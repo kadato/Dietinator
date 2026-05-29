@@ -11,7 +11,12 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { logFood } from '@/services/diary';
 import { getFoodRemote } from '@/services/yazio/foods';
-import { getFoodById } from '@/db/food-cache';
+import {
+  getFoodById,
+  getIsFavorite,
+  saveFoodToCache,
+  toggleFavorite,
+} from '@/db/food-cache';
 import type { FoodServing, MealType, SearchFoodResult } from '@/types';
 import {
   isPerGramNutrients,
@@ -51,15 +56,13 @@ export default function AddFoodScreen() {
 
   useEffect(() => {
     if (!productId) {
-      router.replace({
-        pathname: '/(tabs)/search',
-        params: { meal: mealType, date },
-      });
+      router.back();
     }
-  }, [productId, mealType, date, router]);
+  }, [productId, router]);
 
   const [food, setFood] = useState<SearchFoodResult | null>(null);
   const [loadingFood, setLoadingFood] = useState(Boolean(productId));
+  const [isFavorite, setIsFavorite] = useState(false);
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -104,6 +107,7 @@ export default function AddFoodScreen() {
             },
           });
           setAmount(String(initialServing.amount));
+          setIsFavorite(await getIsFavorite(productId));
         }
       } catch {
         if (!cancelled) {
@@ -121,6 +125,18 @@ export default function AddFoodScreen() {
       cancelled = true;
     };
   }, [productId, showError]);
+
+  useEffect(() => {
+    if (!productId) return;
+    let cancelled = false;
+    (async () => {
+      const fav = await getIsFavorite(productId);
+      if (!cancelled) setIsFavorite(fav);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [productId]);
 
   const servingOptions = useMemo((): FoodServing[] => {
     if (!food) return [];
@@ -163,6 +179,17 @@ export default function AddFoodScreen() {
     [food],
   );
 
+  const handleToggleFavorite = async () => {
+    if (!food || !productId) return;
+    try {
+      await saveFoodToCache(food);
+      const next = await toggleFavorite(productId);
+      setIsFavorite(next);
+    } catch (error) {
+      showError(error, 'Could not update favorite.');
+    }
+  };
+
   const handleSave = async () => {
     if (!food) return;
     const amt = Number(amount);
@@ -203,7 +230,7 @@ export default function AddFoodScreen() {
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <ActivityIndicator color={colors.primary} size="large" />
           <Text style={styles.loadingText}>
-            {productId ? 'Could not load this food.' : 'Opening food search…'}
+            Could not load this food.
           </Text>
           {productId ? (
             <Pressable onPress={() => router.back()}>
@@ -221,10 +248,24 @@ export default function AddFoodScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
-        <Text style={styles.title}>{food.name}</Text>
-        {food.producer ? (
-          <Text style={styles.producer}>{food.producer}</Text>
-        ) : null}
+        <View style={styles.titleRow}>
+          <View style={styles.titleBlock}>
+            <Text style={styles.title}>{food.name}</Text>
+            {food.producer ? (
+              <Text style={styles.producer}>{food.producer}</Text>
+            ) : null}
+          </View>
+          <Pressable
+            onPress={handleToggleFavorite}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isFavorite ? 'Remove from favorites' : 'Add to favorites'
+            }
+          >
+            <Text style={styles.star}>{isFavorite ? '★' : '☆'}</Text>
+          </Pressable>
+        </View>
         <Text style={styles.subtitle}>
           {mealType} · {date}
         </Text>
@@ -309,7 +350,14 @@ const createStyles = (colors: ColorPalette) =>
     loadingText: { color: colors.textMuted, fontSize: 14 },
     message: { color: colors.text },
     link: { color: colors.primary, marginTop: spacing.md },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+    },
+    titleBlock: { flex: 1 },
     title: { fontSize: 24, fontWeight: '700', color: colors.text },
+    star: { fontSize: 28, color: colors.warning, paddingTop: 2 },
     producer: {
       fontSize: 15,
       color: colors.textMuted,
