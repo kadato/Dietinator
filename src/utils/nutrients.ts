@@ -62,6 +62,10 @@ export function nutrientsReferenceAmount(
     (baseUnit === 'g' || baseUnit === 'ml') &&
     isBaseUnitServingLabel(serving.serving ?? '', baseUnit)
   ) {
+    // API often returns amount=100 with serving_quantity=1 while nutrients are per 100 g/ml
+    if (qty === 1 && amount >= 100) return 100;
+    // Default portion (e.g. 30 g bar) — nutrients match `amount`, not 1 g
+    if (qty === 1 && amount > 1) return amount;
     return qty;
   }
 
