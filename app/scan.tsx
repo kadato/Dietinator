@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
+import { useToast } from '@/context/ToastContext';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { getFoodByBarcode, searchFoodsRemote } from '@/services/yazio/foods';
@@ -23,6 +24,7 @@ import { spacing, type ColorPalette } from '@/theme';
 export default function ScanScreen() {
   const router = useRouter();
   const { setYazioAvailable } = useApp();
+  const { showError } = useToast();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const [permission, requestPermission] = useCameraPermissions();
@@ -60,9 +62,9 @@ export default function ScanScreen() {
       } else {
         setResults(remote);
       }
-    } catch {
+    } catch (error) {
       setYazioAvailable(false);
-      Alert.alert('Lookup failed', 'Could not reach YAZIO. Try again later.');
+      showError(error, 'Could not reach YAZIO. Try again later.', 'Lookup failed');
       setScanned(false);
     } finally {
       setLoading(false);

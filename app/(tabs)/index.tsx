@@ -16,6 +16,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
 import { useLayout } from '@/hooks/useLayout';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import type { DiaryEntry, MealType } from '@/types';
 import {
   deleteFoodEntry,
@@ -32,6 +33,7 @@ const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 export default function TodayScreen() {
   const router = useRouter();
   const { settings, yazioAvailable } = useApp();
+  const { showError } = useToast();
   const { colors } = useTheme();
   const { isWide } = useLayout('wide');
   const styles = useThemedStyles(createStyles);
@@ -41,13 +43,17 @@ export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const [list, sum] = await Promise.all([
-      getDiaryEntriesForDate(dateKey),
-      getDiaryTotalsForDate(dateKey),
-    ]);
-    setEntries(list);
-    setTotals(sum);
-  }, [dateKey]);
+    try {
+      const [list, sum] = await Promise.all([
+        getDiaryEntriesForDate(dateKey),
+        getDiaryTotalsForDate(dateKey),
+      ]);
+      setEntries(list);
+      setTotals(sum);
+    } catch (error) {
+      showError(error, 'Could not load diary for this day.');
+    }
+  }, [dateKey, showError]);
 
   useEffect(() => {
     load();
@@ -105,8 +111,12 @@ export default function TodayScreen() {
         entries={entries.filter((e) => e.meal_type === meal)}
         onAdd={() => openAdd(meal)}
         onDelete={async (id) => {
-          await deleteFoodEntry(id);
-          await load();
+          try {
+            await deleteFoodEntry(id);
+            await load();
+          } catch (error) {
+            showError(error, 'Could not delete entry.');
+          }
         }}
       />
     </View>

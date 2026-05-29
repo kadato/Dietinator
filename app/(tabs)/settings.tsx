@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import { logoutYazio } from '@/services/yazio/client';
 import { loadGoalsFromYazio, syncPendingEntries } from '@/services/yazio/sync';
 import { exportDiaryCsv, exportDiaryJson } from '@/services/diary';
@@ -24,7 +25,8 @@ import { spacing, type ColorPalette } from '@/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { settings, updateSettings, refreshAuth } = useApp();
+  const { settings, updateSettings, refreshAuth, refreshSettings } = useApp();
+  const { showSuccess, showError } = useToast();
   const { colors } = useTheme();
   const { isMedium } = useLayout();
   const styles = useThemedStyles(createStyles);
@@ -34,13 +36,17 @@ export default function SettingsScreen() {
   const [fatGoal, setFatGoal] = useState(String(settings.fat_goal));
 
   const saveGoals = async () => {
-    await updateSettings({
-      calorie_goal: Number(calorieGoal) || 2000,
-      protein_goal: Number(proteinGoal) || 150,
-      carbs_goal: Number(carbsGoal) || 200,
-      fat_goal: Number(fatGoal) || 65,
-    });
-    Alert.alert('Saved', 'Goals updated.');
+    try {
+      await updateSettings({
+        calorie_goal: Number(calorieGoal) || 2000,
+        protein_goal: Number(proteinGoal) || 150,
+        carbs_goal: Number(carbsGoal) || 200,
+        fat_goal: Number(fatGoal) || 65,
+      });
+      showSuccess('Goals updated.', 'Saved');
+    } catch (error) {
+      showError(error, 'Could not save goals.');
+    }
   };
 
   const handleLogout = async () => {
@@ -50,8 +56,12 @@ export default function SettingsScreen() {
   };
 
   const handleExport = async (format: 'json' | 'csv') => {
-    const content = format === 'json' ? await exportDiaryJson() : await exportDiaryCsv();
-    await Share.share({ message: content, title: `diary-export.${format}` });
+    try {
+      const content = format === 'json' ? await exportDiaryJson() : await exportDiaryCsv();
+      await Share.share({ message: content, title: `diary-export.${format}` });
+    } catch (error) {
+      showError(error, 'Could not export diary.');
+    }
   };
 
   return (
@@ -70,8 +80,13 @@ export default function SettingsScreen() {
       <Pressable
         style={styles.btnSecondary}
         onPress={async () => {
-          await loadGoalsFromYazio();
-          Alert.alert('Imported', 'Goals loaded from YAZIO.');
+          try {
+            await loadGoalsFromYazio();
+            await refreshSettings();
+            showSuccess('Goals loaded from YAZIO.', 'Imported');
+          } catch (error) {
+            showError(error, 'Could not import goals from YAZIO.');
+          }
         }}
       >
         <Text style={styles.btnSecondaryText}>Import goals from YAZIO</Text>
@@ -83,7 +98,11 @@ export default function SettingsScreen() {
         <Switch
           value={settings.yazio_sync_enabled === 1}
           onValueChange={async (v) => {
-            await updateSettings({ yazio_sync_enabled: v ? 1 : 0 });
+            try {
+              await updateSettings({ yazio_sync_enabled: v ? 1 : 0 });
+            } catch (error) {
+              showError(error, 'Could not update sync setting.');
+            }
           }}
           trackColor={{ true: colors.primary }}
         />
@@ -91,8 +110,15 @@ export default function SettingsScreen() {
       <Pressable
         style={styles.btnSecondary}
         onPress={async () => {
-          const count = await syncPendingEntries();
-          Alert.alert('Sync', `Synced ${count} entries.`);
+          try {
+            const count = await syncPendingEntries();
+            showSuccess(
+              count === 1 ? 'Synced 1 entry.' : `Synced ${count} entries.`,
+              'Sync',
+            );
+          } catch (error) {
+            showError(error, 'Could not sync entries to YAZIO.');
+          }
         }}
       >
         <Text style={styles.btnSecondaryText}>Sync pending entries now</Text>
@@ -114,8 +140,12 @@ export default function SettingsScreen() {
               text: 'Clear',
               style: 'destructive',
               onPress: async () => {
-                await clearFoodCache();
-                Alert.alert('Done', 'Food cache cleared.');
+                try {
+                  await clearFoodCache();
+                  showSuccess('Food cache cleared.', 'Done');
+                } catch (error) {
+                  showError(error, 'Could not clear food cache.');
+                }
               },
             },
           ]);

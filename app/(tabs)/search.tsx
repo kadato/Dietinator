@@ -13,6 +13,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import { searchFoods } from '@/services/yazio/foods';
 import { toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
 import type { SearchFoodResult } from '@/types';
@@ -24,6 +25,7 @@ import { spacing, type ColorPalette } from '@/theme';
 export default function SearchScreen() {
   const router = useRouter();
   const { yazioAvailable, setYazioAvailable } = useApp();
+  const { showError } = useToast();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const [query, setQuery] = useState('');
@@ -51,9 +53,10 @@ export default function SearchScreen() {
           setRemote(result.remote);
           setYazioAvailable(result.remote.length > 0 || !debounced.trim());
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setYazioAvailable(false);
+          showError(error, 'Food search failed. Showing cached results only.');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -62,7 +65,7 @@ export default function SearchScreen() {
     return () => {
       cancelled = true;
     };
-  }, [debounced, setYazioAvailable]);
+  }, [debounced, setYazioAvailable, showError]);
 
   const openFood = (food: SearchFoodResult) => {
     router.push({

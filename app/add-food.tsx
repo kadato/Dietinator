@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   Pressable,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -15,11 +14,13 @@ import type { MealType, SearchFoodResult } from '@/types';
 import { scaleNutrients } from '@/utils/nutrients';
 import { PageContainer } from '@/components/PageContainer';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
 
 export default function AddFoodScreen() {
   const router = useRouter();
   const styles = useThemedStyles(createStyles);
+  const { showError, showWarning } = useToast();
   const params = useLocalSearchParams<{
     meal: string;
     date: string;
@@ -75,7 +76,7 @@ export default function AddFoodScreen() {
     if (!food) return;
     const amt = Number(amount);
     if (!amt || amt <= 0) {
-      Alert.alert('Invalid amount', 'Enter a positive amount.');
+      showWarning('Enter a positive amount.', 'Invalid amount');
       return;
     }
     setSaving(true);
@@ -88,7 +89,7 @@ export default function AddFoodScreen() {
       await logFood({ date, mealType, food: resolved, amount: amt });
       router.back();
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Could not save entry.');
+      showError(error, 'Could not save entry.');
     } finally {
       setSaving(false);
     }

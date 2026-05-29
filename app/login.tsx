@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
   Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,6 +20,7 @@ import {
 } from '@/services/yazio/auth-storage';
 import { loadGoalsFromYazio } from '@/services/yazio/sync';
 import { useApp } from '@/context/AppContext';
+import { useToast } from '@/context/ToastContext';
 import { PageContainer } from '@/components/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
@@ -29,6 +29,7 @@ import { spacing, type ColorPalette } from '@/theme';
 export default function LoginScreen() {
   const router = useRouter();
   const { refreshAuth } = useApp();
+  const { showError, showWarning } = useToast();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
@@ -56,7 +57,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (loading) return;
     if (!email.trim() || !password) {
-      Alert.alert('Missing fields', 'Enter your YAZIO email and password.');
+      showWarning('Enter your YAZIO email and password.', 'Missing fields');
       return;
     }
     setLoading(true);
@@ -71,10 +72,7 @@ export default function LoginScreen() {
       await refreshAuth();
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert(
-        'Login failed',
-        error instanceof Error ? error.message : 'Check your YAZIO credentials.',
-      );
+      showError(error, 'Check your YAZIO credentials.', 'Login failed');
     } finally {
       setLoading(false);
     }
