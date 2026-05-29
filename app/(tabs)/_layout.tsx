@@ -11,8 +11,9 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.textOnBackground,
+        headerShown: !isWide,
         tabBarPosition: isWide ? 'left' : 'bottom',
         tabBarVariant: isWide ? 'material' : 'uikit',
         tabBarLabelPosition: isWide ? 'below-icon' : 'beside-icon',
@@ -21,13 +22,13 @@ export default function TabLayout() {
               width: layout.sideTabWidth,
               paddingTop: spacing.md,
               paddingBottom: spacing.md,
-              backgroundColor: colors.surface,
+              backgroundColor: colors.background,
               borderTopWidth: 0,
               borderRightWidth: 1,
               borderRightColor: colors.border,
             }
           : {
-              backgroundColor: colors.surface,
+              backgroundColor: colors.background,
               borderTopColor: colors.border,
             },
         tabBarItemStyle: isWide ? { paddingVertical: spacing.sm } : undefined,
@@ -39,6 +40,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="today-outline" size={size} color={color} />
           ),
