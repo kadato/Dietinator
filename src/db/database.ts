@@ -75,4 +75,13 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
 
     INSERT OR IGNORE INTO settings (id) VALUES (1);
   `);
+
+  const settingsColumns = await database.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(settings)',
+  );
+  if (!settingsColumns.some((column) => column.name === 'food_database_country')) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN food_database_country TEXT NOT NULL DEFAULT ''`,
+    );
+  }
 }

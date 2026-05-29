@@ -35,6 +35,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fat_goal: 65,
     units: 'metric',
     yazio_sync_enabled: 0,
+    food_database_country: '',
   });
   const [yazioAvailable, setYazioAvailable] = useState(true);
 

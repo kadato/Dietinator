@@ -4,7 +4,7 @@ import { getDatabase } from './database';
 export async function getSettings(): Promise<AppSettings> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<AppSettings>(
-    'SELECT calorie_goal, protein_goal, carbs_goal, fat_goal, units, yazio_sync_enabled FROM settings WHERE id = 1',
+    'SELECT calorie_goal, protein_goal, carbs_goal, fat_goal, units, yazio_sync_enabled, food_database_country FROM settings WHERE id = 1',
   );
   return (
     row ?? {
@@ -14,6 +14,7 @@ export async function getSettings(): Promise<AppSettings> {
       fat_goal: 65,
       units: 'metric',
       yazio_sync_enabled: 0,
+      food_database_country: '',
     }
   );
 }
@@ -31,7 +32,8 @@ export async function updateSettings(
       carbs_goal = ?,
       fat_goal = ?,
       units = ?,
-      yazio_sync_enabled = ?
+      yazio_sync_enabled = ?,
+      food_database_country = ?
     WHERE id = 1`,
     next.calorie_goal,
     next.protein_goal,
@@ -39,5 +41,6 @@ export async function updateSettings(
     next.fat_goal,
     next.units,
     next.yazio_sync_enabled,
+    next.food_database_country,
   );
 }

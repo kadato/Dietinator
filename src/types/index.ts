@@ -36,6 +36,8 @@ export interface AppSettings {
   fat_goal: number;
   units: string;
   yazio_sync_enabled: number;
+  /** YAZIO profile `food_database_country` — used for product search. */
+  food_database_country: string;
 }
 
 export interface FoodNutrients {
