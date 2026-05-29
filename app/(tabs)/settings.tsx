@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,13 @@ import { useLayout } from '@/hooks/useLayout';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
+import { FoodDatabaseCountryPicker } from '@/components/FoodDatabaseCountryPicker';
+import { getYazioProfile } from '@/services/yazio/client';
+import {
+  getFoodDatabaseCountryLabel,
+  resolveFoodDatabaseCountry,
+} from '@/utils/food-database-country';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -35,6 +42,27 @@ export default function SettingsScreen() {
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal));
   const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal));
   const [fatGoal, setFatGoal] = useState(String(settings.fat_goal));
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [profileCountry, setProfileCountry] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const profile = await getYazioProfile();
+      if (!cancelled) {
+        setProfileCountry(profile?.food_database_country ?? null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const effectiveCountry = resolveFoodDatabaseCountry(
+    settings.food_database_country,
+    profileCountry,
+  );
+  const countryUsesProfileDefault = !settings.food_database_country?.trim();
 
   const saveGoals = async () => {
     try {
@@ -105,6 +133,44 @@ export default function SettingsScreen() {
       >
         <Text style={styles.btnSecondaryText}>Import today from YAZIO</Text>
       </Pressable>
+
+      <Text style={styles.sectionTitle}>Food search</Text>
+      <Pressable
+        style={styles.countryRow}
+        onPress={() => setCountryPickerOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Change food database country"
+      >
+        <View style={styles.countryRowText}>
+          <Text style={styles.rowLabel}>Food database country</Text>
+          <Text style={styles.countryValue}>
+            {getFoodDatabaseCountryLabel(effectiveCountry)}
+          </Text>
+          {countryUsesProfileDefault && profileCountry ? (
+            <Text style={styles.countryHint}>
+              Using your YAZIO profile until you pick a country here.
+            </Text>
+          ) : null}
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      </Pressable>
+      <FoodDatabaseCountryPicker
+        visible={countryPickerOpen}
+        selectedCode={effectiveCountry}
+        onClose={() => setCountryPickerOpen(false)}
+        onSelect={async (code) => {
+          try {
+            await updateSettings({ food_database_country: code });
+            setProfileCountry(null);
+            showSuccess(
+              `Search now uses ${getFoodDatabaseCountryLabel(code)}.`,
+              'Food database',
+            );
+          } catch (error) {
+            showError(error, 'Could not save food database country.');
+          }
+        }}
+      />
 
       <Text style={styles.sectionTitle}>YAZIO sync</Text>
       <View style={styles.row}>
@@ -274,4 +340,21 @@ const createStyles = (colors: ColorPalette) =>
     paddingVertical: spacing.sm,
   },
   rowLabel: { flex: 1, color: colors.text, fontSize: 14, marginRight: spacing.md },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  countryRowText: { flex: 1 },
+  countryValue: {
+    fontSize: 15,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  countryHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+  },
 });
