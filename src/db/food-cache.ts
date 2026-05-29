@@ -126,6 +126,15 @@ export async function touchFoodUsed(productId: string): Promise<void> {
   );
 }
 
+export async function getIsFavorite(productId: string): Promise<boolean> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ is_favorite: number }>(
+    'SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?',
+    productId,
+  );
+  return row?.is_favorite === 1;
+}
+
 export async function toggleFavorite(productId: string): Promise<boolean> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ is_favorite: number }>(
