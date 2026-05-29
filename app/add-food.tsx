@@ -13,7 +13,11 @@ import { logFood } from '@/services/diary';
 import { getFoodRemote } from '@/services/yazio/foods';
 import { getFoodById } from '@/db/food-cache';
 import type { FoodServing, MealType, SearchFoodResult } from '@/types';
-import { nutrientsForAmount, nutrientsReferenceAmount } from '@/utils/nutrients';
+import {
+  isPerGramNutrients,
+  nutrientsForAmount,
+  resolveNutrientsRefAmount,
+} from '@/utils/nutrients';
 import {
   formatNutrientsServingLabel,
   formatServingOption,
@@ -24,6 +28,11 @@ import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
+
+function routeParam(value: string | string[] | undefined): string | undefined {
+  if (value == null) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default function AddFoodScreen() {
   const router = useRouter();
@@ -36,9 +45,18 @@ export default function AddFoodScreen() {
     productId?: string;
   }>();
 
-  const mealType = (params.meal ?? 'lunch') as MealType;
-  const date = params.date ?? new Date().toISOString().slice(0, 10);
-  const productId = params.productId;
+  const mealType = (routeParam(params.meal) ?? 'lunch') as MealType;
+  const date = routeParam(params.date) ?? new Date().toISOString().slice(0, 10);
+  const productId = routeParam(params.productId);
+
+  useEffect(() => {
+    if (!productId) {
+      router.replace({
+        pathname: '/(tabs)/search',
+        params: { meal: mealType, date },
+      });
+    }
+  }, [productId, mealType, date, router]);
 
   const [food, setFood] = useState<SearchFoodResult | null>(null);
   const [loadingFood, setLoadingFood] = useState(Boolean(productId));
@@ -57,9 +75,35 @@ export default function AddFoodScreen() {
       try {
         let resolved =
           (await getFoodRemote(productId)) ?? (await getFoodById(productId));
+        if (
+          resolved &&
+          isPerGramNutrients(resolved.nutrients, resolved.base_unit || 'g')
+        ) {
+          const refreshed = await getFoodRemote(productId);
+          if (refreshed) resolved = refreshed;
+        }
         if (!cancelled && resolved) {
-          setFood(resolved);
-          setAmount(String(resolved.serving.amount));
+          const initialServing = resolved.servings?.[0] ?? resolved.serving;
+          const unit = resolved.base_unit || 'g';
+          const ref = resolveNutrientsRefAmount(
+            resolved.nutrients,
+            resolved.serving,
+            unit,
+          );
+          const perHundred = Boolean(resolved.servings?.length) && ref === 100;
+          setFood({
+            ...resolved,
+            serving: {
+              serving: initialServing.serving,
+              amount: initialServing.amount,
+              serving_quantity: perHundred
+                ? ref
+                : initialServing.serving_quantity > 0
+                  ? initialServing.serving_quantity
+                  : initialServing.amount,
+            },
+          });
+          setAmount(String(initialServing.amount));
         }
       } catch {
         if (!cancelled) {
@@ -100,9 +144,8 @@ export default function AddFoodScreen() {
     (option: FoodServing) => {
       if (!food) return;
       const unit = food.base_unit || 'g';
-      const ref = nutrientsReferenceAmount(food.serving, unit);
-      const perHundredProduct =
-        Boolean(food.servings?.length) && ref === 100;
+      const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
+      const perHundredProduct = Boolean(food.servings?.length) && ref === 100;
       setFood({
         ...food,
         serving: {
@@ -158,10 +201,15 @@ export default function AddFoodScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
-          <Text style={styles.message}>No food selected.</Text>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.link}>Go back</Text>
-          </Pressable>
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text style={styles.loadingText}>
+            {productId ? 'Could not load this food.' : 'Opening food search…'}
+          </Text>
+          {productId ? (
+            <Pressable onPress={() => router.back()}>
+              <Text style={styles.link}>Go back</Text>
+            </Pressable>
+          ) : null}
         </PageContainer>
       </View>
     );
