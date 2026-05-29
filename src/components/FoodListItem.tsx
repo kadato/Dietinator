@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet, View } from 'react-native';
 import type { SearchFoodResult } from '@/types';
+import { formatListNutrientLine } from '@/utils/food-display';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
 
@@ -27,8 +28,7 @@ export function FoodListItem({
           {food.name}
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
-          {subtitle ??
-            `${food.producer ? `${food.producer} · ` : ''}${food.nutrients.kcal} kcal / ${food.serving.amount}${food.base_unit}`}
+          {subtitle ?? formatListNutrientLine(food)}
         </Text>
       </View>
       {onToggleFavorite && (
