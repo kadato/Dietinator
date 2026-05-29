@@ -4,7 +4,12 @@ import * as foodCacheDb from '@/db/food-cache';
 import { getSettings } from '@/db/settings';
 import { matchesDateKey, toDateKey, toYazioApiDate } from '@/utils/date';
 import { nutrientsForAmount, nutrientsFromYazio, toKcal } from '@/utils/nutrients';
-import { getYazioClient, getYazioEnergyUnit, initYazioClient } from './client';
+import {
+  getYazioClient,
+  getYazioEnergyUnit,
+  getYazioProfile,
+  initYazioClient,
+} from './client';
 import { getFoodRemote } from './foods';
 
 function generateId(): string {
@@ -312,8 +317,9 @@ export async function loadGoalsFromYazio(date: string = toDateKey()): Promise<vo
   if (!yazio) return;
 
   try {
-    const [goals, unitEnergy] = await Promise.all([
+    const [goals, profile, unitEnergy] = await Promise.all([
       yazio.user.getGoals({ date: toYazioApiDate(date) }),
+      getYazioProfile(),
       getYazioEnergyUnit(),
     ]);
     const { updateSettings } = await import('@/db/settings');
@@ -322,6 +328,9 @@ export async function loadGoalsFromYazio(date: string = toDateKey()): Promise<vo
       protein_goal: goals['nutrient.protein'] ?? 150,
       carbs_goal: goals['nutrient.carb'] ?? 200,
       fat_goal: goals['nutrient.fat'] ?? 65,
+      ...(profile?.food_database_country
+        ? { food_database_country: profile.food_database_country }
+        : {}),
     });
   } catch {
     // Goals stay local defaults

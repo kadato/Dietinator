@@ -1,4 +1,5 @@
 import { Yazio } from 'yazio';
+import { getSettings } from '@/db/settings';
 import {
   clearAuth,
   getCredentials,
@@ -11,24 +12,58 @@ import { installYazioWebFetch } from './web-fetch';
 installYazioWebFetch();
 
 let client: Yazio | null = null;
-let cachedEnergyUnit: string | null = null;
+
+type YazioProfileSlice = {
+  unit_energy: string;
+  food_database_country: string;
+  sex: 'male' | 'female' | 'other';
+};
+
+let cachedProfile: YazioProfileSlice | null = null;
 
 export function getYazioClient(): Yazio | null {
   return client;
 }
 
-/** YAZIO profile `unit_energy` (kcal or kj); cached per session. */
-export async function getYazioEnergyUnit(): Promise<string> {
-  if (cachedEnergyUnit) return cachedEnergyUnit;
+/** Cached YAZIO profile fields used for search and nutrient units. */
+export async function getYazioProfile(): Promise<YazioProfileSlice | null> {
+  if (cachedProfile) return cachedProfile;
   const yazio = getYazioClient() ?? (await initYazioClient());
-  if (!yazio) return 'kcal';
+  if (!yazio) return null;
   const profile = await yazio.user.get();
-  cachedEnergyUnit = profile.unit_energy ?? 'kcal';
-  return cachedEnergyUnit;
+  cachedProfile = {
+    unit_energy: profile.unit_energy ?? 'kcal',
+    food_database_country: profile.food_database_country || profile.country || 'DE',
+    sex: profile.sex ?? 'male',
+  };
+  return cachedProfile;
 }
 
-export function clearYazioEnergyUnitCache(): void {
-  cachedEnergyUnit = null;
+/** YAZIO profile `unit_energy` (kcal or kj); cached per session. */
+export async function getYazioEnergyUnit(): Promise<string> {
+  const profile = await getYazioProfile();
+  return profile?.unit_energy ?? 'kcal';
+}
+
+/** Product search options aligned with the user's YAZIO food database country. */
+export async function getYazioProductSearchOptions(): Promise<{
+  countries: string[];
+  sex: 'male' | 'female';
+}> {
+  const [settings, profile] = await Promise.all([getSettings(), getYazioProfile()]);
+  const country =
+    settings.food_database_country?.trim() ||
+    profile?.food_database_country ||
+    'DE';
+  const sex = profile?.sex === 'female' ? 'female' : 'male';
+  return {
+    countries: [country.toUpperCase()],
+    sex,
+  };
+}
+
+export function clearYazioProfileCache(): void {
+  cachedProfile = null;
 }
 
 export async function initYazioClient(): Promise<Yazio | null> {
@@ -67,6 +102,7 @@ export async function loginWithCredentials(
   });
 
   await yazio.user.get();
+  clearYazioProfileCache();
   const { getToken: readStoredToken } = await import('./auth-storage');
   const stored = await readStoredToken();
   if (!stored) {
@@ -78,6 +114,6 @@ export async function loginWithCredentials(
 
 export async function logoutYazio(): Promise<void> {
   client = null;
-  clearYazioEnergyUnitCache();
+  clearYazioProfileCache();
   await clearAuth();
 }
