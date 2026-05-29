@@ -81,6 +81,19 @@ export async function markDiaryEntrySynced(
   );
 }
 
+export async function getYazioItemIdsForDate(date: string): Promise<Set<string>> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ yazio_item_id: string | null }>(
+    'SELECT yazio_item_id FROM diary_entries WHERE date = ? AND yazio_item_id IS NOT NULL',
+    date,
+  );
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.yazio_item_id) ids.add(row.yazio_item_id);
+  }
+  return ids;
+}
+
 export async function getUnsyncedEntries(): Promise<DiaryEntry[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<Record<string, unknown>>(

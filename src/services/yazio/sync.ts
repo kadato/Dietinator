@@ -1,7 +1,10 @@
-import type { DiaryEntry, MealType } from '@/types';
+import type { DiaryEntry, FoodServing, MealType } from '@/types';
 import * as diaryDb from '@/db/diary';
+import * as foodCacheDb from '@/db/food-cache';
 import { getSettings } from '@/db/settings';
-import { getYazioClient, initYazioClient } from './client';
+import { matchesDateKey, toDateKey, toYazioApiDate } from '@/utils/date';
+import { nutrientsForAmount, nutrientsFromYazio, toKcal } from '@/utils/nutrients';
+import { getYazioClient, getYazioEnergyUnit, initYazioClient } from './client';
 import { getFoodRemote } from './foods';
 
 function generateId(): string {
@@ -50,17 +53,278 @@ export async function syncPendingEntries(): Promise<number> {
   return synced;
 }
 
-export async function loadGoalsFromYazio(): Promise<void> {
+type YazioConsumedProduct = {
+  id: string;
+  date: string;
+  product_id: string;
+  amount: number;
+  serving: string | null;
+  serving_quantity: number | null;
+  daytime: MealType;
+};
+
+type YazioSimpleProduct = {
+  id: string;
+  date: string;
+  daytime: MealType;
+  name: string;
+  nutrients: Record<string, number>;
+};
+
+type YazioRecipePortion = {
+  id: string;
+  date: string;
+  daytime: MealType;
+  name?: string;
+  nutrients?: Record<string, number>;
+  amount?: number;
+};
+
+export type MealGoals = Partial<Record<MealType, number>>;
+
+export type DiaryImportResult = {
+  imported: number;
+  skipped: number;
+  failed: number;
+  mealGoals: MealGoals;
+  error?: string;
+};
+
+async function ensureYazioClient() {
   let yazio = getYazioClient();
   if (!yazio) yazio = await initYazioClient();
+  return yazio;
+}
+
+async function fetchMealGoals(
+  date: string,
+): Promise<MealGoals> {
+  const yazio = await ensureYazioClient();
+  if (!yazio) return {};
+
+  try {
+    const unitEnergy = await getYazioEnergyUnit();
+    const summary = await yazio.user.getDailySummary({
+      date: toYazioApiDate(date),
+    });
+    const meals = summary.meals;
+    return {
+      breakfast: toKcal(meals.breakfast.energy_goal, unitEnergy),
+      lunch: toKcal(meals.lunch.energy_goal, unitEnergy),
+      dinner: toKcal(meals.dinner.energy_goal, unitEnergy),
+      snack: toKcal(meals.snack.energy_goal, unitEnergy),
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function importConsumedProduct(
+  item: YazioConsumedProduct,
+  date: string,
+  existingIds: Set<string>,
+  unitEnergy: string,
+  productCache: Map<string, Awaited<ReturnType<typeof getFoodRemote>>>,
+): Promise<'imported' | 'skipped' | 'failed'> {
+  if (!matchesDateKey(item.date, date)) return 'skipped';
+  if (existingIds.has(item.id)) return 'skipped';
+
+  let food = productCache.get(item.product_id);
+  if (food === undefined) {
+    food = await getFoodRemote(item.product_id);
+    productCache.set(item.product_id, food);
+  }
+  if (!food) return 'failed';
+
+  const serving: FoodServing = {
+    serving: item.serving ?? food.serving.serving,
+    amount: item.amount,
+    serving_quantity:
+      item.serving_quantity ?? food.serving.serving_quantity ?? item.amount,
+  };
+  const scaled = nutrientsForAmount(
+    food.nutrients,
+    serving,
+    item.amount,
+    food.base_unit,
+  );
+
+  await diaryDb.addDiaryEntry({
+    id: generateId(),
+    date,
+    meal_type: item.daytime,
+    food_id: item.product_id,
+    food_name: food.name,
+    amount: item.amount,
+    unit: food.base_unit || 'g',
+    kcal: scaled.kcal,
+    protein: scaled.protein,
+    carbs: scaled.carbs,
+    fat: scaled.fat,
+    created_at: new Date().toISOString(),
+    yazio_synced: 1,
+    yazio_item_id: item.id,
+  });
+
+  await foodCacheDb.saveFoodToCache(food);
+  await foodCacheDb.touchFoodUsed(food.product_id);
+  existingIds.add(item.id);
+  return 'imported';
+}
+
+async function importSimpleProduct(
+  item: YazioSimpleProduct,
+  date: string,
+  existingIds: Set<string>,
+  unitEnergy: string,
+): Promise<'imported' | 'skipped' | 'failed'> {
+  if (!matchesDateKey(item.date, date)) return 'skipped';
+  if (existingIds.has(item.id)) return 'skipped';
+  if (!item.name?.trim()) return 'failed';
+
+  const scaled = nutrientsFromYazio(item.nutrients ?? {}, unitEnergy);
+
+  await diaryDb.addDiaryEntry({
+    id: generateId(),
+    date,
+    meal_type: item.daytime,
+    food_id: null,
+    food_name: item.name.trim(),
+    amount: 1,
+    unit: 'serving',
+    kcal: scaled.kcal,
+    protein: scaled.protein,
+    carbs: scaled.carbs,
+    fat: scaled.fat,
+    created_at: new Date().toISOString(),
+    yazio_synced: 1,
+    yazio_item_id: item.id,
+  });
+
+  existingIds.add(item.id);
+  return 'imported';
+}
+
+async function importRecipePortion(
+  item: YazioRecipePortion,
+  date: string,
+  existingIds: Set<string>,
+  unitEnergy: string,
+): Promise<'imported' | 'skipped' | 'failed'> {
+  if (!matchesDateKey(item.date, date)) return 'skipped';
+  if (existingIds.has(item.id)) return 'skipped';
+
+  const name = item.name?.trim() || 'Recipe';
+  const nutrients = item.nutrients ?? {};
+  const scaled = nutrientsFromYazio(nutrients, unitEnergy);
+  if (scaled.kcal <= 0 && !item.name) return 'failed';
+
+  await diaryDb.addDiaryEntry({
+    id: generateId(),
+    date,
+    meal_type: item.daytime,
+    food_id: null,
+    food_name: name,
+    amount: item.amount ?? 1,
+    unit: 'portion',
+    kcal: scaled.kcal,
+    protein: scaled.protein,
+    carbs: scaled.carbs,
+    fat: scaled.fat,
+    created_at: new Date().toISOString(),
+    yazio_synced: 1,
+    yazio_item_id: item.id,
+  });
+
+  existingIds.add(item.id);
+  return 'imported';
+}
+
+export async function importDiaryFromYazio(
+  date: string = toDateKey(),
+): Promise<DiaryImportResult> {
+  const empty: DiaryImportResult = {
+    imported: 0,
+    skipped: 0,
+    failed: 0,
+    mealGoals: {},
+  };
+
+  const yazio = await ensureYazioClient();
+  if (!yazio) return empty;
+
+  const mealGoals = await fetchMealGoals(date);
+
+  try {
+    const [consumed, existingIds, unitEnergy] = await Promise.all([
+      yazio.user.getConsumedItems({ date: toYazioApiDate(date) }),
+      diaryDb.getYazioItemIdsForDate(date),
+      getYazioEnergyUnit(),
+    ]);
+
+    let imported = 0;
+    let skipped = 0;
+    let failed = 0;
+    const productCache = new Map<
+      string,
+      Awaited<ReturnType<typeof getFoodRemote>>
+    >();
+
+    for (const item of consumed.products as YazioConsumedProduct[]) {
+      const result = await importConsumedProduct(
+        item,
+        date,
+        existingIds,
+        unitEnergy,
+        productCache,
+      );
+      if (result === 'imported') imported += 1;
+      else if (result === 'skipped') skipped += 1;
+      else failed += 1;
+    }
+
+    for (const raw of consumed.simple_products as YazioSimpleProduct[]) {
+      const result = await importSimpleProduct(raw, date, existingIds, unitEnergy);
+      if (result === 'imported') imported += 1;
+      else if (result === 'skipped') skipped += 1;
+      else failed += 1;
+    }
+
+    for (const raw of consumed.recipe_portions as YazioRecipePortion[]) {
+      const result = await importRecipePortion(raw, date, existingIds, unitEnergy);
+      if (result === 'imported') imported += 1;
+      else if (result === 'skipped') skipped += 1;
+      else failed += 1;
+    }
+
+    return { imported, skipped, failed, mealGoals };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Could not reach YAZIO.';
+    return { ...empty, mealGoals, error: message };
+  }
+}
+
+/** Import daily goals and consumed foods from YAZIO for one date. */
+export async function importFromYazio(
+  date: string = toDateKey(),
+): Promise<DiaryImportResult> {
+  await loadGoalsFromYazio(date);
+  return importDiaryFromYazio(date);
+}
+
+export async function loadGoalsFromYazio(date: string = toDateKey()): Promise<void> {
+  const yazio = await ensureYazioClient();
   if (!yazio) return;
 
   try {
-    const goals = await yazio.user.getGoals({ date: new Date() });
+    const [goals, unitEnergy] = await Promise.all([
+      yazio.user.getGoals({ date: toYazioApiDate(date) }),
+      getYazioEnergyUnit(),
+    ]);
     const { updateSettings } = await import('@/db/settings');
-    const { toKcal } = await import('@/utils/nutrients');
     await updateSettings({
-      calorie_goal: toKcal(goals['energy.energy'] ?? 2000),
+      calorie_goal: toKcal(goals['energy.energy'] ?? 2000, unitEnergy),
       protein_goal: goals['nutrient.protein'] ?? 150,
       carbs_goal: goals['nutrient.carb'] ?? 200,
       fat_goal: goals['nutrient.fat'] ?? 65,

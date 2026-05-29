@@ -1,7 +1,7 @@
 import * as diaryDb from '@/db/diary';
 import * as foodCacheDb from '@/db/food-cache';
 import type { DiaryEntry, FoodNutrients, MealType, SearchFoodResult } from '@/types';
-import { scaleNutrients } from '@/utils/nutrients';
+import { nutrientsForAmount } from '@/utils/nutrients';
 import { syncEntryToYazio } from './yazio/sync';
 
 function generateId(): string {
@@ -15,10 +15,11 @@ export async function logFood(params: {
   amount: number;
 }): Promise<DiaryEntry> {
   const { date, mealType, food, amount } = params;
-  const scaled = scaleNutrients(
+  const scaled = nutrientsForAmount(
     food.nutrients,
-    food.serving.amount,
+    food.serving,
     amount,
+    food.base_unit,
   );
 
   const entry = await diaryDb.addDiaryEntry({
