@@ -11,9 +11,24 @@ import { installYazioWebFetch } from './web-fetch';
 installYazioWebFetch();
 
 let client: Yazio | null = null;
+let cachedEnergyUnit: string | null = null;
 
 export function getYazioClient(): Yazio | null {
   return client;
+}
+
+/** YAZIO profile `unit_energy` (kcal or kj); cached per session. */
+export async function getYazioEnergyUnit(): Promise<string> {
+  if (cachedEnergyUnit) return cachedEnergyUnit;
+  const yazio = getYazioClient() ?? (await initYazioClient());
+  if (!yazio) return 'kcal';
+  const profile = await yazio.user.get();
+  cachedEnergyUnit = profile.unit_energy ?? 'kcal';
+  return cachedEnergyUnit;
+}
+
+export function clearYazioEnergyUnitCache(): void {
+  cachedEnergyUnit = null;
 }
 
 export async function initYazioClient(): Promise<Yazio | null> {
@@ -63,5 +78,6 @@ export async function loginWithCredentials(
 
 export async function logoutYazio(): Promise<void> {
   client = null;
+  clearYazioEnergyUnitCache();
   await clearAuth();
 }
