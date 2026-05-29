@@ -1,17 +1,32 @@
 import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
-let db: SQLite.SQLiteDatabase | null = null;
+/** Single in-flight open; avoids duplicate OPFS access handles on web (Strict Mode / parallel boot). */
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (db) return db;
-  db = await SQLite.openDatabaseAsync('dietinator.db');
-  await migrate(db);
-  return db;
+  if (!dbPromise) {
+    dbPromise = openDatabase().catch((error) => {
+      dbPromise = null;
+      throw error;
+    });
+  }
+  return dbPromise;
+}
+
+async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
+  const database = await SQLite.openDatabaseAsync('dietinator.db', {
+    useNewConnection: false,
+  });
+  await migrate(database);
+  return database;
 }
 
 async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
+  // WAL uses extra OPFS files; web OPFS allows only one sync handle per file.
+  const journalMode = Platform.OS === 'web' ? 'DELETE' : 'WAL';
   await database.execAsync(`
-    PRAGMA journal_mode = WAL;
+    PRAGMA journal_mode = ${journalMode};
 
     CREATE TABLE IF NOT EXISTS diary_entries (
       id TEXT PRIMARY KEY NOT NULL,
@@ -31,6 +46,7 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_diary_date ON diary_entries(date);
+    CREATE INDEX IF NOT EXISTS idx_diary_yazio_item ON diary_entries(yazio_item_id);
 
     CREATE TABLE IF NOT EXISTS food_cache (
       yazio_product_id TEXT PRIMARY KEY NOT NULL,
