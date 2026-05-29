@@ -29,7 +29,7 @@ npm start
 
 Scan the QR code with Expo Go, or run `npm run android` / `npm run ios`.
 
-For **web** in the browser: `npm run web` (needs `react-native-web` and `react-dom`, installed with the rest of the deps).
+For **web** in the browser: `npm run web` (needs `react-native-web` and `react-dom`, installed with the rest of the deps). YAZIO API calls are proxied through Metro at `/api/yazio` during development so the browser is not blocked by CORS on `yzapi.yazio.com`.
 
 ## Reproducible dev environment (recommended)
 

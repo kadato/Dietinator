@@ -6,6 +6,9 @@ import {
   saveToken,
   type StoredToken,
 } from './auth-storage';
+import { installYazioWebFetch } from './web-fetch';
+
+installYazioWebFetch();
 
 let client: Yazio | null = null;
 
