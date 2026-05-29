@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing } from '@/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 type Props = {
   consumed: number;
@@ -7,6 +8,7 @@ type Props = {
 };
 
 export function CalorieRing({ consumed, goal }: Props) {
+  const styles = useThemedStyles(createStyles);
   const remaining = Math.max(goal - consumed, 0);
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
 
@@ -17,39 +19,42 @@ export function CalorieRing({ consumed, goal }: Props) {
       </View>
       <Text style={styles.consumed}>{Math.round(consumed)}</Text>
       <Text style={styles.label}>kcal eaten</Text>
-      <Text style={styles.remaining}>{Math.round(remaining)} left of {goal}</Text>
+      <Text style={styles.remaining}>
+        {Math.round(remaining)} left of {goal}
+      </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { alignItems: 'center', paddingVertical: spacing.lg },
-  ringOuter: {
-    width: '100%',
-    height: 8,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: spacing.md,
-  },
-  ringFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  consumed: {
-    fontSize: 42,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  label: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  remaining: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
-  },
-});
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    container: { alignItems: 'center', paddingVertical: spacing.lg },
+    ringOuter: {
+      width: '100%',
+      height: 8,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: 4,
+      overflow: 'hidden',
+      marginBottom: spacing.md,
+    },
+    ringFill: {
+      height: '100%',
+      backgroundColor: colors.primary,
+      borderRadius: 4,
+    },
+    consumed: {
+      fontSize: 42,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    label: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+    },
+    remaining: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+    },
+  });

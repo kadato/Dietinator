@@ -1,6 +1,7 @@
 import { Pressable, Text, StyleSheet, View } from 'react-native';
 import type { SearchFoodResult } from '@/types';
-import { colors, spacing } from '@/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 type Props = {
   food: SearchFoodResult;
@@ -17,6 +18,8 @@ export function FoodListItem({
   isFavorite,
   subtitle,
 }: Props) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Pressable style={styles.row} onPress={onPress}>
       <View style={styles.info}>
@@ -37,17 +40,18 @@ export function FoodListItem({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  info: { flex: 1 },
-  name: { fontSize: 16, color: colors.text, fontWeight: '500' },
-  meta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  star: { fontSize: 22, color: colors.warning, paddingLeft: spacing.sm },
-});
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    info: { flex: 1 },
+    name: { fontSize: 16, color: colors.text, fontWeight: '500' },
+    meta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    star: { fontSize: 22, color: colors.warning, paddingLeft: spacing.sm },
+  });
