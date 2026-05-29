@@ -1,4 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { ProgressRing } from '@/components/ProgressRing';
+import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
 
@@ -8,6 +10,7 @@ type Props = {
 };
 
 export function CalorieRing({ consumed, goal }: Props) {
+  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const remaining = Math.max(goal - consumed, 0);
   const over = consumed > goal ? consumed - goal : 0;
@@ -15,28 +18,36 @@ export function CalorieRing({ consumed, goal }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.ringOuter}>
-        <View style={[styles.ringFill, { width: `${progress * 100}%` }]} />
+      <Text style={styles.sectionTitle}>Summary</Text>
+      <View style={styles.row}>
+        <View style={styles.sideStat}>
+          <Text style={styles.sideValue}>{Math.round(consumed).toLocaleString()}</Text>
+          <Text style={styles.sideLabel}>Eaten</Text>
+        </View>
+
+        <View style={styles.ringWrap}>
+          <ProgressRing
+            progress={progress}
+            size={132}
+            stroke={8}
+            color={colors.primary}
+            trackColor={colors.surfaceAlt}
+          >
+            <View style={styles.ringCenter}>
+              <Text style={styles.remainingValue}>
+                {over > 0 ? Math.round(over).toLocaleString() : Math.round(remaining).toLocaleString()}
+              </Text>
+              <Text style={styles.remainingLabel}>{over > 0 ? 'Over' : 'Remaining'}</Text>
+            </View>
+          </ProgressRing>
+        </View>
+
+        <View style={styles.sideStat}>
+          <Text style={styles.sideValue}>0</Text>
+          <Text style={styles.sideLabel}>Burned</Text>
+        </View>
       </View>
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{Math.round(consumed)}</Text>
-          <Text style={styles.statLabel}>Eaten</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.stat}>
-          <Text style={[styles.statValue, over > 0 && styles.statOver]}>
-            {over > 0 ? Math.round(over) : Math.round(remaining)}
-          </Text>
-          <Text style={styles.statLabel}>{over > 0 ? 'Over' : 'Left'}</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{Math.round(goal)}</Text>
-          <Text style={styles.statLabel}>Goal</Text>
-        </View>
-      </View>
-      <Text style={styles.unitHint}>kilocalories (kcal)</Text>
+      <Text style={styles.goalHint}>Daily goal {Math.round(goal).toLocaleString()} kcal</Text>
     </View>
   );
 }
@@ -44,59 +55,62 @@ export function CalorieRing({ consumed, goal }: Props) {
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: {
-      alignItems: 'center',
-      paddingVertical: spacing.lg,
-      paddingHorizontal: spacing.md,
-      backgroundColor: colors.surface,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginBottom: spacing.md,
+      padding: spacing.lg,
+      paddingBottom: 0,
     },
-    ringOuter: {
-      width: '100%',
-      height: 10,
-      backgroundColor: colors.surfaceAlt,
-      borderRadius: 5,
-      overflow: 'hidden',
+    sectionTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
       marginBottom: spacing.lg,
     },
-    ringFill: {
-      height: '100%',
-      backgroundColor: colors.primary,
-      borderRadius: 5,
-    },
-    stats: {
+    row: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      width: '100%',
-      maxWidth: 360,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
     },
-    stat: { flex: 1, alignItems: 'center' },
-    statDivider: {
-      width: 1,
-      height: 36,
-      backgroundColor: colors.border,
-      marginHorizontal: spacing.sm,
+    sideStat: {
+      flex: 1,
+      alignItems: 'center',
+      minWidth: 72,
     },
-    statValue: {
-      fontSize: 28,
+    sideValue: {
+      fontSize: 20,
       fontWeight: '700',
       color: colors.text,
     },
-    statOver: { color: colors.warning },
-    statLabel: {
-      fontSize: 12,
-      fontWeight: '600',
+    sideLabel: {
+      fontSize: 13,
       color: colors.textMuted,
-      marginTop: spacing.xs,
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
+      marginTop: 4,
+      fontWeight: '500',
     },
-    unitHint: {
-      fontSize: 11,
+    ringWrap: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ringCenter: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 100,
+    },
+    remainingValue: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: -0.5,
+    },
+    remainingLabel: {
+      fontSize: 13,
       color: colors.textMuted,
+      marginTop: 2,
+      fontWeight: '500',
+    },
+    goalHint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      textAlign: 'center',
       marginTop: spacing.md,
     },
   });

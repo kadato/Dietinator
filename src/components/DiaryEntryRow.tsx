@@ -80,7 +80,7 @@ const createStyles = (colors: ColorPalette) =>
     kcalValue: {
       fontSize: 17,
       fontWeight: '700',
-      color: colors.primary,
+      color: colors.text,
     },
     kcalUnit: {
       fontSize: 10,
