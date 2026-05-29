@@ -78,15 +78,6 @@ export default function ScanScreen() {
         meal: 'lunch',
         date: toDateKey(),
         productId: food.product_id,
-        name: food.name,
-        kcal: String(food.nutrients.kcal),
-        amount: String(food.serving.amount),
-        unit: food.base_unit,
-        protein: String(food.nutrients.protein),
-        carbs: String(food.nutrients.carbs),
-        fat: String(food.nutrients.fat),
-        serving: food.serving.serving,
-        servingQty: String(food.serving.serving_quantity),
       },
     });
   };

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,71 +6,119 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { logFood } from '@/services/diary';
 import { getFoodRemote } from '@/services/yazio/foods';
-import type { MealType, SearchFoodResult } from '@/types';
-import { scaleNutrients } from '@/utils/nutrients';
+import { getFoodById } from '@/db/food-cache';
+import type { FoodServing, MealType, SearchFoodResult } from '@/types';
+import { nutrientsForAmount, nutrientsReferenceAmount } from '@/utils/nutrients';
+import {
+  formatNutrientsServingLabel,
+  formatServingOption,
+} from '@/utils/food-display';
+import { NutritionFactsCard } from '@/components/NutritionFactsCard';
 import { PageContainer } from '@/components/PageContainer';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
 
 export default function AddFoodScreen() {
   const router = useRouter();
   const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme();
   const { showError, showWarning } = useToast();
   const params = useLocalSearchParams<{
     meal: string;
     date: string;
     productId?: string;
-    name?: string;
-    kcal?: string;
-    amount?: string;
-    unit?: string;
-    protein?: string;
-    carbs?: string;
-    fat?: string;
-    serving?: string;
-    servingQty?: string;
   }>();
 
   const mealType = (params.meal ?? 'lunch') as MealType;
   const date = params.date ?? new Date().toISOString().slice(0, 10);
+  const productId = params.productId;
 
-  const initialFood = useMemo<SearchFoodResult | null>(() => {
-    if (!params.productId || !params.name) return null;
-    const baseAmount = Number(params.amount) || 100;
-    return {
-      product_id: params.productId,
-      name: params.name,
-      producer: '',
-      nutrients: {
-        kcal: Number(params.kcal) || 0,
-        protein: Number(params.protein) || 0,
-        carbs: Number(params.carbs) || 0,
-        fat: Number(params.fat) || 0,
-      },
-      serving: {
-        serving: params.serving ?? 'portion',
-        amount: baseAmount,
-        serving_quantity: Number(params.servingQty) || baseAmount,
-      },
-      base_unit: params.unit ?? 'g',
-      is_verified: true,
-    };
-  }, [params]);
-
-  const [food, setFood] = useState<SearchFoodResult | null>(initialFood);
-  const [amount, setAmount] = useState(String(initialFood?.serving.amount ?? 100));
+  const [food, setFood] = useState<SearchFoodResult | null>(null);
+  const [loadingFood, setLoadingFood] = useState(Boolean(productId));
+  const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!productId) {
+      setLoadingFood(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setLoadingFood(true);
+      try {
+        let resolved =
+          (await getFoodRemote(productId)) ?? (await getFoodById(productId));
+        if (!cancelled && resolved) {
+          setFood(resolved);
+          setAmount(String(resolved.serving.amount));
+        }
+      } catch {
+        if (!cancelled) {
+          showError(
+            new Error('Could not load food details'),
+            'Try again or pick another item.',
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingFood(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productId, showError]);
+
+  const servingOptions = useMemo((): FoodServing[] => {
+    if (!food) return [];
+    if (food.servings?.length) return food.servings;
+    return [food.serving];
+  }, [food]);
 
   const preview = useMemo(() => {
     if (!food) return null;
     const amt = Number(amount) || 0;
-    return scaleNutrients(food.nutrients, food.serving.amount, amt);
+    if (amt <= 0) return null;
+    return nutrientsForAmount(
+      food.nutrients,
+      food.serving,
+      amt,
+      food.base_unit,
+    );
   }, [food, amount]);
+
+  const selectServing = useCallback(
+    (option: FoodServing) => {
+      if (!food) return;
+      const unit = food.base_unit || 'g';
+      const ref = nutrientsReferenceAmount(food.serving, unit);
+      const perHundredProduct =
+        Boolean(food.servings?.length) && ref === 100;
+      setFood({
+        ...food,
+        serving: {
+          serving: option.serving,
+          amount: option.amount,
+          serving_quantity: perHundredProduct
+            ? ref
+            : option.serving_quantity > 0
+              ? option.serving_quantity
+              : option.amount,
+        },
+      });
+      setAmount(String(option.amount));
+    },
+    [food],
+  );
 
   const handleSave = async () => {
     if (!food) return;
@@ -82,8 +130,8 @@ export default function AddFoodScreen() {
     setSaving(true);
     try {
       let resolved = food;
-      if (params.productId && !food.nutrients.kcal) {
-        const remote = await getFoodRemote(params.productId);
+      if (!resolved.nutrients.kcal && productId) {
+        const remote = await getFoodRemote(productId);
         if (remote) resolved = remote;
       }
       await logFood({ date, mealType, food: resolved, amount: amt });
@@ -94,6 +142,17 @@ export default function AddFoodScreen() {
       setSaving(false);
     }
   };
+
+  if (loadingFood) {
+    return (
+      <View style={styles.center}>
+        <PageContainer variant="narrow" contentStyle={styles.centerContent}>
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text style={styles.loadingText}>Loading food details…</Text>
+        </PageContainer>
+      </View>
+    );
+  }
 
   if (!food) {
     return (
@@ -108,43 +167,76 @@ export default function AddFoodScreen() {
     );
   }
 
+  const unit = food.base_unit || 'g';
+  const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
-      <Text style={styles.title}>{food.name}</Text>
-      <Text style={styles.subtitle}>
-        {mealType} · {date}
-      </Text>
+        <Text style={styles.title}>{food.name}</Text>
+        {food.producer ? (
+          <Text style={styles.producer}>{food.producer}</Text>
+        ) : null}
+        <Text style={styles.subtitle}>
+          {mealType} · {date}
+        </Text>
 
-      <Text style={styles.label}>Amount ({food.base_unit})</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="decimal-pad"
-        value={amount}
-        onChangeText={setAmount}
-      />
+        <Text style={styles.sectionLabel}>Serving size</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.servingRow}
+        >
+          {servingOptions.map((option) => {
+            const key = `${option.serving}-${option.amount}`;
+            const selected = key === selectedServingKey;
+            return (
+              <Pressable
+                key={key}
+                style={[styles.servingChip, selected && styles.servingChipSelected]}
+                onPress={() => selectServing(option)}
+              >
+                <Text
+                  style={[
+                    styles.servingChipText,
+                    selected && styles.servingChipTextSelected,
+                  ]}
+                >
+                  {formatServingOption(option, unit)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-      {preview && (
-        <View style={styles.preview}>
-          <Text style={styles.previewTitle}>Nutrition</Text>
-          <Text style={styles.previewRow}>{preview.kcal} kcal</Text>
-          <Text style={styles.previewRow}>
-            P {preview.protein}g · C {preview.carbs}g · F {preview.fat}g
+        <Text style={styles.label}>Amount ({unit})</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="decimal-pad"
+          value={amount}
+          onChangeText={setAmount}
+        />
+
+        {preview && (
+          <NutritionFactsCard
+            nutrients={preview}
+            servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+          />
+        )}
+
+        <Pressable
+          style={[styles.saveBtn, saving && styles.saveDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          <Text style={styles.saveText}>
+            {saving ? 'Saving...' : 'Add to diary'}
           </Text>
-        </View>
-      )}
+        </Pressable>
 
-      <Pressable
-        style={[styles.saveBtn, saving && styles.saveDisabled]}
-        onPress={handleSave}
-        disabled={saving}
-      >
-        <Text style={styles.saveText}>{saving ? 'Saving...' : 'Add to diary'}</Text>
-      </Pressable>
-
-      <Pressable style={styles.cancel} onPress={() => router.back()}>
-        <Text style={styles.cancelText}>Cancel</Text>
-      </Pressable>
+        <Pressable style={styles.cancel} onPress={() => router.back()}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </Pressable>
       </PageContainer>
     </ScrollView>
   );
@@ -152,50 +244,84 @@ export default function AddFoodScreen() {
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { flexGrow: 1 },
-  page: { padding: spacing.lg },
-  center: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  message: { color: colors.text },
-  link: { color: colors.primary, marginTop: spacing.md },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  subtitle: { color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.lg },
-  label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: spacing.md,
-    color: colors.text,
-    fontSize: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.lg,
-  },
-  preview: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  previewTitle: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm },
-  previewRow: { color: colors.text, fontSize: 16, marginBottom: spacing.xs },
-  saveBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  saveDisabled: { opacity: 0.6 },
-  saveText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
-  cancel: { alignItems: 'center', marginTop: spacing.lg },
-  cancelText: { color: colors.textMuted },
-});
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { flexGrow: 1 },
+    page: { padding: spacing.lg },
+    center: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    centerContent: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    loadingText: { color: colors.textMuted, fontSize: 14 },
+    message: { color: colors.text },
+    link: { color: colors.primary, marginTop: spacing.md },
+    title: { fontSize: 24, fontWeight: '700', color: colors.text },
+    producer: {
+      fontSize: 15,
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+    },
+    subtitle: {
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    sectionLabel: {
+      color: colors.textMuted,
+      fontSize: 13,
+      fontWeight: '600',
+      marginBottom: spacing.sm,
+    },
+    servingRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingBottom: spacing.md,
+    },
+    servingChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    servingChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    servingChipText: {
+      fontSize: 14,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    servingChipTextSelected: {
+      color: colors.onPrimary,
+    },
+    label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: spacing.md,
+      color: colors.text,
+      fontSize: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: spacing.lg,
+    },
+    saveBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      padding: spacing.md,
+      alignItems: 'center',
+    },
+    saveDisabled: { opacity: 0.6 },
+    saveText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
+    cancel: { alignItems: 'center', marginTop: spacing.lg },
+    cancelText: { color: colors.textMuted },
+  });
