@@ -39,6 +39,8 @@ function RootNavigator() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="log-meal" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="create-options" options={{ presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
         <Stack.Screen name="add-food" options={{ presentation: 'modal' }} />
       </Stack>
