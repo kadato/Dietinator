@@ -7,6 +7,7 @@ import {
   saveToken,
   type StoredToken,
 } from './auth-storage';
+import { resolveFoodDatabaseCountry } from '@/utils/food-database-country';
 import { installYazioWebFetch } from './web-fetch';
 
 installYazioWebFetch();
@@ -51,10 +52,10 @@ export async function getYazioProductSearchOptions(): Promise<{
   sex: 'male' | 'female';
 }> {
   const [settings, profile] = await Promise.all([getSettings(), getYazioProfile()]);
-  const country =
-    settings.food_database_country?.trim() ||
-    profile?.food_database_country ||
-    'DE';
+  const country = resolveFoodDatabaseCountry(
+    settings.food_database_country,
+    profile?.food_database_country,
+  );
   const sex = profile?.sex === 'female' ? 'female' : 'male';
   return {
     countries: [country.toUpperCase()],

@@ -322,13 +322,14 @@ export async function loadGoalsFromYazio(date: string = toDateKey()): Promise<vo
       getYazioProfile(),
       getYazioEnergyUnit(),
     ]);
-    const { updateSettings } = await import('@/db/settings');
+    const { getSettings, updateSettings } = await import('@/db/settings');
+    const current = await getSettings();
     await updateSettings({
       calorie_goal: toKcal(goals['energy.energy'] ?? 2000, unitEnergy),
       protein_goal: goals['nutrient.protein'] ?? 150,
       carbs_goal: goals['nutrient.carb'] ?? 200,
       fat_goal: goals['nutrient.fat'] ?? 65,
-      ...(profile?.food_database_country
+      ...(profile?.food_database_country && !current.food_database_country?.trim()
         ? { food_database_country: profile.food_database_country }
         : {}),
     });
