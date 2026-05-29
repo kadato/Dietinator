@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FoodListItem } from '@/components/FoodListItem';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
@@ -16,14 +16,22 @@ import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
 import { searchFoods } from '@/services/yazio/foods';
 import { toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
-import type { SearchFoodResult } from '@/types';
+import type { MealType, SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
 
+function routeParam(value: string | string[] | undefined): string | undefined {
+  if (value == null) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function SearchScreen() {
   const router = useRouter();
+  const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>();
+  const addMeal = (routeParam(routeParams.meal) ?? 'lunch') as MealType;
+  const addDate = routeParam(routeParams.date) ?? toDateKey();
   const { yazioAvailable, setYazioAvailable } = useApp();
   const { showError } = useToast();
   const { colors } = useTheme();
@@ -71,8 +79,8 @@ export default function SearchScreen() {
     router.push({
       pathname: '/add-food',
       params: {
-        meal: 'lunch',
-        date: toDateKey(),
+        meal: addMeal,
+        date: addDate,
         productId: food.product_id,
       },
     });

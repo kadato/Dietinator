@@ -108,7 +108,7 @@ export default function TodayScreen() {
 
   const openAdd = (mealType: MealType) => {
     router.push({
-      pathname: '/add-food',
+      pathname: '/(tabs)/search',
       params: { meal: mealType, date: dateKey },
     });
   };
