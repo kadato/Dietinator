@@ -7,6 +7,9 @@ import {
 const TOKEN_KEY = 'yazio_token';
 const CREDENTIALS_KEY = 'yazio_credentials';
 const LOGGED_IN_KEY = 'yazio_logged_in';
+const REMEMBER_LOGIN_KEY = 'yazio_remember_login';
+const REMEMBERED_EMAIL_KEY = 'yazio_remembered_email';
+const REMEMBERED_PASSWORD_KEY = 'yazio_remembered_password';
 
 export type StoredToken = {
   token_type: string;
@@ -53,6 +56,33 @@ export async function getCredentials(): Promise<StoredCredentials | null> {
 export async function isLoggedIn(): Promise<boolean> {
   const flag = await getSecureItem(LOGGED_IN_KEY);
   return flag === '1';
+}
+
+export async function saveRememberedLogin(
+  email: string,
+  password: string,
+): Promise<void> {
+  await setSecureItem(REMEMBER_LOGIN_KEY, '1');
+  await setSecureItem(REMEMBERED_EMAIL_KEY, email);
+  await setSecureItem(REMEMBERED_PASSWORD_KEY, password);
+}
+
+export async function getRememberedLogin(): Promise<{
+  email: string;
+  password: string;
+} | null> {
+  const flag = await getSecureItem(REMEMBER_LOGIN_KEY);
+  if (flag !== '1') return null;
+  const email = await getSecureItem(REMEMBERED_EMAIL_KEY);
+  if (!email) return null;
+  const password = (await getSecureItem(REMEMBERED_PASSWORD_KEY)) ?? '';
+  return { email, password };
+}
+
+export async function clearRememberedLogin(): Promise<void> {
+  await deleteSecureItem(REMEMBER_LOGIN_KEY);
+  await deleteSecureItem(REMEMBERED_EMAIL_KEY);
+  await deleteSecureItem(REMEMBERED_PASSWORD_KEY);
 }
 
 export async function clearAuth(): Promise<void> {
