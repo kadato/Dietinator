@@ -1,9 +1,14 @@
 import type { SearchFoodResult } from '@/types';
-import { nutrientsFromYazio } from '@/utils/nutrients';
+import { isPerGramNutrients, isPerGramRawNutrients, nutrientsFromYazio } from '@/utils/nutrients';
 import { withRetry } from '@/utils/retry';
 import { pickBestBarcodeMatch } from '@/utils/barcode';
 import * as foodCacheDb from '@/db/food-cache';
-import { getYazioClient, getYazioEnergyUnit, initYazioClient } from './client';
+import {
+  getYazioClient,
+  getYazioEnergyUnit,
+  getYazioProductSearchOptions,
+  initYazioClient,
+} from './client';
 
 function mapSearchResult(
   item: {
@@ -41,14 +46,33 @@ async function ensureClient() {
   return yazio;
 }
 
+function withoutLegacyPerGramCache(
+  cached: SearchFoodResult | null,
+): SearchFoodResult | null {
+  if (
+    cached &&
+    isPerGramNutrients(cached.nutrients, cached.base_unit || 'g')
+  ) {
+    return null;
+  }
+  return cached;
+}
+
 export async function searchFoodsRemote(
   query: string,
   unitEnergy?: string,
 ): Promise<SearchFoodResult[]> {
   const yazio = await ensureClient();
-  const energyUnit = unitEnergy ?? (await getYazioEnergyUnit());
+  const [energyUnit, searchOptions] = await Promise.all([
+    unitEnergy ? Promise.resolve(unitEnergy) : getYazioEnergyUnit(),
+    getYazioProductSearchOptions(),
+  ]);
   const results = await withRetry(() =>
-    yazio.products.search({ query: query.trim() }),
+    yazio.products.search({
+      query: query.trim(),
+      countries: searchOptions.countries,
+      sex: searchOptions.sex,
+    }),
   );
   const mapped = results.map((r) => mapSearchResult(r, energyUnit));
   for (const food of mapped) {
@@ -67,34 +91,39 @@ export async function getFoodRemote(
   try {
     yazio = await ensureClient();
   } catch {
-    return cached;
+    return withoutLegacyPerGramCache(cached);
   }
 
   let product;
   try {
     product = await withRetry(() => yazio.products.get(productId));
   } catch {
-    return cached;
+    return withoutLegacyPerGramCache(cached);
   }
-  if (!product) return cached;
+  if (!product) return withoutLegacyPerGramCache(cached);
 
   const energyUnit = unitEnergy ?? (await getYazioEnergyUnit());
   const defaultServing = product.servings[0];
   const defaultAmount = defaultServing?.amount ?? 100;
-  const mappedNutrients = nutrientsFromYazio(product.nutrients, energyUnit);
   const baseUnit = product.base_unit || 'g';
-  // Product detail API returns nutrients per gram (e.g. ~1–9 kcal/g), not per 100 g.
-  const perGram =
-    (baseUnit === 'g' || baseUnit === 'ml') &&
-    mappedNutrients.kcal > 0 &&
-    mappedNutrients.kcal < 20;
+  // Product detail API returns nutrients per gram; normalize to per 100 g before rounding.
+  const perGram = isPerGramRawNutrients(
+    product.nutrients,
+    baseUnit,
+    energyUnit,
+  );
+  const mappedNutrients = nutrientsFromYazio(
+    product.nutrients,
+    energyUnit,
+    perGram ? 100 : 1,
+  );
   const food: SearchFoodResult = {
     product_id: product.id,
     name: product.name,
     producer: product.producer ?? '',
     nutrients: mappedNutrients,
     serving: perGram
-      ? { serving: baseUnit, amount: 1, serving_quantity: 1 }
+      ? { serving: baseUnit, amount: 100, serving_quantity: 100 }
       : defaultServing
         ? {
             serving: defaultServing.serving,
