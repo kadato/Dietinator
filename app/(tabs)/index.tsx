@@ -16,6 +16,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
 import { useLayout } from '@/hooks/useLayout';
 import { useApp } from '@/context/AppContext';
+import { importDiaryFromYazio, type MealGoals } from '@/services/yazio/sync';
 import { useToast } from '@/context/ToastContext';
 import type { DiaryEntry, MealType } from '@/types';
 import {
@@ -32,8 +33,8 @@ const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { settings, yazioAvailable } = useApp();
-  const { showError } = useToast();
+  const { settings, yazioAvailable, authenticated } = useApp();
+  const { showError, showSuccess, showWarning } = useToast();
   const { colors } = useTheme();
   const { isWide } = useLayout('wide');
   const styles = useThemedStyles(createStyles);
@@ -41,27 +42,58 @@ export default function TodayScreen() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [totals, setTotals] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0 });
   const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [mealGoals, setMealGoals] = useState<MealGoals>({});
 
-  const load = useCallback(async () => {
-    try {
-      const [list, sum] = await Promise.all([
-        getDiaryEntriesForDate(dateKey),
-        getDiaryTotalsForDate(dateKey),
-      ]);
-      setEntries(list);
-      setTotals(sum);
-    } catch (error) {
-      showError(error, 'Could not load diary for this day.');
-    }
-  }, [dateKey, showError]);
+  const load = useCallback(
+    async (options?: { quiet?: boolean }) => {
+      try {
+        if (authenticated) {
+          setImporting(true);
+          const result = await importDiaryFromYazio(dateKey);
+          setMealGoals(result.mealGoals);
+          if (result.error && !options?.quiet) {
+            showWarning(result.error, 'YAZIO import');
+          } else if (
+            !options?.quiet &&
+            result.imported > 0 &&
+            result.failed === 0
+          ) {
+            showSuccess(
+              result.imported === 1
+                ? 'Imported 1 item from YAZIO.'
+                : `Imported ${result.imported} items from YAZIO.`,
+              'Synced',
+            );
+          } else if (!options?.quiet && result.failed > 0) {
+            showWarning(
+              `${result.imported} imported, ${result.failed} could not be loaded. Try again.`,
+              'Partial import',
+            );
+          }
+        }
+        const [list, sum] = await Promise.all([
+          getDiaryEntriesForDate(dateKey),
+          getDiaryTotalsForDate(dateKey),
+        ]);
+        setEntries(list);
+        setTotals(sum);
+      } catch (error) {
+        showError(error, 'Could not load diary for this day.');
+      } finally {
+        setImporting(false);
+      }
+    },
+    [authenticated, dateKey, showError, showSuccess, showWarning],
+  );
 
   useEffect(() => {
-    load();
+    load({ quiet: true });
   }, [load]);
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      load({ quiet: true });
     }, [load]),
   );
 
@@ -109,6 +141,7 @@ export default function TodayScreen() {
       <MealSection
         mealType={meal}
         entries={entries.filter((e) => e.meal_type === meal)}
+        mealGoal={mealGoals[meal]}
         onAdd={() => openAdd(meal)}
         onDelete={async (id) => {
           try {
@@ -127,13 +160,30 @@ export default function TodayScreen() {
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant="wide" style={styles.page}>
         <View style={styles.dateRow}>
-          <Pressable onPress={() => shiftDate(-1)} hitSlop={12}>
+          <Pressable onPress={() => shiftDate(-1)} hitSlop={12} style={styles.dateNav}>
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={styles.dateText}>{formatDisplayDate(dateKey)}</Text>
-          <Pressable onPress={() => shiftDate(1)} hitSlop={12}>
-            <Ionicons name="chevron-forward" size={24} color={colors.text} />
-          </Pressable>
+          <View style={styles.dateNavGroup}>
+            <Pressable onPress={() => shiftDate(1)} hitSlop={12} style={styles.dateNav}>
+              <Ionicons name="chevron-forward" size={24} color={colors.text} />
+            </Pressable>
+            {authenticated ? (
+              <Pressable
+                onPress={() => load()}
+                disabled={importing || refreshing}
+                style={styles.syncBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Refresh from YAZIO"
+              >
+                <Ionicons
+                  name="cloud-download-outline"
+                  size={22}
+                  color={importing ? colors.textMuted : colors.primary}
+                />
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         <ScrollView
@@ -172,14 +222,22 @@ const createStyles = (colors: ColorPalette) =>
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  dateText: { fontSize: 18, fontWeight: '600', color: colors.text },
+  dateNav: { width: 36, alignItems: 'center' },
+  dateNavGroup: { flexDirection: 'row', alignItems: 'center', width: 72, justifyContent: 'flex-end' },
+  dateText: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  syncBtn: { padding: spacing.xs, marginLeft: spacing.xs },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl * 2 },
   wideSummary: {
     flexDirection: 'row',

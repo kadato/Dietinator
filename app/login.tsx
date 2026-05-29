@@ -18,7 +18,8 @@ import {
   getRememberedLogin,
   saveRememberedLogin,
 } from '@/services/yazio/auth-storage';
-import { loadGoalsFromYazio } from '@/services/yazio/sync';
+import { importFromYazio } from '@/services/yazio/sync';
+import { toDateKey } from '@/utils/date';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
 import { PageContainer } from '@/components/PageContainer';
@@ -28,7 +29,7 @@ import { spacing, type ColorPalette } from '@/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { refreshAuth } = useApp();
+  const { refreshAuth, refreshSettings } = useApp();
   const { showError, showWarning } = useToast();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -68,7 +69,8 @@ export default function LoginScreen() {
       } else {
         await clearRememberedLogin();
       }
-      await loadGoalsFromYazio();
+      await importFromYazio(toDateKey());
+      await refreshSettings();
       await refreshAuth();
       router.replace('/(tabs)');
     } catch (error) {

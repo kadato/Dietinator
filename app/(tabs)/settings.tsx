@@ -14,7 +14,8 @@ import { useRouter } from 'expo-router';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
 import { logoutYazio } from '@/services/yazio/client';
-import { loadGoalsFromYazio, syncPendingEntries } from '@/services/yazio/sync';
+import { importFromYazio, syncPendingEntries } from '@/services/yazio/sync';
+import { toDateKey } from '@/utils/date';
 import { exportDiaryCsv, exportDiaryJson } from '@/services/diary';
 import { clearFoodCache } from '@/db/food-cache';
 import { PageContainer } from '@/components/PageContainer';
@@ -81,15 +82,28 @@ export default function SettingsScreen() {
         style={styles.btnSecondary}
         onPress={async () => {
           try {
-            await loadGoalsFromYazio();
+            const { imported, skipped, failed } = await importFromYazio(toDateKey());
             await refreshSettings();
-            showSuccess('Goals loaded from YAZIO.', 'Imported');
+            const parts = ['Goals updated.'];
+            if (imported > 0) {
+              parts.push(
+                imported === 1
+                  ? 'Imported 1 food for today.'
+                  : `Imported ${imported} foods for today.`,
+              );
+            } else if (skipped > 0 && failed === 0) {
+              parts.push("Today's foods are already up to date.");
+            }
+            if (failed > 0) {
+              parts.push(`${failed} item(s) could not be loaded.`);
+            }
+            showSuccess(parts.join(' '), 'Imported from YAZIO');
           } catch (error) {
-            showError(error, 'Could not import goals from YAZIO.');
+            showError(error, 'Could not import from YAZIO.');
           }
         }}
       >
-        <Text style={styles.btnSecondaryText}>Import goals from YAZIO</Text>
+        <Text style={styles.btnSecondaryText}>Import today from YAZIO</Text>
       </Pressable>
 
       <Text style={styles.sectionTitle}>YAZIO sync</Text>
