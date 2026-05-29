@@ -7,6 +7,8 @@ export type ColorPalette = {
   onPrimary: string;
   text: string;
   textMuted: string;
+  /** Section titles and chrome on the page background (not on cards). */
+  textOnBackground: string;
   danger: string;
   warning: string;
   onWarning: string;
@@ -18,40 +20,42 @@ export type ColorPalette = {
 };
 
 export const darkColors: ColorPalette = {
-  background: '#0f1419',
-  surface: '#1a2332',
-  surfaceAlt: '#243044',
-  primary: '#3dd68c',
-  primaryMuted: '#2a9d63',
-  onPrimary: '#0f1419',
-  text: '#f0f4f8',
-  textMuted: '#94a3b8',
-  danger: '#f87171',
-  warning: '#fbbf24',
-  onWarning: '#1a1a1a',
-  border: '#334155',
-  breakfast: '#60a5fa',
-  lunch: '#f472b6',
-  dinner: '#a78bfa',
-  snack: '#fbbf24',
+  background: '#141416',
+  surface: '#ffffff',
+  surfaceAlt: '#f4f4f5',
+  primary: '#18181b',
+  primaryMuted: '#3f3f46',
+  onPrimary: '#ffffff',
+  text: '#18181b',
+  textMuted: '#71717a',
+  textOnBackground: '#fafafa',
+  danger: '#ef4444',
+  warning: '#f59e0b',
+  onWarning: '#18181b',
+  border: '#e4e4e7',
+  breakfast: '#14b8a6',
+  lunch: '#f97316',
+  dinner: '#ec4899',
+  snack: '#eab308',
 };
 
 export const lightColors: ColorPalette = {
   background: '#f1f5f9',
   surface: '#ffffff',
   surfaceAlt: '#e2e8f0',
-  primary: '#16a34a',
-  primaryMuted: '#15803d',
+  primary: '#18181b',
+  primaryMuted: '#3f3f46',
   onPrimary: '#ffffff',
   text: '#0f172a',
   textMuted: '#64748b',
+  textOnBackground: '#0f172a',
   danger: '#dc2626',
   warning: '#d97706',
   onWarning: '#1a1a1a',
   border: '#cbd5e1',
-  breakfast: '#2563eb',
-  lunch: '#db2777',
-  dinner: '#7c3aed',
+  breakfast: '#0d9488',
+  lunch: '#ea580c',
+  dinner: '#db2777',
   snack: '#ca8a04',
 };
 
