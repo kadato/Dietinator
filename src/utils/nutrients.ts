@@ -9,15 +9,53 @@ export function toKcal(energy: number, unitEnergy = 'kcal'): number {
   return Math.round(energy);
 }
 
+/** Unrounded kcal from a YAZIO nutrient payload. */
+export function rawEnergyKcal(
+  nutrients: Record<string, number>,
+  unitEnergy = 'kcal',
+): number {
+  const energy = nutrients['energy.energy'] ?? 0;
+  const unit = unitEnergy.trim().toLowerCase();
+  if (unit === 'kj' || unit === 'kilojoule' || unit === 'kilojoules') {
+    return energy / 4.184;
+  }
+  return energy;
+}
+
+/** Product detail API stores nutrients per gram/ml (typically 0.1–9 kcal). */
+export function isPerGramRawNutrients(
+  nutrients: Record<string, number>,
+  baseUnit: string,
+  unitEnergy = 'kcal',
+): boolean {
+  const kcal = rawEnergyKcal(nutrients, unitEnergy);
+  return (baseUnit === 'g' || baseUnit === 'ml') && kcal > 0 && kcal < 10;
+}
+
+/** Detect rounded per-gram values already stored in cache (legacy). */
+export function isPerGramNutrients(
+  nutrients: FoodNutrients,
+  baseUnit = 'g',
+): boolean {
+  return (
+    (baseUnit === 'g' || baseUnit === 'ml') &&
+    nutrients.kcal > 0 &&
+    nutrients.kcal < 10
+  );
+}
+
 export function nutrientsFromYazio(
   nutrients: Record<string, number>,
   unitEnergy = 'kcal',
+  /** Scale raw API values before rounding (e.g. 100 to normalize per-gram → per-100 g). */
+  multiplier = 1,
 ): FoodNutrients {
+  const scale = multiplier;
   return {
-    kcal: toKcal(nutrients['energy.energy'] ?? 0, unitEnergy),
-    protein: roundMacro(nutrients['nutrient.protein'] ?? 0),
-    carbs: roundMacro(nutrients['nutrient.carb'] ?? 0),
-    fat: roundMacro(nutrients['nutrient.fat'] ?? 0),
+    kcal: toKcal((nutrients['energy.energy'] ?? 0) * scale, unitEnergy),
+    protein: roundMacro((nutrients['nutrient.protein'] ?? 0) * scale),
+    carbs: roundMacro((nutrients['nutrient.carb'] ?? 0) * scale),
+    fat: roundMacro((nutrients['nutrient.fat'] ?? 0) * scale),
   };
 }
 
@@ -77,6 +115,18 @@ export function nutrientsReferenceAmount(
   return qty;
 }
 
+/** Resolve how many base units the stored nutrient values represent. */
+export function resolveNutrientsRefAmount(
+  nutrients: FoodNutrients,
+  serving: Pick<FoodServing, 'amount' | 'serving_quantity'> & {
+    serving?: string;
+  },
+  baseUnit = 'g',
+): number {
+  if (isPerGramNutrients(nutrients, baseUnit)) return 1;
+  return nutrientsReferenceAmount(serving, baseUnit);
+}
+
 export function scaleNutrients(
   base: FoodNutrients,
   baseAmount: number,
@@ -100,7 +150,7 @@ export function nutrientsForAmount(
   targetAmount: number,
   baseUnit = 'g',
 ): FoodNutrients {
-  const ref = nutrientsReferenceAmount(serving, baseUnit);
+  const ref = resolveNutrientsRefAmount(base, serving, baseUnit);
   return scaleNutrients(base, ref, targetAmount);
 }
 

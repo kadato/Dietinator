@@ -1,5 +1,5 @@
 import type { FoodServing, SearchFoodResult } from '@/types';
-import { nutrientsReferenceAmount } from '@/utils/nutrients';
+import { resolveNutrientsRefAmount } from '@/utils/nutrients';
 
 export function formatServingOption(
   serving: FoodServing,
@@ -13,11 +13,11 @@ export function formatServingOption(
 }
 
 export function formatNutrientsServingLabel(
-  food: Pick<SearchFoodResult, 'serving' | 'base_unit'>,
+  food: Pick<SearchFoodResult, 'nutrients' | 'serving' | 'base_unit'>,
   amount: number,
 ): string {
   const unit = food.base_unit || 'g';
-  const ref = nutrientsReferenceAmount(food.serving, unit);
+  const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
   const amt = Number(amount) || 0;
   if (amt <= 0) return `per ${ref} ${unit}`;
 
@@ -30,7 +30,7 @@ export function formatNutrientsServingLabel(
 
 export function formatListNutrientLine(food: SearchFoodResult): string {
   const unit = food.base_unit || 'g';
-  const ref = nutrientsReferenceAmount(food.serving, unit);
+  const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
   const prefix = food.producer ? `${food.producer} · ` : '';
   const servingLabel =
     ref === food.serving.amount
