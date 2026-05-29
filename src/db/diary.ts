@@ -69,6 +69,21 @@ export async function removeDiaryEntry(id: string): Promise<void> {
   await db.runAsync('DELETE FROM diary_entries WHERE id = ?', id);
 }
 
+export async function updateDiaryEntryNutrients(
+  id: string,
+  nutrients: FoodNutrients,
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'UPDATE diary_entries SET kcal = ?, protein = ?, carbs = ?, fat = ? WHERE id = ?',
+    nutrients.kcal,
+    nutrients.protein,
+    nutrients.carbs,
+    nutrients.fat,
+    id,
+  );
+}
+
 export async function markDiaryEntrySynced(
   id: string,
   yazioItemId: string,
