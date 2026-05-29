@@ -57,6 +57,8 @@ export interface SearchFoodResult {
   producer: string;
   nutrients: FoodNutrients;
   serving: FoodServing;
+  /** All serving options from YAZIO product detail (when loaded). */
+  servings?: FoodServing[];
   base_unit: string;
   is_verified: boolean;
 }
