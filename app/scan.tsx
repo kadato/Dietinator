@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useToast } from '@/context/ToastContext';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { MealType } from '@/types';
 import { getFoodByBarcode, searchFoodsRemote } from '@/services/yazio/foods';
 import { FoodListItem } from '@/components/FoodListItem';
 import { PageContainer } from '@/components/PageContainer';
@@ -21,8 +22,16 @@ import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
 
+function routeParam(value: string | string[] | undefined): string | undefined {
+  if (value == null) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function ScanScreen() {
   const router = useRouter();
+  const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>();
+  const mealType = (routeParam(routeParams.meal) ?? 'lunch') as MealType;
+  const dateKey = routeParam(routeParams.date) ?? toDateKey();
   const { setYazioAvailable } = useApp();
   const { showError } = useToast();
   const { colors } = useTheme();
@@ -54,7 +63,17 @@ export default function ScanScreen() {
         Alert.alert(
           'Not found',
           'No YAZIO match for this barcode. Try manual search.',
-          [{ text: 'Search', onPress: () => router.replace('/(tabs)/search') }, { text: 'OK' }],
+          [
+            {
+              text: 'Search',
+              onPress: () =>
+                router.replace({
+                  pathname: '/log-meal',
+                  params: { meal: mealType, date: dateKey },
+                }),
+            },
+            { text: 'OK' },
+          ],
         );
         setScanned(false);
       } else if (remote.length === 1) {
@@ -75,8 +94,8 @@ export default function ScanScreen() {
     router.replace({
       pathname: '/add-food',
       params: {
-        meal: 'lunch',
-        date: toDateKey(),
+        meal: mealType,
+        date: dateKey,
         productId: food.product_id,
       },
     });
