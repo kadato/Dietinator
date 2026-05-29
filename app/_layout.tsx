@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AppProvider, useApp } from '@/context/AppContext';
+import { ToastProvider } from '@/context/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import type { ColorPalette } from '@/theme';
 
@@ -48,7 +49,9 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <AppProvider>
-      <RootNavigator />
+      <ToastProvider>
+        <RootNavigator />
+      </ToastProvider>
     </AppProvider>
   );
 }
