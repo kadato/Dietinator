@@ -12,14 +12,19 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { getFoodByBarcode, searchFoodsRemote } from '@/services/yazio/foods';
 import { FoodListItem } from '@/components/FoodListItem';
+import { PageContainer } from '@/components/PageContainer';
 import { useApp } from '@/context/AppContext';
 import type { SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
-import { colors, spacing } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 export default function ScanScreen() {
   const router = useRouter();
   const { setYazioAvailable } = useApp();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -95,13 +100,15 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.center}>
-        <Text style={styles.message}>Camera permission is required to scan barcodes.</Text>
-        <Pressable style={styles.btn} onPress={requestPermission}>
-          <Text style={styles.btnText}>Grant permission</Text>
-        </Pressable>
-        <Pressable style={styles.close} onPress={() => router.back()}>
-          <Text style={styles.closeText}>Cancel</Text>
-        </Pressable>
+        <PageContainer variant="narrow" contentStyle={styles.centerContent}>
+          <Text style={styles.message}>Camera permission is required to scan barcodes.</Text>
+          <Pressable style={styles.btn} onPress={requestPermission}>
+            <Text style={styles.btnText}>Grant permission</Text>
+          </Pressable>
+          <Pressable style={styles.close} onPress={() => router.back()}>
+            <Text style={styles.closeText}>Cancel</Text>
+          </Pressable>
+        </PageContainer>
       </View>
     );
   }
@@ -124,17 +131,19 @@ export default function ScanScreen() {
           }
         />
       ) : (
-        <FlatList
-          style={styles.list}
-          data={results}
-          keyExtractor={(item) => item.product_id}
-          ListHeaderComponent={
-            <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
-          }
-          renderItem={({ item }) => (
-            <FoodListItem food={item} onPress={() => openFood(item)} />
-          )}
-        />
+        <PageContainer>
+          <FlatList
+            style={styles.list}
+            data={results}
+            keyExtractor={(item) => item.product_id}
+            ListHeaderComponent={
+              <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+            }
+            renderItem={({ item }) => (
+              <FoodListItem food={item} onPress={() => openFood(item)} />
+            )}
+          />
+        </PageContainer>
       )}
       {loading && (
         <View style={styles.overlay}>
@@ -149,7 +158,8 @@ export default function ScanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   camera: { flex: 1 },
   list: { flex: 1 },
@@ -161,10 +171,13 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  centerContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.background,
   },
   message: { color: colors.text, textAlign: 'center', marginBottom: spacing.lg },
   btn: {
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: 10,
   },
-  btnText: { color: colors.background, fontWeight: '700' },
+  btnText: { color: colors.onPrimary, fontWeight: '700' },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.6)',

@@ -1,17 +1,36 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useLayout } from '@/hooks/useLayout';
+import { layout, spacing } from '@/theme';
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+  const { isWide } = useLayout();
+
   return (
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-        },
+        tabBarPosition: isWide ? 'left' : 'bottom',
+        tabBarVariant: isWide ? 'material' : 'uikit',
+        tabBarLabelPosition: isWide ? 'below-icon' : 'beside-icon',
+        tabBarStyle: isWide
+          ? {
+              width: layout.sideTabWidth,
+              paddingTop: spacing.md,
+              paddingBottom: spacing.md,
+              backgroundColor: colors.surface,
+              borderTopWidth: 0,
+              borderRightWidth: 1,
+              borderRightColor: colors.border,
+            }
+          : {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
+            },
+        tabBarItemStyle: isWide ? { paddingVertical: spacing.sm } : undefined,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
       }}

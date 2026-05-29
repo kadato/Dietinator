@@ -10,17 +10,22 @@ import {
 import { useRouter } from 'expo-router';
 import { FoodListItem } from '@/components/FoodListItem';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { PageContainer } from '@/components/PageContainer';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApp } from '@/context/AppContext';
 import { searchFoods } from '@/services/yazio/foods';
 import { toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
 import type { SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
-import { colors, spacing } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 export default function SearchScreen() {
   const router = useRouter();
   const { yazioAvailable, setYazioAvailable } = useApp();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
   const [local, setLocal] = useState<SearchFoodResult[]>([]);
@@ -83,50 +88,55 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
-      <TextInput
-        style={styles.input}
-        placeholder="Search YAZIO foods..."
-        placeholderTextColor={colors.textMuted}
-        value={query}
-        onChangeText={setQuery}
-        autoCorrect={false}
-      />
-      {loading && <ActivityIndicator style={styles.loader} color={colors.primary} />}
-      {!debounced && (
-        <Text style={styles.hint}>Recent and favorite foods appear when the search is empty.</Text>
-      )}
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.product_id}
-        renderItem={({ item }) => (
-          <FoodListItem
-            food={item}
-            onPress={() => openFood(item)}
-            isFavorite={favoriteIds.has(item.product_id)}
-            onToggleFavorite={async () => {
-              const isFav = await toggleFavorite(item.product_id);
-              setFavoriteIds((prev) => {
-                const next = new Set(prev);
-                if (isFav) next.add(item.product_id);
-                else next.delete(item.product_id);
-                return next;
-              });
-            }}
-          />
+      <PageContainer>
+        <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
+        <TextInput
+          style={styles.input}
+          placeholder="Search YAZIO foods..."
+          placeholderTextColor={colors.textMuted}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+        />
+        {loading && <ActivityIndicator style={styles.loader} color={colors.primary} />}
+        {!debounced && (
+          <Text style={styles.hint}>Recent and favorite foods appear when the search is empty.</Text>
         )}
-        ListEmptyComponent={
-          !loading && debounced ? (
-            <Text style={styles.empty}>No foods found. Try a different search.</Text>
-          ) : null
-        }
-      />
+        <FlatList
+          style={styles.list}
+          data={data}
+          keyExtractor={(item) => item.product_id}
+          renderItem={({ item }) => (
+            <FoodListItem
+              food={item}
+              onPress={() => openFood(item)}
+              isFavorite={favoriteIds.has(item.product_id)}
+              onToggleFavorite={async () => {
+                const isFav = await toggleFavorite(item.product_id);
+                setFavoriteIds((prev) => {
+                  const next = new Set(prev);
+                  if (isFav) next.add(item.product_id);
+                  else next.delete(item.product_id);
+                  return next;
+                });
+              }}
+            />
+          )}
+          ListEmptyComponent={
+            !loading && debounced ? (
+              <Text style={styles.empty}>No foods found. Try a different search.</Text>
+            ) : null
+          }
+        />
+      </PageContainer>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  list: { flex: 1 },
   input: {
     margin: spacing.md,
     backgroundColor: colors.surface,

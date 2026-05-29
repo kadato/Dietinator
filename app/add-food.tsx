@@ -13,10 +13,13 @@ import { logFood } from '@/services/diary';
 import { getFoodRemote } from '@/services/yazio/foods';
 import type { MealType, SearchFoodResult } from '@/types';
 import { scaleNutrients } from '@/utils/nutrients';
-import { colors, spacing } from '@/theme';
+import { PageContainer } from '@/components/PageContainer';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 export default function AddFoodScreen() {
   const router = useRouter();
+  const styles = useThemedStyles(createStyles);
   const params = useLocalSearchParams<{
     meal: string;
     date: string;
@@ -94,16 +97,19 @@ export default function AddFoodScreen() {
   if (!food) {
     return (
       <View style={styles.center}>
-        <Text style={styles.message}>No food selected.</Text>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.link}>Go back</Text>
-        </Pressable>
+        <PageContainer variant="narrow" contentStyle={styles.centerContent}>
+          <Text style={styles.message}>No food selected.</Text>
+          <Pressable onPress={() => router.back()}>
+            <Text style={styles.link}>Go back</Text>
+          </Pressable>
+        </PageContainer>
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
       <Text style={styles.title}>{food.name}</Text>
       <Text style={styles.subtitle}>
         {mealType} · {date}
@@ -138,18 +144,25 @@ export default function AddFoodScreen() {
       <Pressable style={styles.cancel} onPress={() => router.back()}>
         <Text style={styles.cancelText}>Cancel</Text>
       </Pressable>
+      </PageContainer>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg },
+  content: { flexGrow: 1 },
+  page: { padding: spacing.lg },
   center: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    padding: spacing.lg,
   },
   message: { color: colors.text },
   link: { color: colors.primary, marginTop: spacing.md },
@@ -181,7 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveDisabled: { opacity: 0.6 },
-  saveText: { color: colors.background, fontWeight: '700', fontSize: 16 },
+  saveText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
   cancel: { alignItems: 'center', marginTop: spacing.lg },
   cancelText: { color: colors.textMuted },
 });

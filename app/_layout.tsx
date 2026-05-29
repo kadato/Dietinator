@@ -1,12 +1,15 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AppProvider, useApp } from '@/context/AppContext';
-import { colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
+import type { ColorPalette } from '@/theme';
 
 function RootNavigator() {
   const { ready, authenticated } = useApp();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const segments = useSegments();
   const router = useRouter();
 
@@ -31,7 +34,7 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
@@ -50,11 +53,12 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    loading: {
+      flex: 1,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

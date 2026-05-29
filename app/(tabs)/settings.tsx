@@ -16,11 +16,18 @@ import { logoutYazio } from '@/services/yazio/client';
 import { loadGoalsFromYazio, syncPendingEntries } from '@/services/yazio/sync';
 import { exportDiaryCsv, exportDiaryJson } from '@/services/diary';
 import { clearFoodCache } from '@/db/food-cache';
-import { colors, spacing } from '@/theme';
+import { PageContainer } from '@/components/PageContainer';
+import { useLayout } from '@/hooks/useLayout';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { spacing, type ColorPalette } from '@/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { settings, updateSettings, refreshAuth } = useApp();
+  const { colors } = useTheme();
+  const { isMedium } = useLayout();
+  const styles = useThemedStyles(createStyles);
   const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal));
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal));
   const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal));
@@ -49,11 +56,14 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <PageContainer grow={false} contentStyle={styles.pageContent}>
       <Text style={styles.sectionTitle}>Daily goals</Text>
-      <GoalInput label="Calories (kcal)" value={calorieGoal} onChange={setCalorieGoal} />
-      <GoalInput label="Protein (g)" value={proteinGoal} onChange={setProteinGoal} />
-      <GoalInput label="Carbs (g)" value={carbsGoal} onChange={setCarbsGoal} />
-      <GoalInput label="Fat (g)" value={fatGoal} onChange={setFatGoal} />
+      <View style={isMedium ? styles.goalsGrid : undefined}>
+        <GoalInput label="Calories (kcal)" value={calorieGoal} onChange={setCalorieGoal} styles={styles} grid={isMedium} />
+        <GoalInput label="Protein (g)" value={proteinGoal} onChange={setProteinGoal} styles={styles} grid={isMedium} />
+        <GoalInput label="Carbs (g)" value={carbsGoal} onChange={setCarbsGoal} styles={styles} grid={isMedium} />
+        <GoalInput label="Fat (g)" value={fatGoal} onChange={setFatGoal} styles={styles} grid={isMedium} />
+      </View>
       <Pressable style={styles.btn} onPress={saveGoals}>
         <Text style={styles.btnText}>Save goals</Text>
       </Pressable>
@@ -117,6 +127,7 @@ export default function SettingsScreen() {
       <Pressable style={styles.btnDanger} onPress={handleLogout}>
         <Text style={styles.btnDangerText}>Sign out</Text>
       </Pressable>
+      </PageContainer>
     </ScrollView>
   );
 }
@@ -125,13 +136,17 @@ function GoalInput({
   label,
   value,
   onChange,
+  styles,
+  grid,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  styles: ReturnType<typeof createStyles>;
+  grid?: boolean;
 }) {
   return (
-    <View style={styles.goalRow}>
+    <View style={[styles.goalRow, grid && styles.goalRowGrid]}>
       <Text style={styles.goalLabel}>{label}</Text>
       <TextInput
         style={styles.goalInput}
@@ -143,9 +158,16 @@ function GoalInput({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl * 2 },
+  content: { paddingBottom: spacing.xl * 2 },
+  pageContent: { padding: spacing.md },
+  goalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: spacing.lg,
+  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
@@ -158,6 +180,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.sm,
+  },
+  goalRowGrid: {
+    flexGrow: 1,
+    flexBasis: '45%',
+    minWidth: 260,
   },
   goalLabel: { flex: 1, color: colors.text, fontSize: 15 },
   goalInput: {
@@ -177,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.md,
   },
-  btnText: { color: colors.background, fontWeight: '700' },
+  btnText: { color: colors.onPrimary, fontWeight: '700' },
   btnSecondary: {
     borderRadius: 10,
     padding: spacing.md,
