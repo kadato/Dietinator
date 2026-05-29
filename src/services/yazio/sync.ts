@@ -1,4 +1,4 @@
-import type { DiaryEntry, FoodServing, MealType } from '@/types';
+import type { DiaryEntry, MealType } from '@/types';
 import * as diaryDb from '@/db/diary';
 import * as foodCacheDb from '@/db/food-cache';
 import { getSettings } from '@/db/settings';
@@ -136,15 +136,9 @@ async function importConsumedProduct(
   }
   if (!food) return 'failed';
 
-  const serving: FoodServing = {
-    serving: item.serving ?? food.serving.serving,
-    amount: item.amount,
-    serving_quantity:
-      item.serving_quantity ?? food.serving.serving_quantity ?? item.amount,
-  };
   const scaled = nutrientsForAmount(
     food.nutrients,
-    serving,
+    food.serving,
     item.amount,
     food.base_unit,
   );
