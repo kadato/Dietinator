@@ -31,6 +31,47 @@ Scan the QR code with Expo Go, or run `npm run android` / `npm run ios`.
 
 For **web** in the browser: `npm run web` (needs `react-native-web` and `react-dom`, installed with the rest of the deps). YAZIO API calls are proxied through Metro at `/api/yazio` during development so the browser is not blocked by CORS on `yzapi.yazio.com`.
 
+> **Why not Vite?** Expo SDK 56 removed Vite support (since SDK 52 the only web bundler is Metro). The fastest supported loops are `npm run dev:web` (hot reload) and `npm run test:e2e:dev` (Playwright against the dev server).
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm start` / `npm run dev` | Metro dev server (native + web) |
+| `npm run dev:web` | Metro dev server for the browser, hot reload |
+| `npm run typecheck` | `tsc --noEmit` over the whole project |
+| `npm run build:web` | Production web export to `dist/` |
+| `npm run serve:web` | Serve `dist/` locally (COEP/COOP headers + YAZIO proxy, gzip). Requires a prior `build:web` |
+| `npm run web:prod` | Build + serve in one shot |
+| `npm run test:e2e` | Build web + run Playwright (phone viewport, offline/local-first flows) |
+| `npm run test:e2e:headed` | Same, with a visible browser |
+| `npm run test:e2e:dev` | Playwright against a running `npm run dev:web` (fast iteration, no rebuild) |
+| `npm run test:e2e:yazio` | Real-account suite (skips unless `.env.local` has credentials) |
+| `npm run test:e2e:install` | Download the Chromium test browser |
+
+### E2E tests
+
+Tests live in `e2e/` and run against the **web build at phone dimensions** (390×844). They seed a fake local session (`calorie_tracker_yazio_logged_in` in localStorage) so the whole diary works offline — no YAZIO credentials needed. YAZIO stays unreachable in tests, which exercises the local-first path.
+
+```bash
+npm run test:e2e          # deterministic: build + serve + test (offline suites)
+npm run test:e2e:dev      # fast loop against your dev server (start `npm run dev:web` once)
+```
+
+**Real-account YAZIO tests** (`e2e/yazio.spec.ts`) sign in with your actual YAZIO credentials and exercise live search, logging, sync, and delete. They only run when `.env.local` contains credentials — the file is gitignored and never committed:
+
+```bash
+# .env.local  (never commit)
+YAZIO_EMAIL=you@example.com
+YAZIO_PASSWORD=your-password
+
+npm run test:e2e:yazio
+```
+
+These tests create one consumed item on the real YAZIO account and delete it again afterwards.
+
+Playwright's MCP server is configured for AI agents in `.opencode/opencode.json` — it lets an agent drive the browser, screenshot the app, and iterate on UI without hand-written selectors.
+
 ## Reproducible dev environment (recommended)
 
 Local Node version mismatches (wrong `node` on PATH, old npm `node` package, peer dependency errors) are the usual cause of Metro/Babel failures. Pin the toolchain instead of relying on whatever is installed globally.

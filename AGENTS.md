@@ -23,7 +23,8 @@ Guidance for AI agents and contributors working on this codebase.
 | DB | **expo-sqlite** (WAL, migrations in `src/db/database.ts`) |
 | Auth secrets | **expo-secure-store** (web falls back to prefixed `localStorage` via `src/utils/secure-storage.ts`) |
 | Camera | **expo-camera** (barcode scan — device/dev build, not all web browsers) |
-| Path alias | `@/*` → `src/*` (`tsconfig.json`) |
+| Path alias | `@/*` → `src/*`; `@ui/*` → `components/ui/*` (`tsconfig.json`) |
+| UI | **gluestack-ui v3** + **NativeWind** v4 (`components/ui/*`, `global.css`) |
 | TypeScript | `strict: true` |
 
 Start scripts go through `scripts/expo-cli.cjs` (Node version gate + `polyfill-os.cjs`). Always use `npm start`, not raw `npx expo` unless debugging the wrapper.
@@ -85,7 +86,7 @@ scripts/                # expo-cli wrapper, polyfills
 - **SQLite booleans:** `INTEGER` 0/1 (`yazio_synced`, `is_favorite`) — not JS `boolean` in DB rows.
 - **IDs:** diary entry IDs generated in sync layer (`Date.now()` + random); DB uses `TEXT PRIMARY KEY`.
 - **Dates:** store as `YYYY-MM-DD` strings (`toDateKey` in `src/utils/date.ts`).
-- **Styling:** `StyleSheet.create` + `colors` / `spacing` from `@/theme` — no CSS-in-JS libraries.
+- **Styling:** Prefer **gluestack-ui** components (`components/ui/*`) with NativeWind `className`; keep `src/theme.ts` for domain tokens (meal colors, layout). Use `StyleSheet` only for unmigrated screens or SVG-heavy widgets. Import gluestack via `@ui/…` (e.g. `@ui/button`); app code stays on `@/…` → `src/`.
 - **Icons:** `@expo/vector-icons` (Ionicons).
 - **Lists:** prefer stable keys; memoize heavy child components when profiling shows need.
 - **Network:** wrap flaky YAZIO calls with `withRetry` (`src/utils/retry.ts`) — retries 5xx/429, not most 4xx.
@@ -146,7 +147,7 @@ Test both targets when touching storage, camera, or native modules.
 
 ## What to avoid
 
-- Adding heavyweight UI kits, Redux, or ORMs for this small codebase.
+- Adding Redux, ORMs, or extra UI libraries beyond gluestack-ui for this small codebase.
 - Installing npm package **`node`** (fake runtime) — breaks Expo; README documents this.
 - Breaking offline diary when YAZIO is down.
 - Committing API keys (none required today — user YAZIO login only).
@@ -161,7 +162,14 @@ npm start            # Metro + Expo
 npm run android
 npm run ios
 npm run web
+npm run typecheck    # tsc --noEmit after substantive TS changes
+npm run build:web    # production web export → dist/
+npm run serve:web    # serve dist/ with COEP/COOP + YAZIO proxy (needs build first)
+npm run test:e2e     # build + Playwright (phone viewport, offline/local-first flows)
+npm run test:e2e:dev # Playwright against a running `npm run dev:web` (fast loop)
 ```
+
+**Iteration notes:** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials; run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json` — prefer it over hand-written selectors when driving the browser.
 
 **Dev Container:** `.devcontainer/devcontainer.json` — Node 22, `npm ci` on create, ports 8081/8082/19000+.
 
