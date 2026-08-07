@@ -39,3 +39,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# local env files (may contain test credentials)
+.env
