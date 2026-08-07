@@ -9,24 +9,51 @@ function rowToCached(row: Record<string, unknown>): CachedFood {
     producer: row.producer ? String(row.producer) : null,
     nutrients_json: String(row.nutrients_json),
     serving_json: String(row.serving_json),
+    base_unit: row.base_unit ? String(row.base_unit) : 'g',
     cached_at: String(row.cached_at),
     is_favorite: Number(row.is_favorite),
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
   };
 }
 
-export function cachedToSearchResult(cached: CachedFood): SearchFoodResult {
-  const nutrients = JSON.parse(cached.nutrients_json) as FoodNutrients;
-  const serving = JSON.parse(cached.serving_json) as FoodServing;
+/** Parse a cached JSON column; corrupt rows return null so one bad row can't kill a day. */
+function parseCachedJson<T>(raw: string): T | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' ? (parsed as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function cachedToSearchResult(cached: CachedFood): SearchFoodResult | null {
+  const nutrients = parseCachedJson<FoodNutrients>(cached.nutrients_json);
+  const serving = parseCachedJson<FoodServing>(cached.serving_json);
+  if (!nutrients || !serving || !serving.serving) return null;
   return {
     product_id: cached.yazio_product_id,
     name: cached.name,
     producer: cached.producer ?? '',
     nutrients,
     serving,
-    base_unit: 'g',
+    base_unit: cached.base_unit || 'g',
     is_verified: true,
   };
+}
+
+function mapRows(rows: Record<string, unknown>[]): SearchFoodResult[] {
+  const results: SearchFoodResult[] = [];
+  for (const row of rows) {
+    const food = cachedToSearchResult(rowToCached(row));
+    if (food) results.push(food);
+  }
+  return results;
+}
+
+/** Escape `%` / `_` so user input acts as literal text, not LIKE wildcards. */
+function escapeLike(query: string): string {
+  return query.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
 export async function getFoodByBarcode(
@@ -51,19 +78,39 @@ export async function getFoodById(
   return row ? cachedToSearchResult(rowToCached(row)) : null;
 }
 
+/** Batch cache lookup — avoids N+1 reads when resolving a list of entries. */
+export async function getFoodsByIds(
+  productIds: string[],
+): Promise<Map<string, SearchFoodResult>> {
+  const unique = [...new Set(productIds.filter(Boolean))];
+  const map = new Map<string, SearchFoodResult>();
+  if (unique.length === 0) return map;
+  const db = await getDatabase();
+  const placeholders = unique.map(() => '?').join(', ');
+  const rows = await db.getAllAsync<Record<string, unknown>>(
+    `SELECT * FROM food_cache WHERE yazio_product_id IN (${placeholders})`,
+    ...unique,
+  );
+  for (const row of rows) {
+    const food = cachedToSearchResult(rowToCached(row));
+    if (food) map.set(food.product_id, food);
+  }
+  return map;
+}
+
 export async function searchLocalFoods(query: string): Promise<SearchFoodResult[]> {
   const db = await getDatabase();
-  const pattern = `%${query.trim()}%`;
+  const pattern = `%${escapeLike(query.trim())}%`;
   const rows = await db.getAllAsync<Record<string, unknown>>(
     `SELECT * FROM food_cache
-     WHERE name LIKE ? OR producer LIKE ? OR barcode LIKE ?
+     WHERE name LIKE ? ESCAPE '\\' OR producer LIKE ? ESCAPE '\\' OR barcode LIKE ? ESCAPE '\\'
      ORDER BY last_used_at DESC NULLS LAST
      LIMIT 20`,
     pattern,
     pattern,
     pattern,
   );
-  return rows.map((r) => cachedToSearchResult(rowToCached(r)));
+  return mapRows(rows);
 }
 
 export async function getRecentFoods(limit = 10): Promise<SearchFoodResult[]> {
@@ -75,15 +122,15 @@ export async function getRecentFoods(limit = 10): Promise<SearchFoodResult[]> {
      LIMIT ?`,
     limit,
   );
-  return rows.map((r) => cachedToSearchResult(rowToCached(r)));
+  return mapRows(rows);
 }
 
 export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<Record<string, unknown>>(
-    'SELECT * FROM food_cache WHERE is_favorite = 1 ORDER BY name ASC',
+    'SELECT * FROM food_cache WHERE is_favorite = 1 ORDER BY name ASC LIMIT 100',
   );
-  return rows.map((r) => cachedToSearchResult(rowToCached(r)));
+  return mapRows(rows);
 }
 
 export async function saveFoodToCache(
@@ -94,15 +141,16 @@ export async function saveFoodToCache(
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO food_cache (
-      yazio_product_id, barcode, name, producer, nutrients_json, serving_json,
+      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, base_unit,
       cached_at, is_favorite, last_used_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?)
     ON CONFLICT(yazio_product_id) DO UPDATE SET
       barcode = COALESCE(excluded.barcode, food_cache.barcode),
       name = excluded.name,
       producer = excluded.producer,
       nutrients_json = excluded.nutrients_json,
       serving_json = excluded.serving_json,
+      base_unit = excluded.base_unit,
       cached_at = excluded.cached_at,
       last_used_at = excluded.last_used_at`,
     food.product_id,
@@ -111,6 +159,7 @@ export async function saveFoodToCache(
     food.producer,
     JSON.stringify(food.nutrients),
     JSON.stringify(food.serving),
+    food.base_unit || 'g',
     now,
     food.product_id,
     now,
