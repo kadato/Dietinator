@@ -22,7 +22,12 @@ export function rawEnergyKcal(
   return energy;
 }
 
-/** Product detail API stores nutrients per gram/ml (typically 0.1–9 kcal). */
+/**
+ * Product detail API stores nutrients per gram/ml. Verified against live
+ * payloads: raw `energy.energy` is 0.1–9 kcal per gram (banana 0.89, olive oil
+ * 8.84, lettuce 0.15) and default servings are named portions ("whole.regular"
+ * @150 g) — the serving label is NOT a per-100 g signal.
+ */
 export function isPerGramRawNutrients(
   nutrients: Record<string, number>,
   baseUnit: string,
@@ -32,16 +37,24 @@ export function isPerGramRawNutrients(
   return (baseUnit === 'g' || baseUnit === 'ml') && kcal > 0 && kcal < 10;
 }
 
-/** Detect rounded per-gram values already stored in cache (legacy). */
+/**
+ * Detect per-gram values already stored in cache.
+ *
+ * `serving_quantity` is the reliable discriminator:
+ * - Search rows carry `serving_quantity = 1` with nutrients per gram.
+ * - Normalized product-detail cache rows carry `serving_quantity = 100`
+ *   (nutrients per 100 g/ml) — even when the food is genuinely low-cal
+ *   (e.g. diet drinks ~0.4 kcal/100 ml), those must NOT be read as per-gram.
+ */
 export function isPerGramNutrients(
   nutrients: FoodNutrients,
   baseUnit = 'g',
+  servingQuantity?: number,
 ): boolean {
-  return (
-    (baseUnit === 'g' || baseUnit === 'ml') &&
-    nutrients.kcal > 0 &&
-    nutrients.kcal < 10
-  );
+  if (!(baseUnit === 'g' || baseUnit === 'ml')) return false;
+  if (nutrients.kcal <= 0 || nutrients.kcal >= 10) return false;
+  if (servingQuantity !== undefined && servingQuantity > 1) return false;
+  return true;
 }
 
 export function nutrientsFromYazio(
@@ -64,7 +77,7 @@ export function nutrientsFromYazio(
  * YAZIO search can use `serving_quantity` when it differs from `amount`;
  * full product payloads are usually per 100 g/ml.
  */
-function isBaseUnitServingLabel(servingName: string, baseUnit: string): boolean {
+function isBaseUnitServingLabelForRef(servingName: string, baseUnit: string): boolean {
   const label = servingName.trim().toLowerCase();
   return (
     label === 'g' ||
@@ -98,7 +111,7 @@ export function nutrientsReferenceAmount(
   // Search "gram" rows: nutrients are per serving_quantity (often 1 g), not default amount
   if (
     (baseUnit === 'g' || baseUnit === 'ml') &&
-    isBaseUnitServingLabel(serving.serving ?? '', baseUnit)
+    isBaseUnitServingLabelForRef(serving.serving ?? '', baseUnit)
   ) {
     // API often returns amount=100 with serving_quantity=1 while nutrients are per 100 g/ml
     if (qty === 1 && amount >= 100) return 100;
@@ -123,7 +136,7 @@ export function resolveNutrientsRefAmount(
   },
   baseUnit = 'g',
 ): number {
-  if (isPerGramNutrients(nutrients, baseUnit)) return 1;
+  if (isPerGramNutrients(nutrients, baseUnit, serving.serving_quantity)) return 1;
   return nutrientsReferenceAmount(serving, baseUnit);
 }
 

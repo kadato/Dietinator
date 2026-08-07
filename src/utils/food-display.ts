@@ -1,5 +1,5 @@
 import type { FoodServing, SearchFoodResult } from '@/types';
-import { resolveNutrientsRefAmount } from '@/utils/nutrients';
+import { isPerGramNutrients, resolveNutrientsRefAmount } from '@/utils/nutrients';
 
 export function formatServingOption(
   serving: FoodServing,
@@ -30,6 +30,16 @@ export function formatNutrientsServingLabel(
 
 export function formatListNutrientLine(food: SearchFoodResult): string {
   const unit = food.base_unit || 'g';
+  const perGram = isPerGramNutrients(
+    food.nutrients,
+    unit,
+    food.serving.serving_quantity,
+  );
+  if (perGram) {
+    // Search rows carry per-gram values — show them as per-100 g for readability.
+    const prefix = food.producer ? `${food.producer} · ` : '';
+    return `${prefix}${Math.round(food.nutrients.kcal * 100)} kcal / 100 ${unit}`;
+  }
   const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
   const prefix = food.producer ? `${food.producer} · ` : '';
   const servingLabel =
