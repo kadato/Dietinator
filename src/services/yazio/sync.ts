@@ -3,7 +3,9 @@ import * as diaryDb from '@/db/diary';
 import * as foodCacheDb from '@/db/food-cache';
 import { getSettings } from '@/db/settings';
 import { matchesDateKey, toDateKey, toYazioApiDate } from '@/utils/date';
+import { generateId } from '@/utils/id';
 import { nutrientsForAmount, nutrientsFromYazio, toKcal } from '@/utils/nutrients';
+import { withRetry } from '@/utils/retry';
 import {
   getYazioClient,
   getYazioEnergyUnit,
@@ -12,11 +14,31 @@ import {
 } from './client';
 import { getFoodRemote } from './foods';
 
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+/** YAZIO daily summary data shown on the dashboard (burned kcal, steps, water, weight). */
+export type YazioDailySummary = {
+  activityEnergy: number;
+  steps: number;
+  waterIntake: number;
+  waterGoal: number;
+  weight: number | null;
+};
+
+/** Single-flight per entry: concurrent callers share one push instead of duplicating it. */
+const inFlightSyncs = new Map<string, Promise<boolean>>();
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
+  const existing = inFlightSyncs.get(entry.id);
+  if (existing) return existing;
+  const promise = doSyncEntryToYazio(entry).finally(() => {
+    inFlightSyncs.delete(entry.id);
+  });
+  inFlightSyncs.set(entry.id, promise);
+  return promise;
 }
 
-export async function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
+async function doSyncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
   const settings = await getSettings();
   if (!settings.yazio_sync_enabled || !entry.food_id) return false;
 
@@ -25,19 +47,38 @@ export async function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
   if (!yazio) return false;
 
   try {
-    const product = await getFoodRemote(entry.food_id);
+    const foodId = entry.food_id;
+    if (!foodId) return false;
+    const product = await getFoodRemote(foodId);
     if (!product) return false;
 
-    const yazioId = generateId();
-    await yazio.user.addConsumedItem({
-      id: yazioId,
-      product_id: entry.food_id,
-      date: entry.date,
-      daytime: entry.meal_type as MealType,
-      amount: entry.amount,
-      serving: product.serving.serving,
-      serving_quantity: product.serving.serving_quantity,
-    });
+    const yazioId = entry.yazio_item_id ?? generateId();
+
+    if (entry.yazio_item_id) {
+      // A previous attempt already pushed this id but never confirmed it.
+      // Remove-then-add makes the retry idempotent instead of duplicating.
+      try {
+        await yazio.user.removeConsumedItem(yazioId);
+      } catch {
+        // Best-effort: the item may never have been created.
+      }
+    } else {
+      // Reserve the id before the network call so a crash between push and
+      // confirmation cannot lead to a duplicate on retry.
+      await diaryDb.reserveYazioItemId(entry.id, yazioId);
+    }
+
+    await withRetry(() =>
+      yazio.user.addConsumedItem({
+        id: yazioId,
+        product_id: foodId,
+        date: entry.date,
+        daytime: entry.meal_type as MealType,
+        amount: entry.amount,
+        serving: product.serving.serving,
+        serving_quantity: product.serving.serving_quantity,
+      }),
+    );
     await diaryDb.markDiaryEntrySynced(entry.id, yazioId);
     return true;
   } catch {
@@ -45,15 +86,32 @@ export async function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
   }
 }
 
+/** Best-effort removal of a consumed item from YAZIO (used when deleting locally). */
+export async function removeEntryFromYazio(yazioItemId: string): Promise<void> {
+  const yazio = await ensureYazioClient();
+  if (!yazio) return;
+  await withRetry(() => yazio.user.removeConsumedItem(yazioItemId));
+}
+
 export async function syncPendingEntries(): Promise<number> {
   const settings = await getSettings();
   if (!settings.yazio_sync_enabled) return 0;
 
-  const pending = await diaryDb.getUnsyncedEntries();
+  // Oldest-first, bounded batch — syncing years of history at once is not useful.
+  const pending = await diaryDb.getUnsyncedEntries(20);
   let synced = 0;
+  let consecutiveFailures = 0;
   for (const entry of pending) {
     const ok = await syncEntryToYazio(entry);
-    if (ok) synced += 1;
+    if (ok) {
+      synced += 1;
+      consecutiveFailures = 0;
+    } else {
+      consecutiveFailures += 1;
+    }
+    // Give up early on a broken remote instead of hammering it.
+    if (consecutiveFailures >= 3) break;
+    await delay(150 + Math.random() * 150);
   }
   return synced;
 }
@@ -92,6 +150,7 @@ export type DiaryImportResult = {
   skipped: number;
   failed: number;
   mealGoals: MealGoals;
+  summary: YazioDailySummary | null;
   error?: string;
 };
 
@@ -101,11 +160,12 @@ async function ensureYazioClient() {
   return yazio;
 }
 
-async function fetchMealGoals(
-  date: string,
-): Promise<MealGoals> {
+async function fetchDailyData(date: string): Promise<{
+  mealGoals: MealGoals;
+  summary: YazioDailySummary | null;
+}> {
   const yazio = await ensureYazioClient();
-  if (!yazio) return {};
+  if (!yazio) return { mealGoals: {}, summary: null };
 
   try {
     const unitEnergy = await getYazioEnergyUnit();
@@ -114,25 +174,57 @@ async function fetchMealGoals(
     });
     const meals = summary.meals;
     return {
-      breakfast: toKcal(meals.breakfast.energy_goal, unitEnergy),
-      lunch: toKcal(meals.lunch.energy_goal, unitEnergy),
-      dinner: toKcal(meals.dinner.energy_goal, unitEnergy),
-      snack: toKcal(meals.snack.energy_goal, unitEnergy),
+      mealGoals: {
+        breakfast: toKcal(meals.breakfast.energy_goal, unitEnergy),
+        lunch: toKcal(meals.lunch.energy_goal, unitEnergy),
+        dinner: toKcal(meals.dinner.energy_goal, unitEnergy),
+        snack: toKcal(meals.snack.energy_goal, unitEnergy),
+      },
+      summary: {
+        activityEnergy: summary.activity_energy ?? 0,
+        steps: summary.steps ?? 0,
+        waterIntake: summary.water_intake ?? 0,
+        waterGoal: summary.goals?.water ?? 0,
+        weight: summary.user?.current_weight ?? null,
+      },
     };
   } catch {
-    return {};
+    return { mealGoals: {}, summary: null };
   }
+}
+
+/** Run async work with bounded concurrency, preserving input order. */
+async function mapPool<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await fn(items[index]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+  return results;
 }
 
 async function importConsumedProduct(
   item: YazioConsumedProduct,
   date: string,
   existingIds: Set<string>,
+  deletedIds: Set<string>,
   unitEnergy: string,
   productCache: Map<string, Awaited<ReturnType<typeof getFoodRemote>>>,
 ): Promise<'imported' | 'skipped' | 'failed'> {
   if (!matchesDateKey(item.date, date)) return 'skipped';
   if (existingIds.has(item.id)) return 'skipped';
+  if (deletedIds.has(item.id)) return 'skipped';
 
   let food = productCache.get(item.product_id);
   if (food === undefined) {
@@ -175,10 +267,12 @@ async function importSimpleProduct(
   item: YazioSimpleProduct,
   date: string,
   existingIds: Set<string>,
+  deletedIds: Set<string>,
   unitEnergy: string,
 ): Promise<'imported' | 'skipped' | 'failed'> {
   if (!matchesDateKey(item.date, date)) return 'skipped';
   if (existingIds.has(item.id)) return 'skipped';
+  if (deletedIds.has(item.id)) return 'skipped';
   if (!item.name?.trim()) return 'failed';
 
   const scaled = nutrientsFromYazio(item.nutrients ?? {}, unitEnergy);
@@ -208,10 +302,12 @@ async function importRecipePortion(
   item: YazioRecipePortion,
   date: string,
   existingIds: Set<string>,
+  deletedIds: Set<string>,
   unitEnergy: string,
 ): Promise<'imported' | 'skipped' | 'failed'> {
   if (!matchesDateKey(item.date, date)) return 'skipped';
   if (existingIds.has(item.id)) return 'skipped';
+  if (deletedIds.has(item.id)) return 'skipped';
 
   const name = item.name?.trim() || 'Recipe';
   const nutrients = item.nutrients ?? {};
@@ -247,17 +343,19 @@ export async function importDiaryFromYazio(
     skipped: 0,
     failed: 0,
     mealGoals: {},
+    summary: null,
   };
 
   const yazio = await ensureYazioClient();
   if (!yazio) return empty;
 
-  const mealGoals = await fetchMealGoals(date);
+  const { mealGoals, summary } = await fetchDailyData(date);
 
   try {
-    const [consumed, existingIds, unitEnergy] = await Promise.all([
+    const [consumed, existingIds, deletedIds, unitEnergy] = await Promise.all([
       yazio.user.getConsumedItems({ date: toYazioApiDate(date) }),
       diaryDb.getYazioItemIdsForDate(date),
+      diaryDb.getDeletedYazioItemIds(),
       getYazioEnergyUnit(),
     ]);
 
@@ -269,34 +367,42 @@ export async function importDiaryFromYazio(
       Awaited<ReturnType<typeof getFoodRemote>>
     >();
 
-    for (const item of consumed.products as YazioConsumedProduct[]) {
-      const result = await importConsumedProduct(
-        item,
-        date,
-        existingIds,
-        unitEnergy,
-        productCache,
-      );
+    // Bounded concurrency for remote product fetches — a full day imports
+    // quickly without firing dozens of simultaneous HTTP requests.
+    const productResults = await mapPool(
+      consumed.products as YazioConsumedProduct[],
+      4,
+      (item) =>
+        importConsumedProduct(
+          item,
+          date,
+          existingIds,
+          deletedIds,
+          unitEnergy,
+          productCache,
+        ),
+    );
+    for (const result of productResults) {
       if (result === 'imported') imported += 1;
       else if (result === 'skipped') skipped += 1;
       else failed += 1;
     }
 
     for (const raw of consumed.simple_products as YazioSimpleProduct[]) {
-      const result = await importSimpleProduct(raw, date, existingIds, unitEnergy);
+      const result = await importSimpleProduct(raw, date, existingIds, deletedIds, unitEnergy);
       if (result === 'imported') imported += 1;
       else if (result === 'skipped') skipped += 1;
       else failed += 1;
     }
 
     for (const raw of consumed.recipe_portions as YazioRecipePortion[]) {
-      const result = await importRecipePortion(raw, date, existingIds, unitEnergy);
+      const result = await importRecipePortion(raw, date, existingIds, deletedIds, unitEnergy);
       if (result === 'imported') imported += 1;
       else if (result === 'skipped') skipped += 1;
       else failed += 1;
     }
 
-    return { imported, skipped, failed, mealGoals };
+    return { imported, skipped, failed, mealGoals, summary };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Could not reach YAZIO.';
