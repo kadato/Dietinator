@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -62,7 +62,7 @@ function ToastHost({
     Animated.timing(opacity, {
       toValue: 0,
       duration: 120,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start(({ finished }) => {
       if (finished) onDismiss();
     });
@@ -75,7 +75,7 @@ function ToastHost({
     Animated.timing(opacity, {
       toValue: 1,
       duration: 120,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
 
     const type = toast.type ?? 'info';
@@ -94,7 +94,13 @@ function ToastHost({
   const icon = toastIcon(type);
 
   return (
-    <View style={[styles.host, { paddingTop: insets.top + spacing.sm }]} pointerEvents="box-none">
+    <View
+      style={[
+        Platform.OS === 'web' ? styles.hostBottom : styles.host,
+        Platform.OS !== 'web' ? { paddingTop: insets.top + spacing.sm } : undefined,
+        { pointerEvents: 'box-none' },
+      ]}
+    >
       <Animated.View
         style={[styles.toast, toastAccent(type, colors), { opacity }]}
       >
@@ -201,6 +207,15 @@ const createToastStyles = (colors: ColorPalette) =>
       alignItems: 'center',
       paddingHorizontal: spacing.md,
     },
+    hostBottom: {
+      position: 'absolute',
+      bottom: spacing.lg,
+      left: 0,
+      right: 0,
+      zIndex: 9999,
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+    },
     toast: {
       width: '100%',
       maxWidth: 480,
@@ -209,10 +224,7 @@ const createToastStyles = (colors: ColorPalette) =>
       borderWidth: 1,
       borderColor: colors.border,
       borderLeftWidth: 4,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
       elevation: 6,
     },
     row: {
