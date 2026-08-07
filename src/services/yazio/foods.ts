@@ -1,4 +1,4 @@
-import type { SearchFoodResult } from '@/types';
+import type { MealType, SearchFoodResult } from '@/types';
 import { isPerGramNutrients, isPerGramRawNutrients, nutrientsFromYazio } from '@/utils/nutrients';
 import { withRetry } from '@/utils/retry';
 import { pickBestBarcodeMatch } from '@/utils/barcode';
@@ -51,11 +51,47 @@ function withoutLegacyPerGramCache(
 ): SearchFoodResult | null {
   if (
     cached &&
-    isPerGramNutrients(cached.nutrients, cached.base_unit || 'g')
+    isPerGramNutrients(
+      cached.nutrients,
+      cached.base_unit || 'g',
+      cached.serving.serving_quantity,
+    )
   ) {
     return null;
   }
   return cached;
+}
+
+/** Products YAZIO suggests for a meal slot on a date (resolution falls back to cache/remote). */
+export async function getSuggestedFoods(
+  date: string,
+  mealType: MealType,
+  limit = 5,
+): Promise<SearchFoodResult[]> {
+  const yazio = await ensureClient();
+  let suggested: { product_id: string }[];
+  try {
+    suggested = await withRetry(() =>
+      yazio.user.getSuggestedProducts({ date, daytime: mealType }),
+    );
+  } catch {
+    return [];
+  }
+  const ids = suggested.map((s) => s.product_id).slice(0, limit);
+  if (ids.length === 0) return [];
+
+  const cached = await foodCacheDb.getFoodsByIds(ids);
+  const resolved: SearchFoodResult[] = [];
+  for (const id of ids) {
+    const fromCache = cached.get(id);
+    if (fromCache) {
+      resolved.push(fromCache);
+    } else {
+      const remote = await getFoodRemote(id);
+      if (remote) resolved.push(remote);
+    }
+  }
+  return resolved;
 }
 
 export async function searchFoodsRemote(
@@ -159,7 +195,12 @@ export async function getFoodByBarcode(
 export async function searchFoods(
   query: string,
   unitEnergy?: string,
-): Promise<{ local: SearchFoodResult[]; remote: SearchFoodResult[] }> {
+): Promise<{
+  local: SearchFoodResult[];
+  remote: SearchFoodResult[];
+  /** True when the remote search failed (YAZIO unreachable), not just empty. */
+  offline: boolean;
+}> {
   const trimmed = query.trim();
   if (!trimmed) {
     const [recent, favorites] = await Promise.all([
@@ -174,14 +215,14 @@ export async function searchFoods(
         local.push(item);
       }
     }
-    return { local, remote: [] };
+    return { local, remote: [], offline: false };
   }
 
   const local = await foodCacheDb.searchLocalFoods(trimmed);
   try {
     const remote = await searchFoodsRemote(trimmed, unitEnergy);
-    return { local, remote };
+    return { local, remote, offline: false };
   } catch {
-    return { local, remote: [] };
+    return { local, remote: [], offline: true };
   }
 }
