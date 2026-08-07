@@ -23,24 +23,14 @@ export async function updateSettings(
   partial: Partial<AppSettings>,
 ): Promise<void> {
   const db = await getDatabase();
-  const current = await getSettings();
-  const next = { ...current, ...partial };
-  await db.runAsync(
-    `UPDATE settings SET
-      calorie_goal = ?,
-      protein_goal = ?,
-      carbs_goal = ?,
-      fat_goal = ?,
-      units = ?,
-      yazio_sync_enabled = ?,
-      food_database_country = ?
-    WHERE id = 1`,
-    next.calorie_goal,
-    next.protein_goal,
-    next.carbs_goal,
-    next.fat_goal,
-    next.units,
-    next.yazio_sync_enabled,
-    next.food_database_country,
-  );
+  const keys = Object.keys(partial) as (keyof AppSettings)[];
+  if (keys.length === 0) return;
+  // Column-per-update avoids read-modify-write races between concurrent callers.
+  await db.withTransactionAsync(async () => {
+    for (const key of keys) {
+      const value = partial[key];
+      if (value === undefined) continue;
+      await db.runAsync(`UPDATE settings SET ${key} = ? WHERE id = 1`, value);
+    }
+  });
 }
