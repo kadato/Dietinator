@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+import { Text } from '@ui/text';
+import { Card } from '@ui/card';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -14,82 +14,56 @@ type Props<T extends string> = {
 };
 
 export function FilterDropdown<T extends string>({ value, options, onChange }: Props<T>) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
+  const { colors } = useTheme();
   const selected = options.find((o) => o.value === value) ?? options[0];
 
   return (
     <>
       <Pressable
-        style={styles.trigger}
+        className="flex-1 flex-row items-center justify-between rounded-xl border border-outline-300 bg-background-50 px-4 py-3"
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`Filter: ${selected.label}`}
       >
-        <Text style={styles.triggerText}>{selected.label}</Text>
+        <Text size="md" bold className="text-typography-900">
+          {selected.label}
+        </Text>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <View style={styles.menu}>
+        <Pressable
+          className="flex-1 bg-black/30 justify-center p-8"
+          onPress={() => setOpen(false)}
+        >
+          <Card variant="outline" className="rounded-2xl overflow-hidden p-1">
             {options.map((option) => {
               const active = option.value === value;
               return (
                 <Pressable
                   key={option.value}
-                  style={[styles.option, active && styles.optionActive]}
+                  className={`px-4 py-3.5 rounded-xl ${active ? 'bg-background-100' : ''}`}
                   onPress={() => {
                     onChange(option.value);
                     setOpen(false);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={option.label}
+                  accessibilityState={{ selected: active }}
                 >
-                  <Text style={[styles.optionText, active && styles.optionTextActive]}>
+                  <Text
+                    size="md"
+                    bold={active}
+                    className={active ? 'text-typography-900' : 'text-typography-700'}
+                  >
                     {option.label}
                   </Text>
                 </Pressable>
               );
             })}
-          </View>
+          </Card>
         </Pressable>
       </Modal>
     </>
   );
 }
-
-const createStyles = (colors: ColorPalette) =>
-  StyleSheet.create({
-    trigger: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm + 2,
-    },
-    triggerText: { fontSize: 15, fontWeight: '600', color: colors.text },
-    backdrop: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.25)',
-      justifyContent: 'center',
-      padding: spacing.xl,
-    },
-    menu: {
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.border,
-      overflow: 'hidden',
-    },
-    option: {
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    optionActive: { backgroundColor: colors.surfaceAlt },
-    optionText: { fontSize: 16, color: colors.text },
-    optionTextActive: { fontWeight: '700' },
-  });

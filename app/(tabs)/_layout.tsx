@@ -28,12 +28,21 @@ export default function TabLayout() {
               borderRightColor: colors.border,
             }
           : {
-              backgroundColor: colors.background,
-              borderTopColor: colors.border,
+              backgroundColor: colors.surface,
+              borderTopWidth: 0,
+              height: 64,
+              paddingTop: 6,
+              paddingBottom: 8,
+              elevation: 12,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
             },
         tabBarItemStyle: isWide ? { paddingVertical: spacing.sm } : undefined,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
       }}
     >
       <Tabs.Screen
@@ -50,6 +59,7 @@ export default function TabLayout() {
         name="search"
         options={{
           title: 'Search',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search-outline" size={size} color={color} />
           ),
@@ -59,6 +69,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),

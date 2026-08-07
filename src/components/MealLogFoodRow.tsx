@@ -2,6 +2,7 @@ import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { SearchFoodResult } from '@/types';
 import { formatListNutrientLine } from '@/utils/food-display';
+import { isPerGramNutrients } from '@/utils/nutrients';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
@@ -17,7 +18,14 @@ type Props = {
 export function MealLogFoodRow({ food, subtitle, accentColor, onPress, onAdd }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const kcal = Math.round(food.nutrients.kcal);
+  const perGram = isPerGramNutrients(
+    food.nutrients,
+    food.base_unit || 'g',
+    food.serving.serving_quantity,
+  );
+  const kcal = perGram
+    ? Math.round(food.nutrients.kcal * 100)
+    : Math.round(food.nutrients.kcal);
 
   return (
     <View style={styles.row}>
@@ -55,11 +63,15 @@ const createStyles = (colors: ColorPalette) =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.sm,
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.md,
       gap: spacing.sm,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     mainTap: {
       flex: 1,

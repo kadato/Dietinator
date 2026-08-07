@@ -8,6 +8,8 @@ type MacroRow = {
   value: number;
   unit: string;
   color: string;
+  /** kcal per gram — keeps percentage math independent of display labels. */
+  factor: number;
 };
 
 type Props = {
@@ -34,18 +36,21 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
       value: nutrients.protein,
       unit: 'g',
       color: styles.proteinColor.color,
+      factor: 4,
     },
     {
       label: 'Carbohydrates',
       value: nutrients.carbs,
       unit: 'g',
       color: styles.carbsColor.color,
+      factor: 4,
     },
     {
       label: 'Fat',
       value: nutrients.fat,
       unit: 'g',
       color: styles.fatColor.color,
+      factor: 9,
     },
   ];
 
@@ -55,7 +60,9 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
       <Text style={styles.servingNote}>{servingLabel}</Text>
 
       <View style={styles.calorieBlock}>
-        <Text style={styles.calorieValue}>{nutrients.kcal}</Text>
+        <Text style={styles.calorieValue} testID="preview-kcal">
+          {nutrients.kcal}
+        </Text>
         <Text style={styles.calorieUnit}>kcal</Text>
       </View>
 
@@ -73,7 +80,7 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
               {row.unit}
             </Text>
             <Text style={styles.macroPct}>
-              {pct(row.value * (row.label === 'Fat' ? 9 : 4))}%
+              {pct(row.value * row.factor)}%
             </Text>
           </View>
         </View>

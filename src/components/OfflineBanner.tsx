@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { Box } from '@ui/box';
+import { Text } from '@ui/text';
 
 type Props = {
   visible: boolean;
@@ -11,22 +12,14 @@ export function OfflineBanner({
   visible,
   message = 'YAZIO unavailable — using cached foods',
 }: Props) {
-  const styles = useThemedStyles(createStyles);
-
+  const { colors } = useTheme();
   if (!visible) return null;
   return (
-    <View style={styles.banner}>
-      <Text style={styles.text}>{message}</Text>
-    </View>
+    <Box className="flex-row items-center justify-center gap-2 bg-background-warning px-4 py-2.5 border-b border-outline-200">
+      <Ionicons name="cloud-offline-outline" size={18} color={colors.warning} />
+      <Text size="sm" className="text-typography-800 flex-shrink">
+        {message}
+      </Text>
+    </Box>
   );
 }
-
-const createStyles = (colors: ColorPalette) =>
-  StyleSheet.create({
-    banner: {
-      backgroundColor: colors.warning,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
-    },
-    text: { color: colors.onWarning, fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  });
