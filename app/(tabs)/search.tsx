@@ -1,31 +1,21 @@
-import { useEffect, useState } from 'react';
-import {
-  View,
-  TextInput,
-  FlatList,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { FoodListItem } from '@/components/FoodListItem';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApp } from '@/context/AppContext';
-import { useToast } from '@/context/ToastContext';
-import { searchFoods } from '@/services/yazio/foods';
-import { toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
+import { useTheme } from '@/hooks/useTheme';
+import { searchFoodsRemote } from '@/services/yazio/foods';
+import { searchLocalFoods, toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
 import type { MealType, SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
-import { useTheme } from '@/hooks/useTheme';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
-
-function routeParam(value: string | string[] | undefined): string | undefined {
-  if (value == null) return undefined;
-  return Array.isArray(value) ? value[0] : value;
-}
+import { routeParam } from '@/utils/route';
+import { Box } from '@ui/box';
+import { Text } from '@ui/text';
+import { Input, InputField, InputIcon } from '@ui/input';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -33,47 +23,76 @@ export default function SearchScreen() {
   const addMeal = (routeParam(routeParams.meal) ?? 'lunch') as MealType;
   const addDate = routeParam(routeParams.date) ?? toDateKey();
   const { yazioAvailable, setYazioAvailable } = useApp();
-  const { showError } = useToast();
   const { colors } = useTheme();
-  const styles = useThemedStyles(createStyles);
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
   const [local, setLocal] = useState<SearchFoodResult[]>([]);
   const [remote, setRemote] = useState<SearchFoodResult[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const requestRef = useRef(0);
 
-  useEffect(() => {
-    (async () => {
-      const favs = await getFavoriteFoods();
-      setFavoriteIds(new Set(favs.map((f) => f.product_id)));
-    })();
+  const loadFavorites = useCallback(async () => {
+    const favs = await getFavoriteFoods();
+    setFavoriteIds(new Set(favs.map((f) => f.product_id)));
   }, []);
 
   useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  // Star toggles inside add-food must show up when coming back to this tab.
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [loadFavorites]),
+  );
+
+  useEffect(() => {
     let cancelled = false;
+    const requestId = ++requestRef.current;
     (async () => {
+      const trimmed = debounced.trim();
+      if (!trimmed) {
+        const favs = await getFavoriteFoods();
+        const recents = await searchLocalFoods('');
+        const seen = new Set<string>();
+        const merged: SearchFoodResult[] = [];
+        for (const item of [...favs, ...recents]) {
+          if (!seen.has(item.product_id)) {
+            seen.add(item.product_id);
+            merged.push(item);
+          }
+        }
+        if (!cancelled) {
+          setLocal(merged);
+          setRemote([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Cached results render instantly; remote patches in when it arrives.
       setLoading(true);
+      const cached = await searchLocalFoods(trimmed);
+      if (requestId !== requestRef.current || cancelled) return;
+      setLocal(cached);
+      setLoading(false);
+
       try {
-        const result = await searchFoods(debounced);
-        if (!cancelled) {
-          setLocal(result.local);
-          setRemote(result.remote);
-          setYazioAvailable(result.remote.length > 0 || !debounced.trim());
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setYazioAvailable(false);
-          showError(error, 'Food search failed. Showing cached results only.');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+        const found = await searchFoodsRemote(trimmed);
+        if (requestId !== requestRef.current || cancelled) return;
+        setRemote(found);
+        setYazioAvailable(true);
+      } catch {
+        if (requestId !== requestRef.current || cancelled) return;
+        setYazioAvailable(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [debounced, setYazioAvailable, showError]);
+  }, [debounced, setYazioAvailable]);
 
   const openFood = (food: SearchFoodResult) => {
     router.push({
@@ -89,24 +108,38 @@ export default function SearchScreen() {
   const data = [...local, ...remote.filter((r) => !local.some((l) => l.product_id === r.product_id))];
 
   return (
-    <View style={styles.container}>
-      <PageContainer>
+    <Box className="flex-1 bg-background-0">
+      <PageContainer className="flex-1">
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
-        <TextInput
-          style={styles.input}
-          placeholder="Search YAZIO foods..."
-          placeholderTextColor={colors.textMuted}
-          value={query}
-          onChangeText={setQuery}
-          autoCorrect={false}
-        />
-        {loading && <ActivityIndicator style={styles.loader} color={colors.primary} />}
-        {!debounced && (
-          <Text style={styles.hint}>Recent and favorite foods appear when the search is empty.</Text>
-        )}
+        <Box className="px-4 pt-2 pb-3">
+          <Text size="2xl" bold className="text-typography-900 mb-3">
+            Search foods
+          </Text>
+          <Input size="lg" variant="rounded" className="bg-background-50">
+            <InputIcon>
+              <Ionicons name="search" size={20} color={colors.textMuted} />
+            </InputIcon>
+            <InputField
+              placeholder="Search YAZIO foods..."
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              returnKeyType="search"
+            />
+          </Input>
+        </Box>
+        {loading ? (
+          <ActivityIndicator className="mb-2" color={colors.primary} />
+        ) : null}
+        {!debounced ? (
+          <Text size="sm" className="text-typography-500 px-5 mb-2">
+            Recent and favorite foods appear when the search is empty.
+          </Text>
+        ) : null}
         <FlatList
-          style={styles.list}
+          className="flex-1"
           data={data}
+          contentContainerClassName="pt-1 pb-8"
           keyExtractor={(item) => item.product_id}
           renderItem={({ item }) => (
             <FoodListItem
@@ -126,40 +159,19 @@ export default function SearchScreen() {
           )}
           ListEmptyComponent={
             !loading && debounced ? (
-              <Text style={styles.empty}>No foods found. Try a different search.</Text>
+              <Box className="items-center mt-12 px-6">
+                <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+                <Text size="md" bold className="text-typography-900 mt-4 text-center">
+                  No foods found
+                </Text>
+                <Text size="sm" className="text-typography-500 mt-1 text-center">
+                  Try a different spelling or a shorter name.
+                </Text>
+              </Box>
             ) : null
           }
         />
       </PageContainer>
-    </View>
+    </Box>
   );
 }
-
-const createStyles = (colors: ColorPalette) =>
-  StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  list: { flex: 1 },
-  input: {
-    margin: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: spacing.md,
-    color: colors.text,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  loader: { marginBottom: spacing.sm },
-  hint: {
-    paddingHorizontal: spacing.md,
-    color: colors.textMuted,
-    fontSize: 13,
-    marginBottom: spacing.sm,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-    padding: spacing.md,
-  },
-});

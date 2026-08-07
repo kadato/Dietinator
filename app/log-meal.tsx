@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MealLogFoodRow } from '@/components/MealLogFoodRow';
 import { FilterDropdown } from '@/components/FilterDropdown';
@@ -18,20 +18,20 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
-import { searchFoods } from '@/services/yazio/foods';
-import { getFavoriteFoods, getRecentFoods } from '@/db/food-cache';
+import { getSuggestedFoods, searchFoodsRemote } from '@/services/yazio/foods';
+import {
+  getFavoriteFoods,
+  getRecentFoods,
+  searchLocalFoods,
+} from '@/db/food-cache';
 import type { MealType, SearchFoodResult } from '@/types';
 import { MEAL_LABELS, MEAL_PLACEHOLDERS } from '@/utils/meals';
 import { formatServingOption } from '@/utils/food-display';
-import { toDateKey } from '@/utils/date';
+import { formatDisplayDate, toDateKey } from '@/utils/date';
+import { routeParam } from '@/utils/route';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
-
-function routeParam(value: string | string[] | undefined): string | undefined {
-  if (value == null) return undefined;
-  return Array.isArray(value) ? value[0] : value;
-}
 
 type LogMode = 'search' | 'camera' | 'barcode' | 'more';
 type FoodCategory = 'foods' | 'meals' | 'recipes';
@@ -69,8 +69,10 @@ export default function LogMealScreen() {
   const [listMode, setListMode] = useState<ListMode>('frequent');
   const [foods, setFoods] = useState<SearchFoodResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const requestRef = useRef(0);
 
   const loadFoods = useCallback(async () => {
+    const requestId = ++requestRef.current;
     if (category !== 'foods') {
       setFoods([]);
       setLoading(false);
@@ -80,34 +82,66 @@ export default function LogMealScreen() {
     setLoading(true);
     try {
       if (debounced.trim()) {
-        const result = await searchFoods(debounced);
-        const merged = [
-          ...result.local,
-          ...result.remote.filter(
-            (r) => !result.local.some((l) => l.product_id === r.product_id),
-          ),
-        ];
-        setFoods(merged);
-        setYazioAvailable(result.remote.length > 0 || !debounced.trim());
+        // Cached matches render instantly; remote results patch in when ready.
+        const cached = await searchLocalFoods(debounced);
+        if (requestId !== requestRef.current) return;
+        setFoods(cached);
+        setLoading(false);
+        try {
+          const remote = await searchFoodsRemote(debounced);
+          if (requestId !== requestRef.current) return;
+          setFoods([
+            ...cached,
+            ...remote.filter(
+              (r) => !cached.some((l) => l.product_id === r.product_id),
+            ),
+          ]);
+          setYazioAvailable(true);
+        } catch {
+          if (requestId === requestRef.current) setYazioAvailable(false);
+        }
       } else if (listMode === 'favorites') {
         setFoods(await getFavoriteFoods());
       } else if (listMode === 'recent') {
         setFoods(await getRecentFoods(20));
       } else {
-        const result = await searchFoods('');
-        setFoods(result.local);
+        // Frequent list: YAZIO's suggestions for this meal slot, then favorites + recents.
+        const [suggested, favorites, recent] = await Promise.all([
+          getSuggestedFoods(date, mealType, 5),
+          getFavoriteFoods(),
+          getRecentFoods(10),
+        ]);
+        if (requestId !== requestRef.current) return;
+        const seen = new Set<string>();
+        const merged: SearchFoodResult[] = [];
+        for (const item of [...suggested, ...favorites, ...recent]) {
+          if (!seen.has(item.product_id)) {
+            seen.add(item.product_id);
+            merged.push(item);
+          }
+        }
+        setFoods(merged);
       }
     } catch (error) {
       setYazioAvailable(false);
       showError(error, 'Could not load foods.');
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) setLoading(false);
     }
-  }, [category, debounced, listMode, setYazioAvailable, showError]);
+  }, [category, date, debounced, listMode, mealType, setYazioAvailable, showError]);
 
   useEffect(() => {
     loadFoods();
   }, [loadFoods]);
+
+  // Refetch favorites/recent when returning from add-food (a star may have changed).
+  useFocusEffect(
+    useCallback(() => {
+      if (!debounced.trim() && listMode !== 'frequent') {
+        loadFoods();
+      }
+    }, [debounced, listMode, loadFoods]),
+  );
 
   const openFood = (food: SearchFoodResult) => {
     router.push({
@@ -252,8 +286,9 @@ export default function LogMealScreen() {
       />
 
       <View style={styles.footer}>
-        <View style={[styles.footerCount, { backgroundColor: accent }]}>
-          <Text style={styles.footerCountText}>0</Text>
+        <View style={styles.footerContext}>
+          <Text style={styles.footerContextDate}>{formatDisplayDate(date)}</Text>
+          <Text style={styles.footerContextMeal}>{MEAL_LABELS[mealType]}</Text>
         </View>
         <Pressable
           style={styles.doneBtn}
@@ -358,6 +393,17 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    footerContext: { minWidth: 88 },
+    footerContextDate: {
+      color: colors.onPrimary,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    footerContextMeal: {
+      color: colors.onPrimary,
+      fontSize: 11,
+      opacity: 0.85,
     },
     footerCountText: {
       color: colors.onPrimary,
