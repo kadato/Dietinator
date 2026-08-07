@@ -65,3 +65,27 @@ export interface SearchFoodResult {
   base_unit: string;
   is_verified: boolean;
 }
+
+/**
+ * One food inside a saved meal. Nutrients/serving are snapshotted so meals
+ * render and log correctly even when the product cache has been cleared.
+ */
+export interface MealItem {
+  product_id: string;
+  name: string;
+  producer: string;
+  amount: number;
+  base_unit: string;
+  nutrients: FoodNutrients;
+  serving: FoodServing;
+}
+
+/** A user-created meal: foods you often eat together. */
+export interface Meal {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+  items: MealItem[];
+}

@@ -44,6 +44,7 @@ function RootNavigator() {
         <Stack.Screen name="log-meal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="create-options" options={{ presentation: 'modal' }} />
         <Stack.Screen name="manual-entry" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="meal-builder" options={{ presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
         <Stack.Screen name="add-food" options={{ presentation: 'modal' }} />
       </Stack>

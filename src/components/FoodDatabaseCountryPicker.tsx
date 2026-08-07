@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Modal,
+  Platform,
   View,
   Text,
   Pressable,
@@ -55,7 +56,7 @@ export function FoodDatabaseCountryPicker({
   const normalizedSelected = normalizeFoodDatabaseCountry(selectedCode);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType={Platform.OS === 'web' ? undefined : 'slide'} onRequestClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Food database country</Text>

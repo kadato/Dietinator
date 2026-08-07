@@ -81,6 +81,31 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     INSERT OR IGNORE INTO settings (id) VALUES (1);
+
+    CREATE TABLE IF NOT EXISTS meals (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_used_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_meals_last_used ON meals(last_used_at DESC);
+
+    CREATE TABLE IF NOT EXISTS meal_items (
+      meal_id TEXT NOT NULL,
+      position INTEGER NOT NULL,
+      product_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      producer TEXT,
+      amount REAL NOT NULL,
+      base_unit TEXT NOT NULL DEFAULT 'g',
+      nutrients_json TEXT NOT NULL,
+      serving_json TEXT NOT NULL,
+      PRIMARY KEY (meal_id, position)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_meal_items_meal ON meal_items(meal_id);
   `);
 
   const settingsColumns = await database.getAllAsync<{ name: string }>(

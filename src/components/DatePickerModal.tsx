@@ -53,7 +53,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={styles.sheet}>
           <View style={styles.monthRow}>
@@ -148,10 +148,7 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.surface,
       borderRadius: 24,
       padding: spacing.md,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.25,
-      shadowRadius: 12,
+      boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.25)',
       elevation: 8,
     },
     monthRow: {
