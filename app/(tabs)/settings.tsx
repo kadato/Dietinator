@@ -12,11 +12,13 @@ import { clearFoodCache } from '@/db/food-cache';
 import { PageContainer } from '@/components/PageContainer';
 import { SettingsSection } from '@/components/SettingsSection';
 import { FoodDatabaseCountryPicker } from '@/components/FoodDatabaseCountryPicker';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import {
   getFoodDatabaseCountryLabel,
   resolveFoodDatabaseCountry,
 } from '@/utils/food-database-country';
 import { useTheme } from '@/hooks/useTheme';
+import { useLayout } from '@/hooks/useLayout';
 import { confirmAction } from '@/utils/confirm';
 import { Box } from '@ui/box';
 import { Text } from '@ui/text';
@@ -47,13 +49,14 @@ function GoalInput({
   onChange: (v: string) => void;
   bordered?: boolean;
 }) {
+  const { isWide } = useLayout();
   return (
     <SettingsRow bordered={bordered}>
       <Box className="flex-row items-center">
         <Text size="md" className="flex-1 text-typography-900">
           {label}
         </Text>
-        <Input size="sm" variant="outline" className="w-[100px]">
+        <Input size="sm" variant="outline" className={isWide ? 'w-[140px]' : 'w-[100px]'}>
           <InputField
             keyboardType="numeric"
             value={value}
@@ -71,6 +74,7 @@ export default function SettingsScreen() {
   const { settings, updateSettings, refreshAuth, refreshSettings } = useApp();
   const { showSuccess, showError } = useToast();
   const { colors } = useTheme();
+  const { isWide } = useLayout();
   const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal));
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal));
   const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal));
@@ -165,8 +169,11 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView className="flex-1 bg-background-0" contentContainerClassName="pb-16">
-      <PageContainer grow={false} contentStyle={{ padding: 16 }}>
-        <Text size="2xl" bold className="text-typography-900 mb-1">
+      <PageContainer
+        grow={false}
+        contentStyle={[{ padding: 16 }, isWide ? { maxWidth: 860 } : undefined]}
+      >
+        <Text size={isWide ? '3xl' : '2xl'} bold className="text-typography-900 mb-1">
           Settings
         </Text>
         <Text size="sm" className="text-typography-500 mb-6">
@@ -264,25 +271,28 @@ export default function SettingsScreen() {
         />
 
         <SettingsSection title="Units">
-          <SettingsRow>
-            <Box className="flex-row items-center justify-between">
-              <Text size="sm" className="flex-1 text-typography-900 mr-4">
-                Units for weight and water
-              </Text>
-              <Switch
-                value={settings.units !== 'imperial'}
-                accessibilityLabel="Units for weight and water"
-                onValueChange={async (v) => {
-                  try {
-                    await updateSettings({ units: v ? 'metric' : 'imperial' });
-                  } catch (error) {
-                    showError(error, 'Could not update units.');
-                  }
-                }}
-              />
-            </Box>
-            <Text size="xs" className="text-typography-500 mt-1">
-              {settings.units === 'imperial' ? 'Imperial (lb, fl oz)' : 'Metric (kg, L)'}
+          <SettingsRow bordered={false}>
+            <Text size="sm" className="text-typography-900 mb-2">
+              Units for weight and water
+            </Text>
+            <SegmentedControl
+              value={settings.units === 'imperial' ? 'imperial' : 'metric'}
+              options={[
+                { value: 'metric', label: 'Metric (kg, L)' },
+                { value: 'imperial', label: 'Imperial (lb, fl oz)' },
+              ]}
+              onChange={async (units) => {
+                try {
+                  await updateSettings({ units });
+                } catch (error) {
+                  showError(error, 'Could not update units.');
+                }
+              }}
+            />
+            <Text size="xs" className="text-typography-500 mt-2">
+              {settings.units === 'imperial'
+                ? 'Weight and water show in pounds and fluid ounces.'
+                : 'Weight and water show in kilograms and liters.'}
             </Text>
           </SettingsRow>
         </SettingsSection>

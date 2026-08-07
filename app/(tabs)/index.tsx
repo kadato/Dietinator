@@ -15,6 +15,7 @@ import type { DiaryEntry, MealType } from '@/types';
 import { deleteFoodEntry, getDiaryEntriesForDate } from '@/services/diary';
 import { confirmAction } from '@/utils/confirm';
 import { shiftDateKey, toDateKey, formatDisplayDate } from '@/utils/date';
+import { formatWaterAmount, formatWeight } from '@/utils/units';
 import { useLayout } from '@/hooks/useLayout';
 import { useTheme } from '@/hooks/useTheme';
 import { Box } from '@ui/box';
@@ -182,6 +183,7 @@ export default function TodayScreen() {
         consumed={totals.kcal}
         goal={settings.calorie_goal}
         burned={summary?.activityEnergy ?? 0}
+        size={isWide ? 170 : 140}
       />
       <MacroBar
         protein={totals.protein}
@@ -206,8 +208,8 @@ export default function TodayScreen() {
               <Ionicons name="water-outline" size={16} color={colors.primary} />
               <Text size="sm" className="text-typography-900">
                 {summary.waterGoal > 0
-                  ? `${Math.round(summary.waterIntake / 100) / 10} / ${Math.round(summary.waterGoal / 100) / 10} L`
-                  : `${Math.round(summary.waterIntake / 100) / 10} L`}
+                  ? `${formatWaterAmount(summary.waterIntake, settings.units)} / ${formatWaterAmount(summary.waterGoal, settings.units)}`
+                  : formatWaterAmount(summary.waterIntake, settings.units)}
               </Text>
             </Box>
           ) : null}
@@ -215,7 +217,7 @@ export default function TodayScreen() {
             <Box className="flex-row items-center gap-1.5">
               <Ionicons name="scale-outline" size={16} color={colors.primary} />
               <Text size="sm" className="text-typography-900">
-                {weight} kg
+                {formatWeight(weight, settings.units)}
               </Text>
             </Box>
           ) : null}
@@ -254,7 +256,7 @@ export default function TodayScreen() {
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? 'wide' : 'narrow'} className="flex-1">
-        <Box className="px-4 pt-3 pb-2">
+        <Box className="px-6 pt-3 pb-2">
           <Card variant="elevated" className="flex-row items-center px-2 py-2">
             <Pressable
               onPress={() => shiftDate(-1)}
@@ -321,8 +323,8 @@ export default function TodayScreen() {
         >
           {isWide ? (
             <Box className="flex-row items-start gap-6 w-full">
-              <Box className="flex-[0.9] min-w-[320px] max-w-[420px]">{summaryCard}</Box>
-              <Box className="flex-[1.1] min-w-0">
+              <Box className="flex-[0.95] min-w-[340px] max-w-[460px]">{summaryCard}</Box>
+              <Box className="flex-[1.05] min-w-0">
                 {nutritionHeader}
                 <Box className="flex-row flex-wrap gap-2">{renderMealSections(true)}</Box>
               </Box>

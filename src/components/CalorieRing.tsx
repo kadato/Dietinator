@@ -8,38 +8,43 @@ type Props = {
   consumed: number;
   goal: number;
   burned?: number;
+  /** Ring diameter; defaults to 140 (mobile scale). */
+  size?: number;
 };
 
-export function CalorieRing({ consumed, goal, burned = 0 }: Props) {
+export function CalorieRing({ consumed, goal, burned = 0, size = 140 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const remaining = Math.max(goal - consumed, 0);
   const over = consumed > goal ? consumed - goal : 0;
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
   const ringColor = over > 0 ? colors.danger : colors.primary;
+  const scale = size / 140;
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Today</Text>
       <View style={styles.row}>
         <View style={styles.sideStat}>
-          <Text style={styles.sideValue}>{Math.round(consumed).toLocaleString()}</Text>
+          <Text style={[styles.sideValue, { fontSize: 20 * scale }]}>{Math.round(consumed).toLocaleString()}</Text>
           <Text style={styles.sideLabel}>Eaten</Text>
         </View>
 
         <View style={styles.ringWrap}>
           <ProgressRing
             progress={progress}
-            size={140}
-            stroke={10}
+            size={size}
+            stroke={Math.round(10 * scale)}
             color={ringColor}
             trackColor={colors.surfaceAlt}
           >
-            <View style={styles.ringCenter}>
-              <Text style={[styles.remainingValue, over > 0 && { color: colors.danger }]}>
+            <View style={[styles.ringCenter, { width: size * 0.7 }]}>
+              <Text style={[styles.remainingValue, over > 0 && { color: colors.danger }, { fontSize: 28 * scale }]}>
                 {over > 0 ? Math.round(over).toLocaleString() : Math.round(remaining).toLocaleString()}
               </Text>
-              <Text style={styles.remainingLabel}>{over > 0 ? 'Over goal' : 'Remaining'}</Text>
+              <Text style={[styles.remainingLabel, { fontSize: 13 * scale }]}>
+                {over > 0 ? 'Over goal' : 'Remaining'}
+              </Text>
             </View>
           </ProgressRing>
         </View>

@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/PageContainer';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useApp } from '@/context/AppContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useLayout } from '@/hooks/useLayout';
 import { searchFoodsRemote } from '@/services/yazio/foods';
 import { searchLocalFoods, toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
 import type { MealType, SearchFoodResult } from '@/types';
@@ -24,6 +25,7 @@ export default function SearchScreen() {
   const addDate = routeParam(routeParams.date) ?? toDateKey();
   const { yazioAvailable, setYazioAvailable } = useApp();
   const { colors } = useTheme();
+  const { isWide } = useLayout();
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
   const [local, setLocal] = useState<SearchFoodResult[]>([]);
@@ -109,10 +111,14 @@ export default function SearchScreen() {
 
   return (
     <Box className="flex-1 bg-background-0">
-      <PageContainer className="flex-1">
+      <PageContainer variant={isWide ? 'wide' : 'default'} className="flex-1">
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
-        <Box className="px-4 pt-2 pb-3">
-          <Text size="2xl" bold className="text-typography-900 mb-3">
+        <Box className={`${isWide ? 'px-8' : 'px-4'} pt-2 pb-3`}>
+          <Text
+            size={isWide ? '3xl' : '2xl'}
+            bold
+            className="text-typography-900 mb-3"
+          >
             Search foods
           </Text>
           <Input size="lg" variant="rounded" className="bg-background-50">
@@ -120,7 +126,7 @@ export default function SearchScreen() {
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
             <InputField
-              placeholder="Search YAZIO foods..."
+              placeholder="Search foods..."
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
@@ -131,7 +137,7 @@ export default function SearchScreen() {
         {loading ? (
           <ActivityIndicator className="mb-2" color={colors.primary} />
         ) : null}
-        {!debounced ? (
+        {!debounced && local.length > 0 ? (
           <Text size="sm" className="text-typography-500 px-5 mb-2">
             Recent and favorite foods appear when the search is empty.
           </Text>
@@ -139,7 +145,7 @@ export default function SearchScreen() {
         <FlatList
           className="flex-1"
           data={data}
-          contentContainerClassName="pt-1 pb-8"
+          contentContainerClassName={data.length === 0 ? 'grow justify-center pb-8' : 'pt-1 pb-8'}
           keyExtractor={(item) => item.product_id}
           renderItem={({ item }) => (
             <FoodListItem
@@ -158,16 +164,35 @@ export default function SearchScreen() {
             />
           )}
           ListEmptyComponent={
-            !loading && debounced ? (
-              <Box className="items-center mt-12 px-6">
-                <Ionicons name="search-outline" size={48} color={colors.textMuted} />
-                <Text size="md" bold className="text-typography-900 mt-4 text-center">
-                  No foods found
-                </Text>
-                <Text size="sm" className="text-typography-500 mt-1 text-center">
-                  Try a different spelling or a shorter name.
-                </Text>
-              </Box>
+            !loading ? (
+              debounced ? (
+                <Box className="items-center mt-12 px-6">
+                  <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+                  <Text size="md" bold className="text-typography-900 mt-4 text-center">
+                    No foods found
+                  </Text>
+                  <Text size="sm" className="text-typography-500 mt-1 text-center">
+                    Try a different spelling or a shorter name.
+                  </Text>
+                </Box>
+              ) : (
+                <Box className="items-center px-6 pb-10">
+                  <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
+                    <Ionicons name="search-outline" size={36} color={colors.primary} />
+                  </Box>
+                  <Text size="lg" bold className="text-typography-900 mt-5 text-center">
+                    Find your foods
+                  </Text>
+                  <Text
+                    size="sm"
+                    className="text-typography-500 mt-2 text-center leading-5"
+                    style={{ maxWidth: 420 }}
+                  >
+                    Type to search thousands of foods from the YAZIO database. Your recent and
+                    favorite picks show up here too.
+                  </Text>
+                </Box>
+              )
             ) : null
           }
         />

@@ -34,12 +34,11 @@ export default function TabLayout() {
               paddingTop: 6,
               paddingBottom: 8,
               elevation: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
+              boxShadow: '0px -2px 8px rgba(0, 0, 0, 0.08)',
             },
-        tabBarItemStyle: isWide ? { paddingVertical: spacing.sm } : undefined,
+        tabBarItemStyle: isWide
+          ? { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, alignItems: 'center' }
+          : undefined,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
