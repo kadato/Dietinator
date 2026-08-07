@@ -9,7 +9,7 @@ test.describe('food search (offline)', () => {
     await page.getByText('Search', { exact: true }).click();
     await expect(page.getByText('Search foods', { exact: true })).toBeVisible();
 
-    await page.getByPlaceholder('Search YAZIO foods...').fill('oats');
+    await page.getByPlaceholder('Search foods...').fill('oats');
     // No YAZIO in tests → remote fails, offline banner appears, cached list stays usable.
     // (Both the dashboard and this tab may show the banner — assert the first.)
     await expect(page.getByText(/YAZIO unavailable/i).first()).toBeVisible({
