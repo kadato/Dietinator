@@ -1,5 +1,6 @@
 // Polyfill runs in scripts/polyfill-os.cjs before Expo CLI loads (metro.config.js is too late).
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 
 const YAZIO_API_BASE = 'https://yzapi.yazio.com/v15';
 const YAZIO_PROXY_PREFIX = '/api/yazio';
@@ -42,8 +43,6 @@ async function proxyYazioRequest(req, res) {
   const payload = Buffer.from(await upstream.arrayBuffer());
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    // Node fetch decompresses gzip/br bodies; forwarding Content-Encoding
-    // makes the browser decode again → net::ERR_CONTENT_DECODING_FAILED.
     if (
       lower === 'transfer-encoding' ||
       lower === 'content-encoding' ||
@@ -78,4 +77,4 @@ config.server.enhanceMiddleware = (middleware) => {
   };
 };
 
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' });
