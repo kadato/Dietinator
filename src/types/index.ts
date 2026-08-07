@@ -24,6 +24,7 @@ export interface CachedFood {
   producer: string | null;
   nutrients_json: string;
   serving_json: string;
+  base_unit: string;
   cached_at: string;
   is_favorite: number;
   last_used_at: string | null;

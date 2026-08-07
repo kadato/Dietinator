@@ -47,6 +47,7 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_diary_date ON diary_entries(date);
     CREATE INDEX IF NOT EXISTS idx_diary_yazio_item ON diary_entries(yazio_item_id);
+    CREATE INDEX IF NOT EXISTS idx_diary_synced ON diary_entries(yazio_synced);
 
     CREATE TABLE IF NOT EXISTS food_cache (
       yazio_product_id TEXT PRIMARY KEY NOT NULL,
@@ -55,9 +56,15 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       producer TEXT,
       nutrients_json TEXT NOT NULL,
       serving_json TEXT NOT NULL,
+      base_unit TEXT NOT NULL DEFAULT 'g',
       cached_at TEXT NOT NULL,
       is_favorite INTEGER NOT NULL DEFAULT 0,
       last_used_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS deleted_yazio_items (
+      id TEXT PRIMARY KEY NOT NULL,
+      deleted_at TEXT NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_food_barcode ON food_cache(barcode);
@@ -83,5 +90,30 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     await database.execAsync(
       `ALTER TABLE settings ADD COLUMN food_database_country TEXT NOT NULL DEFAULT ''`,
     );
+  }
+
+  const foodCacheColumns = await database.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(food_cache)',
+  );
+  if (!foodCacheColumns.some((column) => column.name === 'base_unit')) {
+    await database.execAsync(
+      `ALTER TABLE food_cache ADD COLUMN base_unit TEXT NOT NULL DEFAULT 'g'`,
+    );
+  }
+
+  // One-time cleanup (user_version 0 → 1): drop cached foods whose stored
+  // nutrients look per-gram (kcal < 10). They are either legacy raw per-gram
+  // rows or rare normalized low-cal rows — both are ambiguous to read back, so
+  // they get refetched and re-normalized from the API instead.
+  const versionRow = await database.getFirstAsync<{ user_version: number }>(
+    'PRAGMA user_version',
+  );
+  if ((versionRow?.user_version ?? 0) < 1) {
+    await database.execAsync(
+      `DELETE FROM food_cache
+       WHERE base_unit IN ('g', 'ml')
+         AND CAST(json_extract(nutrients_json, '$.kcal') AS REAL) < 10`,
+    );
+    await database.execAsync('PRAGMA user_version = 1');
   }
 }
