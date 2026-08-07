@@ -49,17 +49,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthenticated(loggedIn);
     if (loggedIn) {
       await setupClient();
-      setYazioAvailable(true);
     }
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      await getDatabase();
-      await refreshSettings();
-      await refreshAuth();
-      setReady(true);
+      try {
+        await getDatabase();
+        if (cancelled) return;
+        await refreshSettings();
+        if (cancelled) return;
+        await refreshAuth();
+      } catch {
+        // Boot must never hang on a failure — a spinner with no recovery is worse
+        // than starting up with local-only state.
+      } finally {
+        if (!cancelled) setReady(true);
+      }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshAuth, refreshSettings]);
 
   const updateSettingsFn = useCallback(async (partial: Partial<AppSettings>) => {

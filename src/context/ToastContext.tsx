@@ -52,7 +52,6 @@ function ToastHost({
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-16)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismiss = useCallback(() => {
@@ -60,24 +59,24 @@ function ToastHost({
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: -12, duration: 180, useNativeDriver: true }),
-    ]).start(({ finished }) => {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
       if (finished) onDismiss();
     });
-  }, [opacity, translateY, onDismiss]);
+  }, [opacity, onDismiss]);
 
   useEffect(() => {
     if (!toast) return;
 
-    opacity.setValue(0);
-    translateY.setValue(-16);
-
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
+    opacity.setValue(1);
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
 
     const type = toast.type ?? 'info';
     const duration = toast.duration ?? DEFAULT_DURATION[type];
@@ -86,7 +85,7 @@ function ToastHost({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [toast, opacity, translateY, dismiss]);
+  }, [toast, opacity, dismiss]);
 
   if (!toast) return null;
 
@@ -97,7 +96,7 @@ function ToastHost({
   return (
     <View style={[styles.host, { paddingTop: insets.top + spacing.sm }]} pointerEvents="box-none">
       <Animated.View
-        style={[styles.toast, toastAccent(type, colors), { opacity, transform: [{ translateY }] }]}
+        style={[styles.toast, toastAccent(type, colors), { opacity }]}
       >
         <Pressable style={styles.row} onPress={dismiss} accessibilityRole="button">
           <Ionicons name={icon.name} size={22} color={icon.color} style={styles.icon} />
