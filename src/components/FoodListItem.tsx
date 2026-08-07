@@ -24,23 +24,25 @@ export function FoodListItem({
   const { colors } = useTheme();
 
   return (
-    <Pressable
-      className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3.5 active:opacity-90 shadow-soft-1"
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${food.name}, ${Math.round(food.nutrients.kcal)} calories`}
-    >
-      <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-muted">
-        <Ionicons name="nutrition-outline" size={20} color={colors.primary} />
-      </Box>
-      <Box className="flex-1 min-w-0">
-        <Text size="md" bold className="text-typography-900" numberOfLines={1}>
-          {food.name}
-        </Text>
-        <Text size="xs" className="text-typography-500 mt-0.5" numberOfLines={1}>
-          {subtitle ?? formatListNutrientLine(food)}
-        </Text>
-      </Box>
+    <Box className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3.5 shadow-soft-1">
+      <Pressable
+        className="min-w-0 flex-1 flex-row items-center active:opacity-90"
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${food.name}, ${Math.round(food.nutrients.kcal)} calories`}
+      >
+        <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-muted">
+          <Ionicons name="nutrition-outline" size={20} color={colors.primary} />
+        </Box>
+        <Box className="flex-1 min-w-0">
+          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+            {food.name}
+          </Text>
+          <Text size="xs" className="text-typography-500 mt-0.5" numberOfLines={1}>
+            {subtitle ?? formatListNutrientLine(food)}
+          </Text>
+        </Box>
+      </Pressable>
       {onToggleFavorite ? (
         <Pressable
           onPress={onToggleFavorite}
@@ -59,6 +61,6 @@ export function FoodListItem({
       ) : (
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       )}
-    </Pressable>
+    </Box>
   );
 }
