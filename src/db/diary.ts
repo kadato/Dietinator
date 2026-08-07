@@ -31,6 +31,15 @@ export async function getDiaryEntriesForDate(
   return rows.map(rowToEntry);
 }
 
+export async function getDiaryEntryById(id: string): Promise<DiaryEntry | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<Record<string, unknown>>(
+    'SELECT * FROM diary_entries WHERE id = ?',
+    id,
+  );
+  return row ? rowToEntry(row) : null;
+}
+
 export async function addDiaryEntry(entry: Omit<DiaryEntry, 'yazio_synced' | 'yazio_item_id'> & {
   yazio_synced?: number;
   yazio_item_id?: string | null;
@@ -84,6 +93,53 @@ export async function updateDiaryEntryNutrients(
   );
 }
 
+export async function updateDiaryEntryDetails(
+  id: string,
+  details: {
+    amount: number;
+    unit?: string;
+    meal_type?: MealType;
+    food_name?: string;
+    nutrients?: FoodNutrients;
+  },
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE diary_entries SET
+      amount = ?,
+      unit = ?,
+      meal_type = ?,
+      food_name = ?,
+      kcal = ?,
+      protein = ?,
+      carbs = ?,
+      fat = ?
+    WHERE id = ?`,
+    details.amount,
+    details.unit ?? 'g',
+    details.meal_type ?? 'lunch',
+    details.food_name ?? '',
+    details.nutrients?.kcal ?? 0,
+    details.nutrients?.protein ?? 0,
+    details.nutrients?.carbs ?? 0,
+    details.nutrients?.fat ?? 0,
+    id,
+  );
+}
+
+/** Reserve the YAZIO item id before the network push so retries reuse it (idempotent sync). */
+export async function reserveYazioItemId(
+  id: string,
+  yazioItemId: string,
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'UPDATE diary_entries SET yazio_item_id = ? WHERE id = ? AND yazio_synced = 0',
+    yazioItemId,
+    id,
+  );
+}
+
 export async function markDiaryEntrySynced(
   id: string,
   yazioItemId: string,
@@ -109,27 +165,37 @@ export async function getYazioItemIdsForDate(date: string): Promise<Set<string>>
   return ids;
 }
 
-export async function getUnsyncedEntries(): Promise<DiaryEntry[]> {
+export async function getUnsyncedEntries(limit = 20): Promise<DiaryEntry[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<Record<string, unknown>>(
-    'SELECT * FROM diary_entries WHERE yazio_synced = 0 AND food_id IS NOT NULL',
+    'SELECT * FROM diary_entries WHERE yazio_synced = 0 AND food_id IS NOT NULL ORDER BY created_at ASC LIMIT ?',
+    limit,
   );
   return rows.map(rowToEntry);
 }
 
-export async function getDiaryTotalsForDate(
-  date: string,
-): Promise<FoodNutrients> {
-  const entries = await getDiaryEntriesForDate(date);
-  return entries.reduce(
-    (acc, e) => ({
-      kcal: acc.kcal + e.kcal,
-      protein: acc.protein + e.protein,
-      carbs: acc.carbs + e.carbs,
-      fat: acc.fat + e.fat,
-    }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+export async function getDeletedYazioItemIds(): Promise<Set<string>> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ id: string }>(
+    'SELECT id FROM deleted_yazio_items',
   );
+  return new Set(rows.map((row) => row.id));
+}
+
+export async function addDeletedYazioItemId(id: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'INSERT OR IGNORE INTO deleted_yazio_items (id, deleted_at) VALUES (?, ?)',
+    id,
+    new Date().toISOString(),
+  );
+}
+
+/** Keep tombstones tidy: drop anything older than 90 days. */
+export async function pruneDeletedYazioItems(days = 90): Promise<void> {
+  const db = await getDatabase();
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+  await db.runAsync('DELETE FROM deleted_yazio_items WHERE deleted_at < ?', cutoff);
 }
 
 export async function exportDiaryJson(): Promise<string> {
@@ -138,13 +204,30 @@ export async function exportDiaryJson(): Promise<string> {
   return JSON.stringify(rows, null, 2);
 }
 
+/** Quote every CSV field and neutralize spreadsheet formula injection. */
+function csvCell(value: unknown): string {
+  let text = String(value ?? '');
+  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  text = text.replace(/"/g, '""').replace(/[\r\n]+/g, ' ');
+  return `"${text}"`;
+}
+
 export async function exportDiaryCsv(): Promise<string> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<DiaryEntry>('SELECT * FROM diary_entries ORDER BY date DESC, created_at DESC');
   const header = 'date,meal_type,food_name,amount,unit,kcal,protein,carbs,fat';
-  const lines = rows.map(
-    (r) =>
-      `${r.date},${r.meal_type},"${r.food_name.replace(/"/g, '""')}",${r.amount},${r.unit},${r.kcal},${r.protein},${r.carbs},${r.fat}`,
+  const lines = rows.map((r) =>
+    [
+      csvCell(r.date),
+      csvCell(r.meal_type),
+      csvCell(r.food_name),
+      csvCell(r.amount),
+      csvCell(r.unit),
+      csvCell(r.kcal),
+      csvCell(r.protein),
+      csvCell(r.carbs),
+      csvCell(r.fat),
+    ].join(','),
   );
   return [header, ...lines].join('\n');
 }
