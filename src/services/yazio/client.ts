@@ -79,7 +79,11 @@ export async function initYazioClient(): Promise<Yazio | null> {
     await saveToken(refreshed);
   };
 
-  if (token) {
+  // Pass BOTH when available: an expired cached token cannot be refreshed
+  // without credentials (the yazio client re-auths from `credentials`).
+  if (token && credentials) {
+    client = new Yazio({ token, credentials, onRefresh });
+  } else if (token) {
     client = new Yazio({ token, onRefresh });
   } else if (credentials) {
     client = new Yazio({ credentials, onRefresh });
@@ -93,7 +97,6 @@ export async function loginWithCredentials(
   password: string,
 ): Promise<Yazio> {
   const { saveCredentials } = await import('./auth-storage');
-  await saveCredentials({ username, password });
 
   const yazio = new Yazio({
     credentials: { username, password },
@@ -102,6 +105,8 @@ export async function loginWithCredentials(
     },
   });
 
+  // Validate credentials BEFORE persisting them — a failed login must not
+  // leave stale credentials behind that poison every later session.
   await yazio.user.get();
   clearYazioProfileCache();
   const { getToken: readStoredToken } = await import('./auth-storage');
@@ -109,6 +114,7 @@ export async function loginWithCredentials(
   if (!stored) {
     throw new Error('Authentication succeeded but no token was stored.');
   }
+  await saveCredentials({ username, password });
   client = yazio;
   return yazio;
 }
