@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Linking,
 } from 'react-native';
 import { useToast } from '@/context/ToastContext';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -18,14 +19,10 @@ import { PageContainer } from '@/components/PageContainer';
 import { useApp } from '@/context/AppContext';
 import type { SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
+import { routeParam } from '@/utils/route';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { spacing, type ColorPalette } from '@/theme';
-
-function routeParam(value: string | string[] | undefined): string | undefined {
-  if (value == null) return undefined;
-  return Array.isArray(value) ? value[0] : value;
-}
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -43,10 +40,16 @@ export default function ScanScreen() {
   const [lastBarcode, setLastBarcode] = useState('');
 
   useEffect(() => {
-    if (!permission?.granted) {
+    if (!permission?.granted && permission?.canAskAgain !== false) {
       requestPermission();
     }
   }, [permission, requestPermission]);
+
+  const resetForNextScan = () => {
+    setResults([]);
+    setScanned(false);
+    setLastBarcode('');
+  };
 
   const lookupBarcode = async (barcode: string) => {
     setLoading(true);
@@ -72,7 +75,7 @@ export default function ScanScreen() {
                   params: { meal: mealType, date: dateKey },
                 }),
             },
-            { text: 'OK' },
+            { text: 'OK', onPress: resetForNextScan },
           ],
         );
         setScanned(false);
@@ -114,10 +117,31 @@ export default function ScanScreen() {
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <Text style={styles.message}>Camera permission is required to scan barcodes.</Text>
-          <Pressable style={styles.btn} onPress={requestPermission}>
-            <Text style={styles.btnText}>Grant permission</Text>
-          </Pressable>
-          <Pressable style={styles.close} onPress={() => router.back()}>
+          {permission.canAskAgain === false ? (
+            <>
+              <Text style={styles.hint}>
+                Permission was denied permanently. Open system settings to allow the camera.
+              </Text>
+              <Pressable
+                style={styles.btn}
+                onPress={() => Linking.openSettings()}
+                accessibilityRole="button"
+                accessibilityLabel="Open system settings"
+              >
+                <Text style={styles.btnText}>Open settings</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              style={styles.btn}
+              onPress={requestPermission}
+              accessibilityRole="button"
+              accessibilityLabel="Grant camera permission"
+            >
+              <Text style={styles.btnText}>Grant permission</Text>
+            </Pressable>
+          )}
+          <Pressable style={styles.close} onPress={() => router.back()} accessibilityRole="button">
             <Text style={styles.closeText}>Cancel</Text>
           </Pressable>
         </PageContainer>
@@ -149,7 +173,17 @@ export default function ScanScreen() {
             data={results}
             keyExtractor={(item) => item.product_id}
             ListHeaderComponent={
-              <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+              <>
+                <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+                <Pressable
+                  style={styles.scanAgainBtn}
+                  onPress={resetForNextScan}
+                  accessibilityRole="button"
+                  accessibilityLabel="Scan another barcode"
+                >
+                  <Text style={styles.scanAgainText}>Scan another</Text>
+                </Pressable>
+              </>
             }
             renderItem={({ item }) => (
               <FoodListItem food={item} onPress={() => openFood(item)} />
@@ -163,7 +197,12 @@ export default function ScanScreen() {
           <Text style={styles.overlayText}>Looking up {lastBarcode}...</Text>
         </View>
       )}
-      <Pressable style={styles.closeFab} onPress={() => router.back()}>
+      <Pressable
+        style={styles.closeFab}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Close scanner"
+      >
         <Text style={styles.closeText}>Close</Text>
       </Pressable>
     </View>
@@ -181,6 +220,16 @@ const createStyles = (colors: ColorPalette) =>
     fontWeight: '600',
     padding: spacing.md,
   },
+  scanAgainBtn: {
+    alignSelf: 'flex-start',
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  scanAgainText: { color: colors.onPrimary, fontWeight: '700' },
   center: {
     flex: 1,
     backgroundColor: colors.background,
@@ -191,7 +240,13 @@ const createStyles = (colors: ColorPalette) =>
     alignItems: 'center',
     padding: spacing.lg,
   },
-  message: { color: colors.text, textAlign: 'center', marginBottom: spacing.lg },
+  message: { color: colors.text, textAlign: 'center', marginBottom: spacing.sm },
+  hint: {
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    maxWidth: 280,
+  },
   btn: {
     backgroundColor: colors.primary,
     padding: spacing.md,
@@ -204,7 +259,7 @@ const createStyles = (colors: ColorPalette) =>
     alignItems: 'center',
     justifyContent: 'center',
   },
-  overlayText: { color: colors.text, marginTop: spacing.md },
+  overlayText: { color: '#ffffff', marginTop: spacing.md },
   closeFab: {
     position: 'absolute',
     bottom: 40,
