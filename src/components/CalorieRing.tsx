@@ -7,18 +7,20 @@ import { spacing, type ColorPalette } from '@/theme';
 type Props = {
   consumed: number;
   goal: number;
+  burned?: number;
 };
 
-export function CalorieRing({ consumed, goal }: Props) {
+export function CalorieRing({ consumed, goal, burned = 0 }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const remaining = Math.max(goal - consumed, 0);
   const over = consumed > goal ? consumed - goal : 0;
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0;
+  const ringColor = over > 0 ? colors.danger : colors.primary;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Summary</Text>
+      <Text style={styles.sectionTitle}>Today</Text>
       <View style={styles.row}>
         <View style={styles.sideStat}>
           <Text style={styles.sideValue}>{Math.round(consumed).toLocaleString()}</Text>
@@ -28,22 +30,24 @@ export function CalorieRing({ consumed, goal }: Props) {
         <View style={styles.ringWrap}>
           <ProgressRing
             progress={progress}
-            size={132}
-            stroke={8}
-            color={colors.primary}
+            size={140}
+            stroke={10}
+            color={ringColor}
             trackColor={colors.surfaceAlt}
           >
             <View style={styles.ringCenter}>
-              <Text style={styles.remainingValue}>
+              <Text style={[styles.remainingValue, over > 0 && { color: colors.danger }]}>
                 {over > 0 ? Math.round(over).toLocaleString() : Math.round(remaining).toLocaleString()}
               </Text>
-              <Text style={styles.remainingLabel}>{over > 0 ? 'Over' : 'Remaining'}</Text>
+              <Text style={styles.remainingLabel}>{over > 0 ? 'Over goal' : 'Remaining'}</Text>
             </View>
           </ProgressRing>
         </View>
 
         <View style={styles.sideStat}>
-          <Text style={styles.sideValue}>0</Text>
+          <Text style={styles.sideValue}>
+            {burned > 0 ? Math.round(burned).toLocaleString() : '–'}
+          </Text>
           <Text style={styles.sideLabel}>Burned</Text>
         </View>
       </View>

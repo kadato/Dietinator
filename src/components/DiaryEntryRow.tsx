@@ -7,10 +7,11 @@ import { spacing, type ColorPalette } from '@/theme';
 type Props = {
   entry: DiaryEntry;
   accentColor: string;
+  onEdit: () => void;
   onDelete: () => void;
 };
 
-export function DiaryEntryRow({ entry, accentColor, onDelete }: Props) {
+export function DiaryEntryRow({ entry, accentColor, onEdit, onDelete }: Props) {
   const styles = useThemedStyles(createStyles);
   const amountLabel =
     entry.unit === 'serving'
@@ -19,10 +20,12 @@ export function DiaryEntryRow({ entry, accentColor, onDelete }: Props) {
 
   return (
     <Pressable
+      onPress={onEdit}
       onLongPress={onDelete}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       accessibilityRole="button"
       accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
+      accessibilityHint="Tap to edit, long press to delete"
     >
       <View style={[styles.iconWrap, { backgroundColor: accentColor + '22' }]}>
         <Ionicons name="nutrition-outline" size={18} color={accentColor} />

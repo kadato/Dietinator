@@ -43,8 +43,8 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
 
   return (
     <View style={styles.container}>
-      <MacroRow label="Carbs" value={carbs} goal={carbsGoal} color={colors.lunch} styles={styles} />
       <MacroRow label="Protein" value={protein} goal={proteinGoal} color={colors.breakfast} styles={styles} />
+      <MacroRow label="Carbs" value={carbs} goal={carbsGoal} color={colors.lunch} styles={styles} />
       <MacroRow label="Fat" value={fat} goal={fatGoal} color={colors.dinner} styles={styles} />
     </View>
   );
@@ -69,11 +69,11 @@ const createStyles = (colors: ColorPalette) =>
     },
     label: { fontSize: 14, color: colors.text, fontWeight: '600', flexShrink: 0 },
     barBg: {
-      height: 8,
+      height: 10,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 4,
+      borderRadius: 999,
       overflow: 'hidden',
     },
-    barFill: { height: '100%', borderRadius: 4 },
+    barFill: { height: '100%', borderRadius: 999 },
     value: { fontSize: 13, color: colors.textMuted, fontWeight: '500', flexShrink: 0 },
   });
