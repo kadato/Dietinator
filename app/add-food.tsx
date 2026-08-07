@@ -7,9 +7,11 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { logFood } from '@/services/diary';
+import { logFood, updateDiaryEntry } from '@/services/diary';
 import { getFoodRemote } from '@/services/yazio/foods';
 import {
   getFoodById,
@@ -17,6 +19,7 @@ import {
   saveFoodToCache,
   toggleFavorite,
 } from '@/db/food-cache';
+import { getDiaryEntryById } from '@/db/diary';
 import type { FoodServing, MealType, SearchFoodResult } from '@/types';
 import {
   isPerGramNutrients,
@@ -27,6 +30,9 @@ import {
   formatNutrientsServingLabel,
   formatServingOption,
 } from '@/utils/food-display';
+import { routeParam } from '@/utils/route';
+import { toDateKey } from '@/utils/date';
+import { MEAL_LABELS } from '@/utils/meals';
 import { NutritionFactsCard } from '@/components/NutritionFactsCard';
 import { PageContainer } from '@/components/PageContainer';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
@@ -34,10 +40,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
 
-function routeParam(value: string | string[] | undefined): string | undefined {
-  if (value == null) return undefined;
-  return Array.isArray(value) ? value[0] : value;
-}
+const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export default function AddFoodScreen() {
   const router = useRouter();
@@ -48,30 +51,111 @@ export default function AddFoodScreen() {
     meal: string;
     date: string;
     productId?: string;
+    entryId?: string;
   }>();
 
   const mealType = (routeParam(params.meal) ?? 'lunch') as MealType;
-  const date = routeParam(params.date) ?? new Date().toISOString().slice(0, 10);
+  const date = routeParam(params.date) ?? toDateKey();
   const productId = routeParam(params.productId);
-
-  useEffect(() => {
-    if (!productId) {
-      router.back();
-    }
-  }, [productId, router]);
+  const entryId = routeParam(params.entryId);
+  const isEditing = Boolean(entryId);
 
   const [food, setFood] = useState<SearchFoodResult | null>(null);
-  const [loadingFood, setLoadingFood] = useState(Boolean(productId));
+  const [loadingFood, setLoadingFood] = useState(Boolean(productId) || Boolean(entryId));
   const [isFavorite, setIsFavorite] = useState(false);
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealType>(mealType);
 
   useEffect(() => {
-    if (!productId) {
-      setLoadingFood(false);
-      return;
+    if (!productId && !entryId) {
+      router.back();
     }
+  }, [productId, entryId, router]);
 
+  // Edit mode: load the existing entry and resolve its food (cache → remote).
+  useEffect(() => {
+    if (!entryId) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingFood(true);
+      try {
+        const entry = await getDiaryEntryById(entryId);
+        if (!entry) {
+          showError(new Error('Entry not found.'), 'It may have been deleted.');
+          router.back();
+          return;
+        }
+        setSelectedMeal(entry.meal_type);
+        setAmount(String(entry.amount));
+        if (!entry.food_id) {
+          // Manual entries have no product — treat stored totals as the base.
+          const nutrients = {
+            kcal: entry.kcal,
+            protein: entry.protein,
+            carbs: entry.carbs,
+            fat: entry.fat,
+          };
+          const ref = entry.amount > 0 ? entry.amount : 1;
+          setFood({
+            product_id: `manual-${entryId}`,
+            name: entry.food_name,
+            producer: '',
+            nutrients,
+            serving: { serving: entry.unit, amount: ref, serving_quantity: ref },
+            base_unit: entry.unit,
+            is_verified: false,
+          });
+          setLoadingFood(false);
+          return;
+        }
+        const resolved =
+          (await getFoodRemote(entry.food_id)) ?? (await getFoodById(entry.food_id));
+        if (cancelled) return;
+        if (!resolved) {
+          showError(
+            new Error('Could not load food details'),
+            'Try again or pick another item.',
+          );
+          setLoadingFood(false);
+          return;
+        }
+        const initialServing = resolved.servings?.[0] ?? resolved.serving;
+        const unit = resolved.base_unit || 'g';
+        const ref = resolveNutrientsRefAmount(resolved.nutrients, resolved.serving, unit);
+        const perHundred = Boolean(resolved.servings?.length) && ref === 100;
+        setFood({
+          ...resolved,
+          serving: {
+            serving: initialServing.serving,
+            amount: initialServing.amount,
+            serving_quantity: perHundred
+              ? ref
+              : initialServing.serving_quantity > 0
+                ? initialServing.serving_quantity
+                : initialServing.amount,
+          },
+        });
+        setIsFavorite(await getIsFavorite(resolved.product_id));
+      } catch {
+        if (!cancelled) {
+          showError(
+            new Error('Could not load food details'),
+            'Try again or pick another item.',
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingFood(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entryId, router, showError]);
+
+  // New-entry mode: load product details.
+  useEffect(() => {
+    if (!productId || entryId) return;
     let cancelled = false;
     (async () => {
       setLoadingFood(true);
@@ -80,7 +164,11 @@ export default function AddFoodScreen() {
           (await getFoodRemote(productId)) ?? (await getFoodById(productId));
         if (
           resolved &&
-          isPerGramNutrients(resolved.nutrients, resolved.base_unit || 'g')
+          isPerGramNutrients(
+            resolved.nutrients,
+            resolved.base_unit || 'g',
+            resolved.serving.serving_quantity,
+          )
         ) {
           const refreshed = await getFoodRemote(productId);
           if (refreshed) resolved = refreshed;
@@ -124,19 +212,7 @@ export default function AddFoodScreen() {
     return () => {
       cancelled = true;
     };
-  }, [productId, showError]);
-
-  useEffect(() => {
-    if (!productId) return;
-    let cancelled = false;
-    (async () => {
-      const fav = await getIsFavorite(productId);
-      if (!cancelled) setIsFavorite(fav);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [productId]);
+  }, [productId, entryId, showError]);
 
   const servingOptions = useMemo((): FoodServing[] => {
     if (!food) return [];
@@ -199,12 +275,16 @@ export default function AddFoodScreen() {
     }
     setSaving(true);
     try {
-      let resolved = food;
-      if (!resolved.nutrients.kcal && productId) {
-        const remote = await getFoodRemote(productId);
-        if (remote) resolved = remote;
+      if (isEditing && entryId) {
+        await updateDiaryEntry({ id: entryId, amount: amt, mealType: selectedMeal });
+      } else {
+        let resolved = food;
+        if (!resolved.nutrients.kcal && productId) {
+          const remote = await getFoodRemote(productId);
+          if (remote) resolved = remote;
+        }
+        await logFood({ date, mealType: selectedMeal, food: resolved, amount: amt });
       }
-      await logFood({ date, mealType, food: resolved, amount: amt });
       router.back();
     } catch (error) {
       showError(error, 'Could not save entry.');
@@ -229,11 +309,9 @@ export default function AddFoodScreen() {
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>
-            Could not load this food.
-          </Text>
-          {productId ? (
-            <Pressable onPress={() => router.back()}>
+          <Text style={styles.loadingText}>Could not load this food.</Text>
+          {productId || entryId ? (
+            <Pressable onPress={() => router.back()} accessibilityRole="button">
               <Text style={styles.link}>Go back</Text>
             </Pressable>
           ) : null}
@@ -246,88 +324,137 @@ export default function AddFoodScreen() {
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
-        <View style={styles.titleRow}>
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>{food.name}</Text>
-            {food.producer ? (
-              <Text style={styles.producer}>{food.producer}</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
+          <View style={styles.titleRow}>
+            <View style={styles.titleBlock}>
+              <Text style={styles.title}>{food.name}</Text>
+              {food.producer ? (
+                <Text style={styles.producer}>{food.producer}</Text>
+              ) : null}
+            </View>
+            {!isEditing ? (
+              <Pressable
+                onPress={handleToggleFavorite}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isFavorite ? 'Remove from favorites' : 'Add to favorites'
+                }
+              >
+                <Text style={styles.star}>{isFavorite ? '★' : '☆'}</Text>
+              </Pressable>
             ) : null}
           </View>
-          <Pressable
-            onPress={handleToggleFavorite}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isFavorite ? 'Remove from favorites' : 'Add to favorites'
-            }
-          >
-            <Text style={styles.star}>{isFavorite ? '★' : '☆'}</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.subtitle}>
-          {mealType} · {date}
-        </Text>
-
-        <Text style={styles.sectionLabel}>Serving size</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.servingRow}
-        >
-          {servingOptions.map((option) => {
-            const key = `${option.serving}-${option.amount}`;
-            const selected = key === selectedServingKey;
-            return (
-              <Pressable
-                key={key}
-                style={[styles.servingChip, selected && styles.servingChipSelected]}
-                onPress={() => selectServing(option)}
-              >
-                <Text
-                  style={[
-                    styles.servingChipText,
-                    selected && styles.servingChipTextSelected,
-                  ]}
-                >
-                  {formatServingOption(option, unit)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        <Text style={styles.label}>Amount ({unit})</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="decimal-pad"
-          value={amount}
-          onChangeText={setAmount}
-        />
-
-        {preview && (
-          <NutritionFactsCard
-            nutrients={preview}
-            servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
-          />
-        )}
-
-        <Pressable
-          style={[styles.saveBtn, saving && styles.saveDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          <Text style={styles.saveText}>
-            {saving ? 'Saving...' : 'Add to diary'}
+          <Text style={styles.subtitle}>
+            {MEAL_LABELS[selectedMeal]} · {date}
           </Text>
-        </Pressable>
 
-        <Pressable style={styles.cancel} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </Pressable>
-      </PageContainer>
-    </ScrollView>
+          {isEditing ? (
+            <>
+              <Text style={styles.label}>Meal</Text>
+              <View style={styles.mealRow}>
+                {MEALS.map((meal) => {
+                  const active = meal === selectedMeal;
+                  return (
+                    <Pressable
+                      key={meal}
+                      style={[styles.mealChip, active && styles.mealChipSelected]}
+                      onPress={() => setSelectedMeal(meal)}
+                      accessibilityRole="button"
+                      accessibilityLabel={MEAL_LABELS[meal]}
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text
+                        style={[styles.mealChipText, active && styles.mealChipTextSelected]}
+                      >
+                        {MEAL_LABELS[meal]}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : null}
+
+          <Text style={styles.sectionLabel}>Serving size</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.servingRow}
+            keyboardShouldPersistTaps="handled"
+          >
+            {servingOptions.map((option) => {
+              const key = `${option.serving}-${option.amount}`;
+              const selected = key === selectedServingKey;
+              return (
+                <Pressable
+                  key={key}
+                  style={[styles.servingChip, selected && styles.servingChipSelected]}
+                  onPress={() => selectServing(option)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
+                  accessibilityState={{ selected }}
+                >
+                  <Text
+                    style={[
+                      styles.servingChipText,
+                      selected && styles.servingChipTextSelected,
+                    ]}
+                  >
+                    {formatServingOption(option, unit)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <Text style={styles.label}>Amount ({unit})</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="decimal-pad"
+            value={amount}
+            onChangeText={setAmount}
+            accessibilityLabel={`Amount in ${unit}`}
+          />
+
+          {preview && (
+            <NutritionFactsCard
+              nutrients={preview}
+              servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+            />
+          )}
+
+          <Pressable
+            style={[styles.saveBtn, saving && styles.saveDisabled]}
+            onPress={handleSave}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityLabel={isEditing ? 'Update entry' : 'Add to diary'}
+          >
+            <Text style={styles.saveText}>
+              {saving ? 'Saving...' : isEditing ? 'Update entry' : 'Add to diary'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.cancel}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </Pressable>
+        </PageContainer>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -348,7 +475,6 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.md,
     },
     loadingText: { color: colors.textMuted, fontSize: 14 },
-    message: { color: colors.text },
     link: { color: colors.primary, marginTop: spacing.md },
     titleRow: {
       flexDirection: 'row',
@@ -373,6 +499,32 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 13,
       fontWeight: '600',
       marginBottom: spacing.sm,
+    },
+    mealRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginBottom: spacing.lg,
+    },
+    mealChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mealChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    mealChipText: {
+      fontSize: 14,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    mealChipTextSelected: {
+      color: colors.onPrimary,
     },
     servingRow: {
       flexDirection: 'row',
