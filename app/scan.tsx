@@ -5,24 +5,33 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Alert,
   FlatList,
   Linking,
+  Platform,
+  TextInput,
 } from 'react-native';
 import { useToast } from '@/context/ToastContext';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import type { MealType } from '@/types';
 import { getFoodByBarcode, searchFoodsRemote } from '@/services/yazio/foods';
 import { FoodListItem } from '@/components/FoodListItem';
 import { PageContainer } from '@/components/PageContainer';
+import { ModalContainer } from '@/components/ModalContainer';
 import { useApp } from '@/context/AppContext';
 import type { SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
 import { routeParam } from '@/utils/route';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { confirmAction } from '@/utils/confirm';
 import { spacing, type ColorPalette } from '@/theme';
+import { Box } from '@ui/box';
+import { Input, InputField } from '@ui/input';
+import { Button, ButtonText } from '@ui/button';
+
+const MANUAL_SCAN_ON_WEB = Platform.OS === 'web';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -38,9 +47,11 @@ export default function ScanScreen() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchFoodResult[]>([]);
   const [lastBarcode, setLastBarcode] = useState('');
+  const [manualBarcode, setManualBarcode] = useState('');
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!permission?.granted && permission?.canAskAgain !== false) {
+    if (!MANUAL_SCAN_ON_WEB && !permission?.granted && permission?.canAskAgain !== false) {
       requestPermission();
     }
   }, [permission, requestPermission]);
@@ -49,11 +60,14 @@ export default function ScanScreen() {
     setResults([]);
     setScanned(false);
     setLastBarcode('');
+    setNotFound(false);
+    setManualBarcode('');
   };
 
   const lookupBarcode = async (barcode: string) => {
     setLoading(true);
     setLastBarcode(barcode);
+    setNotFound(false);
     try {
       const match = await getFoodByBarcode(barcode);
       if (match) {
@@ -63,21 +77,7 @@ export default function ScanScreen() {
       const remote = await searchFoodsRemote(barcode);
       setYazioAvailable(true);
       if (remote.length === 0) {
-        Alert.alert(
-          'Not found',
-          'No YAZIO match for this barcode. Try manual search.',
-          [
-            {
-              text: 'Search',
-              onPress: () =>
-                router.replace({
-                  pathname: '/log-meal',
-                  params: { meal: mealType, date: dateKey },
-                }),
-            },
-            { text: 'OK', onPress: resetForNextScan },
-          ],
-        );
+        setNotFound(true);
         setScanned(false);
       } else if (remote.length === 1) {
         openFood(remote[0]);
@@ -93,6 +93,26 @@ export default function ScanScreen() {
     }
   };
 
+  const handleManualLookup = () => {
+    const barcode = manualBarcode.replace(/\D/g, '');
+    if (!barcode) return;
+    lookupBarcode(barcode);
+  };
+
+  const confirmNotFound = () => {
+    confirmAction({
+      title: 'Not found',
+      message: 'No YAZIO match for this barcode. Try manual search.',
+      confirmLabel: 'Search',
+      onConfirm: () =>
+        router.replace({
+          pathname: '/log-meal',
+          params: { meal: mealType, date: dateKey },
+        }),
+      onCancel: resetForNextScan,
+    });
+  };
+
   const openFood = (food: SearchFoodResult) => {
     router.replace({
       pathname: '/add-food',
@@ -103,6 +123,107 @@ export default function ScanScreen() {
       },
     });
   };
+
+  if (MANUAL_SCAN_ON_WEB) {
+    return (
+      <View style={styles.container}>
+        <ModalContainer hug maxWidth={640}>
+        <Box className="flex-1" style={styles.webScanContent}>
+          <Box className="flex-row items-center justify-between mb-2">
+            <Text style={styles.webScanTitle}>Scan barcode</Text>
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={28} color={colors.text} />
+            </Pressable>
+          </Box>
+          <Text style={styles.webScanHint}>
+            Camera scanning is not available in the browser. Enter the barcode
+            number from the product label instead (EAN-13 / UPC).
+          </Text>
+          <Input size="lg" variant="rounded" className="bg-background-50 mb-3">
+            <InputField
+              placeholder="e.g. 4000539012345"
+              keyboardType="number-pad"
+              value={manualBarcode}
+              onChangeText={(value) => {
+                setManualBarcode(value);
+                setNotFound(false);
+              }}
+              autoCorrect={false}
+              onSubmitEditing={handleManualLookup}
+              returnKeyType="search"
+              accessibilityLabel="Barcode number"
+            />
+          </Input>
+          <Button size="lg" onPress={handleManualLookup} disabled={loading}>
+            <ButtonText>{loading ? 'Looking up...' : 'Look up barcode'}</ButtonText>
+          </Button>
+
+          {notFound ? (
+            <Box className="mt-8 items-center">
+              <Ionicons name="search-outline" size={44} color={colors.textMuted} />
+              <Text style={styles.notFoundText}>
+                No YAZIO match for {lastBarcode}.
+              </Text>
+              <Button
+                size="md"
+                variant="outline"
+                action="secondary"
+                className="mt-4"
+                onPress={confirmNotFound}
+              >
+                <ButtonText>Search for a food instead</ButtonText>
+              </Button>
+              <Pressable
+                style={styles.linkBtn}
+                onPress={resetForNextScan}
+                accessibilityRole="button"
+                accessibilityLabel="Clear barcode"
+              >
+                <Text style={styles.linkBtnText}>Try another barcode</Text>
+              </Pressable>
+            </Box>
+          ) : null}
+
+          {results.length > 0 ? (
+            <FlatList
+              style={styles.list}
+              data={results}
+              keyExtractor={(item) => item.product_id}
+              ListHeaderComponent={
+                <>
+                  <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+                  <Pressable
+                    style={styles.scanAgainBtn}
+                    onPress={resetForNextScan}
+                    accessibilityRole="button"
+                    accessibilityLabel="Scan another barcode"
+                  >
+                    <Text style={styles.scanAgainText}>Scan another</Text>
+                  </Pressable>
+                </>
+              }
+              renderItem={({ item }) => (
+                <FoodListItem food={item} onPress={() => openFood(item)} />
+              )}
+            />
+          ) : null}
+
+          {loading ? (
+            <Box className="flex-row items-center justify-center gap-2 mt-6">
+              <ActivityIndicator color={colors.primary} />
+              <Text style={styles.overlayText}>Looking up {lastBarcode}...</Text>
+            </Box>
+          ) : null}
+        </Box>
+        </ModalContainer>
+      </View>
+    );
+  }
 
   if (!permission) {
     return (
@@ -214,6 +335,26 @@ const createStyles = (colors: ColorPalette) =>
   container: { flex: 1, backgroundColor: colors.background },
   camera: { flex: 1 },
   list: { flex: 1 },
+  webScanContent: { padding: spacing.lg, paddingTop: spacing.md },
+  webScanTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  webScanHint: {
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  notFoundText: {
+    color: colors.text,
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  linkBtn: { marginTop: spacing.md },
+  linkBtnText: { color: colors.primary, fontWeight: '600', fontSize: 15 },
   pickerTitle: {
     color: colors.text,
     fontSize: 16,

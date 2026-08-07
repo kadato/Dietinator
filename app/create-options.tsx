@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '@/context/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
+import { ModalContainer } from '@/components/ModalContainer';
 import type { MealType } from '@/types';
 import { toDateKey } from '@/utils/date';
 import { routeParam } from '@/utils/route';
@@ -50,7 +51,7 @@ const OPTIONS: CreateOption[] = [
     description: 'Foods you often eat together (e.g. Cornflakes with milk)',
     icon: 'restaurant',
     iconColor: '#14b8a6',
-    available: false,
+    available: true,
   },
   {
     id: 'recipe',
@@ -73,12 +74,15 @@ export default function CreateOptionsScreen() {
 
   const onSelect = (option: CreateOption) => {
     if (!option.available) {
-      showWarning('Creating meals and recipes on YAZIO is not supported by this app yet.', 'Coming soon');
+      showWarning('Creating recipes on YAZIO is not supported by this app yet.', 'Coming soon');
       return;
     }
     switch (option.id) {
       case 'barcode-food':
         router.push({ pathname: '/scan', params: { meal: mealType, date } });
+        break;
+      case 'meal':
+        router.push({ pathname: '/meal-builder', params: { meal: mealType, date } });
         break;
       case 'manual-food':
       case 'quick-add':
@@ -93,7 +97,7 @@ export default function CreateOptionsScreen() {
   };
 
   return (
-    <Box className="flex-1 bg-background-50">
+    <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
       <Box className="px-4 pt-4">
         <Pressable
           onPress={() => router.back()}
@@ -110,7 +114,7 @@ export default function CreateOptionsScreen() {
         What would you like to create?
       </Text>
 
-      <ScrollView contentContainerClassName="px-4 pb-8 gap-2">
+      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 gap-2">
         {OPTIONS.map((option) => (
           <Pressable
             key={option.id}
@@ -145,6 +149,6 @@ export default function CreateOptionsScreen() {
           </Pressable>
         ))}
       </ScrollView>
-    </Box>
+    </ModalContainer>
   );
 }

@@ -16,6 +16,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { routeParam } from '@/utils/route';
 import { toDateKey } from '@/utils/date';
 import { MEAL_LABELS } from '@/utils/meals';
+import { ModalContainer } from '@/components/ModalContainer';
 import type { MealType } from '@/types';
 import { spacing, type ColorPalette } from '@/theme';
 import { Box } from '@ui/box';
@@ -102,7 +103,8 @@ export default function ManualEntryScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Box className="flex-row items-center px-4 pt-4 pb-2">
+      <ModalContainer hug maxWidth={520}>
+        <Box className="flex-row items-center px-4 pt-4 pb-2">
         <Pressable
           onPress={() => router.back()}
           hitSlop={12}
@@ -167,6 +169,7 @@ export default function ManualEntryScreen() {
           <Text style={styles.saveText}>{saving ? 'Saving...' : 'Add to diary'}</Text>
         </Pressable>
       </ScrollView>
+      </ModalContainer>
     </KeyboardAvoidingView>
   );
 }

@@ -35,8 +35,10 @@ import { toDateKey } from '@/utils/date';
 import { MEAL_LABELS } from '@/utils/meals';
 import { NutritionFactsCard } from '@/components/NutritionFactsCard';
 import { PageContainer } from '@/components/PageContainer';
+import { ModalContainer } from '@/components/ModalContainer';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useTheme } from '@/hooks/useTheme';
+import { useLayout } from '@/hooks/useLayout';
 import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
 
@@ -46,6 +48,7 @@ export default function AddFoodScreen() {
   const router = useRouter();
   const styles = useThemedStyles(createStyles);
   const { colors } = useTheme();
+  const { isWide } = useLayout();
   const { showError, showWarning } = useToast();
   const params = useLocalSearchParams<{
     meal: string;
@@ -328,11 +331,16 @@ export default function AddFoodScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <PageContainer grow={false} variant="narrow" contentStyle={styles.page}>
+      <ModalContainer maxWidth={560}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <PageContainer
+            grow={false}
+            variant="narrow"
+            contentStyle={isWide ? [styles.page, { maxWidth: 520 }] : styles.page}
+          >
           <View style={styles.titleRow}>
             <View style={styles.titleBlock}>
               <Text style={styles.title}>{food.name}</Text>
@@ -454,6 +462,7 @@ export default function AddFoodScreen() {
           </Pressable>
         </PageContainer>
       </ScrollView>
+      </ModalContainer>
     </KeyboardAvoidingView>
   );
 }
