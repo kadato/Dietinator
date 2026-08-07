@@ -1,9 +1,11 @@
 import * as diaryDb from '@/db/diary';
 import * as foodCacheDb from '@/db/food-cache';
+import { getSettings } from '@/db/settings';
 import type { DiaryEntry, FoodNutrients, MealType, SearchFoodResult } from '@/types';
-import { nutrientsForAmount } from '@/utils/nutrients';
+import { isPerGramNutrients, nutrientsForAmount } from '@/utils/nutrients';
+import { generateId } from '@/utils/id';
 import { getFoodRemote } from './yazio/foods';
-import { syncEntryToYazio } from './yazio/sync';
+import { removeEntryFromYazio, syncEntryToYazio } from './yazio/sync';
 
 function nutrientsDiffer(a: FoodNutrients, b: FoodNutrients): boolean {
   return (
@@ -14,58 +16,46 @@ function nutrientsDiffer(a: FoodNutrients, b: FoodNutrients): boolean {
   );
 }
 
-function looksUnderScaled(entry: DiaryEntry): boolean {
-  if (entry.unit !== 'g' && entry.unit !== 'ml') return false;
-  if (entry.amount < 15) return false;
-  const perUnit = entry.kcal / entry.amount;
-  return perUnit < 0.2;
-}
-
-async function reconcileEntryNutrients(entry: DiaryEntry): Promise<DiaryEntry> {
-  if (!entry.food_id) return entry;
-
-  let food = await foodCacheDb.getFoodById(entry.food_id);
-  if (!food || looksUnderScaled(entry)) {
-    food = (await getFoodRemote(entry.food_id)) ?? food;
-  }
-  if (!food) return entry;
-
-  const scaled = nutrientsForAmount(
-    food.nutrients,
-    food.serving,
-    entry.amount,
-    food.base_unit,
-  );
-  if (!nutrientsDiffer(scaled, entry)) return entry;
-
-  await diaryDb.updateDiaryEntryNutrients(entry.id, scaled);
-  return { ...entry, ...scaled };
-}
-
+/**
+ * Resolve cache rows in one query; refetch from YAZIO only when the cache is
+ * missing or still holds legacy per-gram values (search rows are per-gram by
+ * design and are normalized on save, so per-gram cache rows are always stale).
+ */
 export async function getDiaryEntriesForDate(
   date: string,
 ): Promise<DiaryEntry[]> {
   const entries = await diaryDb.getDiaryEntriesForDate(date);
-  return Promise.all(entries.map(reconcileEntryNutrients));
-}
+  const foodIds = entries
+    .map((e) => e.food_id)
+    .filter((id): id is string => Boolean(id));
+  const cached = await foodCacheDb.getFoodsByIds(foodIds);
 
-export async function getDiaryTotalsForDate(
-  date: string,
-): Promise<FoodNutrients> {
-  const entries = await getDiaryEntriesForDate(date);
-  return entries.reduce(
-    (acc, e) => ({
-      kcal: acc.kcal + e.kcal,
-      protein: acc.protein + e.protein,
-      carbs: acc.carbs + e.carbs,
-      fat: acc.fat + e.fat,
+  return Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.food_id) return entry;
+      const food = cached.get(entry.food_id);
+      const needRemote =
+        !food ||
+        isPerGramNutrients(
+          food.nutrients,
+          food.base_unit || 'g',
+          food.serving.serving_quantity,
+        );
+      const resolved = needRemote ? ((await getFoodRemote(entry.food_id)) ?? food) : food;
+      if (!resolved) return entry;
+
+      const scaled = nutrientsForAmount(
+        resolved.nutrients,
+        resolved.serving,
+        entry.amount,
+        resolved.base_unit,
+      );
+      if (!nutrientsDiffer(scaled, entry)) return entry;
+
+      await diaryDb.updateDiaryEntryNutrients(entry.id, scaled);
+      return { ...entry, ...scaled };
     }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function logFood(params: {
@@ -97,16 +87,128 @@ export async function logFood(params: {
     created_at: new Date().toISOString(),
   });
 
-  await foodCacheDb.saveFoodToCache(food);
-  await foodCacheDb.touchFoodUsed(food.product_id);
+  // Cache writes must never fail the log — the entry is already saved.
+  foodCacheDb.saveFoodToCache(food).catch(() => undefined);
+  foodCacheDb.touchFoodUsed(food.product_id).catch(() => undefined);
 
   syncEntryToYazio(entry).catch(() => undefined);
 
   return entry;
 }
 
+/** Log a one-off entry (Quick Add / manual food) with no YAZIO product behind it. */
+export async function logManualEntry(params: {
+  date: string;
+  mealType: MealType;
+  name: string;
+  kcal: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}): Promise<DiaryEntry> {
+  const entry = await diaryDb.addDiaryEntry({
+    id: generateId(),
+    date: params.date,
+    meal_type: params.mealType,
+    food_id: null,
+    food_name: params.name.trim(),
+    amount: 1,
+    unit: 'serving',
+    kcal: params.kcal,
+    protein: params.protein ?? 0,
+    carbs: params.carbs ?? 0,
+    fat: params.fat ?? 0,
+    created_at: new Date().toISOString(),
+  });
+  return entry;
+}
+
+export async function updateDiaryEntry(params: {
+  id: string;
+  amount: number;
+  mealType: MealType;
+}): Promise<DiaryEntry | null> {
+  const { id, amount, mealType } = params;
+  const current = await diaryDb.getDiaryEntryById(id);
+  if (!current) return null;
+  if (amount <= 0 || !Number.isFinite(amount)) return current;
+
+  let nutrients: FoodNutrients;
+  let unit = current.unit;
+
+  if (current.food_id) {
+    const food =
+      (await foodCacheDb.getFoodById(current.food_id)) ??
+      (await getFoodRemote(current.food_id));
+    if (food) {
+      nutrients = nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit);
+      unit = food.base_unit || 'g';
+    } else {
+      nutrients = scaleFromStored(current, amount);
+    }
+  } else {
+    // Manual/simple/recipe entries have no product lookup — scale stored totals linearly.
+    nutrients = scaleFromStored(current, amount);
+  }
+
+  await diaryDb.updateDiaryEntryDetails(id, {
+    amount,
+    unit,
+    meal_type: mealType,
+    food_name: current.food_name,
+    nutrients,
+  });
+
+  const updated = await diaryDb.getDiaryEntryById(id);
+
+  // Keep YAZIO in step when the push already happened; best-effort.
+  if (updated && updated.yazio_item_id) {
+    syncUpdatedEntryToYazio(updated).catch(() => undefined);
+  }
+
+  return updated;
+}
+
+function scaleFromStored(entry: DiaryEntry, amount: number): FoodNutrients {
+  if (entry.amount <= 0) {
+    return { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+  }
+  const factor = amount / entry.amount;
+  return {
+    kcal: Math.round(entry.kcal * factor),
+    protein: Math.round(entry.protein * factor * 10) / 10,
+    carbs: Math.round(entry.carbs * factor * 10) / 10,
+    fat: Math.round(entry.fat * factor * 10) / 10,
+  };
+}
+
+/** Re-push an edited entry: remove the old YAZIO item, then push the new values. */
+async function syncUpdatedEntryToYazio(entry: DiaryEntry): Promise<void> {
+  const settings = await getSettings();
+  if (!settings.yazio_sync_enabled || !entry.food_id || !entry.yazio_item_id) return;
+
+  try {
+    await removeEntryFromYazio(entry.yazio_item_id);
+    await syncEntryToYazio({ ...entry, yazio_item_id: null });
+  } catch {
+    // Best-effort; the diary stays correct locally.
+  }
+}
+
 export async function deleteFoodEntry(id: string): Promise<void> {
+  const entry = await diaryDb.getDiaryEntryById(id);
+  if (!entry) return;
+
+  if (entry.yazio_item_id) {
+    // Tombstone regardless of remote success so the item never resurrects on import.
+    await diaryDb.addDeletedYazioItemId(entry.yazio_item_id);
+    if (entry.yazio_synced) {
+      removeEntryFromYazio(entry.yazio_item_id).catch(() => undefined);
+    }
+  }
+
   await diaryDb.removeDiaryEntry(id);
+  diaryDb.pruneDeletedYazioItems().catch(() => undefined);
 }
 
 export { exportDiaryJson, exportDiaryCsv } from '@/db/diary';
