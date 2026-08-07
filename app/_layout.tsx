@@ -1,11 +1,13 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useMemo } from 'react';
+import { ActivityIndicator, StyleSheet, useColorScheme, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import type { ColorPalette } from '@/theme';
+import { GluestackUIProvider } from '@ui/gluestack-ui-provider';
+import '../global.css';
 
 function RootNavigator() {
   const { ready, authenticated } = useApp();
@@ -41,6 +43,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log-meal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="create-options" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="manual-entry" options={{ presentation: 'modal' }} />
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
         <Stack.Screen name="add-food" options={{ presentation: 'modal' }} />
       </Stack>
@@ -49,12 +52,17 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const gluestackMode = colorScheme === 'light' ? 'light' : 'dark';
+
   return (
-    <AppProvider>
-      <ToastProvider>
-        <RootNavigator />
-      </ToastProvider>
-    </AppProvider>
+    <GluestackUIProvider mode={gluestackMode}>
+      <AppProvider>
+        <ToastProvider>
+          <RootNavigator />
+        </ToastProvider>
+      </AppProvider>
+    </GluestackUIProvider>
   );
 }
 
