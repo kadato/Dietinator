@@ -13,3 +13,10 @@ export const MEAL_PLACEHOLDERS: Record<MealType, string> = {
   dinner: 'What did you have for dinner?',
   snack: 'What did you have for a snack?',
 };
+
+export const MEAL_ICONS: Record<MealType, keyof typeof import('@expo/vector-icons').Ionicons.glyphMap> = {
+  breakfast: 'sunny-outline',
+  lunch: 'restaurant-outline',
+  dinner: 'moon-outline',
+  snack: 'cafe-outline',
+};

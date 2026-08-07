@@ -10,9 +10,16 @@ export function toYazioApiDate(dateKey: string): string {
 
 /** Match `YYYY-MM-DD` or `YYYY-MM-DD HH:mm:ss` from consumed-item payloads. */
 export function matchesDateKey(itemDate: string | undefined, dateKey: string): boolean {
-  if (!itemDate) return true;
+  if (!itemDate) return false;
   const head = itemDate.trim().slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(head) && head === dateKey;
+}
+
+/** Shift a `YYYY-MM-DD` key by whole days using local time (DST-safe). */
+export function shiftDateKey(dateKey: string, delta: number): string {
+  const d = parseDateKey(dateKey);
+  d.setDate(d.getDate() + delta);
+  return toDateKey(d);
 }
 
 export function toDateKey(date: Date = new Date()): string {
