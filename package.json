@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/html-elements": "^0.10.1",
+    "@expo/metro-runtime": "~56.0.19",
     "@expo/vector-icons": "^15.0.2",
     "@gluestack-ui/core": "^3.0.10",
     "@gluestack-ui/utils": "^3.0.11",
@@ -54,9 +55,11 @@
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-expo": "~56.0.5",
+    "lighthouse": "^13.4.1",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "puppeteer-core": "^25.5.0",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.3"
   },
