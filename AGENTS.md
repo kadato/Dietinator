@@ -15,17 +15,17 @@ Guidance for AI agents and contributors working on this codebase.
 
 ## Tech stack
 
-| Area | Choice |
-|------|--------|
-| Runtime | Node **≥ 20.19.4** (`.nvmrc` → **22 LTS** recommended) |
-| Framework | Expo **~56**, React **19.2**, RN **0.85** |
-| Navigation | **expo-router** (file-based routes in `app/`) |
-| DB | **expo-sqlite** (WAL, migrations in `src/db/database.ts`) |
+| Area         | Choice                                                                                              |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| Runtime      | Node **≥ 20.19.4** (`.nvmrc` → **22 LTS** recommended)                                              |
+| Framework    | Expo **~56**, React **19.2**, RN **0.85**                                                           |
+| Navigation   | **expo-router** (file-based routes in `app/`)                                                       |
+| DB           | **expo-sqlite** (WAL, migrations in `src/db/database.ts`)                                           |
 | Auth secrets | **expo-secure-store** (web falls back to prefixed `localStorage` via `src/utils/secure-storage.ts`) |
-| Camera | **expo-camera** (barcode scan — device/dev build, not all web browsers) |
-| Path alias | `@/*` → `src/*`; `@ui/*` → `components/ui/*` (`tsconfig.json`) |
-| UI | **gluestack-ui v3** + **NativeWind** v4 (`components/ui/*`, `global.css`) |
-| TypeScript | `strict: true` |
+| Camera       | **expo-camera** (barcode scan — device/dev build, not all web browsers)                             |
+| Path alias   | `@/*` → `src/*`; `@ui/*` → `components/ui/*` (`tsconfig.json`)                                      |
+| UI           | **gluestack-ui v3** + **NativeWind** v4 (`components/ui/*`, `global.css`)                           |
+| TypeScript   | `strict: true`                                                                                      |
 
 Start scripts go through `scripts/expo-cli.cjs` (Node version gate + `polyfill-os.cjs`). Always use `npm start`, not raw `npx expo` unless debugging the wrapper.
 
@@ -124,11 +124,11 @@ scripts/                # expo-cli wrapper, polyfills
 
 ### Platform differences
 
-| Feature | Native | Web |
-|---------|--------|-----|
+| Feature            | Native            | Web                                    |
+| ------------------ | ----------------- | -------------------------------------- |
 | Secure credentials | expo-secure-store | localStorage prefix `calorie_tracker_` |
-| Barcode scan | expo-camera | limited — test before assuming |
-| SQLite | expo-sqlite | supported in Expo 56 web with plugin |
+| Barcode scan       | expo-camera       | limited — test before assuming         |
+| SQLite             | expo-sqlite       | supported in Expo 56 web with plugin   |
 
 Test both targets when touching storage, camera, or native modules.
 
@@ -163,11 +163,16 @@ npm run android
 npm run ios
 npm run web
 npm run typecheck    # tsc --noEmit after substantive TS changes
+npm run lint         # ESLint (eslint-config-expo flat config)
+npm run format       # Prettier — write across the repo
+npm run format:check # Prettier — verify (runs in CI)
 npm run build:web    # production web export → dist/
 npm run serve:web    # serve dist/ with COEP/COOP + YAZIO proxy (needs build first)
 npm run test:e2e     # build + Playwright (phone viewport, offline/local-first flows)
 npm run test:e2e:dev # Playwright against a running `npm run dev:web` (fast loop)
 ```
+
+**Quality gates:** husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). CI (`.github/workflows/ci.yml`) runs typecheck, lint, `format:check`, e2e, and a gitleaks secret scan on every push/PR. Dependabot updates npm + GitHub Actions weekly (`yazio` is ignored — unofficial API, pin manually).
 
 **Iteration notes:** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials; run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json` — prefer it over hand-written selectors when driving the browser.
 
@@ -185,20 +190,20 @@ Schema changes: update `migrate()` in `src/db/database.ts` only (no separate mig
 
 ## Testing & quality
 
-- No automated test suite today — if adding tests, prefer **Jest + @testing-library/react-native** for components and pure unit tests for `utils/` and `db/` helpers.
+- No unit test suite today — if adding unit tests, prefer **Jest + @testing-library/react-native** for components and pure unit tests for `utils/` and `db/` helpers.
 - Manual smoke: login → search food → add entry → see dashboard → optional sync → offline add with cached food → barcode scan on device.
 
 ## Useful files for common tasks
 
-| Task | Start here |
-|------|------------|
-| New screen | `app/` + register in `app/_layout.tsx` if outside tabs |
-| Diary CRUD | `src/db/diary.ts`, `src/services/diary.ts` |
-| Food search/cache | `src/services/yazio/foods.ts`, `src/db/food-cache.ts` |
-| Goals/settings | `src/db/settings.ts`, Settings tab |
-| In-app updates | `src/services/updates.ts`, `src/context/UpdateContext.tsx`, `public/` release pipeline in `.github/workflows/release.yml` |
-| Theme/colors | `src/theme.ts` |
-| Auth flow | `app/login.tsx`, `src/services/yazio/client.ts` |
+| Task              | Start here                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| New screen        | `app/` + register in `app/_layout.tsx` if outside tabs                                                                    |
+| Diary CRUD        | `src/db/diary.ts`, `src/services/diary.ts`                                                                                |
+| Food search/cache | `src/services/yazio/foods.ts`, `src/db/food-cache.ts`                                                                     |
+| Goals/settings    | `src/db/settings.ts`, Settings tab                                                                                        |
+| In-app updates    | `src/services/updates.ts`, `src/context/UpdateContext.tsx`, `public/` release pipeline in `.github/workflows/release.yml` |
+| Theme/colors      | `src/theme.ts`                                                                                                            |
+| Auth flow         | `app/login.tsx`, `src/services/yazio/client.ts`                                                                           |
 
 ## Agent workflow checklist
 
