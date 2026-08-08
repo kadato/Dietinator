@@ -1,25 +1,22 @@
-import type { FoodNutrients, FoodServing } from '@/types';
+import type { FoodNutrients, FoodServing } from "@/types"
 
 /** Convert YAZIO energy to kcal using the account's `unit_energy` (kcal or kj). */
-export function toKcal(energy: number, unitEnergy = 'kcal'): number {
-  const unit = unitEnergy.trim().toLowerCase();
-  if (unit === 'kj' || unit === 'kilojoule' || unit === 'kilojoules') {
-    return Math.round(energy / 4.184);
+export function toKcal(energy: number, unitEnergy = "kcal"): number {
+  const unit = unitEnergy.trim().toLowerCase()
+  if (unit === "kj" || unit === "kilojoule" || unit === "kilojoules") {
+    return Math.round(energy / 4.184)
   }
-  return Math.round(energy);
+  return Math.round(energy)
 }
 
 /** Unrounded kcal from a YAZIO nutrient payload. */
-export function rawEnergyKcal(
-  nutrients: Record<string, number>,
-  unitEnergy = 'kcal',
-): number {
-  const energy = nutrients['energy.energy'] ?? 0;
-  const unit = unitEnergy.trim().toLowerCase();
-  if (unit === 'kj' || unit === 'kilojoule' || unit === 'kilojoules') {
-    return energy / 4.184;
+export function rawEnergyKcal(nutrients: Record<string, number>, unitEnergy = "kcal"): number {
+  const energy = nutrients["energy.energy"] ?? 0
+  const unit = unitEnergy.trim().toLowerCase()
+  if (unit === "kj" || unit === "kilojoule" || unit === "kilojoules") {
+    return energy / 4.184
   }
-  return energy;
+  return energy
 }
 
 /**
@@ -31,10 +28,10 @@ export function rawEnergyKcal(
 export function isPerGramRawNutrients(
   nutrients: Record<string, number>,
   baseUnit: string,
-  unitEnergy = 'kcal',
+  unitEnergy = "kcal",
 ): boolean {
-  const kcal = rawEnergyKcal(nutrients, unitEnergy);
-  return (baseUnit === 'g' || baseUnit === 'ml') && kcal > 0 && kcal < 10;
+  const kcal = rawEnergyKcal(nutrients, unitEnergy)
+  return (baseUnit === "g" || baseUnit === "ml") && kcal > 0 && kcal < 10
 }
 
 /**
@@ -48,28 +45,28 @@ export function isPerGramRawNutrients(
  */
 export function isPerGramNutrients(
   nutrients: FoodNutrients,
-  baseUnit = 'g',
+  baseUnit = "g",
   servingQuantity?: number,
 ): boolean {
-  if (!(baseUnit === 'g' || baseUnit === 'ml')) return false;
-  if (nutrients.kcal <= 0 || nutrients.kcal >= 10) return false;
-  if (servingQuantity !== undefined && servingQuantity > 1) return false;
-  return true;
+  if (!(baseUnit === "g" || baseUnit === "ml")) return false
+  if (nutrients.kcal <= 0 || nutrients.kcal >= 10) return false
+  if (servingQuantity !== undefined && servingQuantity > 1) return false
+  return true
 }
 
 export function nutrientsFromYazio(
   nutrients: Record<string, number>,
-  unitEnergy = 'kcal',
+  unitEnergy = "kcal",
   /** Scale raw API values before rounding (e.g. 100 to normalize per-gram → per-100 g). */
   multiplier = 1,
 ): FoodNutrients {
-  const scale = multiplier;
+  const scale = multiplier
   return {
-    kcal: toKcal((nutrients['energy.energy'] ?? 0) * scale, unitEnergy),
-    protein: roundMacro((nutrients['nutrient.protein'] ?? 0) * scale),
-    carbs: roundMacro((nutrients['nutrient.carb'] ?? 0) * scale),
-    fat: roundMacro((nutrients['nutrient.fat'] ?? 0) * scale),
-  };
+    kcal: toKcal((nutrients["energy.energy"] ?? 0) * scale, unitEnergy),
+    protein: roundMacro((nutrients["nutrient.protein"] ?? 0) * scale),
+    carbs: roundMacro((nutrients["nutrient.carb"] ?? 0) * scale),
+    fat: roundMacro((nutrients["nutrient.fat"] ?? 0) * scale),
+  }
 }
 
 /**
@@ -78,66 +75,58 @@ export function nutrientsFromYazio(
  * full product payloads are usually per 100 g/ml.
  */
 function isBaseUnitServingLabelForRef(servingName: string, baseUnit: string): boolean {
-  const label = servingName.trim().toLowerCase();
+  const label = servingName.trim().toLowerCase()
   return (
-    label === 'g' ||
-    label === 'ml' ||
-    label === 'gram' ||
-    label === 'grams' ||
-    label === baseUnit
-  );
+    label === "g" || label === "ml" || label === "gram" || label === "grams" || label === baseUnit
+  )
 }
 
 export function nutrientsReferenceAmount(
-  serving: Pick<FoodServing, 'amount' | 'serving_quantity'> & {
-    serving?: string;
+  serving: Pick<FoodServing, "amount" | "serving_quantity"> & {
+    serving?: string
   },
-  baseUnit = 'g',
+  baseUnit = "g",
 ): number {
-  const amount = serving.amount > 0 ? serving.amount : 100;
-  const qty = serving.serving_quantity > 0 ? serving.serving_quantity : amount;
+  const amount = serving.amount > 0 ? serving.amount : 100
+  const qty = serving.serving_quantity > 0 ? serving.serving_quantity : amount
 
-  if (qty === amount) return amount;
+  if (qty === amount) return amount
 
   // Per 100 g/ml label on product detail
-  if (
-    (baseUnit === 'g' || baseUnit === 'ml') &&
-    qty === 100 &&
-    amount !== 100
-  ) {
-    return 100;
+  if ((baseUnit === "g" || baseUnit === "ml") && qty === 100 && amount !== 100) {
+    return 100
   }
 
   // Search "gram" rows: nutrients are per serving_quantity (often 1 g), not default amount
   if (
-    (baseUnit === 'g' || baseUnit === 'ml') &&
-    isBaseUnitServingLabelForRef(serving.serving ?? '', baseUnit)
+    (baseUnit === "g" || baseUnit === "ml") &&
+    isBaseUnitServingLabelForRef(serving.serving ?? "", baseUnit)
   ) {
     // API often returns amount=100 with serving_quantity=1 while nutrients are per 100 g/ml
-    if (qty === 1 && amount >= 100) return 100;
+    if (qty === 1 && amount >= 100) return 100
     // Default portion (e.g. 30 g bar) — nutrients match `amount`, not 1 g
-    if (qty === 1 && amount > 1) return amount;
-    return qty;
+    if (qty === 1 && amount > 1) return amount
+    return qty
   }
 
   // Named portion (1 scoop, 1 bar, …) — nutrients match `amount`
   if (qty <= 10 && Number.isInteger(qty) && amount > qty) {
-    return amount;
+    return amount
   }
 
-  return qty;
+  return qty
 }
 
 /** Resolve how many base units the stored nutrient values represent. */
 export function resolveNutrientsRefAmount(
   nutrients: FoodNutrients,
-  serving: Pick<FoodServing, 'amount' | 'serving_quantity'> & {
-    serving?: string;
+  serving: Pick<FoodServing, "amount" | "serving_quantity"> & {
+    serving?: string
   },
-  baseUnit = 'g',
+  baseUnit = "g",
 ): number {
-  if (isPerGramNutrients(nutrients, baseUnit, serving.serving_quantity)) return 1;
-  return nutrientsReferenceAmount(serving, baseUnit);
+  if (isPerGramNutrients(nutrients, baseUnit, serving.serving_quantity)) return 1
+  return nutrientsReferenceAmount(serving, baseUnit)
 }
 
 export function scaleNutrients(
@@ -145,30 +134,30 @@ export function scaleNutrients(
   baseAmount: number,
   targetAmount: number,
 ): FoodNutrients {
-  if (baseAmount <= 0) return base;
-  const factor = targetAmount / baseAmount;
+  if (baseAmount <= 0) return base
+  const factor = targetAmount / baseAmount
   return {
     kcal: Math.round(base.kcal * factor),
     protein: roundMacro(base.protein * factor),
     carbs: roundMacro(base.carbs * factor),
     fat: roundMacro(base.fat * factor),
-  };
+  }
 }
 
 export function nutrientsForAmount(
   base: FoodNutrients,
-  serving: Pick<FoodServing, 'amount' | 'serving_quantity'> & {
-    serving?: string;
+  serving: Pick<FoodServing, "amount" | "serving_quantity"> & {
+    serving?: string
   },
   targetAmount: number,
-  baseUnit = 'g',
+  baseUnit = "g",
 ): FoodNutrients {
-  const ref = resolveNutrientsRefAmount(base, serving, baseUnit);
-  return scaleNutrients(base, ref, targetAmount);
+  const ref = resolveNutrientsRefAmount(base, serving, baseUnit)
+  return scaleNutrients(base, ref, targetAmount)
 }
 
 function roundMacro(value: number): number {
-  return Math.round(value * 10) / 10;
+  return Math.round(value * 10) / 10
 }
 
 export function sumNutrients(entries: FoodNutrients[]): FoodNutrients {
@@ -180,5 +169,5 @@ export function sumNutrients(entries: FoodNutrients[]): FoodNutrients {
       fat: roundMacro(acc.fat + n.fat),
     }),
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  );
+  )
 }

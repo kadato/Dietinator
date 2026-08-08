@@ -1,30 +1,30 @@
-import * as SQLite from 'expo-sqlite';
-import { Platform } from 'react-native';
+import * as SQLite from "expo-sqlite"
+import { Platform } from "react-native"
 
 /** Single in-flight open; avoids duplicate OPFS access handles on web (Strict Mode / parallel boot). */
-let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
     dbPromise = openDatabase().catch((error) => {
-      dbPromise = null;
-      throw error;
-    });
+      dbPromise = null
+      throw error
+    })
   }
-  return dbPromise;
+  return dbPromise
 }
 
 async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
-  const database = await SQLite.openDatabaseAsync('dietinator.db', {
+  const database = await SQLite.openDatabaseAsync("dietinator.db", {
     useNewConnection: false,
-  });
-  await migrate(database);
-  return database;
+  })
+  await migrate(database)
+  return database
 }
 
 async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   // WAL uses extra OPFS files; web OPFS allows only one sync handle per file.
-  const journalMode = Platform.OS === 'web' ? 'DELETE' : 'WAL';
+  const journalMode = Platform.OS === "web" ? "DELETE" : "WAL"
   await database.execAsync(`
     PRAGMA journal_mode = ${journalMode};
 
@@ -106,44 +106,42 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_meal_items_meal ON meal_items(meal_id);
-  `);
+  `)
 
   const settingsColumns = await database.getAllAsync<{ name: string }>(
-    'PRAGMA table_info(settings)',
-  );
-  if (!settingsColumns.some((column) => column.name === 'food_database_country')) {
+    "PRAGMA table_info(settings)",
+  )
+  if (!settingsColumns.some((column) => column.name === "food_database_country")) {
     await database.execAsync(
       `ALTER TABLE settings ADD COLUMN food_database_country TEXT NOT NULL DEFAULT ''`,
-    );
+    )
   }
-  if (!settingsColumns.some((column) => column.name === 'update_check_enabled')) {
+  if (!settingsColumns.some((column) => column.name === "update_check_enabled")) {
     await database.execAsync(
       `ALTER TABLE settings ADD COLUMN update_check_enabled INTEGER NOT NULL DEFAULT 1`,
-    );
+    )
   }
 
   const foodCacheColumns = await database.getAllAsync<{ name: string }>(
-    'PRAGMA table_info(food_cache)',
-  );
-  if (!foodCacheColumns.some((column) => column.name === 'base_unit')) {
+    "PRAGMA table_info(food_cache)",
+  )
+  if (!foodCacheColumns.some((column) => column.name === "base_unit")) {
     await database.execAsync(
       `ALTER TABLE food_cache ADD COLUMN base_unit TEXT NOT NULL DEFAULT 'g'`,
-    );
+    )
   }
 
   // One-time cleanup (user_version 0 → 1): drop cached foods whose stored
   // nutrients look per-gram (kcal < 10). They are either legacy raw per-gram
   // rows or rare normalized low-cal rows — both are ambiguous to read back, so
   // they get refetched and re-normalized from the API instead.
-  const versionRow = await database.getFirstAsync<{ user_version: number }>(
-    'PRAGMA user_version',
-  );
+  const versionRow = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version")
   if ((versionRow?.user_version ?? 0) < 1) {
     await database.execAsync(
       `DELETE FROM food_cache
        WHERE base_unit IN ('g', 'ml')
          AND CAST(json_extract(nutrients_json, '$.kcal') AS REAL) < 10`,
-    );
-    await database.execAsync('PRAGMA user_version = 1');
+    )
+    await database.execAsync("PRAGMA user_version = 1")
   }
 }

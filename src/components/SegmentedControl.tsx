@@ -1,16 +1,16 @@
-import { Pressable, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
-import { Text } from '@ui/text';
+import { Pressable, View } from "react-native"
+import { useTheme } from "@/hooks/useTheme"
+import { Text } from "@ui/text"
 
-type Option<T extends string> = { value: T; label: string };
+type Option<T extends string> = { value: T; label: string }
 
 type Props<T extends string> = {
-  value: T;
-  options: Option<T>[];
-  onChange: (value: T) => void;
+  value: T
+  options: Option<T>[]
+  onChange: (value: T) => void
   /** Active pill color; defaults to the theme primary. */
-  accentColor?: string;
-};
+  accentColor?: string
+}
 
 export function SegmentedControl<T extends string>({
   value,
@@ -18,13 +18,13 @@ export function SegmentedControl<T extends string>({
   onChange,
   accentColor,
 }: Props<T>) {
-  const { colors } = useTheme();
-  const accent = accentColor ?? colors.primary;
+  const { colors } = useTheme()
+  const accent = accentColor ?? colors.primary
 
   return (
     <View className="flex-row rounded-full border border-outline-200 bg-background-50 p-1">
       {options.map((option) => {
-        const active = option.value === value;
+        const active = option.value === value
         return (
           <Pressable
             key={option.value}
@@ -43,8 +43,8 @@ export function SegmentedControl<T extends string>({
               {option.label}
             </Text>
           </Pressable>
-        );
+        )
       })}
     </View>
-  );
+  )
 }

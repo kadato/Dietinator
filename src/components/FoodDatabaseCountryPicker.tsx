@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react"
 import {
   Modal,
   Platform,
@@ -8,55 +8,52 @@ import {
   FlatList,
   StyleSheet,
   TextInput,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { FOOD_DATABASE_COUNTRY_CODES } from '@/constants/food-database-countries';
+} from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { FOOD_DATABASE_COUNTRY_CODES } from "@/constants/food-database-countries"
 import {
   getFoodDatabaseCountryLabel,
   normalizeFoodDatabaseCountry,
-} from '@/utils/food-database-country';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+} from "@/utils/food-database-country"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { spacing, type ColorPalette } from "@/theme"
 
-type CountryOption = { code: string; label: string };
+type CountryOption = { code: string; label: string }
 
 type Props = {
-  visible: boolean;
-  selectedCode: string;
-  onSelect: (code: string) => void;
-  onClose: () => void;
-};
+  visible: boolean
+  selectedCode: string
+  onSelect: (code: string) => void
+  onClose: () => void
+}
 
-export function FoodDatabaseCountryPicker({
-  visible,
-  selectedCode,
-  onSelect,
-  onClose,
-}: Props) {
-  const styles = useThemedStyles(createStyles);
-  const [filter, setFilter] = useState('');
+export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onClose }: Props) {
+  const styles = useThemedStyles(createStyles)
+  const [filter, setFilter] = useState("")
 
   const options = useMemo((): CountryOption[] => {
     return FOOD_DATABASE_COUNTRY_CODES.map((code) => ({
       code,
       label: getFoodDatabaseCountryLabel(code),
-    })).sort((a, b) => a.label.localeCompare(b.label, 'en'));
-  }, []);
+    })).sort((a, b) => a.label.localeCompare(b.label, "en"))
+  }, [])
 
   const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return options;
+    const q = filter.trim().toLowerCase()
+    if (!q) return options
     return options.filter(
-      (item) =>
-        item.code.toLowerCase().includes(q) ||
-        item.label.toLowerCase().includes(q),
-    );
-  }, [filter, options]);
+      (item) => item.code.toLowerCase().includes(q) || item.label.toLowerCase().includes(q),
+    )
+  }, [filter, options])
 
-  const normalizedSelected = normalizeFoodDatabaseCountry(selectedCode);
+  const normalizedSelected = normalizeFoodDatabaseCountry(selectedCode)
 
   return (
-    <Modal visible={visible} animationType={Platform.OS === 'web' ? undefined : 'slide'} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType={Platform.OS === "web" ? undefined : "slide"}
+      onRequestClose={onClose}
+    >
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Food database country</Text>
@@ -64,9 +61,7 @@ export function FoodDatabaseCountryPicker({
             <Ionicons name="close" size={28} color={styles.closeIcon.color} />
           </Pressable>
         </View>
-        <Text style={styles.hint}>
-          Product search uses this country&apos;s YAZIO food catalog.
-        </Text>
+        <Text style={styles.hint}>Product search uses this country&apos;s YAZIO food catalog.</Text>
         <TextInput
           style={styles.search}
           placeholder="Search country…"
@@ -82,14 +77,14 @@ export function FoodDatabaseCountryPicker({
           keyExtractor={(item) => item.code}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
-            const selected = item.code === normalizedSelected;
+            const selected = item.code === normalizedSelected
             return (
               <Pressable
                 style={[styles.row, selected && styles.rowSelected]}
                 onPress={() => {
-                  onSelect(item.code);
-                  setFilter('');
-                  onClose();
+                  onSelect(item.code)
+                  setFilter("")
+                  onClose()
                 }}
               >
                 <Text style={[styles.rowLabel, selected && styles.rowLabelSelected]}>
@@ -99,15 +94,13 @@ export function FoodDatabaseCountryPicker({
                   <Ionicons name="checkmark" size={22} color={styles.checkmark.color} />
                 ) : null}
               </Pressable>
-            );
+            )
           }}
-          ListEmptyComponent={
-            <Text style={styles.empty}>No countries match your search.</Text>
-          }
+          ListEmptyComponent={<Text style={styles.empty}>No countries match your search.</Text>}
         />
       </View>
     </Modal>
-  );
+  )
 }
 
 const createStyles = (colors: ColorPalette) =>
@@ -119,14 +112,14 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       marginBottom: spacing.sm,
     },
     title: {
       fontSize: 20,
-      fontWeight: '700',
+      fontWeight: "700",
       color: colors.text,
       flex: 1,
     },
@@ -147,9 +140,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     searchPlaceholder: { color: colors.textMuted },
     row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.sm,
       borderRadius: 8,
@@ -163,14 +156,14 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
     },
     rowLabelSelected: {
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.primary,
     },
     checkmark: { color: colors.primary },
     empty: {
-      textAlign: 'center',
+      textAlign: "center",
       color: colors.textMuted,
       marginTop: spacing.xl,
       fontSize: 15,
     },
-  });
+  })

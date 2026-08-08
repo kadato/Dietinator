@@ -1,9 +1,9 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native"
 
 /** Hide the inlined pre-JS loading shell once React has painted (web only). */
 export function hideWebShell(): void {
-  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-  document.documentElement.dataset.shellHide = 'true';
+  if (Platform.OS !== "web" || typeof document === "undefined") return
+  document.documentElement.dataset.shellHide = "true"
 }
 
 /**
@@ -13,13 +13,13 @@ export function hideWebShell(): void {
  * in every session; the browser performs the work asynchronously.
  */
 export function registerWebServiceWorker(): void {
-  if (Platform.OS !== 'web' || __DEV__) return;
+  if (Platform.OS !== "web" || __DEV__) return
   if (
-    typeof navigator === 'undefined' ||
-    !('serviceWorker' in navigator) ||
-    typeof window === 'undefined'
+    typeof navigator === "undefined" ||
+    !("serviceWorker" in navigator) ||
+    typeof window === "undefined"
   ) {
-    return;
+    return
   }
-  navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+  navigator.serviceWorker.register("/sw.js").catch(() => undefined)
 }

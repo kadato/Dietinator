@@ -1,58 +1,56 @@
-import { View, Text, StyleSheet } from 'react-native';
-import type { FoodNutrients } from '@/types';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+import { View, Text, StyleSheet } from "react-native"
+import type { FoodNutrients } from "@/types"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { spacing, type ColorPalette } from "@/theme"
 
 type MacroRow = {
-  label: string;
-  value: number;
-  unit: string;
-  color: string;
+  label: string
+  value: number
+  unit: string
+  color: string
   /** kcal per gram — keeps percentage math independent of display labels. */
-  factor: number;
-};
+  factor: number
+}
 
 type Props = {
-  nutrients: FoodNutrients;
+  nutrients: FoodNutrients
   /** e.g. "for 150 g" or "per 100 g" */
-  servingLabel: string;
-};
+  servingLabel: string
+}
 
 function formatMacro(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
 export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
-  const styles = useThemedStyles(createStyles);
+  const styles = useThemedStyles(createStyles)
 
-  const macroTotal =
-    nutrients.protein * 4 + nutrients.carbs * 4 + nutrients.fat * 9;
-  const pct = (kcal: number) =>
-    macroTotal > 0 ? Math.round((kcal / macroTotal) * 100) : 0;
+  const macroTotal = nutrients.protein * 4 + nutrients.carbs * 4 + nutrients.fat * 9
+  const pct = (kcal: number) => (macroTotal > 0 ? Math.round((kcal / macroTotal) * 100) : 0)
 
   const rows: MacroRow[] = [
     {
-      label: 'Protein',
+      label: "Protein",
       value: nutrients.protein,
-      unit: 'g',
+      unit: "g",
       color: styles.proteinColor.color,
       factor: 4,
     },
     {
-      label: 'Carbohydrates',
+      label: "Carbohydrates",
       value: nutrients.carbs,
-      unit: 'g',
+      unit: "g",
       color: styles.carbsColor.color,
       factor: 4,
     },
     {
-      label: 'Fat',
+      label: "Fat",
       value: nutrients.fat,
-      unit: 'g',
+      unit: "g",
       color: styles.fatColor.color,
       factor: 9,
     },
-  ];
+  ]
 
   return (
     <View style={styles.card}>
@@ -79,9 +77,7 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
               {formatMacro(row.value)}
               {row.unit}
             </Text>
-            <Text style={styles.macroPct}>
-              {pct(row.value * row.factor)}%
-            </Text>
+            <Text style={styles.macroPct}>{pct(row.value * row.factor)}%</Text>
           </View>
         </View>
       ))}
@@ -90,7 +86,7 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
         Macro percentages are share of calories from protein, carbs, and fat.
       </Text>
     </View>
-  );
+  )
 }
 
 const createStyles = (colors: ColorPalette) =>
@@ -105,9 +101,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     heading: {
       fontSize: 13,
-      fontWeight: '700',
+      fontWeight: "700",
       color: colors.textMuted,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 0.6,
     },
     servingNote: {
@@ -117,18 +113,18 @@ const createStyles = (colors: ColorPalette) =>
       marginBottom: spacing.md,
     },
     calorieBlock: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
+      flexDirection: "row",
+      alignItems: "baseline",
       gap: spacing.xs,
     },
     calorieValue: {
       fontSize: 40,
-      fontWeight: '800',
+      fontWeight: "800",
       color: colors.primary,
     },
     calorieUnit: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.textMuted,
     },
     divider: {
@@ -137,32 +133,32 @@ const createStyles = (colors: ColorPalette) =>
       marginVertical: spacing.md,
     },
     macroRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingVertical: spacing.sm,
     },
     macroLabelWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: spacing.sm,
       flex: 1,
     },
     macroDot: { width: 8, height: 8, borderRadius: 4 },
-    macroLabel: { fontSize: 15, color: colors.text, fontWeight: '500' },
-    macroValues: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    macroLabel: { fontSize: 15, color: colors.text, fontWeight: "500" },
+    macroValues: { flexDirection: "row", alignItems: "center", gap: spacing.md },
     macroAmount: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
       minWidth: 56,
-      textAlign: 'right',
+      textAlign: "right",
     },
     macroPct: {
       fontSize: 13,
       color: colors.textMuted,
       minWidth: 36,
-      textAlign: 'right',
+      textAlign: "right",
     },
     footnote: {
       fontSize: 11,
@@ -173,4 +169,4 @@ const createStyles = (colors: ColorPalette) =>
     proteinColor: { color: colors.breakfast },
     carbsColor: { color: colors.lunch },
     fatColor: { color: colors.dinner },
-  });
+  })

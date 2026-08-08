@@ -3,13 +3,13 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 1.1.0)'
+        description: "Version number (e.g., 1.1.0)"
         required: true
-        default: '1.1.0'
+        default: "1.1.0"
 
 permissions:
   contents: write
@@ -44,13 +44,13 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
       - name: Setup Android SDK
         uses: react-native-community/setup-android-sdk@v2
         with:
           cache-enabled: true
           cache-key: android-sdk-dietinator
-          sdk-version: '36'
+          sdk-version: "36"
       - name: Resolve version
         id: version
         shell: bash

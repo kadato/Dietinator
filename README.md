@@ -35,19 +35,19 @@ For **web** in the browser: `npm run web` (needs `react-native-web` and `react-d
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `npm start` / `npm run dev` | Metro dev server (native + web) |
-| `npm run dev:web` | Metro dev server for the browser, hot reload |
-| `npm run typecheck` | `tsc --noEmit` over the whole project |
-| `npm run build:web` | Production web export to `dist/` |
-| `npm run serve:web` | Serve `dist/` locally (COEP/COOP headers + YAZIO proxy, gzip). Requires a prior `build:web` |
-| `npm run web:prod` | Build + serve in one shot |
-| `npm run test:e2e` | Build web + run Playwright (phone viewport, offline/local-first flows) |
-| `npm run test:e2e:headed` | Same, with a visible browser |
-| `npm run test:e2e:dev` | Playwright against a running `npm run dev:web` (fast iteration, no rebuild) |
-| `npm run test:e2e:yazio` | Real-account suite (skips unless `.env.local` has credentials) |
-| `npm run test:e2e:install` | Download the Chromium test browser |
+| Command                     | What it does                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm start` / `npm run dev` | Metro dev server (native + web)                                                             |
+| `npm run dev:web`           | Metro dev server for the browser, hot reload                                                |
+| `npm run typecheck`         | `tsc --noEmit` over the whole project                                                       |
+| `npm run build:web`         | Production web export to `dist/`                                                            |
+| `npm run serve:web`         | Serve `dist/` locally (COEP/COOP headers + YAZIO proxy, gzip). Requires a prior `build:web` |
+| `npm run web:prod`          | Build + serve in one shot                                                                   |
+| `npm run test:e2e`          | Build web + run Playwright (phone viewport, offline/local-first flows)                      |
+| `npm run test:e2e:headed`   | Same, with a visible browser                                                                |
+| `npm run test:e2e:dev`      | Playwright against a running `npm run dev:web` (fast iteration, no rebuild)                 |
+| `npm run test:e2e:yazio`    | Real-account suite (skips unless `.env.local` has credentials)                              |
+| `npm run test:e2e:install`  | Download the Chromium test browser                                                          |
 
 ### E2E tests
 
@@ -140,12 +140,12 @@ keytool -genkeypair -v -keystore dietinator-release.keystore -alias dietinator \
 
 Add these repository secrets (Actions > Settings > Secrets):
 
-| Secret | Value |
-|--------|-------|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 dietinator-release.keystore` |
-| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
-| `ANDROID_KEY_ALIAS` | `dietinator` |
-| `ANDROID_KEY_PASSWORD` | Key password |
+| Secret                      | Value                                    |
+| --------------------------- | ---------------------------------------- |
+| `ANDROID_KEYSTORE_BASE64`   | `base64 -w0 dietinator-release.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password                        |
+| `ANDROID_KEY_ALIAS`         | `dietinator`                             |
+| `ANDROID_KEY_PASSWORD`      | Key password                             |
 
 ### Publishing a release
 

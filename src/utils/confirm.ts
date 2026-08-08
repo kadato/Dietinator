@@ -1,12 +1,12 @@
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform } from "react-native"
 
 type ConfirmOptions = {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  onConfirm: () => void;
-  onCancel?: () => void;
-};
+  title: string
+  message: string
+  confirmLabel: string
+  onConfirm: () => void
+  onCancel?: () => void
+}
 
 /**
  * Cross-platform confirmation.
@@ -21,17 +21,17 @@ export function confirmAction({
   onConfirm,
   onCancel,
 }: ConfirmOptions): void {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.confirm(`${message}\n\n${confirmLabel}`)) {
-      onConfirm();
+  if (Platform.OS === "web") {
+    if (typeof window !== "undefined" && window.confirm(`${message}\n\n${confirmLabel}`)) {
+      onConfirm()
     } else {
-      onCancel?.();
+      onCancel?.()
     }
-    return;
+    return
   }
 
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel', onPress: onCancel },
-    { text: confirmLabel, style: 'destructive', onPress: onConfirm },
-  ]);
+    { text: "Cancel", style: "cancel", onPress: onCancel },
+    { text: confirmLabel, style: "destructive", onPress: onConfirm },
+  ])
 }

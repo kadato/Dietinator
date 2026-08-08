@@ -1,46 +1,47 @@
 export function parseDateKey(dateKey: string): Date {
-  const [y, m, d] = dateKey.split('-').map(Number);
-  return new Date(y, m - 1, d);
+  const [y, m, d] = dateKey.split("-").map(Number)
+  return new Date(y, m - 1, d)
 }
 
 /** YAZIO API accepts `YYYY-MM-DD` without timezone shifting. */
 export function toYazioApiDate(dateKey: string): string {
-  return dateKey;
+  return dateKey
 }
 
 /** Match `YYYY-MM-DD` or `YYYY-MM-DD HH:mm:ss` from consumed-item payloads. */
 export function matchesDateKey(itemDate: string | undefined, dateKey: string): boolean {
-  if (!itemDate) return false;
-  const head = itemDate.trim().slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(head) && head === dateKey;
+  if (!itemDate) return false
+  const head = itemDate.trim().slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(head) && head === dateKey
 }
 
 /** Shift a `YYYY-MM-DD` key by whole days using local time (DST-safe). */
 export function shiftDateKey(dateKey: string, delta: number): string {
-  const d = parseDateKey(dateKey);
-  d.setDate(d.getDate() + delta);
-  return toDateKey(d);
+  const d = parseDateKey(dateKey)
+  d.setDate(d.getDate() + delta)
+  return toDateKey(d)
 }
 
 export function toDateKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
 }
 
 export function formatDisplayDate(dateKey: string): string {
-  const today = toDateKey();
-  if (dateKey === today) return 'Today';
+  const today = toDateKey()
+  if (dateKey === today) return "Today"
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (dateKey === toDateKey(yesterday)) return 'Yesterday';
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (dateKey === toDateKey(yesterday)) return "Yesterday"
 
-  const [y, m, d] = dateKey.split('-').map(Number);
+  const [y, m, d] = dateKey.split("-").map(Number)
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  })
 }
+export const misformatted = 1

@@ -1,29 +1,29 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { CalorieRing } from '@/components/CalorieRing';
-import { MacroBar } from '@/components/MacroBar';
-import { MealSection } from '@/components/MealSection';
-import { OfflineBanner } from '@/components/OfflineBanner';
-import { PageContainer } from '@/components/PageContainer';
-import { DatePickerModal } from '@/components/DatePickerModal';
-import { useApp } from '@/context/AppContext';
-import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from '@/services/yazio/sync';
-import { useToast } from '@/context/ToastContext';
-import type { DiaryEntry, MealType } from '@/types';
-import { deleteFoodEntry, getDiaryEntriesForDate } from '@/services/diary';
-import { confirmAction } from '@/utils/confirm';
-import { shiftDateKey, toDateKey, formatDisplayDate } from '@/utils/date';
-import { formatWaterAmount, formatWeight } from '@/utils/units';
-import { MEAL_TYPES } from '@/utils/meals';
-import { useLayout } from '@/hooks/useLayout';
-import { useTheme } from '@/hooks/useTheme';
-import { Box } from '@ui/box';
-import { Text } from '@ui/text';
-import { Card } from '@ui/card';
+import { useCallback, useMemo, useState } from "react"
+import { Pressable, RefreshControl, ScrollView, View } from "react-native"
+import { useFocusEffect, useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
+import { CalorieRing } from "@/components/CalorieRing"
+import { MacroBar } from "@/components/MacroBar"
+import { MealSection } from "@/components/MealSection"
+import { OfflineBanner } from "@/components/OfflineBanner"
+import { PageContainer } from "@/components/PageContainer"
+import { DatePickerModal } from "@/components/DatePickerModal"
+import { useApp } from "@/context/AppContext"
+import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
+import { useToast } from "@/context/ToastContext"
+import type { DiaryEntry, MealType } from "@/types"
+import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
+import { confirmAction } from "@/utils/confirm"
+import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
+import { formatWaterAmount, formatWeight } from "@/utils/units"
+import { MEAL_TYPES } from "@/utils/meals"
+import { useLayout } from "@/hooks/useLayout"
+import { useTheme } from "@/hooks/useTheme"
+import { Box } from "@ui/box"
+import { Text } from "@ui/text"
+import { Card } from "@ui/card"
 
-type Totals = { kcal: number; protein: number; carbs: number; fat: number };
+type Totals = { kcal: number; protein: number; carbs: number; fat: number }
 
 function sumEntries(list: DiaryEntry[]): Totals {
   return list.reduce(
@@ -34,24 +34,24 @@ function sumEntries(list: DiaryEntry[]): Totals {
       fat: acc.fat + e.fat,
     }),
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  );
+  )
 }
 
 export default function TodayScreen() {
-  const router = useRouter();
-  const { settings, yazioAvailable, authenticated } = useApp();
-  const { showError, showSuccess, showWarning } = useToast();
-  const { colors } = useTheme();
-  const { isWide } = useLayout();
-  const [dateKey, setDateKey] = useState(toDateKey());
-  const [entries, setEntries] = useState<DiaryEntry[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [mealGoals, setMealGoals] = useState<MealGoals>({});
-  const [summary, setSummary] = useState<YazioDailySummary | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const router = useRouter()
+  const { settings, yazioAvailable, authenticated } = useApp()
+  const { showError, showSuccess, showWarning } = useToast()
+  const { colors } = useTheme()
+  const { isWide } = useLayout()
+  const [dateKey, setDateKey] = useState(toDateKey())
+  const [entries, setEntries] = useState<DiaryEntry[]>([])
+  const [refreshing, setRefreshing] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [mealGoals, setMealGoals] = useState<MealGoals>({})
+  const [summary, setSummary] = useState<YazioDailySummary | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  const totals = useMemo(() => sumEntries(entries), [entries]);
+  const totals = useMemo(() => sumEntries(entries), [entries])
 
   const mealEntries = useMemo(() => {
     const grouped: Record<MealType, DiaryEntry[]> = {
@@ -59,119 +59,115 @@ export default function TodayScreen() {
       lunch: [],
       dinner: [],
       snack: [],
-    };
-    for (const entry of entries) {
-      grouped[entry.meal_type]?.push(entry);
     }
-    return grouped;
-  }, [entries]);
+    for (const entry of entries) {
+      grouped[entry.meal_type]?.push(entry)
+    }
+    return grouped
+  }, [entries])
 
   const load = useCallback(
     async (options?: { quiet?: boolean }) => {
       // 1. Local first — the diary renders from SQLite before any network is touched.
-      let list: DiaryEntry[];
+      let list: DiaryEntry[]
       try {
-        list = await getDiaryEntriesForDate(dateKey);
-        setEntries(list);
+        list = await getDiaryEntriesForDate(dateKey)
+        setEntries(list)
       } catch (error) {
-        showError(error, 'Could not load diary for this day.');
-        return;
+        showError(error, "Could not load diary for this day.")
+        return
       }
 
       // 2. Background sync — imports and goals refresh without blocking the render.
-      if (!authenticated) return;
-      setImporting(true);
+      if (!authenticated) return
+      setImporting(true)
       try {
-        const result = await importDiaryFromYazio(dateKey);
-        setMealGoals(result.mealGoals);
-        setSummary(result.summary);
+        const result = await importDiaryFromYazio(dateKey)
+        setMealGoals(result.mealGoals)
+        setSummary(result.summary)
         if (result.imported > 0 || result.failed > 0 || result.error) {
-          const updated = await getDiaryEntriesForDate(dateKey);
-          setEntries(updated);
+          const updated = await getDiaryEntriesForDate(dateKey)
+          setEntries(updated)
         }
         if (result.error && !options?.quiet) {
-          showWarning(result.error, 'YAZIO import');
-        } else if (
-          !options?.quiet &&
-          result.imported > 0 &&
-          result.failed === 0
-        ) {
+          showWarning(result.error, "YAZIO import")
+        } else if (!options?.quiet && result.imported > 0 && result.failed === 0) {
           showSuccess(
             result.imported === 1
-              ? 'Imported 1 item from YAZIO.'
+              ? "Imported 1 item from YAZIO."
               : `Imported ${result.imported} items from YAZIO.`,
-            'Synced',
-          );
+            "Synced",
+          )
         } else if (!options?.quiet && result.failed > 0) {
           showWarning(
             `${result.imported} imported, ${result.failed} could not be loaded. Try again.`,
-            'Partial import',
-          );
+            "Partial import",
+          )
         }
       } catch {
         // Import errors are reported inside importDiaryFromYazio; never block the UI here.
       } finally {
-        setImporting(false);
+        setImporting(false)
       }
     },
     [authenticated, dateKey, showError, showSuccess, showWarning],
-  );
+  )
 
   useFocusEffect(
     useCallback(() => {
-      load({ quiet: true });
+      load({ quiet: true })
     }, [load]),
-  );
+  )
 
   const shiftDate = (delta: number) => {
-    setDateKey((current) => shiftDateKey(current, delta));
-  };
+    setDateKey((current) => shiftDateKey(current, delta))
+  }
 
   const openAdd = useCallback(
     (mealType: MealType) => {
       router.push({
-        pathname: '/log-meal',
+        pathname: "/log-meal",
         params: { meal: mealType, date: dateKey },
-      });
+      })
     },
     [dateKey, router],
-  );
+  )
 
   const openEdit = useCallback(
     (entryId: string) => {
       router.push({
-        pathname: '/add-food',
+        pathname: "/add-food",
         params: { entryId, date: dateKey },
-      });
+      })
     },
     [dateKey, router],
-  );
+  )
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
+    setRefreshing(true)
+    await load()
+    setRefreshing(false)
+  }
 
   const onDeleteEntry = useCallback(
     (id: string) => {
-      const entry = entries.find((e) => e.id === id);
+      const entry = entries.find((e) => e.id === id)
       confirmAction({
-        title: 'Delete entry?',
-        message: `Remove "${entry?.food_name ?? 'this item'}" from the diary?`,
-        confirmLabel: 'Delete',
+        title: "Delete entry?",
+        message: `Remove "${entry?.food_name ?? "this item"}" from the diary?`,
+        confirmLabel: "Delete",
         onConfirm: async () => {
           try {
-            await deleteFoodEntry(id);
-            await load({ quiet: true });
+            await deleteFoodEntry(id)
+            await load({ quiet: true })
           } catch (error) {
-            showError(error, 'Could not delete entry.');
+            showError(error, "Could not delete entry.")
           }
         },
-      });
+      })
     },
     [entries, load, showError],
-  );
+  )
 
   const renderMealSections = (grid?: boolean) =>
     MEAL_TYPES.map((meal) => {
@@ -186,18 +182,18 @@ export default function TodayScreen() {
           onEdit={openEdit}
           onDelete={onDeleteEntry}
         />
-      );
+      )
       return grid ? (
-        <View key={meal} className="grow basis-[48%] min-w-[280px]">
+        <View key={meal} className="min-w-[280px] grow basis-[48%]">
           {section}
         </View>
       ) : (
         section
-      );
-    });
+      )
+    })
 
-  const isToday = dateKey === toDateKey();
-  const weight = summary?.weight;
+  const isToday = dateKey === toDateKey()
+  const weight = summary?.weight
 
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
@@ -246,10 +242,10 @@ export default function TodayScreen() {
         </Box>
       ) : null}
     </Card>
-  );
+  )
 
   const nutritionHeader = (
-    <Box className="flex-row items-center justify-between mb-4 px-1">
+    <Box className="mb-4 flex-row items-center justify-between px-1">
       <Box>
         <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
           Meals
@@ -260,9 +256,7 @@ export default function TodayScreen() {
       </Box>
       <Pressable
         className="h-11 flex-row items-center gap-1.5 rounded-full bg-primary-500 px-4 active:opacity-85"
-        onPress={() =>
-          router.push({ pathname: '/scan', params: { meal: 'lunch', date: dateKey } })
-        }
+        onPress={() => router.push({ pathname: "/scan", params: { meal: "lunch", date: dateKey } })}
         accessibilityRole="button"
         accessibilityLabel="Scan barcode"
       >
@@ -272,13 +266,13 @@ export default function TodayScreen() {
         </Text>
       </Pressable>
     </Box>
-  );
+  )
 
   return (
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
-      <PageContainer variant={isWide ? 'wide' : 'narrow'} className="flex-1">
-        <Box className="px-6 pt-3 pb-2">
+      <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
+        <Box className="px-6 pb-2 pt-3">
           <Card variant="elevated" className="flex-row items-center px-2 py-2">
             <Pressable
               onPress={() => shiftDate(-1)}
@@ -299,7 +293,7 @@ export default function TodayScreen() {
                 {formatDisplayDate(dateKey)}
               </Text>
               {!isToday ? (
-                <Box className="mt-1 px-3 py-0.5 rounded-full bg-primary-500/15">
+                <Box className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5">
                   <Text size="2xs" bold className="text-primary-600">
                     Jump to today
                   </Text>
@@ -339,14 +333,18 @@ export default function TodayScreen() {
 
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
           }
-          contentContainerClassName={`p-4 pb-16 w-full ${isWide ? 'self-stretch max-w-none px-6' : 'self-center'}`}
+          contentContainerClassName={`p-4 pb-16 w-full ${isWide ? "self-stretch max-w-none px-6" : "self-center"}`}
         >
           {isWide ? (
-            <Box className="flex-row items-start gap-6 w-full">
-              <Box className="flex-[0.95] min-w-[340px] max-w-[460px]">{summaryCard}</Box>
-              <Box className="flex-[1.05] min-w-0">
+            <Box className="w-full flex-row items-start gap-6">
+              <Box className="min-w-[340px] max-w-[460px] flex-[0.95]">{summaryCard}</Box>
+              <Box className="min-w-0 flex-[1.05]">
                 {nutritionHeader}
                 <Box className="flex-row flex-wrap gap-2">{renderMealSections(true)}</Box>
               </Box>
@@ -368,5 +366,5 @@ export default function TodayScreen() {
         onClose={() => setPickerOpen(false)}
       />
     </Box>
-  );
+  )
 }

@@ -1,32 +1,28 @@
-import type { MealType, SearchFoodResult } from '@/types';
-import { isPerGramNutrients, isPerGramRawNutrients, nutrientsFromYazio } from '@/utils/nutrients';
-import { withRetry } from '@/utils/retry';
-import { pickBestBarcodeMatch } from '@/utils/barcode';
-import * as foodCacheDb from '@/db/food-cache';
-import {
-  ensureYazioClient,
-  getYazioEnergyUnit,
-  getYazioProductSearchOptions,
-} from './client';
+import type { MealType, SearchFoodResult } from "@/types"
+import { isPerGramNutrients, isPerGramRawNutrients, nutrientsFromYazio } from "@/utils/nutrients"
+import { withRetry } from "@/utils/retry"
+import { pickBestBarcodeMatch } from "@/utils/barcode"
+import * as foodCacheDb from "@/db/food-cache"
+import { ensureYazioClient, getYazioEnergyUnit, getYazioProductSearchOptions } from "./client"
 
 function mapSearchResult(
   item: {
-    product_id: string;
-    name: string;
-    producer: string;
-    nutrients: Record<string, number>;
-    serving: string;
-    amount: number;
-    serving_quantity: number;
-    base_unit: string;
-    is_verified: boolean;
+    product_id: string
+    name: string
+    producer: string
+    nutrients: Record<string, number>
+    serving: string
+    amount: number
+    serving_quantity: number
+    base_unit: string
+    is_verified: boolean
   },
-  unitEnergy = 'kcal',
+  unitEnergy = "kcal",
 ): SearchFoodResult {
   return {
     product_id: item.product_id,
     name: item.name,
-    producer: item.producer ?? '',
+    producer: item.producer ?? "",
     nutrients: nutrientsFromYazio(item.nutrients, unitEnergy),
     serving: {
       serving: item.serving,
@@ -35,29 +31,23 @@ function mapSearchResult(
     },
     base_unit: item.base_unit,
     is_verified: item.is_verified,
-  };
+  }
 }
 
 async function ensureClient() {
-  const yazio = await ensureYazioClient();
-  if (!yazio) throw new Error('Not logged in to YAZIO');
-  return yazio;
+  const yazio = await ensureYazioClient()
+  if (!yazio) throw new Error("Not logged in to YAZIO")
+  return yazio
 }
 
-function withoutLegacyPerGramCache(
-  cached: SearchFoodResult | null,
-): SearchFoodResult | null {
+function withoutLegacyPerGramCache(cached: SearchFoodResult | null): SearchFoodResult | null {
   if (
     cached &&
-    isPerGramNutrients(
-      cached.nutrients,
-      cached.base_unit || 'g',
-      cached.serving.serving_quantity,
-    )
+    isPerGramNutrients(cached.nutrients, cached.base_unit || "g", cached.serving.serving_quantity)
   ) {
-    return null;
+    return null
   }
-  return cached;
+  return cached
 }
 
 /** Products YAZIO suggests for a meal slot on a date (resolution falls back to cache/remote). */
@@ -66,94 +56,84 @@ export async function getSuggestedFoods(
   mealType: MealType,
   limit = 5,
 ): Promise<SearchFoodResult[]> {
-  const yazio = await ensureClient();
-  let suggested: { product_id: string }[];
+  const yazio = await ensureClient()
+  let suggested: { product_id: string }[]
   try {
-    suggested = await withRetry(() =>
-      yazio.user.getSuggestedProducts({ date, daytime: mealType }),
-    );
+    suggested = await withRetry(() => yazio.user.getSuggestedProducts({ date, daytime: mealType }))
   } catch {
-    return [];
+    return []
   }
-  const ids = suggested.map((s) => s.product_id).slice(0, limit);
-  if (ids.length === 0) return [];
+  const ids = suggested.map((s) => s.product_id).slice(0, limit)
+  if (ids.length === 0) return []
 
-  const cached = await foodCacheDb.getFoodsByIds(ids);
-  const resolved: SearchFoodResult[] = [];
+  const cached = await foodCacheDb.getFoodsByIds(ids)
+  const resolved: SearchFoodResult[] = []
   for (const id of ids) {
-    const fromCache = cached.get(id);
+    const fromCache = cached.get(id)
     if (fromCache) {
-      resolved.push(fromCache);
+      resolved.push(fromCache)
     } else {
-      const remote = await getFoodRemote(id);
-      if (remote) resolved.push(remote);
+      const remote = await getFoodRemote(id)
+      if (remote) resolved.push(remote)
     }
   }
-  return resolved;
+  return resolved
 }
 
 export async function searchFoodsRemote(
   query: string,
   unitEnergy?: string,
 ): Promise<SearchFoodResult[]> {
-  const yazio = await ensureClient();
+  const yazio = await ensureClient()
   const [energyUnit, searchOptions] = await Promise.all([
     unitEnergy ? Promise.resolve(unitEnergy) : getYazioEnergyUnit(),
     getYazioProductSearchOptions(),
-  ]);
+  ])
   const results = await withRetry(() =>
     yazio.products.search({
       query: query.trim(),
       countries: searchOptions.countries,
       sex: searchOptions.sex,
     }),
-  );
-  const mapped = results.map((r) => mapSearchResult(r, energyUnit));
+  )
+  const mapped = results.map((r) => mapSearchResult(r, energyUnit))
   // Cache writes run in parallel; a slow write must not stall the search UI.
-  await Promise.all(mapped.map((food) => foodCacheDb.saveFoodToCache(food)));
-  return mapped;
+  await Promise.all(mapped.map((food) => foodCacheDb.saveFoodToCache(food)))
+  return mapped
 }
 
 export async function getFoodRemote(
   productId: string,
   unitEnergy?: string,
 ): Promise<SearchFoodResult | null> {
-  const cached = await foodCacheDb.getFoodById(productId);
+  const cached = await foodCacheDb.getFoodById(productId)
 
-  let yazio;
+  let yazio
   try {
-    yazio = await ensureClient();
+    yazio = await ensureClient()
   } catch {
-    return withoutLegacyPerGramCache(cached);
+    return withoutLegacyPerGramCache(cached)
   }
 
-  let product;
+  let product
   try {
-    product = await withRetry(() => yazio.products.get(productId));
+    product = await withRetry(() => yazio.products.get(productId))
   } catch {
-    return withoutLegacyPerGramCache(cached);
+    return withoutLegacyPerGramCache(cached)
   }
-  if (!product) return withoutLegacyPerGramCache(cached);
+  if (!product) return withoutLegacyPerGramCache(cached)
 
-  const energyUnit = unitEnergy ?? (await getYazioEnergyUnit());
-  const defaultServing = product.servings[0];
-  const defaultAmount = defaultServing?.amount ?? 100;
-  const baseUnit = product.base_unit || 'g';
+  const energyUnit = unitEnergy ?? (await getYazioEnergyUnit())
+  const defaultServing = product.servings[0]
+  const defaultAmount = defaultServing?.amount ?? 100
+  const baseUnit = product.base_unit || "g"
   // Product detail API returns nutrients per gram; normalize to per 100 g before rounding.
-  const perGram = isPerGramRawNutrients(
-    product.nutrients,
-    baseUnit,
-    energyUnit,
-  );
-  const mappedNutrients = nutrientsFromYazio(
-    product.nutrients,
-    energyUnit,
-    perGram ? 100 : 1,
-  );
+  const perGram = isPerGramRawNutrients(product.nutrients, baseUnit, energyUnit)
+  const mappedNutrients = nutrientsFromYazio(product.nutrients, energyUnit, perGram ? 100 : 1)
   const food: SearchFoodResult = {
     product_id: product.id,
     name: product.name,
-    producer: product.producer ?? '',
+    producer: product.producer ?? "",
     nutrients: mappedNutrients,
     serving: perGram
       ? { serving: baseUnit, amount: 100, serving_quantity: 100 }
@@ -163,7 +143,7 @@ export async function getFoodRemote(
             amount: defaultAmount,
             serving_quantity: defaultAmount,
           }
-        : { serving: 'portion', amount: 100, serving_quantity: 100 },
+        : { serving: "portion", amount: 100, serving_quantity: 100 },
     servings: product.servings.map((s) => ({
       serving: s.serving,
       amount: s.amount,
@@ -171,20 +151,20 @@ export async function getFoodRemote(
     })),
     base_unit: product.base_unit,
     is_verified: product.is_verified,
-  };
+  }
 
-  const barcode = product.eans?.[0] ?? null;
-  await foodCacheDb.saveFoodToCache(food, barcode);
-  return food;
+  const barcode = product.eans?.[0] ?? null
+  await foodCacheDb.saveFoodToCache(food, barcode)
+  return food
 }
 
 export async function getFoodByBarcode(
   barcode: string,
   unitEnergy?: string,
 ): Promise<SearchFoodResult | null> {
-  const cached = await foodCacheDb.getFoodByBarcode(barcode);
-  if (cached) return cached;
+  const cached = await foodCacheDb.getFoodByBarcode(barcode)
+  if (cached) return cached
 
-  const results = await searchFoodsRemote(barcode, unitEnergy);
-  return pickBestBarcodeMatch(results, barcode);
+  const results = await searchFoodsRemote(barcode, unitEnergy)
+  return pickBestBarcodeMatch(results, barcode)
 }

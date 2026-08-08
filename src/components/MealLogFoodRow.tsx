@@ -1,32 +1,36 @@
-import { memo } from 'react';
-import { Pressable, Text, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import type { SearchFoodResult } from '@/types';
-import { formatListNutrientLine } from '@/utils/food-display';
-import { isPerGramNutrients } from '@/utils/nutrients';
-import { useTheme } from '@/hooks/useTheme';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+import { memo } from "react"
+import { Pressable, Text, StyleSheet, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import type { SearchFoodResult } from "@/types"
+import { formatListNutrientLine } from "@/utils/food-display"
+import { isPerGramNutrients } from "@/utils/nutrients"
+import { useTheme } from "@/hooks/useTheme"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { spacing, type ColorPalette } from "@/theme"
 
 type Props = {
-  food: SearchFoodResult;
-  subtitle?: string;
-  accentColor: string;
-  onPress: () => void;
-  onAdd: () => void;
-};
+  food: SearchFoodResult
+  subtitle?: string
+  accentColor: string
+  onPress: () => void
+  onAdd: () => void
+}
 
-export const MealLogFoodRow = memo(function MealLogFoodRow({ food, subtitle, accentColor, onPress, onAdd }: Props) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(createStyles);
+export const MealLogFoodRow = memo(function MealLogFoodRow({
+  food,
+  subtitle,
+  accentColor,
+  onPress,
+  onAdd,
+}: Props) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const perGram = isPerGramNutrients(
     food.nutrients,
-    food.base_unit || 'g',
+    food.base_unit || "g",
     food.serving.serving_quantity,
-  );
-  const kcal = perGram
-    ? Math.round(food.nutrients.kcal * 100)
-    : Math.round(food.nutrients.kcal);
+  )
+  const kcal = perGram ? Math.round(food.nutrients.kcal * 100) : Math.round(food.nutrients.kcal)
 
   return (
     <View style={styles.row}>
@@ -56,14 +60,14 @@ export const MealLogFoodRow = memo(function MealLogFoodRow({ food, subtitle, acc
         <Ionicons name="add" size={22} color={colors.onPrimary} />
       </Pressable>
     </View>
-  );
-});
+  )
+})
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     row: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginHorizontal: spacing.md,
       marginBottom: spacing.sm,
       paddingVertical: spacing.md,
@@ -76,24 +80,24 @@ const createStyles = (colors: ColorPalette) =>
     },
     mainTap: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: spacing.sm,
       minWidth: 0,
     },
     info: { flex: 1, minWidth: 0 },
-    name: { fontSize: 16, color: colors.text, fontWeight: '600' },
+    name: { fontSize: 16, color: colors.text, fontWeight: "600" },
     meta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
     kcal: {
       fontSize: 14,
       color: colors.textMuted,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     addBtn: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
-  });
+  })

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -9,29 +9,29 @@ import {
   Linking,
   Platform,
   TextInput,
-} from 'react-native';
-import { useToast } from '@/context/ToastContext';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import type { MealType } from '@/types';
-import { getFoodByBarcode, searchFoodsRemote } from '@/services/yazio/foods';
-import { FoodListItem } from '@/components/FoodListItem';
-import { PageContainer } from '@/components/PageContainer';
-import { ModalContainer } from '@/components/ModalContainer';
-import { useApp } from '@/context/AppContext';
-import type { SearchFoodResult } from '@/types';
-import { toDateKey } from '@/utils/date';
-import { routeParam } from '@/utils/route';
-import { useTheme } from '@/hooks/useTheme';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { confirmAction } from '@/utils/confirm';
-import { spacing, type ColorPalette } from '@/theme';
-import { Box } from '@ui/box';
-import { Input, InputField } from '@ui/input';
-import { Button, ButtonText } from '@ui/button';
+} from "react-native"
+import { useToast } from "@/context/ToastContext"
+import { CameraView, useCameraPermissions } from "expo-camera"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
+import type { MealType } from "@/types"
+import { getFoodByBarcode, searchFoodsRemote } from "@/services/yazio/foods"
+import { FoodListItem } from "@/components/FoodListItem"
+import { PageContainer } from "@/components/PageContainer"
+import { ModalContainer } from "@/components/ModalContainer"
+import { useApp } from "@/context/AppContext"
+import type { SearchFoodResult } from "@/types"
+import { toDateKey } from "@/utils/date"
+import { routeParam } from "@/utils/route"
+import { useTheme } from "@/hooks/useTheme"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { confirmAction } from "@/utils/confirm"
+import { spacing, type ColorPalette } from "@/theme"
+import { Box } from "@ui/box"
+import { Input, InputField } from "@ui/input"
+import { Button, ButtonText } from "@ui/button"
 
-const MANUAL_SCAN_ON_WEB = Platform.OS === 'web';
+const MANUAL_SCAN_ON_WEB = Platform.OS === "web"
 
 function BarcodeMatchesList({
   results,
@@ -39,13 +39,13 @@ function BarcodeMatchesList({
   onPick,
   onRescan,
 }: {
-  results: SearchFoodResult[];
-  lastBarcode: string;
-  onPick: (food: SearchFoodResult) => void;
-  onRescan: () => void;
+  results: SearchFoodResult[]
+  lastBarcode: string
+  onPick: (food: SearchFoodResult) => void
+  onRescan: () => void
 }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(createStyles);
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   return (
     <FlatList
       style={styles.list}
@@ -66,184 +66,182 @@ function BarcodeMatchesList({
       }
       renderItem={({ item }) => <FoodListItem food={item} onPress={() => onPick(item)} />}
     />
-  );
+  )
 }
 
 export default function ScanScreen() {
-  const router = useRouter();
-  const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>();
-  const mealType = (routeParam(routeParams.meal) ?? 'lunch') as MealType;
-  const dateKey = routeParam(routeParams.date) ?? toDateKey();
-  const { setYazioAvailable } = useApp();
-  const { showError } = useToast();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(createStyles);
-  const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<SearchFoodResult[]>([]);
-  const [lastBarcode, setLastBarcode] = useState('');
-  const [manualBarcode, setManualBarcode] = useState('');
-  const [notFound, setNotFound] = useState(false);
+  const router = useRouter()
+  const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>()
+  const mealType = (routeParam(routeParams.meal) ?? "lunch") as MealType
+  const dateKey = routeParam(routeParams.date) ?? toDateKey()
+  const { setYazioAvailable } = useApp()
+  const { showError } = useToast()
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
+  const [permission, requestPermission] = useCameraPermissions()
+  const [scanned, setScanned] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<SearchFoodResult[]>([])
+  const [lastBarcode, setLastBarcode] = useState("")
+  const [manualBarcode, setManualBarcode] = useState("")
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     if (!MANUAL_SCAN_ON_WEB && !permission?.granted && permission?.canAskAgain !== false) {
-      requestPermission();
+      requestPermission()
     }
-  }, [permission, requestPermission]);
+  }, [permission, requestPermission])
 
   const resetForNextScan = () => {
-    setResults([]);
-    setScanned(false);
-    setLastBarcode('');
-    setNotFound(false);
-    setManualBarcode('');
-  };
+    setResults([])
+    setScanned(false)
+    setLastBarcode("")
+    setNotFound(false)
+    setManualBarcode("")
+  }
 
   const lookupBarcode = async (barcode: string) => {
-    setLoading(true);
-    setLastBarcode(barcode);
-    setNotFound(false);
+    setLoading(true)
+    setLastBarcode(barcode)
+    setNotFound(false)
     try {
-      const match = await getFoodByBarcode(barcode);
+      const match = await getFoodByBarcode(barcode)
       if (match) {
-        openFood(match);
-        return;
+        openFood(match)
+        return
       }
-      const remote = await searchFoodsRemote(barcode);
-      setYazioAvailable(true);
+      const remote = await searchFoodsRemote(barcode)
+      setYazioAvailable(true)
       if (remote.length === 0) {
-        setNotFound(true);
-        setScanned(false);
+        setNotFound(true)
+        setScanned(false)
       } else if (remote.length === 1) {
-        openFood(remote[0]);
+        openFood(remote[0])
       } else {
-        setResults(remote);
+        setResults(remote)
       }
     } catch (error) {
-      setYazioAvailable(false);
-      showError(error, 'Could not reach YAZIO. Try again later.', 'Lookup failed');
-      setScanned(false);
+      setYazioAvailable(false)
+      showError(error, "Could not reach YAZIO. Try again later.", "Lookup failed")
+      setScanned(false)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleManualLookup = () => {
-    const barcode = manualBarcode.replace(/\D/g, '');
-    if (!barcode) return;
-    lookupBarcode(barcode);
-  };
+    const barcode = manualBarcode.replace(/\D/g, "")
+    if (!barcode) return
+    lookupBarcode(barcode)
+  }
 
   const confirmNotFound = () => {
     confirmAction({
-      title: 'Not found',
-      message: 'No YAZIO match for this barcode. Try manual search.',
-      confirmLabel: 'Search',
+      title: "Not found",
+      message: "No YAZIO match for this barcode. Try manual search.",
+      confirmLabel: "Search",
       onConfirm: () =>
         router.replace({
-          pathname: '/log-meal',
+          pathname: "/log-meal",
           params: { meal: mealType, date: dateKey },
         }),
       onCancel: resetForNextScan,
-    });
-  };
+    })
+  }
 
   const openFood = (food: SearchFoodResult) => {
     router.replace({
-      pathname: '/add-food',
+      pathname: "/add-food",
       params: {
         meal: mealType,
         date: dateKey,
         productId: food.product_id,
       },
-    });
-  };
+    })
+  }
 
   if (MANUAL_SCAN_ON_WEB) {
     return (
       <View style={styles.container}>
         <ModalContainer hug maxWidth={640}>
-        <Box className="flex-1" style={styles.webScanContent}>
-          <Box className="flex-row items-center justify-between mb-2">
-            <Text style={styles.webScanTitle}>Scan barcode</Text>
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={28} color={colors.text} />
-            </Pressable>
-          </Box>
-          <Text style={styles.webScanHint}>
-            Camera scanning is not available in the browser. Enter the barcode
-            number from the product label instead (EAN-13 / UPC).
-          </Text>
-          <Input size="lg" variant="rounded" className="bg-background-50 mb-3">
-            <InputField
-              placeholder="e.g. 4000539012345"
-              keyboardType="number-pad"
-              value={manualBarcode}
-              onChangeText={(value) => {
-                setManualBarcode(value);
-                setNotFound(false);
-              }}
-              autoCorrect={false}
-              onSubmitEditing={handleManualLookup}
-              returnKeyType="search"
-              accessibilityLabel="Barcode number"
-            />
-          </Input>
-          <Button size="lg" onPress={handleManualLookup} disabled={loading}>
-            <ButtonText>{loading ? 'Looking up...' : 'Look up barcode'}</ButtonText>
-          </Button>
-
-          {notFound ? (
-            <Box className="mt-8 items-center">
-              <Ionicons name="search-outline" size={44} color={colors.textMuted} />
-              <Text style={styles.notFoundText}>
-                No YAZIO match for {lastBarcode}.
-              </Text>
-              <Button
-                size="md"
-                variant="outline"
-                action="secondary"
-                className="mt-4"
-                onPress={confirmNotFound}
-              >
-                <ButtonText>Search for a food instead</ButtonText>
-              </Button>
+          <Box className="flex-1" style={styles.webScanContent}>
+            <Box className="mb-2 flex-row items-center justify-between">
+              <Text style={styles.webScanTitle}>Scan barcode</Text>
               <Pressable
-                style={styles.linkBtn}
-                onPress={resetForNextScan}
+                onPress={() => router.back()}
+                hitSlop={12}
                 accessibilityRole="button"
-                accessibilityLabel="Clear barcode"
+                accessibilityLabel="Close"
               >
-                <Text style={styles.linkBtnText}>Try another barcode</Text>
+                <Ionicons name="close" size={28} color={colors.text} />
               </Pressable>
             </Box>
-          ) : null}
+            <Text style={styles.webScanHint}>
+              Camera scanning is not available in the browser. Enter the barcode number from the
+              product label instead (EAN-13 / UPC).
+            </Text>
+            <Input size="lg" variant="rounded" className="mb-3 bg-background-50">
+              <InputField
+                placeholder="e.g. 4000539012345"
+                keyboardType="number-pad"
+                value={manualBarcode}
+                onChangeText={(value) => {
+                  setManualBarcode(value)
+                  setNotFound(false)
+                }}
+                autoCorrect={false}
+                onSubmitEditing={handleManualLookup}
+                returnKeyType="search"
+                accessibilityLabel="Barcode number"
+              />
+            </Input>
+            <Button size="lg" onPress={handleManualLookup} disabled={loading}>
+              <ButtonText>{loading ? "Looking up..." : "Look up barcode"}</ButtonText>
+            </Button>
 
-          {results.length > 0 ? (
-            <BarcodeMatchesList
-              results={results}
-              lastBarcode={lastBarcode}
-              onPick={openFood}
-              onRescan={resetForNextScan}
-            />
-          ) : null}
+            {notFound ? (
+              <Box className="mt-8 items-center">
+                <Ionicons name="search-outline" size={44} color={colors.textMuted} />
+                <Text style={styles.notFoundText}>No YAZIO match for {lastBarcode}.</Text>
+                <Button
+                  size="md"
+                  variant="outline"
+                  action="secondary"
+                  className="mt-4"
+                  onPress={confirmNotFound}
+                >
+                  <ButtonText>Search for a food instead</ButtonText>
+                </Button>
+                <Pressable
+                  style={styles.linkBtn}
+                  onPress={resetForNextScan}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear barcode"
+                >
+                  <Text style={styles.linkBtnText}>Try another barcode</Text>
+                </Pressable>
+              </Box>
+            ) : null}
 
-          {loading ? (
-            <Box className="flex-row items-center justify-center gap-2 mt-6">
-              <ActivityIndicator color={colors.primary} />
-              <Text style={styles.overlayText}>Looking up {lastBarcode}...</Text>
-            </Box>
-          ) : null}
-        </Box>
+            {results.length > 0 ? (
+              <BarcodeMatchesList
+                results={results}
+                lastBarcode={lastBarcode}
+                onPick={openFood}
+                onRescan={resetForNextScan}
+              />
+            ) : null}
+
+            {loading ? (
+              <Box className="mt-6 flex-row items-center justify-center gap-2">
+                <ActivityIndicator color={colors.primary} />
+                <Text style={styles.overlayText}>Looking up {lastBarcode}...</Text>
+              </Box>
+            ) : null}
+          </Box>
         </ModalContainer>
       </View>
-    );
+    )
   }
 
   if (!permission) {
@@ -251,7 +249,7 @@ export default function ScanScreen() {
       <View style={styles.center}>
         <ActivityIndicator color={colors.primary} />
       </View>
-    );
+    )
   }
 
   if (!permission.granted) {
@@ -288,7 +286,7 @@ export default function ScanScreen() {
           </Pressable>
         </PageContainer>
       </View>
-    );
+    )
   }
 
   return (
@@ -297,14 +295,14 @@ export default function ScanScreen() {
         <CameraView
           style={styles.camera}
           barcodeScannerSettings={{
-            barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'],
+            barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"],
           }}
           onBarcodeScanned={
             scanned || loading
               ? undefined
               : ({ data }) => {
-                  setScanned(true);
-                  lookupBarcode(data);
+                  setScanned(true)
+                  lookupBarcode(data)
                 }
           }
         />
@@ -333,89 +331,89 @@ export default function ScanScreen() {
         <Text style={styles.closeText}>Close</Text>
       </Pressable>
     </View>
-  );
+  )
 }
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  camera: { flex: 1 },
-  list: { flex: 1 },
-  webScanContent: { padding: spacing.lg, paddingTop: spacing.md },
-  webScanTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  webScanHint: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  notFoundText: {
-    color: colors.text,
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-  linkBtn: { marginTop: spacing.md },
-  linkBtnText: { color: colors.primary, fontWeight: '600', fontSize: 15 },
-  pickerTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    padding: spacing.md,
-  },
-  scanAgainBtn: {
-    alignSelf: 'flex-start',
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-  },
-  scanAgainText: { color: colors.onPrimary, fontWeight: '700' },
-  center: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  message: { color: colors.text, textAlign: 'center', marginBottom: spacing.sm },
-  hint: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-    maxWidth: 280,
-  },
-  btn: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: 10,
-  },
-  btnText: { color: colors.onPrimary, fontWeight: '700' },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  overlayText: { color: '#ffffff', marginTop: spacing.md },
-  closeFab: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: 24,
-  },
-  close: { marginTop: spacing.md },
-  closeText: { color: colors.text, fontWeight: '600' },
-});
+    container: { flex: 1, backgroundColor: colors.background },
+    camera: { flex: 1 },
+    list: { flex: 1 },
+    webScanContent: { padding: spacing.lg, paddingTop: spacing.md },
+    webScanTitle: {
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: "700",
+    },
+    webScanHint: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: spacing.md,
+    },
+    notFoundText: {
+      color: colors.text,
+      fontSize: 15,
+      textAlign: "center",
+      marginTop: spacing.sm,
+    },
+    linkBtn: { marginTop: spacing.md },
+    linkBtnText: { color: colors.primary, fontWeight: "600", fontSize: 15 },
+    pickerTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "600",
+      padding: spacing.md,
+    },
+    scanAgainBtn: {
+      alignSelf: "flex-start",
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      borderRadius: 20,
+      backgroundColor: colors.primary,
+    },
+    scanAgainText: { color: colors.onPrimary, fontWeight: "700" },
+    center: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    centerContent: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: spacing.lg,
+    },
+    message: { color: colors.text, textAlign: "center", marginBottom: spacing.sm },
+    hint: {
+      color: colors.textMuted,
+      textAlign: "center",
+      marginBottom: spacing.lg,
+      maxWidth: 280,
+    },
+    btn: {
+      backgroundColor: colors.primary,
+      padding: spacing.md,
+      borderRadius: 10,
+    },
+    btnText: { color: colors.onPrimary, fontWeight: "700" },
+    overlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    overlayText: { color: "#ffffff", marginTop: spacing.md },
+    closeFab: {
+      position: "absolute",
+      bottom: 40,
+      alignSelf: "center",
+      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      borderRadius: 24,
+    },
+    close: { marginTop: spacing.md },
+    closeText: { color: colors.text, fontWeight: "600" },
+  })

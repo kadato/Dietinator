@@ -1,16 +1,16 @@
-import { memo } from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import type { DiaryEntry } from '@/types';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { spacing, type ColorPalette } from '@/theme';
+import { memo } from "react"
+import { Pressable, Text, View, StyleSheet } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import type { DiaryEntry } from "@/types"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { spacing, type ColorPalette } from "@/theme"
 
 type Props = {
-  entry: DiaryEntry;
-  accentColor: string;
-  onEdit: (entryId: string) => void;
-  onDelete: (entryId: string) => void;
-};
+  entry: DiaryEntry
+  accentColor: string
+  onEdit: (entryId: string) => void
+  onDelete: (entryId: string) => void
+}
 
 export const DiaryEntryRow = memo(function DiaryEntryRow({
   entry,
@@ -18,11 +18,8 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
   onEdit,
   onDelete,
 }: Props) {
-  const styles = useThemedStyles(createStyles);
-  const amountLabel =
-    entry.unit === 'serving'
-      ? '1 serving'
-      : `${entry.amount}${entry.unit}`;
+  const styles = useThemedStyles(createStyles)
+  const amountLabel = entry.unit === "serving" ? "1 serving" : `${entry.amount}${entry.unit}`
 
   return (
     <Pressable
@@ -33,7 +30,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
       accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
       accessibilityHint="Tap to edit, long press to delete"
     >
-      <View style={[styles.iconWrap, { backgroundColor: accentColor + '22' }]}>
+      <View style={[styles.iconWrap, { backgroundColor: accentColor + "22" }]}>
         <Ionicons name="nutrition-outline" size={18} color={accentColor} />
       </View>
       <View style={styles.info}>
@@ -49,14 +46,14 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         <Text style={styles.kcalUnit}>kcal</Text>
       </View>
     </Pressable>
-  );
-});
+  )
+})
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     row: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: spacing.sm,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.xs,
@@ -67,13 +64,13 @@ const createStyles = (colors: ColorPalette) =>
       width: 36,
       height: 36,
       borderRadius: 18,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     info: { flex: 1, minWidth: 0 },
     name: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
       lineHeight: 20,
     },
@@ -83,19 +80,19 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: 3,
     },
     kcalPill: {
-      alignItems: 'flex-end',
+      alignItems: "flex-end",
       minWidth: 52,
     },
     kcalValue: {
       fontSize: 17,
-      fontWeight: '700',
+      fontWeight: "700",
       color: colors.text,
     },
     kcalUnit: {
       fontSize: 10,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.textMuted,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 0.3,
     },
-  });
+  })
