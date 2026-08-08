@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * gluestack-ui's dark palette keeps elevated surfaces white
+ * (--color-background-50: 255 255 255). Align the tokens with the app's dark
+ * design system (darkColors in src/theme.ts: surface #1c1c1f, surfaceAlt
+ * #2a2a2f) so cards and inputs are dark in dark mode. `html.dark` outranks
+ * gluestack's `.dark` (higher specificity), regardless of stylesheet order.
+ */
+html.dark {
+  --color-background-50: 28 28 31;
+  --color-background-100: 42 42 47;
+  --color-background-200: 55 55 61;
+  --color-background-300: 70 70 78;
+}
