@@ -174,6 +174,15 @@ export async function getDeletedYazioItemIds(): Promise<Set<string>> {
   return new Set(rows.map((row) => row.id))
 }
 
+export async function isDeletedYazioItemId(id: string): Promise<boolean> {
+  const db = await getDatabase()
+  const row = await db.getFirstAsync<{ id: string }>(
+    "SELECT id FROM deleted_yazio_items WHERE id = ?",
+    id,
+  )
+  return row !== null
+}
+
 export async function addDeletedYazioItemId(id: string): Promise<void> {
   const db = await getDatabase()
   await db.runAsync(

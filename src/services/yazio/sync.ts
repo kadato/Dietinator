@@ -207,6 +207,9 @@ async function importConsumedProduct(
   if (!matchesDateKey(item.date, date)) return "skipped"
   if (existingIds.has(item.id)) return "skipped"
   if (deletedIds.has(item.id)) return "skipped"
+  // Re-check the tombstone table: an import that started before a delete holds
+  // a stale snapshot and would otherwise resurrect the entry.
+  if (await diaryDb.isDeletedYazioItemId(item.id)) return "skipped"
 
   let food = productCache.get(item.product_id)
   if (food === undefined) {
@@ -254,6 +257,9 @@ async function importSimpleProduct(
 
   const scaled = nutrientsFromYazio(item.nutrients ?? {}, unitEnergy)
 
+  // Re-check the tombstone table (see importConsumedProduct).
+  if (await diaryDb.isDeletedYazioItemId(item.id)) return "skipped"
+
   await diaryDb.addDiaryEntry({
     id: generateId(),
     date,
@@ -270,7 +276,6 @@ async function importSimpleProduct(
     yazio_synced: 1,
     yazio_item_id: item.id,
   })
-
   existingIds.add(item.id)
   return "imported"
 }
@@ -290,6 +295,9 @@ async function importRecipePortion(
   const nutrients = item.nutrients ?? {}
   const scaled = nutrientsFromYazio(nutrients, unitEnergy)
   if (scaled.kcal <= 0 && !item.name) return "failed"
+
+  // Re-check the tombstone table (see importConsumedProduct).
+  if (await diaryDb.isDeletedYazioItemId(item.id)) return "skipped"
 
   await diaryDb.addDiaryEntry({
     id: generateId(),

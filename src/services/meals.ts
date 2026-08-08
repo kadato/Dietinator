@@ -96,6 +96,9 @@ export async function logMealToDiary(params: {
 
     const entry = await diaryDb.addDiaryEntry({
       id: generateId(),
+      // Reserve the YAZIO item id up front so a background import that runs
+      // before the async sync finishes can never duplicate this entry.
+      yazio_item_id: generateId(),
       date,
       meal_type: mealType,
       food_id: food.product_id,

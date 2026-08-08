@@ -107,6 +107,9 @@ test.describe("YAZIO (real account)", () => {
 
     // Accept the confirmation dialog BEFORE the long-press fires it.
     page.once("dialog", (dialog) => void dialog.accept())
+    // Live YAZIO data (weight card, meal goals) shifts the layout between runs —
+    // make sure the row is actually reachable before pressing it.
+    await entry.scrollIntoViewIfNeeded()
     const box = await entry.boundingBox()
     if (!box) throw new Error("entry not measurable")
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
