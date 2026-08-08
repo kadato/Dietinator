@@ -22,7 +22,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
   return database
 }
 
-async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
+export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   // WAL uses extra OPFS files; web OPFS allows only one sync handle per file.
   const journalMode = Platform.OS === "web" ? "DELETE" : "WAL"
   await database.execAsync(`
