@@ -11,6 +11,8 @@ import { importFromYazio, syncPendingEntries } from "@/services/yazio/sync"
 import { toDateKey } from "@/utils/date"
 import { exportDiaryCsv, exportDiaryJson } from "@/services/diary"
 import { clearFoodCache } from "@/db/food-cache"
+import { createBackup, restoreBackup } from "@/services/backup"
+import { pickBackupFile, saveBackupFile } from "@/services/backup-files"
 import { PageContainer } from "@/components/PageContainer"
 import { SettingsSection } from "@/components/SettingsSection"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
@@ -160,6 +162,36 @@ export default function SettingsScreen() {
       await Share.share({ message: content, title: `diary-export.${format}` })
     } catch (error) {
       showError(error, "Could not export diary.")
+    }
+  }
+
+  const handleBackup = async () => {
+    try {
+      const payload = await createBackup()
+      await saveBackupFile(payload)
+      showSuccess("Backup saved — keep it somewhere safe.", "Backup created")
+    } catch (error) {
+      showError(error, "Could not create backup.")
+    }
+  }
+
+  const handleRestore = async () => {
+    try {
+      const content = await pickBackupFile()
+      let payload: unknown
+      try {
+        payload = JSON.parse(content)
+      } catch {
+        throw new Error("This file is not valid JSON.")
+      }
+      const { diaryEntries, foodCache, meals } = await restoreBackup(payload)
+      await Promise.all([refreshSettings(), refreshAuth()])
+      showSuccess(
+        `Restored ${diaryEntries} diary entries, ${foodCache} cached foods and ${meals} meals.`,
+        "Backup restored",
+      )
+    } catch (error) {
+      showError(error, "Could not restore backup.")
     }
   }
 
@@ -345,6 +377,25 @@ export default function SettingsScreen() {
               onPress={() => handleExport("csv")}
             >
               <ButtonText>Export diary (CSV)</ButtonText>
+            </Button>
+            <Button size="md" variant="outline" action="secondary" onPress={handleBackup}>
+              <ButtonText>Back up all data</ButtonText>
+            </Button>
+            <Button
+              size="md"
+              variant="outline"
+              action="secondary"
+              onPress={() =>
+                confirmAction({
+                  title: "Restore backup?",
+                  message:
+                    "This replaces all current diary entries, cached foods and meals on this device.",
+                  confirmLabel: "Restore",
+                  onConfirm: handleRestore,
+                })
+              }
+            >
+              <ButtonText>Restore from backup</ButtonText>
             </Button>
             <Button
               size="md"
