@@ -39,7 +39,13 @@
     "babel-plugin-module-resolver": "^5.0.0",
     "babel-preset-expo": "~56.0.13",
     "cross-env": "^10.1.0",
-    "prettier-plugin-tailwindcss": "^0.5.11",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "^57.0.1",
+    "globals": "^17.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.3"
   },
@@ -51,6 +57,10 @@
     "web": "node scripts/expo-cli.cjs start --web",
     "dev:web": "node scripts/expo-cli.cjs start --web",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky",
     "build:web": "node scripts/expo-cli.cjs export --platform web",
     "serve:web": "node scripts/serve-dist.mjs",
     "web:prod": "npm run build:web && npm run serve:web",
@@ -63,5 +73,12 @@
   "private": true,
   "engines": {
     "node": ">=20.19.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,cjs,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": "prettier --write"
   }
 }

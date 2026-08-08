@@ -1,0 +1,9 @@
+dist/
+android/
+ios/
+.expo/
+node_modules/
+playwright-report/
+test-results/
+package-lock.json
+public/sw.js
