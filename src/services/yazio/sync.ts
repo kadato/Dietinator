@@ -7,10 +7,9 @@ import { generateId } from '@/utils/id';
 import { nutrientsForAmount, nutrientsFromYazio, toKcal } from '@/utils/nutrients';
 import { withRetry } from '@/utils/retry';
 import {
-  getYazioClient,
+  ensureYazioClient,
   getYazioEnergyUnit,
   getYazioProfile,
-  initYazioClient,
 } from './client';
 import { getFoodRemote } from './foods';
 
@@ -42,8 +41,7 @@ async function doSyncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
   const settings = await getSettings();
   if (!settings.yazio_sync_enabled || !entry.food_id) return false;
 
-  let yazio = getYazioClient();
-  if (!yazio) yazio = await initYazioClient();
+  const yazio = await ensureYazioClient();
   if (!yazio) return false;
 
   try {
@@ -153,12 +151,6 @@ export type DiaryImportResult = {
   summary: YazioDailySummary | null;
   error?: string;
 };
-
-async function ensureYazioClient() {
-  let yazio = getYazioClient();
-  if (!yazio) yazio = await initYazioClient();
-  return yazio;
-}
 
 async function fetchDailyData(date: string): Promise<{
   mealGoals: MealGoals;

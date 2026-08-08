@@ -1,5 +1,6 @@
 import type { FoodNutrients, FoodServing, Meal, MealItem } from '@/types';
 import { getDatabase } from './database';
+import { parseJson } from '@/utils/json';
 
 type MealRow = {
   id: string;
@@ -21,16 +22,6 @@ type MealItemRow = {
   serving_json: string;
 };
 
-function parseJson<T>(raw: string): T | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === 'object' ? (parsed as T) : null;
-  } catch {
-    return null;
-  }
-}
-
 function rowToMealItem(row: MealItemRow): MealItem | null {
   const nutrients = parseJson<FoodNutrients>(row.nutrients_json);
   const serving = parseJson<FoodServing>(row.serving_json);
@@ -49,7 +40,6 @@ function rowToMealItem(row: MealItemRow): MealItem | null {
 function toMeal(meal: MealRow, itemRows: MealItemRow[]): Meal {
   const items: MealItem[] = [];
   for (const row of itemRows) {
-    if (row.meal_id !== meal.id) continue;
     const item = rowToMealItem(row);
     if (item) items.push(item);
   }
@@ -72,7 +62,13 @@ export async function getMeals(): Promise<Meal[]> {
   const items = await db.getAllAsync<MealItemRow>(
     'SELECT * FROM meal_items ORDER BY position ASC',
   );
-  return meals.map((meal) => toMeal(meal, items));
+  const itemsByMeal = new Map<string, MealItemRow[]>();
+  for (const row of items) {
+    const list = itemsByMeal.get(row.meal_id);
+    if (list) list.push(row);
+    else itemsByMeal.set(row.meal_id, [row]);
+  }
+  return meals.map((meal) => toMeal(meal, itemsByMeal.get(meal.id) ?? []));
 }
 
 export async function getMealById(id: string): Promise<Meal | null> {

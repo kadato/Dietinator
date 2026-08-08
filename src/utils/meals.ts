@@ -1,5 +1,7 @@
 import type { MealType } from '@/types';
 
+export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
 export const MEAL_LABELS: Record<MealType, string> = {
   breakfast: 'Breakfast',
   lunch: 'Lunch',

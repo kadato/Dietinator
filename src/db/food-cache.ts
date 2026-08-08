@@ -1,5 +1,6 @@
 import type { CachedFood, FoodNutrients, FoodServing, SearchFoodResult } from '@/types';
 import { getDatabase } from './database';
+import { parseJson } from '@/utils/json';
 
 function rowToCached(row: Record<string, unknown>): CachedFood {
   return {
@@ -16,20 +17,9 @@ function rowToCached(row: Record<string, unknown>): CachedFood {
   };
 }
 
-/** Parse a cached JSON column; corrupt rows return null so one bad row can't kill a day. */
-function parseCachedJson<T>(raw: string): T | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === 'object' ? (parsed as T) : null;
-  } catch {
-    return null;
-  }
-}
-
 export function cachedToSearchResult(cached: CachedFood): SearchFoodResult | null {
-  const nutrients = parseCachedJson<FoodNutrients>(cached.nutrients_json);
-  const serving = parseCachedJson<FoodServing>(cached.serving_json);
+  const nutrients = parseJson<FoodNutrients>(cached.nutrients_json);
+  const serving = parseJson<FoodServing>(cached.serving_json);
   if (!nutrients || !serving || !serving.serving) return null;
   return {
     product_id: cached.yazio_product_id,

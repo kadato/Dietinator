@@ -26,10 +26,17 @@ export function getYazioClient(): Yazio | null {
   return client;
 }
 
+/** Return the singleton client, initializing it from stored tokens/credentials if needed. */
+export async function ensureYazioClient(): Promise<Yazio | null> {
+  let yazio = getYazioClient();
+  if (!yazio) yazio = await initYazioClient();
+  return yazio;
+}
+
 /** Cached YAZIO profile fields used for search and nutrient units. */
 export async function getYazioProfile(): Promise<YazioProfileSlice | null> {
   if (cachedProfile) return cachedProfile;
-  const yazio = getYazioClient() ?? (await initYazioClient());
+  const yazio = await ensureYazioClient();
   if (!yazio) return null;
   const profile = await yazio.user.get();
   cachedProfile = {
