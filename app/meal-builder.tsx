@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,10 +10,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/context/ToastContext';
-import { useApp } from '@/context/AppContext';
-import { searchFoods } from '@/services/yazio/foods';
 import { deleteMeal, getMealById, mealTotals, saveMeal } from '@/services/meals';
 import type { MealItem, MealType, SearchFoodResult } from '@/types';
 import { MEAL_LABELS } from '@/utils/meals';
@@ -40,17 +39,15 @@ export default function MealBuilderScreen() {
 
   const { colors } = useTheme();
   const { showError, showSuccess, showWarning } = useToast();
-  const { setYazioAvailable } = useApp();
 
   const [name, setName] = useState('');
   const [items, setItems] = useState<MealItem[]>([]);
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
-  const [results, setResults] = useState<SearchFoodResult[]>([]);
-  const [searching, setSearching] = useState(false);
   const [loadingMeal, setLoadingMeal] = useState(isEditing);
   const [saving, setSaving] = useState(false);
-  const requestRef = useRef(0);
+
+  const { foods: results, loading: searching } = useFoodSearch(debounced);
 
   // Edit mode: load the saved meal.
   useEffect(() => {
@@ -77,31 +74,6 @@ export default function MealBuilderScreen() {
       cancelled = true;
     };
   }, [mealId, router, showError]);
-
-  // Food search: cached matches render instantly, remote patches in when ready.
-  useEffect(() => {
-    let cancelled = false;
-    const requestId = ++requestRef.current;
-    (async () => {
-      const trimmed = debounced.trim();
-      if (!trimmed) {
-        if (!cancelled) {
-          setResults([]);
-          setSearching(false);
-        }
-        return;
-      }
-      setSearching(true);
-      const { local, remote, offline } = await searchFoods(trimmed);
-      if (requestId !== requestRef.current || cancelled) return;
-      setResults([...local, ...remote.filter((r) => !local.some((l) => l.product_id === r.product_id))]);
-      setSearching(false);
-      setYazioAvailable(!offline);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [debounced, setYazioAvailable]);
 
   const addFood = useCallback(
     (food: SearchFoodResult) => {

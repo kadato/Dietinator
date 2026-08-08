@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,12 @@ import { FoodListItem } from '@/components/FoodListItem';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { PageContainer } from '@/components/PageContainer';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useApp } from '@/context/AppContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useLayout } from '@/hooks/useLayout';
-import { searchFoodsRemote } from '@/services/yazio/foods';
-import { searchLocalFoods, toggleFavorite, getFavoriteFoods } from '@/db/food-cache';
+import { mergeFoodResults } from '@/utils/food-search';
+import { toggleFavorite, getFavoriteFoods, searchLocalFoods } from '@/db/food-cache';
 import type { MealType, SearchFoodResult } from '@/types';
 import { toDateKey } from '@/utils/date';
 import { routeParam } from '@/utils/route';
@@ -23,16 +24,12 @@ export default function SearchScreen() {
   const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>();
   const addMeal = (routeParam(routeParams.meal) ?? 'lunch') as MealType;
   const addDate = routeParam(routeParams.date) ?? toDateKey();
-  const { yazioAvailable, setYazioAvailable } = useApp();
+  const { yazioAvailable } = useApp();
   const { colors } = useTheme();
   const { isWide } = useLayout();
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
-  const [local, setLocal] = useState<SearchFoodResult[]>([]);
-  const [remote, setRemote] = useState<SearchFoodResult[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
-  const requestRef = useRef(0);
 
   const loadFavorites = useCallback(async () => {
     const favs = await getFavoriteFoods();
@@ -50,64 +47,83 @@ export default function SearchScreen() {
     }, [loadFavorites]),
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    const requestId = ++requestRef.current;
-    (async () => {
-      const trimmed = debounced.trim();
-      if (!trimmed) {
-        const favs = await getFavoriteFoods();
-        const recents = await searchLocalFoods('');
-        const seen = new Set<string>();
-        const merged: SearchFoodResult[] = [];
-        for (const item of [...favs, ...recents]) {
-          if (!seen.has(item.product_id)) {
-            seen.add(item.product_id);
-            merged.push(item);
-          }
-        }
-        if (!cancelled) {
-          setLocal(merged);
-          setRemote([]);
-          setLoading(false);
-        }
-        return;
-      }
+  const emptyQuery = useCallback(async () => {
+    const [favs, recents] = await Promise.all([getFavoriteFoods(), searchLocalFoods('')]);
+    return mergeFoodResults(favs, recents);
+  }, []);
 
-      // Cached results render instantly; remote patches in when it arrives.
-      setLoading(true);
-      const cached = await searchLocalFoods(trimmed);
-      if (requestId !== requestRef.current || cancelled) return;
-      setLocal(cached);
-      setLoading(false);
+  const { foods, loading } = useFoodSearch(debounced, { emptyQuery });
 
-      try {
-        const found = await searchFoodsRemote(trimmed);
-        if (requestId !== requestRef.current || cancelled) return;
-        setRemote(found);
-        setYazioAvailable(true);
-      } catch {
-        if (requestId !== requestRef.current || cancelled) return;
-        setYazioAvailable(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [debounced, setYazioAvailable]);
+  const openFood = useCallback(
+    (food: SearchFoodResult) => {
+      router.push({
+        pathname: '/add-food',
+        params: {
+          meal: addMeal,
+          date: addDate,
+          productId: food.product_id,
+        },
+      });
+    },
+    [addDate, addMeal, router],
+  );
 
-  const openFood = (food: SearchFoodResult) => {
-    router.push({
-      pathname: '/add-food',
-      params: {
-        meal: addMeal,
-        date: addDate,
-        productId: food.product_id,
-      },
+  const handleToggleFavorite = useCallback(async (productId: string) => {
+    const isFav = await toggleFavorite(productId);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (isFav) next.add(productId);
+      else next.delete(productId);
+      return next;
     });
-  };
+  }, []);
 
-  const data = [...local, ...remote.filter((r) => !local.some((l) => l.product_id === r.product_id))];
+  const renderItem = useCallback(
+    ({ item }: { item: SearchFoodResult }) => (
+      <FoodListItem
+        food={item}
+        onPress={() => openFood(item)}
+        isFavorite={favoriteIds.has(item.product_id)}
+        onToggleFavorite={() => handleToggleFavorite(item.product_id)}
+      />
+    ),
+    [favoriteIds, handleToggleFavorite, openFood],
+  );
+
+  const emptyContent = useMemo(() => {
+    if (loading) return null;
+    if (debounced) {
+      return (
+        <Box className="items-center mt-12 px-6">
+          <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+          <Text size="md" bold className="text-typography-900 mt-4 text-center">
+            No foods found
+          </Text>
+          <Text size="sm" className="text-typography-500 mt-1 text-center">
+            Try a different spelling or a shorter name.
+          </Text>
+        </Box>
+      );
+    }
+    return (
+      <Box className="items-center px-6 pb-10">
+        <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
+          <Ionicons name="search-outline" size={36} color={colors.primary} />
+        </Box>
+        <Text size="lg" bold className="text-typography-900 mt-5 text-center">
+          Find your foods
+        </Text>
+        <Text
+          size="sm"
+          className="text-typography-500 mt-2 text-center leading-5"
+          style={{ maxWidth: 420 }}
+        >
+          Type to search thousands of foods from the YAZIO database. Your recent and
+          favorite picks show up here too.
+        </Text>
+      </Box>
+    );
+  }, [colors.textMuted, colors.primary, debounced, loading]);
 
   return (
     <Box className="flex-1 bg-background-0">
@@ -137,64 +153,18 @@ export default function SearchScreen() {
         {loading ? (
           <ActivityIndicator className="mb-2" color={colors.primary} />
         ) : null}
-        {!debounced && local.length > 0 ? (
+        {!debounced && foods.length > 0 ? (
           <Text size="sm" className="text-typography-500 px-5 mb-2">
             Recent and favorite foods appear when the search is empty.
           </Text>
         ) : null}
         <FlatList
           className="flex-1"
-          data={data}
-          contentContainerClassName={data.length === 0 ? 'grow justify-center pb-8' : 'pt-1 pb-8'}
+          data={foods}
+          contentContainerClassName={foods.length === 0 ? 'grow justify-center pb-8' : 'pt-1 pb-8'}
           keyExtractor={(item) => item.product_id}
-          renderItem={({ item }) => (
-            <FoodListItem
-              food={item}
-              onPress={() => openFood(item)}
-              isFavorite={favoriteIds.has(item.product_id)}
-              onToggleFavorite={async () => {
-                const isFav = await toggleFavorite(item.product_id);
-                setFavoriteIds((prev) => {
-                  const next = new Set(prev);
-                  if (isFav) next.add(item.product_id);
-                  else next.delete(item.product_id);
-                  return next;
-                });
-              }}
-            />
-          )}
-          ListEmptyComponent={
-            !loading ? (
-              debounced ? (
-                <Box className="items-center mt-12 px-6">
-                  <Ionicons name="search-outline" size={48} color={colors.textMuted} />
-                  <Text size="md" bold className="text-typography-900 mt-4 text-center">
-                    No foods found
-                  </Text>
-                  <Text size="sm" className="text-typography-500 mt-1 text-center">
-                    Try a different spelling or a shorter name.
-                  </Text>
-                </Box>
-              ) : (
-                <Box className="items-center px-6 pb-10">
-                  <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-                    <Ionicons name="search-outline" size={36} color={colors.primary} />
-                  </Box>
-                  <Text size="lg" bold className="text-typography-900 mt-5 text-center">
-                    Find your foods
-                  </Text>
-                  <Text
-                    size="sm"
-                    className="text-typography-500 mt-2 text-center leading-5"
-                    style={{ maxWidth: 420 }}
-                  >
-                    Type to search thousands of foods from the YAZIO database. Your recent and
-                    favorite picks show up here too.
-                  </Text>
-                </Box>
-              )
-            ) : null
-          }
+          renderItem={renderItem}
+          ListEmptyComponent={emptyContent}
         />
       </PageContainer>
     </Box>

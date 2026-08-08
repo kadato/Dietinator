@@ -4,10 +4,9 @@ import { withRetry } from '@/utils/retry';
 import { pickBestBarcodeMatch } from '@/utils/barcode';
 import * as foodCacheDb from '@/db/food-cache';
 import {
-  getYazioClient,
+  ensureYazioClient,
   getYazioEnergyUnit,
   getYazioProductSearchOptions,
-  initYazioClient,
 } from './client';
 
 function mapSearchResult(
@@ -40,8 +39,7 @@ function mapSearchResult(
 }
 
 async function ensureClient() {
-  let yazio = getYazioClient();
-  if (!yazio) yazio = await initYazioClient();
+  const yazio = await ensureYazioClient();
   if (!yazio) throw new Error('Not logged in to YAZIO');
   return yazio;
 }
@@ -111,9 +109,8 @@ export async function searchFoodsRemote(
     }),
   );
   const mapped = results.map((r) => mapSearchResult(r, energyUnit));
-  for (const food of mapped) {
-    await foodCacheDb.saveFoodToCache(food);
-  }
+  // Cache writes run in parallel; a slow write must not stall the search UI.
+  await Promise.all(mapped.map((food) => foodCacheDb.saveFoodToCache(food)));
   return mapped;
 }
 
@@ -190,39 +187,4 @@ export async function getFoodByBarcode(
 
   const results = await searchFoodsRemote(barcode, unitEnergy);
   return pickBestBarcodeMatch(results, barcode);
-}
-
-export async function searchFoods(
-  query: string,
-  unitEnergy?: string,
-): Promise<{
-  local: SearchFoodResult[];
-  remote: SearchFoodResult[];
-  /** True when the remote search failed (YAZIO unreachable), not just empty. */
-  offline: boolean;
-}> {
-  const trimmed = query.trim();
-  if (!trimmed) {
-    const [recent, favorites] = await Promise.all([
-      foodCacheDb.getRecentFoods(),
-      foodCacheDb.getFavoriteFoods(),
-    ]);
-    const seen = new Set<string>();
-    const local: SearchFoodResult[] = [];
-    for (const item of [...favorites, ...recent]) {
-      if (!seen.has(item.product_id)) {
-        seen.add(item.product_id);
-        local.push(item);
-      }
-    }
-    return { local, remote: [], offline: false };
-  }
-
-  const local = await foodCacheDb.searchLocalFoods(trimmed);
-  try {
-    const remote = await searchFoodsRemote(trimmed, unitEnergy);
-    return { local, remote, offline: false };
-  } catch {
-    return { local, remote: [], offline: true };
-  }
 }

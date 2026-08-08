@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,16 +16,14 @@ import { MealLogFoodRow } from '@/components/MealLogFoodRow';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
-import { getSuggestedFoods, searchFoodsRemote } from '@/services/yazio/foods';
-import {
-  getFavoriteFoods,
-  getRecentFoods,
-  searchLocalFoods,
-} from '@/db/food-cache';
+import { getSuggestedFoods } from '@/services/yazio/foods';
+import { getFavoriteFoods, getRecentFoods } from '@/db/food-cache';
 import { listMeals, logMealToDiary, mealTotals } from '@/services/meals';
-import type { Meal, MealType, SearchFoodResult } from '@/types';
+import type { FoodNutrients, Meal, MealType, SearchFoodResult } from '@/types';
+import { mergeFoodResults } from '@/utils/food-search';
 import { MEAL_LABELS, MEAL_PLACEHOLDERS } from '@/utils/meals';
 import { formatServingOption } from '@/utils/food-display';
 import { formatDisplayDate, toDateKey } from '@/utils/date';
@@ -51,118 +49,75 @@ const CATEGORY_OPTIONS: { value: FoodCategory; label: string }[] = [
   { value: 'meals', label: 'Meals' },
 ];
 
+const ZERO_TOTALS: FoodNutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+
 const LIST_MODE_OPTIONS: { value: ListMode; label: string }[] = [
   { value: 'frequent', label: 'Frequent' },
   { value: 'recent', label: 'Recent' },
   { value: 'favorites', label: 'Favorites' },
 ];
 
+function foodSubtitle(food: SearchFoodResult): string {
+  const unit = food.base_unit || 'g';
+  const producer = food.producer?.trim();
+  const serving = formatServingOption(food.serving, unit);
+  return producer ? `${producer}, ${serving}` : serving;
+}
+
 export default function LogMealScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ meal?: string; date?: string }>();
   const mealType = (routeParam(params.meal) ?? 'lunch') as MealType;
   const date = routeParam(params.date) ?? toDateKey();
-  const { yazioAvailable, setYazioAvailable } = useApp();
+  const { yazioAvailable } = useApp();
   const { showError, showWarning, showSuccess } = useToast();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
-  const mealAccent: Record<MealType, string> = {
-    breakfast: colors.breakfast,
-    lunch: colors.lunch,
-    dinner: colors.dinner,
-    snack: colors.snack,
-  };
-  const accent = mealAccent[mealType];
+  const accent = colors[mealType];
 
   const [mode, setMode] = useState<LogMode>('search');
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 200);
   const [category, setCategory] = useState<FoodCategory>('foods');
   const [listMode, setListMode] = useState<ListMode>('frequent');
-  const [foods, setFoods] = useState<SearchFoodResult[]>([]);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loggingMealId, setLoggingMealId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const requestRef = useRef(0);
 
-  const loadFoods = useCallback(async () => {
-    const requestId = ++requestRef.current;
-    if (category !== 'foods') {
-      setFoods([]);
-      setLoading(false);
-      return;
-    }
+  const emptyQuery = useCallback(async () => {
+    if (listMode === 'favorites') return getFavoriteFoods();
+    if (listMode === 'recent') return getRecentFoods(20);
+    // Frequent list: YAZIO's suggestions for this meal slot, then favorites + recents.
+    const [suggested, favorites, recent] = await Promise.all([
+      getSuggestedFoods(date, mealType, 5),
+      getFavoriteFoods(),
+      getRecentFoods(20),
+    ]);
+    return mergeFoodResults(mergeFoodResults(suggested, favorites), recent);
+  }, [date, listMode, mealType]);
 
-    setLoading(true);
-    try {
-      if (debounced.trim()) {
-        // Cached matches render instantly; remote results patch in when ready.
-        const cached = await searchLocalFoods(debounced);
-        if (requestId !== requestRef.current) return;
-        setFoods(cached);
-        setLoading(false);
-        try {
-          const remote = await searchFoodsRemote(debounced);
-          if (requestId !== requestRef.current) return;
-          setFoods([
-            ...cached,
-            ...remote.filter(
-              (r) => !cached.some((l) => l.product_id === r.product_id),
-            ),
-          ]);
-          setYazioAvailable(true);
-        } catch {
-          if (requestId === requestRef.current) setYazioAvailable(false);
-        }
-      } else if (listMode === 'favorites') {
-        setFoods(await getFavoriteFoods());
-      } else if (listMode === 'recent') {
-        setFoods(await getRecentFoods(20));
-      } else {
-        // Frequent list: YAZIO's suggestions for this meal slot, then favorites + recents.
-        const [suggested, favorites, recent] = await Promise.all([
-          getSuggestedFoods(date, mealType, 5),
-          getFavoriteFoods(),
-          getRecentFoods(10),
-        ]);
-        if (requestId !== requestRef.current) return;
-        const seen = new Set<string>();
-        const merged: SearchFoodResult[] = [];
-        for (const item of [...suggested, ...favorites, ...recent]) {
-          if (!seen.has(item.product_id)) {
-            seen.add(item.product_id);
-            merged.push(item);
-          }
-        }
-        setFoods(merged);
-      }
-    } catch (error) {
-      setYazioAvailable(false);
-      showError(error, 'Could not load foods.');
-    } finally {
-      if (requestId === requestRef.current) setLoading(false);
-    }
-  }, [category, date, debounced, listMode, mealType, setYazioAvailable, showError]);
+  const handleSearchError = useCallback(
+    (error: unknown) => showError(error, 'Could not load foods.'),
+    [showError],
+  );
+
+  const { foods, loading, refresh } = useFoodSearch(debounced, {
+    enabled: category === 'foods',
+    emptyQuery,
+    onError: handleSearchError,
+  });
 
   const loadMeals = useCallback(async () => {
-    const requestId = ++requestRef.current;
     try {
-      const found = await listMeals();
-      if (requestId !== requestRef.current) return;
-      setMeals(found);
+      setMeals(await listMeals());
     } catch (error) {
       showError(error, 'Could not load meals.');
     }
   }, [showError]);
 
   useEffect(() => {
-    if (category === 'foods') {
-      loadFoods();
-    } else {
-      loadMeals();
-    }
-  }, [category, loadFoods, loadMeals]);
+    if (category === 'meals') loadMeals();
+  }, [category, loadMeals]);
 
   // Refetch favorites/recent/meals when returning from add-food or meal-builder.
   useFocusEffect(
@@ -170,28 +125,24 @@ export default function LogMealScreen() {
       if (category === 'meals') {
         loadMeals();
       } else if (!debounced.trim() && listMode !== 'frequent') {
-        loadFoods();
+        refresh();
       }
-    }, [category, debounced, listMode, loadFoods, loadMeals]),
+    }, [category, debounced, listMode, loadMeals, refresh]),
   );
 
-  const openFood = (food: SearchFoodResult) => {
-    router.push({
-      pathname: '/add-food',
-      params: { meal: mealType, date, productId: food.product_id },
-    });
-  };
+  const openFood = useCallback(
+    (food: SearchFoodResult) => {
+      router.push({
+        pathname: '/add-food',
+        params: { meal: mealType, date, productId: food.product_id },
+      });
+    },
+    [date, mealType, router],
+  );
 
   const handleMode = (next: LogMode) => {
-    if (next === 'barcode') {
+    if (next === 'barcode' || next === 'camera') {
       router.push({ pathname: '/scan', params: { meal: mealType, date } });
-      return;
-    }
-    if (next === 'camera') {
-      showWarning(
-        'Photo-based food recognition is not available in Dietinator yet. Use search or barcode instead.',
-        'Camera',
-      );
       return;
     }
     if (next === 'more') {
@@ -201,41 +152,120 @@ export default function LogMealScreen() {
     setMode(next);
   };
 
-  const handleLogMeal = async (meal: Meal) => {
-    if (loggingMealId) return;
-    setLoggingMealId(meal.id);
-    try {
-      const { logged, skipped } = await logMealToDiary({ date, mealType, meal });
-      if (logged === 0) {
-        showWarning('No items in this meal could be logged.', 'Nothing logged');
-      } else {
-        showSuccess(
-          logged === 1
-            ? `Logged 1 item from "${meal.name}".`
-            : `Logged ${logged} items from "${meal.name}".`,
-          'Meal logged',
-        );
+  const handleLogMeal = useCallback(
+    async (meal: Meal) => {
+      if (loggingMealId) return;
+      setLoggingMealId(meal.id);
+      try {
+        const { logged, skipped } = await logMealToDiary({ date, mealType, meal });
+        if (logged === 0) {
+          showWarning('No items in this meal could be logged.', 'Nothing logged');
+        } else {
+          showSuccess(
+            logged === 1
+              ? `Logged 1 item from "${meal.name}".`
+              : `Logged ${logged} items from "${meal.name}".`,
+            'Meal logged',
+          );
+        }
+        if (skipped.length > 0) {
+          showWarning(
+            `Could not log: ${skipped.join(', ')}. Check your connection and try again.`,
+            'Some items skipped',
+          );
+        }
+        router.dismissAll();
+      } catch (error) {
+        showError(error, 'Could not log this meal.');
+      } finally {
+        setLoggingMealId(null);
       }
-      if (skipped.length > 0) {
-        showWarning(
-          `Could not log: ${skipped.join(', ')}. Check your connection and try again.`,
-          'Some items skipped',
-        );
-      }
-      router.dismissAll();
-    } catch (error) {
-      showError(error, 'Could not log this meal.');
-    } finally {
-      setLoggingMealId(null);
-    }
-  };
+    },
+    [date, loggingMealId, mealType, router, showError, showSuccess, showWarning],
+  );
 
-  const foodSubtitle = (food: SearchFoodResult) => {
-    const unit = food.base_unit || 'g';
-    const producer = food.producer?.trim();
-    const serving = formatServingOption(food.serving, unit);
-    return producer ? `${producer}, ${serving}` : serving;
-  };
+  const subtitles = useMemo(
+    () => new Map(foods.map((food) => [food.product_id, foodSubtitle(food)])),
+    [foods],
+  );
+
+  const renderFood = useCallback(
+    ({ item }: { item: SearchFoodResult }) => (
+      <MealLogFoodRow
+        food={item}
+        subtitle={subtitles.get(item.product_id)}
+        accentColor={accent}
+        onPress={() => openFood(item)}
+        onAdd={() => openFood(item)}
+      />
+    ),
+    [accent, openFood, subtitles],
+  );
+
+  const mealTotalsById = useMemo(() => {
+    const map = new Map<string, FoodNutrients>();
+    for (const meal of meals) map.set(meal.id, mealTotals(meal));
+    return map;
+  }, [meals]);
+
+  const renderMeal = useCallback(
+    ({ item }: { item: Meal }) => {
+      const totals = mealTotalsById.get(item.id) ?? ZERO_TOTALS;
+      return (
+        <View style={styles.mealRow}>
+          <Pressable
+            style={styles.mealMainTap}
+            onPress={() => handleLogMeal(item)}
+            disabled={loggingMealId === item.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Log ${item.name}`}
+          >
+            <View style={[styles.mealIcon, { backgroundColor: `${accent}22` }]}>
+              <Ionicons name="restaurant-outline" size={22} color={accent} />
+            </View>
+            <View style={styles.mealInfo}>
+              <Text style={styles.mealName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.mealMeta} numberOfLines={1}>
+                {item.items.length === 1
+                  ? `1 food · ${Math.round(totals.kcal)} Cal`
+                  : `${item.items.length} foods · ${Math.round(totals.kcal)} Cal`}
+              </Text>
+            </View>
+          </Pressable>
+          <Pressable
+            style={styles.mealEditBtn}
+            onPress={() =>
+              router.push({
+                pathname: '/meal-builder',
+                params: { meal: mealType, date, mealId: item.id },
+              })
+            }
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${item.name}`}
+          >
+            <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+          </Pressable>
+          <Pressable
+            style={[styles.mealLogBtn, { backgroundColor: accent }]}
+            onPress={() => handleLogMeal(item)}
+            disabled={loggingMealId === item.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${item.name} to diary`}
+          >
+            {loggingMealId === item.id ? (
+              <ActivityIndicator size="small" color={colors.onPrimary} />
+            ) : (
+              <Ionicons name="add" size={22} color={colors.onPrimary} />
+            )}
+          </Pressable>
+        </View>
+      );
+    },
+    [accent, colors, handleLogMeal, loggingMealId, mealTotalsById, mealType, date, router, styles],
+  );
 
   const emptyMessage = useMemo(() => {
     if (category === 'meals') {
@@ -336,15 +366,7 @@ export default function LogMealScreen() {
           keyExtractor={(item) => item.product_id}
           keyboardShouldPersistTaps="handled"
           contentContainerClassName={foods.length === 0 && !loading ? 'grow justify-center' : undefined}
-          renderItem={({ item }) => (
-            <MealLogFoodRow
-              food={item}
-              subtitle={foodSubtitle(item)}
-              accentColor={accent}
-              onPress={() => openFood(item)}
-              onAdd={() => openFood(item)}
-            />
-          )}
+          renderItem={renderFood}
           ListEmptyComponent={
             !loading ? (
               <View style={styles.emptyWrap}>
@@ -376,61 +398,7 @@ export default function LogMealScreen() {
               <Text style={styles.newMealText}>New meal</Text>
             </Pressable>
           }
-          renderItem={({ item }) => {
-            const totals = mealTotals(item);
-            return (
-              <View style={styles.mealRow}>
-                <Pressable
-                  style={styles.mealMainTap}
-                  onPress={() => handleLogMeal(item)}
-                  disabled={loggingMealId === item.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Log ${item.name}`}
-                >
-                  <View style={[styles.mealIcon, { backgroundColor: `${accent}22` }]}>
-                    <Ionicons name="restaurant-outline" size={22} color={accent} />
-                  </View>
-                  <View style={styles.mealInfo}>
-                    <Text style={styles.mealName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.mealMeta} numberOfLines={1}>
-                      {item.items.length === 1
-                        ? `1 food · ${Math.round(totals.kcal)} Cal`
-                        : `${item.items.length} foods · ${Math.round(totals.kcal)} Cal`}
-                    </Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  style={styles.mealEditBtn}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/meal-builder',
-                      params: { meal: mealType, date, mealId: item.id },
-                    })
-                  }
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Edit ${item.name}`}
-                >
-                  <Ionicons name="create-outline" size={18} color={colors.textMuted} />
-                </Pressable>
-                <Pressable
-                  style={[styles.mealLogBtn, { backgroundColor: accent }]}
-                  onPress={() => handleLogMeal(item)}
-                  disabled={loggingMealId === item.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Add ${item.name} to diary`}
-                >
-                  {loggingMealId === item.id ? (
-                    <ActivityIndicator size="small" color={colors.onPrimary} />
-                  ) : (
-                    <Ionicons name="add" size={22} color={colors.onPrimary} />
-                  )}
-                </Pressable>
-              </View>
-            );
-          }}
+          renderItem={renderMeal}
           ListEmptyComponent={
             !loading ? <Text style={styles.empty}>{emptyMessage}</Text> : null
           }

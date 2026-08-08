@@ -33,6 +33,42 @@ import { Button, ButtonText } from '@ui/button';
 
 const MANUAL_SCAN_ON_WEB = Platform.OS === 'web';
 
+function BarcodeMatchesList({
+  results,
+  lastBarcode,
+  onPick,
+  onRescan,
+}: {
+  results: SearchFoodResult[];
+  lastBarcode: string;
+  onPick: (food: SearchFoodResult) => void;
+  onRescan: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <FlatList
+      style={styles.list}
+      data={results}
+      keyExtractor={(item) => item.product_id}
+      ListHeaderComponent={
+        <>
+          <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+          <Pressable
+            style={styles.scanAgainBtn}
+            onPress={onRescan}
+            accessibilityRole="button"
+            accessibilityLabel="Scan another barcode"
+          >
+            <Text style={styles.scanAgainText}>Scan another</Text>
+          </Pressable>
+        </>
+      }
+      renderItem={({ item }) => <FoodListItem food={item} onPress={() => onPick(item)} />}
+    />
+  );
+}
+
 export default function ScanScreen() {
   const router = useRouter();
   const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>();
@@ -190,26 +226,11 @@ export default function ScanScreen() {
           ) : null}
 
           {results.length > 0 ? (
-            <FlatList
-              style={styles.list}
-              data={results}
-              keyExtractor={(item) => item.product_id}
-              ListHeaderComponent={
-                <>
-                  <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
-                  <Pressable
-                    style={styles.scanAgainBtn}
-                    onPress={resetForNextScan}
-                    accessibilityRole="button"
-                    accessibilityLabel="Scan another barcode"
-                  >
-                    <Text style={styles.scanAgainText}>Scan another</Text>
-                  </Pressable>
-                </>
-              }
-              renderItem={({ item }) => (
-                <FoodListItem food={item} onPress={() => openFood(item)} />
-              )}
+            <BarcodeMatchesList
+              results={results}
+              lastBarcode={lastBarcode}
+              onPick={openFood}
+              onRescan={resetForNextScan}
             />
           ) : null}
 
@@ -289,26 +310,11 @@ export default function ScanScreen() {
         />
       ) : (
         <PageContainer>
-          <FlatList
-            style={styles.list}
-            data={results}
-            keyExtractor={(item) => item.product_id}
-            ListHeaderComponent={
-              <>
-                <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
-                <Pressable
-                  style={styles.scanAgainBtn}
-                  onPress={resetForNextScan}
-                  accessibilityRole="button"
-                  accessibilityLabel="Scan another barcode"
-                >
-                  <Text style={styles.scanAgainText}>Scan another</Text>
-                </Pressable>
-              </>
-            }
-            renderItem={({ item }) => (
-              <FoodListItem food={item} onPress={() => openFood(item)} />
-            )}
+          <BarcodeMatchesList
+            results={results}
+            lastBarcode={lastBarcode}
+            onPick={openFood}
+            onRescan={resetForNextScan}
           />
         </PageContainer>
       )}
