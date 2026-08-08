@@ -29,6 +29,14 @@ export async function getDiaryEntriesForDate(date: string): Promise<DiaryEntry[]
   return rows.map(rowToEntry)
 }
 
+export async function getDiaryEntryCount(): Promise<number> {
+  const db = await getDatabase()
+  const row = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM diary_entries",
+  )
+  return Number(row?.count ?? 0)
+}
+
 export async function getDiaryEntryById(id: string): Promise<DiaryEntry | null> {
   const db = await getDatabase()
   const row = await db.getFirstAsync<Record<string, unknown>>(

@@ -4,7 +4,7 @@ import { getDatabase } from "./database"
 export async function getSettings(): Promise<AppSettings> {
   const db = await getDatabase()
   const row = await db.getFirstAsync<AppSettings>(
-    "SELECT calorie_goal, protein_goal, carbs_goal, fat_goal, units, yazio_sync_enabled, food_database_country, update_check_enabled FROM settings WHERE id = 1",
+    "SELECT calorie_goal, protein_goal, carbs_goal, fat_goal, units, yazio_sync_enabled, food_database_country, update_check_enabled, ai_enabled, ai_provider, ai_base_url, ai_model, ai_system_prompt, agent_bridge_rev FROM settings WHERE id = 1",
   )
   return (
     row ?? {
@@ -16,6 +16,12 @@ export async function getSettings(): Promise<AppSettings> {
       yazio_sync_enabled: 0,
       food_database_country: "",
       update_check_enabled: 1,
+      ai_enabled: 0,
+      ai_provider: "openai",
+      ai_base_url: "",
+      ai_model: "",
+      ai_system_prompt: "",
+      agent_bridge_rev: 0,
     }
   )
 }

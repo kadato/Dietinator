@@ -82,6 +82,20 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
 
     INSERT OR IGNORE INTO settings (id) VALUES (1);
 
+    CREATE TABLE IF NOT EXISTS ai_chat_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      reasoning TEXT NOT NULL DEFAULT '',
+      tool_calls_json TEXT,
+      tool_call_id TEXT,
+      tool_name TEXT,
+      is_error INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_ai_chat_created ON ai_chat_messages(id);
+
     CREATE TABLE IF NOT EXISTS meals (
       id TEXT PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
@@ -119,6 +133,32 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   if (!settingsColumns.some((column) => column.name === "update_check_enabled")) {
     await database.execAsync(
       `ALTER TABLE settings ADD COLUMN update_check_enabled INTEGER NOT NULL DEFAULT 1`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "ai_enabled")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN ai_enabled INTEGER NOT NULL DEFAULT 0`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "ai_provider")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN ai_provider TEXT NOT NULL DEFAULT 'openai'`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "ai_base_url")) {
+    await database.execAsync(`ALTER TABLE settings ADD COLUMN ai_base_url TEXT NOT NULL DEFAULT ''`)
+  }
+  if (!settingsColumns.some((column) => column.name === "ai_model")) {
+    await database.execAsync(`ALTER TABLE settings ADD COLUMN ai_model TEXT NOT NULL DEFAULT ''`)
+  }
+  if (!settingsColumns.some((column) => column.name === "ai_system_prompt")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN ai_system_prompt TEXT NOT NULL DEFAULT ''`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "agent_bridge_rev")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN agent_bridge_rev INTEGER NOT NULL DEFAULT 0`,
     )
   }
 

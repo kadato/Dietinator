@@ -4,6 +4,7 @@ import { getSettings, updateSettings } from "@/db/settings"
 import type { AppSettings } from "@/types"
 import { isLoggedIn } from "@/services/yazio/auth-storage"
 import { initYazioClient as setupClient } from "@/services/yazio/client"
+import { pushSnapshot } from "@/services/agent-bridge"
 
 type AppContextValue = {
   ready: boolean
@@ -30,6 +31,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     yazio_sync_enabled: 0,
     food_database_country: "",
     update_check_enabled: 1,
+    ai_enabled: 0,
+    ai_provider: "openai",
+    ai_base_url: "",
+    ai_model: "",
+    ai_system_prompt: "",
+    agent_bridge_rev: 0,
   })
   const [yazioAvailable, setYazioAvailable] = useState(true)
 
@@ -59,6 +66,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) setReady(true)
       }
     })()
+    // Web-host agent bridge: publish the initial snapshot so the /mcp endpoint
+    // answers from the very first session.
+    pushSnapshot().catch(() => undefined)
     return () => {
       cancelled = true
     }

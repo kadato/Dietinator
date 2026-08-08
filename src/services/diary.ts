@@ -4,6 +4,7 @@ import { getSettings } from "@/db/settings"
 import type { DiaryEntry, FoodNutrients, MealType, SearchFoodResult } from "@/types"
 import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { generateId } from "@/utils/id"
+import { pushSnapshot } from "./agent-bridge"
 import { getFoodRemote } from "./yazio/foods"
 import { removeEntryFromYazio, syncEntryToYazio } from "./yazio/sync"
 
@@ -83,6 +84,8 @@ export async function logFood(params: {
   foodCacheDb.touchFoodUsed(food.product_id).catch(() => undefined)
 
   syncEntryToYazio(entry).catch(() => undefined)
+  // Web-host agent bridge: keep the /mcp snapshot current (web only).
+  pushSnapshot().catch(() => undefined)
 
   return entry
 }
@@ -111,6 +114,7 @@ export async function logManualEntry(params: {
     fat: params.fat ?? 0,
     created_at: new Date().toISOString(),
   })
+  pushSnapshot().catch(() => undefined)
   return entry
 }
 
@@ -156,6 +160,8 @@ export async function updateDiaryEntry(params: {
     syncUpdatedEntryToYazio(updated).catch(() => undefined)
   }
 
+  pushSnapshot().catch(() => undefined)
+
   return updated
 }
 
@@ -199,6 +205,7 @@ export async function deleteFoodEntry(id: string): Promise<void> {
 
   await diaryDb.removeDiaryEntry(id)
   diaryDb.pruneDeletedYazioItems().catch(() => undefined)
+  pushSnapshot().catch(() => undefined)
 }
 
 export { exportDiaryJson, exportDiaryCsv } from "@/db/diary"

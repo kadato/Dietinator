@@ -30,6 +30,9 @@ export interface CachedFood {
   last_used_at: string | null
 }
 
+/** Provider presets mirroring Physiquinator (base URL + default model per provider). */
+export type AiProviderId = "openai" | "openrouter" | "opencode" | "ollama" | "custom"
+
 export interface AppSettings {
   calorie_goal: number
   protein_goal: number
@@ -41,6 +44,18 @@ export interface AppSettings {
   food_database_country: string
   /** Auto-check GitHub releases for a newer app version on startup. */
   update_check_enabled: number
+  /** In-app AI assistant master switch. */
+  ai_enabled: number
+  /** Provider preset — fills base URL + default model (see src/db/ai-settings.ts). */
+  ai_provider: AiProviderId
+  /** OpenAI-compatible endpoint, e.g. https://api.openai.com/v1 (OpenAI, OpenRouter, Ollama...). */
+  ai_base_url: string
+  /** Model name, e.g. gpt-4o-mini. */
+  ai_model: string
+  /** Optional extra instructions appended to the assistant's system prompt. */
+  ai_system_prompt: string
+  /** Last-applied agent (MCP) change revision — web snapshot bridge only. */
+  agent_bridge_rev: number
 }
 
 export interface FoodNutrients {
@@ -90,4 +105,52 @@ export interface Meal {
   updated_at: string
   last_used_at: string | null
   items: MealItem[]
+}
+
+// ── AI assistant ────────────────────────────────────────────────────────────
+
+export type AiMessageRole = "system" | "user" | "assistant" | "tool"
+
+export interface AiToolCallInfo {
+  id: string
+  name: string
+  arguments_json: string
+}
+
+export interface AiChatMessage {
+  id?: number
+  role: AiMessageRole
+  content: string
+  reasoning?: string
+  tool_calls?: AiToolCallInfo[]
+  /** Set on tool messages — the id of the assistant tool call this answers. */
+  tool_call_id?: string
+  tool_name?: string
+  is_error?: number
+  created_at: string
+}
+
+/** A fragment of the streamed assistant response. */
+export interface StreamingChunk {
+  delta?: string
+  reasoning?: string
+  tool_calls?: AiToolCallInfo[]
+  /** Non-null when the stream ended with an error (content carries the message). */
+  error?: string
+}
+
+/** JSON Schema fragment describing one tool's parameters. */
+export interface AiToolSchema {
+  type: "object"
+  properties: Record<string, unknown>
+  required?: string[]
+}
+
+export interface AiProviderSettings {
+  enabled: boolean
+  provider: AiProviderId
+  base_url: string
+  api_key: string
+  model: string
+  system_prompt: string
 }

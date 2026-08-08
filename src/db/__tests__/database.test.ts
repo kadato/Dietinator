@@ -30,9 +30,18 @@ function createMockDb(options: {
     }),
     getAllAsync: jest.fn(async (query: string) => {
       if (query.includes("table_info(settings)")) {
-        return (options.columns?.settings ?? ["food_database_country", "update_check_enabled"]).map(
-          (name) => ({ name }),
-        )
+        return (
+          options.columns?.settings ?? [
+            "food_database_country",
+            "update_check_enabled",
+            "ai_enabled",
+            "ai_provider",
+            "ai_base_url",
+            "ai_model",
+            "ai_system_prompt",
+            "agent_bridge_rev",
+          ]
+        ).map((name) => ({ name }))
       }
       if (query.includes("table_info(food_cache)")) {
         return (options.columns?.food_cache ?? ["base_unit"]).map((name) => ({ name }))
@@ -79,6 +88,12 @@ describe("migrate", () => {
       expect.arrayContaining([
         "settings.food_database_country",
         "settings.update_check_enabled",
+        "settings.ai_enabled",
+        "settings.ai_provider",
+        "settings.ai_base_url",
+        "settings.ai_model",
+        "settings.ai_system_prompt",
+        "settings.agent_bridge_rev",
         "food_cache.base_unit",
       ]),
     )

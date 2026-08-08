@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { Pressable, ScrollView, Share, View } from "react-native"
+import { Platform, Pressable, ScrollView, Share, View } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
@@ -13,6 +13,16 @@ import { exportDiaryCsv, exportDiaryJson } from "@/services/diary"
 import { clearFoodCache } from "@/db/food-cache"
 import { createBackup, restoreBackup } from "@/services/backup"
 import { pickBackupFile, saveBackupFile } from "@/services/backup-files"
+import { clearChatMessages } from "@/db/ai-chat"
+import {
+  AI_PROVIDER_IDS,
+  AI_PROVIDER_PRESETS,
+  getAiProviderSettings,
+  presetFor,
+  saveAiApiKey,
+} from "@/db/ai-settings"
+import { fetchAvailableModels, testProviderConnection } from "@/services/ai/openai-client"
+import type { AiProviderId, AiProviderSettings } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
 import { SettingsSection } from "@/components/SettingsSection"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
@@ -154,6 +164,118 @@ export default function SettingsScreen() {
     }
     await refreshAuth()
     router.replace("/login")
+  }
+
+  const [aiBaseUrl, setAiBaseUrl] = useState("")
+  const [aiModel, setAiModel] = useState("")
+  const [aiApiKey, setAiApiKey] = useState("")
+  const [aiSystemPrompt, setAiSystemPrompt] = useState("")
+  const [aiProvider, setAiProvider] = useState<AiProviderId>("custom")
+  const [aiFormLoaded, setAiFormLoaded] = useState(false)
+  const [aiSaving, setAiSaving] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [fetchingModels, setFetchingModels] = useState(false)
+  const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [testingConnection, setTestingConnection] = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const provider: AiProviderSettings = await getAiProviderSettings()
+        if (cancelled) return
+        setAiBaseUrl(provider.base_url)
+        setAiModel(provider.model)
+        setAiSystemPrompt(provider.system_prompt)
+        setAiProvider(provider.provider)
+        setAiFormLoaded(true)
+      } catch {
+        if (!cancelled) setAiFormLoaded(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const aiSettingsForTest = (): AiProviderSettings => ({
+    enabled: true,
+    provider: aiProvider,
+    base_url: aiBaseUrl.trim() || presetFor(aiProvider).base_url,
+    api_key: aiApiKey.trim(),
+    model: aiModel.trim() || presetFor(aiProvider).model,
+    system_prompt: aiSystemPrompt,
+  })
+
+  const selectAiProvider = (provider: AiProviderId) => {
+    setAiProvider(provider)
+    setAiBaseUrl(AI_PROVIDER_PRESETS[provider].base_url)
+    setAiModel(AI_PROVIDER_PRESETS[provider].model)
+    setFetchedModels([])
+    setTestResult(null)
+  }
+
+  const fetchAiModels = async () => {
+    if (!aiApiKey.trim()) {
+      setAiError("Add an API key first, then fetch the model list.")
+      return
+    }
+    setAiError(null)
+    setFetchingModels(true)
+    try {
+      const models = await fetchAvailableModels(aiSettingsForTest())
+      setFetchedModels(models)
+      if (models.length === 0) {
+        setAiError("No models returned — the endpoint may not expose a model list.")
+      }
+    } catch {
+      setAiError("Could not fetch models from this endpoint.")
+    } finally {
+      setFetchingModels(false)
+    }
+  }
+
+  const testAiConnection = async () => {
+    setAiError(null)
+    setTestResult(null)
+    setTestingConnection(true)
+    try {
+      setTestResult(await testProviderConnection(aiSettingsForTest()))
+    } finally {
+      setTestingConnection(false)
+    }
+  }
+
+  const saveAiSettings = async () => {
+    if (!aiBaseUrl.trim()) {
+      setAiError("Base URL is required (e.g. https://api.openai.com/v1).")
+      return
+    }
+    if (!aiModel.trim()) {
+      setAiError("Model name is required (e.g. gpt-4o-mini).")
+      return
+    }
+    setAiError(null)
+    setAiSaving(true)
+    try {
+      await Promise.all([
+        updateSettings({
+          ai_provider: aiProvider,
+          ai_base_url: aiBaseUrl.trim(),
+          ai_model: aiModel.trim(),
+          ai_system_prompt: aiSystemPrompt.trim(),
+        }),
+        saveAiApiKey(aiApiKey),
+      ])
+      setTestResult(null)
+      showSuccess("AI assistant settings saved.", "Saved")
+    } catch (error) {
+      showError(error, "Could not save AI settings.")
+    } finally {
+      setAiSaving(false)
+    }
   }
 
   const handleExport = async (format: "json" | "csv") => {
@@ -322,6 +444,290 @@ export default function SettingsScreen() {
           </SettingsRow>
         </SettingsSection>
 
+        <SettingsSection title="AI assistant">
+          <SettingsRow>
+            <Box className="flex-row items-center justify-between">
+              <Box className="mr-4 flex-1">
+                <Text size="sm" className="text-typography-900">
+                  AI assistant
+                </Text>
+                <Text size="xs" className="mt-0.5 text-typography-500">
+                  Chat with your diary on device. Your API key never leaves the app
+                </Text>
+              </Box>
+              <Switch
+                value={settings.ai_enabled === 1}
+                accessibilityLabel="Enable AI assistant"
+                onValueChange={async (v) => {
+                  try {
+                    await updateSettings({ ai_enabled: v ? 1 : 0 })
+                  } catch (error) {
+                    showError(error, "Could not update AI setting.")
+                  }
+                }}
+              />
+            </Box>
+          </SettingsRow>
+
+          {aiFormLoaded ? (
+            <>
+              <SettingsRow>
+                <Text size="xs" className="mb-2 text-typography-500">
+                  Provider preset
+                </Text>
+                <Box className="flex-row flex-wrap gap-1.5">
+                  {AI_PROVIDER_IDS.map((provider) => {
+                    const selected = provider === aiProvider
+                    return (
+                      <Pressable
+                        key={provider}
+                        onPress={() => selectAiProvider(provider)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`AI provider ${provider}`}
+                        accessibilityState={{ selected }}
+                        className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
+                          selected
+                            ? "border-primary-500 bg-primary-500/10"
+                            : "border-outline-200 bg-background-50"
+                        }`}
+                      >
+                        <Text
+                          size="xs"
+                          bold={selected}
+                          style={{ color: selected ? colors.primary : colors.textMuted }}
+                        >
+                          {AI_PROVIDER_PRESETS[provider].label}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </Box>
+                <Text size="xs" className="mt-2 text-typography-500">
+                  Picking a preset fills the base URL and a default model — then add your API key.
+                </Text>
+              </SettingsRow>
+              <SettingsRow>
+                <Text size="xs" className="mb-1.5 text-typography-500">
+                  Base URL (OpenAI, OpenRouter, Ollama…)
+                </Text>
+                <Input size="sm" variant="outline">
+                  <InputField
+                    value={aiBaseUrl}
+                    onChangeText={setAiBaseUrl}
+                    placeholder="https://api.openai.com/v1"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    accessibilityLabel="AI provider base URL"
+                  />
+                </Input>
+              </SettingsRow>
+              <SettingsRow>
+                <Text size="xs" className="mb-1.5 text-typography-500">
+                  Model
+                </Text>
+                <Input size="sm" variant="outline">
+                  <InputField
+                    value={aiModel}
+                    onChangeText={setAiModel}
+                    placeholder="gpt-4o-mini"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    accessibilityLabel="AI model name"
+                  />
+                </Input>
+                {fetchedModels.length > 0 ? (
+                  <Box className="mt-2 flex-row flex-wrap gap-1.5">
+                    {fetchedModels.map((model) => (
+                      <Pressable
+                        key={model}
+                        onPress={() => setAiModel(model)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Use model ${model}`}
+                        className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
+                          model === aiModel
+                            ? "border-primary-500 bg-primary-500/10"
+                            : "border-outline-200 bg-background-50"
+                        }`}
+                      >
+                        <Text
+                          size="xs"
+                          style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
+                        >
+                          {model}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </Box>
+                ) : null}
+              </SettingsRow>
+              <SettingsRow>
+                <Text size="xs" className="mb-1.5 text-typography-500">
+                  API key (stored in the device keystore)
+                </Text>
+                <Box className="flex-row items-center gap-2">
+                  <Box className="flex-1">
+                    <Input size="sm" variant="outline">
+                      <InputField
+                        value={aiApiKey}
+                        onChangeText={(value) => {
+                          setAiApiKey(value)
+                          setTestResult(null)
+                        }}
+                        placeholder="sk-…"
+                        secureTextEntry={!showApiKey}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        accessibilityLabel="AI API key"
+                      />
+                    </Input>
+                  </Box>
+                  <Pressable
+                    onPress={() => setShowApiKey((v) => !v)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
+                    className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+                  >
+                    <Ionicons
+                      name={showApiKey ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color={colors.textMuted}
+                    />
+                  </Pressable>
+                </Box>
+              </SettingsRow>
+              <SettingsRow bordered={false}>
+                <Text size="xs" className="mb-1.5 text-typography-500">
+                  Extra instructions (optional)
+                </Text>
+                <Input size="sm" variant="outline">
+                  <InputField
+                    value={aiSystemPrompt}
+                    onChangeText={setAiSystemPrompt}
+                    placeholder="e.g. Keep answers short and use metric units"
+                    multiline
+                    accessibilityLabel="AI extra instructions"
+                  />
+                </Input>
+              </SettingsRow>
+              <View className="gap-2 border-t border-outline-100 p-4">
+                {aiError ? (
+                  <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+                    {aiError}
+                  </Text>
+                ) : null}
+                {testResult ? (
+                  <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
+                    <Ionicons
+                      name={testResult.ok ? "checkmark-circle" : "close-circle"}
+                      size={18}
+                      color={testResult.ok ? colors.primary : colors.danger}
+                    />
+                    <Text size="xs" className="flex-1 text-typography-600">
+                      {testResult.message}
+                    </Text>
+                  </Box>
+                ) : null}
+                <Box className="flex-row gap-2">
+                  <Button size="md" className="flex-1" onPress={saveAiSettings} disabled={aiSaving}>
+                    <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
+                  </Button>
+                  <Button
+                    size="md"
+                    variant="outline"
+                    action="secondary"
+                    onPress={() => void fetchAiModels()}
+                    disabled={fetchingModels}
+                  >
+                    <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
+                  </Button>
+                </Box>
+                <Button
+                  size="md"
+                  variant="outline"
+                  action="secondary"
+                  onPress={() => void testAiConnection()}
+                  disabled={testingConnection}
+                >
+                  <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
+                </Button>
+                <Button
+                  size="md"
+                  variant="outline"
+                  action="secondary"
+                  onPress={() => router.push("/ai-chat")}
+                >
+                  <ButtonText>Open AI chat</ButtonText>
+                </Button>
+                <Button
+                  size="md"
+                  variant="outline"
+                  action="secondary"
+                  onPress={() =>
+                    confirmAction({
+                      title: "Clear chat history?",
+                      message: "Removes the saved AI conversation from this device.",
+                      confirmLabel: "Clear",
+                      onConfirm: async () => {
+                        try {
+                          await clearChatMessages()
+                          showSuccess("Chat history cleared.", "Done")
+                        } catch (error) {
+                          showError(error, "Could not clear chat history.")
+                        }
+                      },
+                    })
+                  }
+                >
+                  <ButtonText>Clear chat history</ButtonText>
+                </Button>
+              </View>
+            </>
+          ) : null}
+        </SettingsSection>
+
+        {Platform.OS === "web" ? (
+          <SettingsSection title="Agent API (MCP)">
+            <View className="gap-1 p-4">
+              <Text size="sm" className="leading-5 text-typography-500">
+                This web build exposes its diary to AI agents over the Model Context Protocol at{" "}
+                <Text size="sm" className="text-typography-900">
+                  {getMcpOrigin()}/mcp
+                </Text>
+                . Point Claude Desktop, Cursor or any MCP client there.
+              </Text>
+              <Text size="xs" className="mt-2 leading-4 text-typography-500">
+                Set MCP_API_KEY on the server to protect the endpoint (required in production). The
+                snapshot bridge is same-origin only and never stores data on disk.
+              </Text>
+              <Box className="mt-2 flex-row flex-wrap gap-1.5">
+                {[
+                  "get_diary",
+                  "get_diary_stats",
+                  "get_goals",
+                  "get_settings",
+                  "get_meals",
+                  "log_food",
+                  "log_meal",
+                  "update_food_entry",
+                  "delete_food_entry",
+                  "set_goals",
+                  "set_units",
+                ].map((tool) => (
+                  <Box
+                    key={tool}
+                    className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
+                  >
+                    <Text size="xs" className="font-mono text-typography-600">
+                      {tool}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </View>
+          </SettingsSection>
+        ) : null}
+
         <SettingsSection title="YAZIO sync">
           <SettingsRow>
             <Box className="flex-row items-center justify-between">
@@ -468,4 +874,11 @@ export default function SettingsScreen() {
       </PageContainer>
     </ScrollView>
   )
+}
+
+function getMcpOrigin(): string {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin
+  }
+  return "http://localhost:8082"
 }
