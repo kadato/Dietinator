@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
       - run: npm run format:check
 
   unit:
-    name: Unit tests
+    name: Unit tests (coverage)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test -- --runInBand
+      - run: npm run test:coverage
 
   e2e:
     name: E2E (offline/local-first)

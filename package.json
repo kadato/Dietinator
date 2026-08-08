@@ -14,8 +14,10 @@
     "expo-linking": "~56.0.12",
     "expo-router": "~56.2.7",
     "expo-secure-store": "~56.0.4",
+    "expo-splash-screen": "~56.0.14",
     "expo-sqlite": "~56.0.4",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.24",
     "nativewind": "^4.1.23",
     "react": "19.2.3",
     "react-aria": "^3.33.0",
@@ -71,6 +73,7 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "test": "jest",
+    "test:coverage": "jest --coverage --runInBand",
     "build:web": "node scripts/expo-cli.cjs export --platform web",
     "serve:web": "node scripts/serve-dist.mjs",
     "web:prod": "npm run build:web && npm run serve:web",
@@ -78,7 +81,8 @@
     "test:e2e:headed": "npm run build:web && playwright test --headed",
     "test:e2e:dev": "cross-env PW_E2E_DEV=1 playwright test",
     "test:e2e:yazio": "npm run build:web && playwright test e2e/yazio.spec.ts",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "release": "node scripts/release.cjs"
   },
   "private": true,
   "engines": {
@@ -89,6 +93,14 @@
     "testMatch": [
       "**/__tests__/**/*.test.(ts|tsx|js|jsx)"
     ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 75,
+        "branches": 60,
+        "functions": 70,
+        "lines": 75
+      }
+    },
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/e2e/",

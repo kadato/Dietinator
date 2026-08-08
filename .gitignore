@@ -50,3 +50,6 @@ playwright/.cache/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Jest coverage
+coverage/
