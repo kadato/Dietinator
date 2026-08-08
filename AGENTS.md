@@ -196,6 +196,7 @@ Schema changes: update `migrate()` in `src/db/database.ts` only (no separate mig
 | Diary CRUD | `src/db/diary.ts`, `src/services/diary.ts` |
 | Food search/cache | `src/services/yazio/foods.ts`, `src/db/food-cache.ts` |
 | Goals/settings | `src/db/settings.ts`, Settings tab |
+| In-app updates | `src/services/updates.ts`, `src/context/UpdateContext.tsx`, `public/` release pipeline in `.github/workflows/release.yml` |
 | Theme/colors | `src/theme.ts` |
 | Auth flow | `app/login.tsx`, `src/services/yazio/client.ts` |
 

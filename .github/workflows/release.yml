@@ -1,0 +1,150 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.1.0)'
+        required: true
+        default: '1.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Typecheck and e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run e2e (offline/local-first; YAZIO specs skip without credentials)
+        run: npm run test:e2e
+
+  build-android:
+    name: Build signed Android APK
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: react-native-community/setup-android-sdk@v2
+        with:
+          cache-enabled: true
+          cache-key: android-sdk-dietinator
+          sdk-version: '36'
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+      - run: npm ci
+      - name: Bake version into app.json
+        run: node scripts/ci-set-version.cjs ${{ steps.version.outputs.version }}
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: Decode signing keystore
+        run: |
+          mkdir -p keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > keystore/dietinator-release.keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      - name: Wire release signing
+        run: node scripts/inject-android-signing.cjs
+      - name: Build release APK
+        run: cd android && ./gradlew assembleRelease --no-daemon
+        env:
+          DIETINATOR_KEYSTORE_FILE: ${{ github.workspace }}/keystore/dietinator-release.keystore
+          DIETINATOR_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          DIETINATOR_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          DIETINATOR_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+  create-release:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    needs: [build-android]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: release
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+      - name: Rename APK
+        run: mv release/app-release.apk release/Dietinator-Android.apk
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV=$(git tag --sort=-version:refname | grep -vx "v${VERSION}" | head -1 || true)
+          echo "Previous tag: ${PREV:-<none>}"
+          RANGE="${PREV:+${PREV}..}HEAD"
+          FEATURES=$(git log "$RANGE" --no-merges --pretty=format:%s | grep -E '^feat' | sed -E 's/^feat(\([^)]*\))?: //' | sed 's/^./\U&/' || true)
+          FIXES=$(git log "$RANGE" --no-merges --pretty=format:%s | grep -E '^fix' | sed -E 's/^fix(\([^)]*\))?: //' | sed 's/^./\U&/' || true)
+          {
+            echo "## What's new"
+            echo ""
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES" | sed 's/^/- /'
+              echo ""
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "### Bug fixes"
+              echo "$FIXES" | sed 's/^/- /'
+              echo ""
+            fi
+            if [ -z "$FEATURES" ] && [ -z "$FIXES" ]; then
+              echo "Improvements and under-the-hood changes."
+              echo ""
+            fi
+          } > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Dietinator v${{ steps.version.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: release/Dietinator-Android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

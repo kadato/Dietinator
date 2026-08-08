@@ -117,3 +117,56 @@ This app uses a **reverse-engineered, unofficial** YAZIO API. It may break witho
 - `src/db/` — SQLite schema and queries
 - `src/services/yazio/` — YAZIO API wrapper
 - `src/components/` — UI components
+
+## Releasing a new version (Android)
+
+Releases are published from GitHub by tagging the repository. The
+`.github/workflows/release.yml` pipeline runs on every `v*` tag:
+
+1. **Tests** - typecheck and the offline/local-first e2e suite (YAZIO specs skip without credentials).
+2. **Signed APK** - `expo prebuild` + a production Gradle build, signed with your release keystore.
+3. **Release** - a GitHub release with the `Dietinator-Android.apk` asset and a changelog generated
+   from conventional commits (`feat:`, `fix:`) since the previous tag. The app shows that changelog
+   (markdown) in the in-app update dialog.
+
+### One-time setup: signing keystore
+
+Create a keystore (keep it forever - the app updates must keep the same signature):
+
+```bash
+keytool -genkeypair -v -keystore dietinator-release.keystore -alias dietinator \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Add these repository secrets (Actions > Settings > Secrets):
+
+| Secret | Value |
+|--------|-------|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 dietinator-release.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | `dietinator` |
+| `ANDROID_KEY_PASSWORD` | Key password |
+
+### Publishing a release
+
+1. Bump the version in `app.json` (`version`, and `android.versionCode`) - or let the pipeline
+   derive both from the tag (`v1.1.0` -> version `1.1.0`, versionCode `10100`).
+2. Commit and push a tag:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+3. The workflow builds the APK, creates the release with auto-generated changelog notes, and the
+   Android app prompts with the update dialog on next start (Settings > Updates to disable).
+
+For a manual trigger without a tag, run the workflow from the Actions tab and provide the version.
+
+### How the in-app updater works
+
+- On Android, the app silently checks GitHub's latest release 4 seconds after startup
+  (once per session). If the release tag is newer than the installed version, an update dialog
+  shows the changelog (markdown-rendered) with **Download** (opens the signed APK in the browser),
+  **Later**, and **Don't ask again** (disables the startup check in Settings > Updates).
+- Check for updates manually at any time from Settings > Updates.
