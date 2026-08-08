@@ -95,7 +95,7 @@ export async function searchLocalFoods(query: string): Promise<SearchFoodResult[
     `SELECT * FROM food_cache
      WHERE name LIKE ? ESCAPE '\\' OR producer LIKE ? ESCAPE '\\' OR barcode LIKE ? ESCAPE '\\'
      ORDER BY last_used_at DESC NULLS LAST
-     LIMIT 20`,
+     LIMIT 50`,
     pattern,
     pattern,
     pattern,
@@ -123,9 +123,17 @@ export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {
   return mapRows(rows);
 }
 
+/**
+ * Upsert a food into the cache.
+ *
+ * `preserveLastUsedAt` keeps recent-usage markers untouched: fresh rows are
+ * stored with no usage date and existing rows keep theirs. Use it for silent
+ * cache warm-ups (e.g. saving a meal) where the food was not consumed.
+ */
 export async function saveFoodToCache(
   food: SearchFoodResult,
   barcode: string | null = null,
+  preserveLastUsedAt = false,
 ): Promise<void> {
   const db = await getDatabase();
   const now = new Date().toISOString();
@@ -142,7 +150,7 @@ export async function saveFoodToCache(
       serving_json = excluded.serving_json,
       base_unit = excluded.base_unit,
       cached_at = excluded.cached_at,
-      last_used_at = excluded.last_used_at`,
+      last_used_at = ${preserveLastUsedAt ? 'food_cache.last_used_at' : 'excluded.last_used_at'}`,
     food.product_id,
     barcode,
     food.name,
@@ -152,7 +160,7 @@ export async function saveFoodToCache(
     food.base_unit || 'g',
     now,
     food.product_id,
-    now,
+    preserveLastUsedAt ? null : now,
   );
 }
 

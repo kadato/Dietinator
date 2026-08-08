@@ -30,6 +30,16 @@ export async function saveMeal(params: {
     updated_at: now,
     items: params.items,
   });
+
+  // Warm the food cache with every ingredient so meals stay fully usable
+  // offline (searchable and editable) even after the cache was cleared.
+  // Best-effort and silent: saving a meal is not consuming the foods.
+  for (const item of params.items) {
+    foodCacheDb
+      .saveFoodToCache(itemToFood(item), null, true)
+      .catch(() => undefined);
+  }
+
   const saved = await mealDb.getMealById(id);
   if (!saved) throw new Error('Could not save meal.');
   return saved;
