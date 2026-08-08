@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DiaryEntry, MealType } from '@/types';
@@ -16,7 +16,7 @@ type Props = {
   mealGoal?: number;
   /** Changes with the selected date so expanded state resets between days. */
   dateKey: string;
-  onAdd: () => void;
+  onAdd: (mealType: MealType) => void;
   onEdit: (entryId: string) => void;
   onDelete: (id: string) => void;
 };
@@ -28,7 +28,7 @@ function formatFoodPreview(entries: DiaryEntry[]): string {
   return joined.length > 72 ? `${joined.slice(0, 69)}…` : joined;
 }
 
-export function MealSection({
+export const MealSection = memo(function MealSection({
   mealType,
   entries,
   mealGoal,
@@ -39,6 +39,8 @@ export function MealSection({
 }: Props) {
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const handleEdit = useCallback((entryId: string) => onEdit(entryId), [onEdit]);
+  const handleDelete = useCallback((entryId: string) => onDelete(entryId), [onDelete]);
   const accent = colors[mealType];
   const totalKcal = entries.reduce((s, e) => s + e.kcal, 0);
   const goal = mealGoal && mealGoal > 0 ? mealGoal : undefined;
@@ -86,7 +88,7 @@ export function MealSection({
 
         <Pressable
           className="h-10 w-10 rounded-full bg-primary-500 items-center justify-center mt-1 active:opacity-80"
-          onPress={onAdd}
+          onPress={() => onAdd(mealType)}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
@@ -101,8 +103,8 @@ export function MealSection({
               key={`${dateKey}-${entry.id}`}
               entry={entry}
               accentColor={accent}
-              onEdit={() => onEdit(entry.id)}
-              onDelete={() => onDelete(entry.id)}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           ))}
           <Text size="2xs" className="text-typography-500 text-center mt-2">
@@ -112,4 +114,4 @@ export function MealSection({
       ) : null}
     </Card>
   );
-}
+});

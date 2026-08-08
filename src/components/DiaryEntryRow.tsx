@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DiaryEntry } from '@/types';
@@ -7,11 +8,16 @@ import { spacing, type ColorPalette } from '@/theme';
 type Props = {
   entry: DiaryEntry;
   accentColor: string;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (entryId: string) => void;
+  onDelete: (entryId: string) => void;
 };
 
-export function DiaryEntryRow({ entry, accentColor, onEdit, onDelete }: Props) {
+export const DiaryEntryRow = memo(function DiaryEntryRow({
+  entry,
+  accentColor,
+  onEdit,
+  onDelete,
+}: Props) {
   const styles = useThemedStyles(createStyles);
   const amountLabel =
     entry.unit === 'serving'
@@ -20,8 +26,8 @@ export function DiaryEntryRow({ entry, accentColor, onEdit, onDelete }: Props) {
 
   return (
     <Pressable
-      onPress={onEdit}
-      onLongPress={onDelete}
+      onPress={() => onEdit(entry.id)}
+      onLongPress={() => onDelete(entry.id)}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       accessibilityRole="button"
       accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
@@ -44,7 +50,7 @@ export function DiaryEntryRow({ entry, accentColor, onEdit, onDelete }: Props) {
       </View>
     </Pressable>
   );
-}
+});
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({

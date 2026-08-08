@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,15 +16,16 @@ import { deleteFoodEntry, getDiaryEntriesForDate } from '@/services/diary';
 import { confirmAction } from '@/utils/confirm';
 import { shiftDateKey, toDateKey, formatDisplayDate } from '@/utils/date';
 import { formatWaterAmount, formatWeight } from '@/utils/units';
+import { MEAL_TYPES } from '@/utils/meals';
 import { useLayout } from '@/hooks/useLayout';
 import { useTheme } from '@/hooks/useTheme';
 import { Box } from '@ui/box';
 import { Text } from '@ui/text';
 import { Card } from '@ui/card';
 
-const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+type Totals = { kcal: number; protein: number; carbs: number; fat: number };
 
-function sumEntries(list: DiaryEntry[]) {
+function sumEntries(list: DiaryEntry[]): Totals {
   return list.reduce(
     (acc, e) => ({
       kcal: acc.kcal + e.kcal,
@@ -44,12 +45,26 @@ export default function TodayScreen() {
   const { isWide } = useLayout();
   const [dateKey, setDateKey] = useState(toDateKey());
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
-  const [totals, setTotals] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0 });
   const [refreshing, setRefreshing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [mealGoals, setMealGoals] = useState<MealGoals>({});
   const [summary, setSummary] = useState<YazioDailySummary | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  const totals = useMemo(() => sumEntries(entries), [entries]);
+
+  const mealEntries = useMemo(() => {
+    const grouped: Record<MealType, DiaryEntry[]> = {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snack: [],
+    };
+    for (const entry of entries) {
+      grouped[entry.meal_type]?.push(entry);
+    }
+    return grouped;
+  }, [entries]);
 
   const load = useCallback(
     async (options?: { quiet?: boolean }) => {
@@ -58,7 +73,6 @@ export default function TodayScreen() {
       try {
         list = await getDiaryEntriesForDate(dateKey);
         setEntries(list);
-        setTotals(sumEntries(list));
       } catch (error) {
         showError(error, 'Could not load diary for this day.');
         return;
@@ -74,7 +88,6 @@ export default function TodayScreen() {
         if (result.imported > 0 || result.failed > 0 || result.error) {
           const updated = await getDiaryEntriesForDate(dateKey);
           setEntries(updated);
-          setTotals(sumEntries(updated));
         }
         if (result.error && !options?.quiet) {
           showWarning(result.error, 'YAZIO import');
@@ -114,19 +127,25 @@ export default function TodayScreen() {
     setDateKey((current) => shiftDateKey(current, delta));
   };
 
-  const openAdd = (mealType: MealType) => {
-    router.push({
-      pathname: '/log-meal',
-      params: { meal: mealType, date: dateKey },
-    });
-  };
+  const openAdd = useCallback(
+    (mealType: MealType) => {
+      router.push({
+        pathname: '/log-meal',
+        params: { meal: mealType, date: dateKey },
+      });
+    },
+    [dateKey, router],
+  );
 
-  const openEdit = (entryId: string) => {
-    router.push({
-      pathname: '/add-food',
-      params: { entryId, date: dateKey },
-    });
-  };
+  const openEdit = useCallback(
+    (entryId: string) => {
+      router.push({
+        pathname: '/add-food',
+        params: { entryId, date: dateKey },
+      });
+    },
+    [dateKey, router],
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -134,33 +153,36 @@ export default function TodayScreen() {
     setRefreshing(false);
   };
 
-  const onDeleteEntry = async (id: string) => {
-    const entry = entries.find((e) => e.id === id);
-    confirmAction({
-      title: 'Delete entry?',
-      message: `Remove "${entry?.food_name ?? 'this item'}" from the diary?`,
-      confirmLabel: 'Delete',
-      onConfirm: async () => {
-        try {
-          await deleteFoodEntry(id);
-          await load({ quiet: true });
-        } catch (error) {
-          showError(error, 'Could not delete entry.');
-        }
-      },
-    });
-  };
+  const onDeleteEntry = useCallback(
+    (id: string) => {
+      const entry = entries.find((e) => e.id === id);
+      confirmAction({
+        title: 'Delete entry?',
+        message: `Remove "${entry?.food_name ?? 'this item'}" from the diary?`,
+        confirmLabel: 'Delete',
+        onConfirm: async () => {
+          try {
+            await deleteFoodEntry(id);
+            await load({ quiet: true });
+          } catch (error) {
+            showError(error, 'Could not delete entry.');
+          }
+        },
+      });
+    },
+    [entries, load, showError],
+  );
 
   const renderMealSections = (grid?: boolean) =>
-    MEALS.map((meal) => {
+    MEAL_TYPES.map((meal) => {
       const section = (
         <MealSection
           key={`${dateKey}-${meal}`}
           mealType={meal}
           dateKey={dateKey}
-          entries={entries.filter((e) => e.meal_type === meal)}
+          entries={mealEntries[meal]}
           mealGoal={mealGoals[meal]}
-          onAdd={() => openAdd(meal)}
+          onAdd={openAdd}
           onEdit={openEdit}
           onDelete={onDeleteEntry}
         />

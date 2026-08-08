@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { SearchFoodResult } from '@/types';
@@ -15,7 +16,7 @@ type Props = {
   onAdd: () => void;
 };
 
-export function MealLogFoodRow({ food, subtitle, accentColor, onPress, onAdd }: Props) {
+export const MealLogFoodRow = memo(function MealLogFoodRow({ food, subtitle, accentColor, onPress, onAdd }: Props) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const perGram = isPerGramNutrients(
@@ -56,7 +57,7 @@ export function MealLogFoodRow({ food, subtitle, accentColor, onPress, onAdd }: 
       </Pressable>
     </View>
   );
-}
+});
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { SearchFoodResult } from '@/types';
@@ -14,7 +15,7 @@ type Props = {
   subtitle?: string;
 };
 
-export function FoodListItem({
+export const FoodListItem = memo(function FoodListItem({
   food,
   onPress,
   onToggleFavorite,
@@ -63,4 +64,4 @@ export function FoodListItem({
       )}
     </Box>
   );
-}
+});
