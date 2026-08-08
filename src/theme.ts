@@ -3,6 +3,8 @@ export type ColorPalette = {
   surface: string
   surfaceAlt: string
   primary: string
+  /** Deeper shade for text/icons on tinted primary backgrounds (tab rails). */
+  primaryStrong: string
   primaryMuted: string
   onPrimary: string
   text: string
@@ -24,6 +26,7 @@ export const darkColors: ColorPalette = {
   surface: "#1c1c1f",
   surfaceAlt: "#2a2a2f",
   primary: "#2dd4bf",
+  primaryStrong: "#2dd4bf",
   primaryMuted: "#14b8a6",
   onPrimary: "#042f2e",
   text: "#fafafa",
@@ -43,11 +46,12 @@ export const lightColors: ColorPalette = {
   background: "#f1f5f9",
   surface: "#ffffff",
   surfaceAlt: "#e2e8f0",
-  primary: "#0d9488",
-  primaryMuted: "#14b8a6",
+  primary: "#0f766e",
+  primaryStrong: "#115e59",
+  primaryMuted: "#0d9488",
   onPrimary: "#ffffff",
   text: "#0f172a",
-  textMuted: "#64748b",
+  textMuted: "#475569",
   textOnBackground: "#0f172a",
   danger: "#dc2626",
   warning: "#d97706",

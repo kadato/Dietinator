@@ -39,7 +39,7 @@ export default function TabLayout() {
         tabBarItemStyle: isWide
           ? { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, alignItems: "center" }
           : undefined,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: isWide ? colors.primaryStrong : colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 2 },
       }}
