@@ -2,8 +2,7 @@
 import React from "react"
 import { Switch as RNSwitch } from "react-native"
 import { createSwitch } from "@gluestack-ui/core/switch/creator"
-import { tva } from "@gluestack-ui/utils/nativewind-utils"
-import { withStyleContext } from "@gluestack-ui/utils/nativewind-utils"
+import { tva, withStyleContext } from "@gluestack-ui/utils/nativewind-utils"
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
 
 const UISwitch = createSwitch({

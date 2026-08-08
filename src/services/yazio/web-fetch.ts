@@ -7,7 +7,6 @@ export const YAZIO_API_BASE = "https://yzapi.yazio.com/v15"
 export const YAZIO_WEB_PROXY_PREFIX = "/api/yazio"
 
 declare global {
-  // eslint-disable-next-line no-var
   var __dietinatorYazioWebFetchInstalled: boolean | undefined
 }
 

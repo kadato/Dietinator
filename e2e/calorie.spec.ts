@@ -1,4 +1,4 @@
-import { expect, test, bootAuthenticated } from "./helpers"
+import { expect, test } from "./helpers"
 
 /**
  * Calorie-recording accuracy, verified against LIVE YAZIO payloads:

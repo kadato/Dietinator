@@ -86,7 +86,7 @@ export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onD
           {release.notes?.trim() ? (
             <>
               <Text size="xs" bold className="mb-2 uppercase tracking-wide text-typography-500">
-                What's new
+                What&apos;s new
               </Text>
               <Markdown source={release.notes} />
             </>
@@ -111,7 +111,7 @@ export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onD
             accessibilityLabel="Don't ask again"
           >
             <Text size="sm" bold className="text-typography-500">
-              Don't ask again
+              Don&apos;t ask again
             </Text>
           </Pressable>
           <View className="flex-1" />

@@ -8,19 +8,17 @@ import {
   FlatList,
   Linking,
   Platform,
-  TextInput,
 } from "react-native"
 import { useToast } from "@/context/ToastContext"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import type { MealType } from "@/types"
+import type { MealType, SearchFoodResult } from "@/types"
 import { getFoodByBarcode, searchFoodsRemote } from "@/services/yazio/foods"
 import { FoodListItem } from "@/components/FoodListItem"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
 import { useApp } from "@/context/AppContext"
-import type { SearchFoodResult } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
@@ -44,7 +42,6 @@ function BarcodeMatchesList({
   onPick: (food: SearchFoodResult) => void
   onRescan: () => void
 }) {
-  const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   return (
     <FlatList

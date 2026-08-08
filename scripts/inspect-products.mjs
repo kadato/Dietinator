@@ -58,11 +58,6 @@ for (const q of queries) {
       continue
     }
     const kcal = detail.nutrients["energy.energy"]
-    const first = detail.servings[0]
-    const kcalPerServing = (serving) =>
-      serving
-        ? `~${(kcal * serving.amount).toFixed(2)} kcal per ${serving.serving} (amount ${serving.amount}${detail.base_unit})`
-        : "no servings"
     console.log(`\n== ${q} → "${detail.name}" (${detail.base_unit})`)
     console.log(
       `   raw energy: ${kcal}  (per-gram semantics ⇒ ${(kcal * 100).toFixed(1)} kcal/100${detail.base_unit})`,
