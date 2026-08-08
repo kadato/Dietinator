@@ -15,10 +15,20 @@ async function openFoodPreview(page: import("@playwright/test").Page, query: str
   await page.getByRole("button", { name: "Add food to Lunch" }).click()
   const searchBox = page.getByPlaceholder("What did you have for lunch?")
   await expect(searchBox).toBeVisible()
+  const firstRow = page.getByRole("button", { name: /, \d+ calories/ }).first()
+  const suggestionLabel = await firstRow.getAttribute("aria-label")
   await searchBox.fill(query)
-  const row = page.getByRole("button", { name: /, \d+ calories/ }).first()
-  await expect(row).toBeVisible({ timeout: 30_000 })
-  await row.click()
+  // The modal shows live suggestions before the query results arrive — wait
+  // until the list actually swaps so the click never lands on a suggestion.
+  if (suggestionLabel) {
+    await expect
+      .poll(async () => (await firstRow.getAttribute("aria-label")) ?? "", {
+        timeout: 30_000,
+      })
+      .not.toBe(suggestionLabel)
+  }
+  await expect(firstRow).toBeVisible({ timeout: 30_000 })
+  await firstRow.click()
   const amount = page.getByLabel(/Amount in/)
   await expect(amount).toBeVisible({ timeout: 30_000 })
   return { amount, kcal: page.getByTestId("preview-kcal") }
