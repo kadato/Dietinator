@@ -166,6 +166,7 @@ npm run typecheck    # tsc --noEmit after substantive TS changes
 npm run lint         # ESLint (eslint-config-expo flat config)
 npm run format       # Prettier — write across the repo
 npm run format:check # Prettier — verify (runs in CI)
+npm test             # Jest unit tests (utils, services, migrations)
 npm run build:web    # production web export → dist/
 npm run serve:web    # serve dist/ with COEP/COOP + YAZIO proxy (needs build first)
 npm run test:e2e     # build + Playwright (phone viewport, offline/local-first flows)
@@ -190,7 +191,7 @@ Schema changes: update `migrate()` in `src/db/database.ts` only (no separate mig
 
 ## Testing & quality
 
-- No unit test suite today — if adding unit tests, prefer **Jest + @testing-library/react-native** for components and pure unit tests for `utils/` and `db/` helpers.
+- **Unit tests:** Jest + jest-expo in `src/**/__tests__/` (`npm test`) — utils, diary/backup services (mocked DB), and the migration contract. Add tests for new pure logic.
 - Manual smoke: login → search food → add entry → see dashboard → optional sync → offline add with cached food → barcode scan on device.
 
 ## Useful files for common tasks
