@@ -45,6 +45,14 @@
         {
           "cameraPermission": "Allow Dietinator to scan food barcodes."
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#E6F4FE"
+        }
       ]
     ]
   }
