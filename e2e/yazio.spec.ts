@@ -71,7 +71,7 @@ test.describe('YAZIO (real account)', () => {
     await login(page);
 
     await page.getByText('Search', { exact: true }).click();
-    await page.getByPlaceholder('Search YAZIO foods...').fill('banana');
+    await page.getByPlaceholder('Search foods...').fill('banana');
 
     // Remote results arrive with real product rows (aria-label "<name>, <kcal> calories").
     const rows = page.locator('[aria-label$=" calories"]');
