@@ -29,7 +29,7 @@ your account is optional and best-effort. No account needed to try it.
 &nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
-  <img alt="Food search with cached results" src="./docs/screenshots/search-light.png" width="190">
+  <img alt="Live YAZIO food search results" src="./docs/screenshots/search-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
@@ -57,15 +57,10 @@ your account is optional and best-effort. No account needed to try it.
 </p>
 
 <p align="center">
-<strong>Settings</strong> · <strong>Barcode scan</strong> · <strong>Login</strong><br><br>
+<strong>Settings</strong> · <strong>Login</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/settings-dark.png">
   <img alt="Goals, units and data management" src="./docs/screenshots/settings-light.png" width="190">
-</picture>
-&nbsp;&nbsp;
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/scan-dark.png">
-  <img alt="Barcode scan with web fallback" src="./docs/screenshots/scan-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
