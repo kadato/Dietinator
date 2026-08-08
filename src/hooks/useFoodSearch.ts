@@ -33,24 +33,29 @@ export function useFoodSearch(
 
   const refresh = useCallback(() => setNonce((n) => n + 1), [])
 
+  // Reset the list synchronously when `enabled` flips (React-recommended
+  // "adjust state during render" pattern instead of setState-in-effect).
+  const [prevEnabled, setPrevEnabled] = useState(enabled)
+  if (enabled !== prevEnabled) {
+    setPrevEnabled(enabled)
+    setFoods([])
+    setLoading(false)
+  }
+
+  // Without an `emptyQuery` provider there is nothing to show for a blank
+  // query — present an empty list rather than stale rows.
+  const showResults = enabled && !(debounced.trim() === "" && !emptyQuery)
+
   useEffect(() => {
-    if (!enabled) {
-      setFoods([])
-      setLoading(false)
-      return
-    }
+    if (!enabled) return
     const requestId = ++requestRef.current
     let cancelled = false
     const trimmed = debounced.trim()
 
     if (!trimmed) {
-      if (!emptyQuery) {
-        setFoods([])
-        setLoading(false)
-        return
-      }
-      setLoading(true)
-      ;(async () => {
+      if (!emptyQuery) return
+      void (async () => {
+        setLoading(true)
         try {
           const items = await emptyQuery()
           if (requestId !== requestRef.current || cancelled) return
@@ -66,8 +71,8 @@ export function useFoodSearch(
       }
     }
 
-    setLoading(true)
-    ;(async () => {
+    void (async () => {
+      setLoading(true)
       try {
         const cached = await searchLocalFoods(trimmed)
         if (requestId !== requestRef.current || cancelled) return
@@ -95,5 +100,5 @@ export function useFoodSearch(
     }
   }, [debounced, enabled, emptyQuery, nonce, onError, setYazioAvailable])
 
-  return { foods, loading, refresh }
+  return { foods: showResults ? foods : [], loading: showResults ? loading : false, refresh }
 }

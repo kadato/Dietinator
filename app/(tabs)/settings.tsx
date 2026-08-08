@@ -80,13 +80,17 @@ export default function SettingsScreen() {
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
 
-  // Keep local fields in step when settings change elsewhere (e.g. YAZIO import).
-  useEffect(() => {
+  // Keep local fields in step when settings change elsewhere (e.g. YAZIO
+  // import) via the React-recommended "adjust state during render" pattern.
+  const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}`
+  const [syncedGoalsKey, setSyncedGoalsKey] = useState(goalsKey)
+  if (goalsKey !== syncedGoalsKey) {
+    setSyncedGoalsKey(goalsKey)
     setCalorieGoal(String(settings.calorie_goal))
     setProteinGoal(String(settings.protein_goal))
     setCarbsGoal(String(settings.carbs_goal))
     setFatGoal(String(settings.fat_goal))
-  }, [settings.calorie_goal, settings.protein_goal, settings.carbs_goal, settings.fat_goal])
+  }
 
   useEffect(() => {
     let cancelled = false

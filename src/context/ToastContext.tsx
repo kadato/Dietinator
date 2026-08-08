@@ -45,7 +45,7 @@ const DEFAULT_DURATION: Record<ToastType, number> = {
 function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: () => void }) {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
-  const opacity = useRef(new Animated.Value(0)).current
+  const [opacity] = useState(() => new Animated.Value(0))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dismiss = useCallback(() => {

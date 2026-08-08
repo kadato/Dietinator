@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { ActivityIndicator, FlatList } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -35,10 +35,6 @@ export default function SearchScreen() {
     const favs = await getFavoriteFoods()
     setFavoriteIds(new Set(favs.map((f) => f.product_id)))
   }, [])
-
-  useEffect(() => {
-    loadFavorites()
-  }, [loadFavorites])
 
   // Star toggles inside add-food must show up when coming back to this tab.
   useFocusEffect(

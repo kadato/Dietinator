@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import {
   View,
   Text,
@@ -114,10 +114,6 @@ export default function LogMealScreen() {
       showError(error, "Could not load meals.")
     }
   }, [showError])
-
-  useEffect(() => {
-    if (category === "meals") loadMeals()
-  }, [category, loadMeals])
 
   // Refetch favorites/recent/meals when returning from add-food or meal-builder.
   useFocusEffect(
