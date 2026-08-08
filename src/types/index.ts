@@ -39,6 +39,8 @@ export interface AppSettings {
   yazio_sync_enabled: number;
   /** YAZIO profile `food_database_country` — used for product search. */
   food_database_country: string;
+  /** Auto-check GitHub releases for a newer app version on startup. */
+  update_check_enabled: number;
 }
 
 export interface FoodNutrients {

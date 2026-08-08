@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, useColorScheme, View } from 'react-nativ
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { UpdateProvider } from '@/context/UpdateContext';
 import { useTheme } from '@/hooks/useTheme';
 import { hideWebShell, registerWebServiceWorker } from '@/utils/web-shell';
 import type { ColorPalette } from '@/theme';
@@ -68,7 +69,9 @@ export default function RootLayout() {
     <GluestackUIProvider mode={gluestackMode}>
       <AppProvider>
         <ToastProvider>
-          <RootNavigator />
+          <UpdateProvider>
+            <RootNavigator />
+          </UpdateProvider>
         </ToastProvider>
       </AppProvider>
     </GluestackUIProvider>

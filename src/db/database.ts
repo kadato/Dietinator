@@ -116,6 +116,11 @@ async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       `ALTER TABLE settings ADD COLUMN food_database_country TEXT NOT NULL DEFAULT ''`,
     );
   }
+  if (!settingsColumns.some((column) => column.name === 'update_check_enabled')) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN update_check_enabled INTEGER NOT NULL DEFAULT 1`,
+    );
+  }
 
   const foodCacheColumns = await database.getAllAsync<{ name: string }>(
     'PRAGMA table_info(food_cache)',

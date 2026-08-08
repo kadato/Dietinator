@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/context/ToastContext';
+import { useUpdates } from '@/context/UpdateContext';
+import { getCurrentVersion } from '@/services/updates';
 import { logoutYazio, getYazioProfile } from '@/services/yazio/client';
 import { importFromYazio, syncPendingEntries } from '@/services/yazio/sync';
 import { toDateKey } from '@/utils/date';
@@ -73,6 +75,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { settings, updateSettings, refreshAuth, refreshSettings } = useApp();
   const { showSuccess, showError } = useToast();
+  const { checking, checkForUpdates } = useUpdates();
   const { colors } = useTheme();
   const { isWide } = useLayout();
   const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal));
@@ -368,6 +371,46 @@ export default function SettingsScreen() {
             >
               <ButtonText>Clear food cache</ButtonText>
             </Button>
+          </View>
+        </SettingsSection>
+
+        <SettingsSection title="Updates">
+          <SettingsRow>
+            <Box className="flex-row items-center justify-between">
+              <Box className="flex-1 mr-4">
+                <Text size="sm" className="text-typography-900">
+                  Check for updates
+                </Text>
+                <Text size="xs" className="text-typography-500 mt-0.5">
+                  Look for new versions on GitHub when the app starts
+                </Text>
+              </Box>
+              <Switch
+                value={settings.update_check_enabled === 1}
+                accessibilityLabel="Check for updates on startup"
+                onValueChange={async (v) => {
+                  try {
+                    await updateSettings({ update_check_enabled: v ? 1 : 0 });
+                  } catch (error) {
+                    showError(error, 'Could not update update-check setting.');
+                  }
+                }}
+              />
+            </Box>
+          </SettingsRow>
+          <View className="p-4 border-t border-outline-100 gap-2">
+            <Button
+              size="md"
+              variant="outline"
+              action="secondary"
+              onPress={() => checkForUpdates({ manual: true })}
+              disabled={checking}
+            >
+              <ButtonText>{checking ? 'Checking…' : 'Check now'}</ButtonText>
+            </Button>
+            <Text size="xs" className="text-typography-500">
+              Version {getCurrentVersion()} · releases on GitHub
+            </Text>
           </View>
         </SettingsSection>
 
