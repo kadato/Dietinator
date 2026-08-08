@@ -5,6 +5,9 @@ const { withNativeWind } = require("nativewind/metro")
 const YAZIO_API_BASE = "https://yzapi.yazio.com/v15"
 const YAZIO_PROXY_PREFIX = "/api/yazio"
 
+// MCP server + agent snapshot bridge (shared with scripts/serve-dist.mjs).
+const { createSnapshotStore, createAgentMiddleware } = require("./scripts/mcp-server.cjs")
+
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname)
 
@@ -64,22 +67,34 @@ async function proxyYazioRequest(req, res) {
 
 // SharedArrayBuffer requires cross-origin isolation headers.
 config.server.enhanceMiddleware = (middleware) => {
+  const agentMiddleware = createAgentMiddleware(createSnapshotStore())
   return (req, res, next) => {
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
 
-    if (req.url?.startsWith(YAZIO_PROXY_PREFIX)) {
-      proxyYazioRequest(req, res).catch((error) => {
-        console.error("[yazio-proxy]", error)
-        if (!res.headersSent) {
-          res.statusCode = 502
-          res.end("YAZIO proxy error")
-        }
-      })
-      return
+    // Agent API → YAZIO proxy → Metro (only when nothing above handled it).
+    const fallback = (innerReq, innerRes) => {
+      if (innerReq.url?.startsWith(YAZIO_PROXY_PREFIX)) {
+        proxyYazioRequest(innerReq, innerRes).catch((error) => {
+          console.error("[yazio-proxy]", error)
+          if (!innerRes.headersSent) {
+            innerRes.statusCode = 502
+            innerRes.end("YAZIO proxy error")
+          }
+        })
+        return
+      }
+      return middleware(innerReq, innerRes, next)
     }
 
-    return middleware(req, res, next)
+    agentMiddleware(req, res, fallback).catch((error) => {
+      console.error("[agent-api]", error)
+      if (!res.headersSent) {
+        res.statusCode = 502
+        res.end("Agent API error")
+      }
+    })
+    return
   }
 }
 

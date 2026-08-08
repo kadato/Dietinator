@@ -12,6 +12,12 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ["scripts/__tests__/**/*.test.js"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.jest },
+    },
+  },
+  {
     ignores: [
       "dist/*",
       "android/*",

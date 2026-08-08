@@ -10,13 +10,22 @@
  * Usage: npm run serve:web   (PORT env overrides the default 8082)
  */
 import { createServer } from "node:http"
-import { createReadStream, existsSync, statSync } from "node:fs"
-import { join, normalize } from "node:path"
-import { gzipSync } from "node:zlib"
+import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import { join, normalize, relative } from "node:path"
+import { brotliCompressSync, gzipSync } from "node:zlib"
 import { fileURLToPath } from "node:url"
+import { createRequire } from "node:module"
+
+// MCP server + agent snapshot bridge (shared with the Metro dev middleware).
+const require = createRequire(import.meta.url)
+const { createSnapshotStore, createAgentMiddleware } = require("./mcp-server.cjs")
 
 const PORT = Number(process.env.PORT ?? 8082)
-const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..", "dist")
+const ROOT = join(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "..",
+  process.env.DIST_DIR ?? "dist",
+)
 
 const YAZIO_API_BASE = "https://yzapi.yazio.com/v15"
 const YAZIO_PROXY_PREFIX = "/api/yazio"
@@ -103,30 +112,56 @@ function serveStatic(req, res, urlPath) {
   const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase()
   res.setHeader("Content-Type", MIME[ext] ?? "application/octet-stream")
 
-  // Hashed build assets never change → cache forever. The HTML shell and the
-  // service worker must always revalidate so app updates ship immediately.
-  if (/^\/_expo\/static\//.test(urlPath)) {
+  // Hashed build assets never change → cache forever. The HTML shell (including
+  // extension-less SPA routes that resolve to index.html) and the service
+  // worker must always revalidate so app updates ship immediately.
+  const servesHtml = ext === ".html" || urlPath.endsWith("/")
+  if (/^\/_expo\/static\//.test(urlPath) || /^\/assets\//.test(urlPath)) {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
-  } else if (urlPath === "/" || urlPath.endsWith(".html") || urlPath === "/sw.js") {
+  } else if (servesHtml || urlPath === "/sw.js") {
     res.setHeader("Cache-Control", "no-cache")
   } else {
     res.setHeader("Cache-Control", "public, max-age=3600")
   }
 
-  if (req.headers["accept-encoding"]?.includes("gzip") && /\.(js|css|html|json|svg)$/.test(ext)) {
-    const raw = createReadStream(filePath)
-    const chunks = []
-    raw.on("data", (c) => chunks.push(c))
-    raw.on("end", () => {
-      const gzipped = gzipSync(Buffer.concat(chunks))
-      res.setHeader("Content-Encoding", "gzip")
-      res.setHeader("Content-Length", String(gzipped.length))
-      res.end(gzipped)
-    })
-    raw.on("error", () => {
-      res.statusCode = 500
-      res.end("Read error")
-    })
+  // Compressible responses are served from a precomputed cache keyed by file
+  // path + mtime, so a rebuild invalidates the cache but repeated requests
+  // (and the audio-like churn of e2e/Lighthouse runs) cost nothing.
+  const COMPRESSIBLE = /\.(js|css|json|svg|wasm|html)$/.test(ext)
+  const acceptEncoding = req.headers["accept-encoding"] ?? ""
+
+  if (COMPRESSIBLE) {
+    const isHtml = ext === ".html"
+    const cacheKey = `${filePath}@${statSync(filePath).mtimeMs}${isHtml ? ":html" : ""}`
+    let cached = compressCache.get(cacheKey)
+    if (!cached) {
+      let raw = readFileSync(filePath)
+      if (isHtml) raw = Buffer.from(decorateHtml(raw.toString("utf8")), "utf8")
+      const br = acceptEncoding.includes("br")
+        ? brotliCompressSync(raw, { params: { [BROTLI_QUALITY]: 5 } })
+        : null
+      const gz = acceptEncoding.includes("gzip") ? gzipSync(raw) : null
+      cached = { br, gz, raw }
+      compressCache.set(cacheKey, cached)
+      // Keep the cache bounded — a handful of assets is all a build produces.
+      if (compressCache.size > 64) {
+        compressCache.delete(compressCache.keys().next().value)
+      }
+    }
+    let body = null
+    let encoding = null
+    if (cached.br) {
+      body = cached.br
+      encoding = "br"
+    } else if (cached.gz) {
+      body = cached.gz
+      encoding = "gzip"
+    } else {
+      body = cached.raw
+    }
+    res.setHeader("Content-Length", String(body.length))
+    if (encoding) res.setHeader("Content-Encoding", encoding)
+    res.end(body)
     return
   }
 
@@ -140,24 +175,99 @@ if (!existsSync(ROOT)) {
   process.exit(1)
 }
 
+// The wa-sqlite WASM is fetched by expo-sqlite only after the JS bundle boots.
+// Preload it from the HTML shell so it downloads in parallel with the bundle —
+// this trims the boot critical path by one full asset download.
+function findWasmUrl() {
+  const assetsDir = join(ROOT, "assets")
+  if (!existsSync(assetsDir)) return null
+  const walk = (dir) =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) return walk(full)
+      return entry.name.endsWith(".wasm") ? [full] : []
+    })
+  const found = walk(assetsDir)
+  if (found.length === 0) return null
+  return "/" + relative(ROOT, found[0]).replaceAll("\\", "/")
+}
+
+const WASM_PRELOAD_URL = findWasmUrl()
+if (WASM_PRELOAD_URL) {
+  console.log(`Preloading ${WASM_PRELOAD_URL} from the HTML shell`)
+}
+
+// The expo-sqlite worker chunk is fetched when the database opens (after the
+// bundle boots); preloading it warms the HTTP cache during the bundle download.
+// A/B tested against no preload: adds ~1pt of perf variance on mobile
+// (throttled) while reducing cold mid-boot latency on fast connections — kept
+// on by default, disable with PRELOAD_WORKER=0.
+const PRELOAD_WORKER = process.env.PRELOAD_WORKER !== "0"
+function findWorkerUrl() {
+  const webDir = join(ROOT, "_expo", "static", "js", "web")
+  if (!existsSync(webDir)) return null
+  const file = readdirSync(webDir).find(
+    (name) => name.startsWith("worker-") && name.endsWith(".js"),
+  )
+  if (!file) return null
+  return "/_expo/static/js/web/" + file
+}
+
+const WORKER_PRELOAD_URL = PRELOAD_WORKER ? findWorkerUrl() : null
+if (WORKER_PRELOAD_URL) {
+  console.log(`Preloading ${WORKER_PRELOAD_URL} from the HTML shell`)
+}
+
+const BROTLI_QUALITY = 5
+const compressCache = new Map()
+const agentMiddleware = createAgentMiddleware(createSnapshotStore())
+
+function decorateHtml(raw) {
+  let out = raw
+  if (WASM_PRELOAD_URL && !out.includes('rel="preload" href="' + WASM_PRELOAD_URL + '"')) {
+    out = out.replace(
+      "</head>",
+      `<link rel="preload" href="${WASM_PRELOAD_URL}" as="fetch" crossorigin="use-credentials">\n</head>`,
+    )
+  }
+  if (WORKER_PRELOAD_URL && !out.includes('rel="preload" href="' + WORKER_PRELOAD_URL + '"')) {
+    out = out.replace(
+      "</head>",
+      `<link rel="preload" href="${WORKER_PRELOAD_URL}" as="script">\n</head>`,
+    )
+  }
+  return out
+}
+
 createServer((req, res) => {
   res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
 
-  const urlPath = decodeURIComponent(new URL(req.url ?? "/", `http://localhost:${PORT}`).pathname)
-
-  if (urlPath.startsWith(YAZIO_PROXY_PREFIX)) {
-    proxyYazioRequest(req, res).catch((error) => {
-      console.error("[yazio-proxy]", error)
-      if (!res.headersSent) {
-        res.statusCode = 502
-        res.end("YAZIO proxy error")
-      }
-    })
-    return
+  // Agent API + MCP take the request when they recognize the path.
+  const fallback = (innerReq, innerRes) => {
+    const innerUrl = decodeURIComponent(
+      new URL(innerReq.url ?? "/", `http://localhost:${PORT}`).pathname,
+    )
+    if (innerUrl.startsWith(YAZIO_PROXY_PREFIX)) {
+      proxyYazioRequest(innerReq, innerRes).catch((error) => {
+        console.error("[yazio-proxy]", error)
+        if (!innerRes.headersSent) {
+          innerRes.statusCode = 502
+          innerRes.end("YAZIO proxy error")
+        }
+      })
+      return
+    }
+    serveStatic(innerReq, innerRes, innerUrl)
   }
 
-  serveStatic(req, res, urlPath)
+  agentMiddleware(req, res, fallback).catch((error) => {
+    console.error("[agent-api]", error)
+    if (!res.headersSent) {
+      res.statusCode = 502
+      res.end("Agent API error")
+    }
+  })
 }).listen(PORT, () => {
   console.log(`Dietinator web build served at http://localhost:${PORT}`)
   console.log(

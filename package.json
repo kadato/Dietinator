@@ -85,6 +85,7 @@
     "test:e2e:dev": "cross-env PW_E2E_DEV=1 playwright test",
     "test:e2e:yazio": "npm run build:web && playwright test e2e/yazio.spec.ts",
     "test:e2e:install": "playwright install chromium",
+    "test:mcp": "node scripts/mcp-agent-check.mjs",
     "release": "node scripts/release.cjs"
   },
   "private": true,
