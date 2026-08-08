@@ -112,6 +112,8 @@ on `yzapi.yazio.com`.
 | `npm run format`            | Prettier — write across the repo                                                            |
 | `npm run format:check`      | Prettier — verify (CI)                                                                      |
 | `npm test`                  | Jest unit tests (utils, services, DB migrations)                                            |
+| `npm run test:coverage`     | Jest with coverage — CI enforces the thresholds in `package.json`                           |
+| `npm run release`           | Bump version + tag `vX.Y.Z` (one command; then push the tag)                                |
 | `npm run build:web`         | Production web export to `dist/`                                                            |
 | `npm run serve:web`         | Serve `dist/` locally (COEP/COOP headers + YAZIO proxy, gzip). Requires a prior `build:web` |
 | `npm run web:prod`          | Build + serve in one shot                                                                   |
@@ -128,6 +130,10 @@ depends on — date math, nutrient normalization (the per-gram vs per-100 g
 conversion is the classic calorie-tracker bug), unit conversion, retry policy,
 barcode matching, food result merging, backup validation/restore, diary service
 business rules (mocked DB), and the SQLite migration contract.
+
+`npm run test:coverage` collects coverage with enforced global thresholds
+(statements/lines 75%, functions 70%, branches 60% — `coverageThreshold` in
+`package.json`). CI runs it on every push, so coverage can't silently slip.
 
 **E2E tests** (`npm run test:e2e`): Playwright against the **web build at phone
 dimensions** (390×844). They seed a fake local session
@@ -217,6 +223,11 @@ without notice and is intended for **personal use only** — do not productize o
 redistribute access to it. The local-first design keeps the app usable when the
 API is unreachable.
 
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the system overview — data model,
+local-first flow, YAZIO client lifecycle, and boot sequence.
+
 ## Releasing a new version (Android)
 
 Releases are published from GitHub by tagging the repository. The
@@ -246,11 +257,32 @@ Add these repository secrets (Actions > Settings > Secrets):
 | `ANDROID_KEY_ALIAS`         | `dietinator`                             |
 | `ANDROID_KEY_PASSWORD`      | Key password                             |
 
+### Mobile builds (EAS)
+
+[`eas.json`](eas.json) defines three EAS Build profiles (see
+[Expo docs](https://docs.expo.dev/build/eas-json/)):
+
+| Profile       | Use                                                      |
+| ------------- | -------------------------------------------------------- |
+| `development` | Debug dev-client build for devices (camera, SecureStore) |
+| `preview`     | Internal test build, installable without a store         |
+| `production`  | Store-ready build; `autoIncrement` bumps versionCode     |
+
+```bash
+npx eas build --profile development   # on-device dev build
+npx eas build --profile preview       # shareable test APK
+npx eas build --profile production    # store build
+```
+
+`expo-updates` is installed so `production` builds can ship OTA updates via
+EAS Update channels once you run `npx eas update:configure`.
+
 ### Publishing a release
 
-1. Bump the version in `app.json` (`version`, and `android.versionCode`) - or let the pipeline
-   derive both from the tag (`v1.1.0` -> version `1.1.0`, versionCode `10100`).
-2. Commit and push a tag:
+1. `npm run release [major|minor|patch]` bumps `app.json` (`version`, and `android.versionCode`),
+   commits, and tags `vX.Y.Z`. Or let the pipeline derive the version from the tag
+   (`v1.1.0` -> version `1.1.0`, versionCode `10100`).
+2. Push the tag:
 
 ```bash
 git tag v1.1.0
