@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
+import { hideWebShell, registerWebServiceWorker } from '@/utils/web-shell';
 import type { ColorPalette } from '@/theme';
 import { GluestackUIProvider } from '@ui/gluestack-ui-provider';
 import '../global.css';
@@ -55,6 +56,13 @@ function RootNavigator() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const gluestackMode = colorScheme === 'light' ? 'light' : 'dark';
+
+  useEffect(() => {
+    // Once React has painted, swap the inlined pre-JS shell for the real app
+    // and register the service worker for offline + instant repeat loads.
+    hideWebShell();
+    registerWebServiceWorker();
+  }, []);
 
   return (
     <GluestackUIProvider mode={gluestackMode}>

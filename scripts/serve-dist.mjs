@@ -104,6 +104,16 @@ function serveStatic(req, res, urlPath) {
   const ext = filePath.slice(filePath.lastIndexOf('.')).toLowerCase();
   res.setHeader('Content-Type', MIME[ext] ?? 'application/octet-stream');
 
+  // Hashed build assets never change → cache forever. The HTML shell and the
+  // service worker must always revalidate so app updates ship immediately.
+  if (/^\/_expo\/static\//.test(urlPath)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (urlPath === '/' || urlPath.endsWith('.html') || urlPath === '/sw.js') {
+    res.setHeader('Cache-Control', 'no-cache');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+
   if (req.headers['accept-encoding']?.includes('gzip') && /\.(js|css|html|json|svg)$/.test(ext)) {
     const raw = createReadStream(filePath);
     const chunks = [];
