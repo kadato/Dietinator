@@ -53,3 +53,6 @@ playwright/.cache/
 
 # Jest coverage
 coverage/
+
+# Lighthouse reports
+lighthouse-reports/
