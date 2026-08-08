@@ -9,7 +9,7 @@ export function getErrorStatus(error: unknown): number | null {
     if (typeof status === "number" && Number.isInteger(status)) return status
   }
   const message = error instanceof Error ? error.message : String(error)
-  const match = /\((\d{3})\)/.exec(message)
+  const match = /\((\d{3})[^)]*\)/.exec(message)
   return match ? Number(match[1]) : null
 }
 
