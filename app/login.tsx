@@ -9,6 +9,7 @@ import {
   saveRememberedLogin,
 } from "@/services/yazio/auth-storage"
 import { importFromYazio } from "@/services/yazio/sync"
+import { isDemoQuery, seedDemoSession } from "@/services/demo"
 import { toDateKey } from "@/utils/date"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
@@ -39,6 +40,14 @@ export default function LoginScreen() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
+      // ?demo=1 opens a ready-to-explore session without an account (web).
+      if (isDemoQuery()) {
+        await seedDemoSession()
+        await refreshSettings()
+        await refreshAuth()
+        if (!cancelled) router.replace("/(tabs)")
+        return
+      }
       const remembered = await getRememberedLogin()
       if (cancelled || !remembered) return
       setEmail(remembered.email)
@@ -48,7 +57,7 @@ export default function LoginScreen() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [refreshAuth, refreshSettings, router])
 
   const handleLogin = async () => {
     if (loading) return
@@ -156,6 +165,28 @@ export default function LoginScreen() {
             ) : (
               <ButtonText>Sign in with YAZIO</ButtonText>
             )}
+          </Button>
+
+          <Button
+            size="lg"
+            variant="outline"
+            action="secondary"
+            isDisabled={loading}
+            onPress={async () => {
+              setLoading(true)
+              try {
+                await seedDemoSession()
+                await refreshSettings()
+                await refreshAuth()
+                router.replace("/(tabs)")
+              } catch (error) {
+                showError(error, "Could not start the demo.")
+              } finally {
+                setLoading(false)
+              }
+            }}
+          >
+            <ButtonText>Explore the demo (no account)</ButtonText>
           </Button>
         </Card>
 

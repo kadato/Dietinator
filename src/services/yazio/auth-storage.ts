@@ -83,3 +83,8 @@ export async function clearAuth(): Promise<void> {
   await deleteSecureItem(CREDENTIALS_KEY)
   await deleteSecureItem(LOGGED_IN_KEY)
 }
+
+/** Demo mode: mark the session signed in without real YAZIO credentials. */
+export async function setDemoLoggedIn(): Promise<void> {
+  await setSecureItem(LOGGED_IN_KEY, "1")
+}
