@@ -74,25 +74,29 @@ your account is optional and best-effort. No account needed to try it.
 ## Features
 
 - **Local-first diary** — instant logging to SQLite; works fully offline, cached foods included
-- **Daily dashboard** — calorie ring, macro goals, color-coded meal sections
+- **Daily dashboard** — calorie ring, macro goals, color-coded meal sections, floating action buttons on phones
 - **Food search** — debounced YAZIO search, cached in SQLite, favorites + recents
 - **Barcode scanning** — EAN/UPC camera scan on device, manual entry on web
 - **Meals & Quick Add** — save food combinations, log calories without searching
+- **AI assistant** — in-app chat with your diary (OpenAI-compatible: OpenAI, OpenRouter, Ollama…). Streaming answers, on-device tools for diary/goals/food search, destructive actions need your approval, history survives restarts
+- **Agent API (MCP)** — the web build exposes the diary snapshot + goals to external AI agents (Claude Desktop, Cursor…) over the Model Context Protocol at `/mcp`
 - **Backup & export** — full JSON backup/restore, JSON/CSV export
 - **Demo mode** — explore everything without an account
 - **Light & dark themes** — adaptive, responsive phone → desktop layouts
 
 ## Tech stack
 
-| Area      | Choice                                                               |
-| --------- | -------------------------------------------------------------------- |
-| Framework | Expo SDK 56 · React Native · expo-router                             |
-| Database  | expo-sqlite (WAL), migrations in `src/db/database.ts`                |
-| UI        | gluestack-ui v3 + NativeWind v4                                      |
-| Sync      | unofficial `yazio` npm client, `withRetry`, offline-first            |
-| Auth/data | expo-secure-store, React Context                                     |
-| Tests     | Jest (unit) · Playwright (e2e on the web build)                      |
-| Quality   | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks |
+| Area      | Choice                                                                     |
+| --------- | -------------------------------------------------------------------------- |
+| Framework | Expo SDK 56 · React Native · expo-router                                   |
+| Database  | expo-sqlite (WAL), migrations in `src/db/database.ts`                      |
+| UI        | gluestack-ui v3 + NativeWind v4                                            |
+| Sync      | unofficial `yazio` npm client, `withRetry`, offline-first                  |
+| AI chat   | OpenAI-compatible streaming client (`src/services/ai/`), tools over SQLite |
+| Agent API | MCP server in `scripts/mcp-server.cjs` (dev Metro + `serve:web`)           |
+| Auth/data | expo-secure-store, React Context                                           |
+| Tests     | Jest (unit) · Playwright (e2e on the web build)                            |
+| Quality   | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks       |
 
 ## Getting started
 
@@ -109,10 +113,50 @@ Useful: `npm run test:coverage` · `npm run test:e2e` · `npm run build:web` ·
 ## Testing & CI
 
 Jest unit tests cover the pure logic (date math, nutrient conversions, retry
-policy, backup round-trip, DB migrations); Playwright e2e drives the web build
-at phone dimensions through boot, demo mode, diary CRUD, offline search and
-backup/restore. CI runs typecheck, lint, format, coverage, e2e and a secret
+policy, backup round-trip, DB migrations, AI streaming/tools/assistant, MCP
+server, agent bridge); Playwright e2e drives the web build at phone dimensions
+through boot, demo mode, diary CRUD, offline search, backup/restore and the AI
+chat surface. CI runs typecheck, lint, format, coverage, e2e and a secret
 scan on every push.
+
+## AI assistant & Agent API (MCP)
+
+### In-app chat
+
+Enable **AI Assistant** in Settings and pick a provider preset (OpenAI, OpenRouter,
+OpenCode, Ollama, or any OpenAI-compatible API) — the preset fills the base URL and a
+default model. Add your API key (stored in the device keystore, prefixed localStorage
+on web; only sent to the provider you configured), then use **Fetch models** to list
+available models or **Test connection** to verify the endpoint. The assistant can read
+your diary, look up foods, log entries, manage meals and update goals using on-device
+tools; destructive actions show an Approve/Decline card first. The chat opens with
+**one-tap presets** (daily review, protein check, plan dinner, week in review, log a
+snack, reset goals), and history lives in SQLite so it survives restarts.
+
+### Agent API (`/mcp`)
+
+The web host (Metro dev server or `npm run serve:web`) mounts a stateless
+Model Context Protocol server at `/mcp` plus a same-origin snapshot bridge
+(`/api/agent/*`):
+
+1. The web app pushes a snapshot of the last 14 diary days + goals + meals on boot and
+   after every diary change (in-memory only — nothing touches disk).
+2. Any MCP client (Claude Desktop, Cursor, MCP Inspector) connects to
+   `http://localhost:8082/mcp` and gets the tools:
+   `get_diary`, `get_diary_stats`, `get_goals`, `get_settings`, `get_meals`,
+   `log_food`, `update_food_entry`, `delete_food_entry`, `set_goals`, `set_units`,
+   `log_meal`. Write tools mirror their changes into the snapshot, so multi-step
+   agent flows (log → update → delete) work.
+3. Agent changes are queued as a revisioned change log; the app pulls and applies
+   them into SQLite the next time it syncs (dashboard focus).
+
+Protect the endpoint with an API key: `MCP_API_KEY=… npm run serve:web`
+(`X-Api-Key` or `Authorization: Bearer`). In production mode the key is
+mandatory. Optional browser-based MCP clients: `MCP_CORS_ORIGINS=…`.
+
+Live-check the whole surface with a real model:
+`OPENCODE_API_KEY=sk-… npm run test:mcp` — it boots `/mcp`, drives an agent loop
+through every tool, and validates the change feed.
 
 ## More
 
