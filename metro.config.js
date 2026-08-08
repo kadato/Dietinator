@@ -11,6 +11,13 @@ const config = getDefaultConfig(__dirname);
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push('wasm');
 
+// react-native-svg's fetchData.ts imports `buffer` on native; alias it to the
+// npm polyfill (documented react-native-svg setup for Expo).
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  buffer: require.resolve('buffer/'),
+};
+
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
