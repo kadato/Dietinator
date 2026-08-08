@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList } from "react-native"
+import { ActivityIndicator, FlatList, View } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
+import { Fab } from "@/components/Fab"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useApp } from "@/context/AppContext"
@@ -63,6 +65,25 @@ export default function SearchScreen() {
     },
     [addDate, addMeal, router],
   )
+
+  const insets = useSafeAreaInsets()
+
+  const scanFab = !isWide ? (
+    <View
+      style={{
+        position: "absolute",
+        right: 20,
+        bottom: 64 + insets.bottom + 16,
+      }}
+      pointerEvents="box-none"
+    >
+      <Fab
+        icon="barcode-outline"
+        onPress={() => router.push({ pathname: "/scan", params: { meal: addMeal, date: addDate } })}
+        accessibilityLabel="Scan barcode"
+      />
+    </View>
+  ) : null
 
   const handleToggleFavorite = useCallback(async (productId: string) => {
     const isFav = await toggleFavorite(productId)
@@ -151,12 +172,14 @@ export default function SearchScreen() {
         <FlatList
           className="flex-1"
           data={foods}
-          contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-8"}
+          contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"}
           keyExtractor={(item) => item.product_id}
           renderItem={renderItem}
           ListEmptyComponent={emptyContent}
         />
       </PageContainer>
+
+      {scanFab}
     </Box>
   )
 }

@@ -2,14 +2,17 @@ import { useCallback, useMemo, useState } from "react"
 import { Pressable, RefreshControl, ScrollView, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
 import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
+import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
 import type { DiaryEntry, MealType } from "@/types"
 import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
@@ -68,6 +71,10 @@ export default function TodayScreen() {
 
   const load = useCallback(
     async (options?: { quiet?: boolean }) => {
+      // 0. Agent bridge (web only): apply any changes external AI agents made
+      //    through the /mcp endpoint before rendering the diary.
+      await pullAgentChanges().catch(() => undefined)
+
       // 1. Local first — the diary renders from SQLite before any network is touched.
       let list: DiaryEntry[]
       try {
@@ -194,6 +201,32 @@ export default function TodayScreen() {
 
   const isToday = dateKey === toDateKey()
   const weight = summary?.weight
+  const insets = useSafeAreaInsets()
+
+  const fabCluster = !isWide ? (
+    <View
+      style={{
+        position: "absolute",
+        right: 20,
+        bottom: 64 + insets.bottom + 16,
+        alignItems: "flex-end",
+        gap: 12,
+      }}
+      pointerEvents="box-none"
+    >
+      <Fab
+        icon="sparkles"
+        onPress={() => router.push("/ai-chat")}
+        accessibilityLabel="Open AI assistant"
+      />
+      <Fab
+        icon="add"
+        label="Add food"
+        onPress={() => router.push({ pathname: "/log-meal", params: { date: dateKey } })}
+        accessibilityLabel="Add food"
+      />
+    </View>
+  ) : null
 
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
@@ -294,7 +327,7 @@ export default function TodayScreen() {
               </Text>
               {!isToday ? (
                 <Box className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5">
-                  <Text size="2xs" bold className="text-primary-600">
+                  <Text size="2xs" bold className="text-primary-700">
                     Jump to today
                   </Text>
                 </Box>
@@ -339,7 +372,7 @@ export default function TodayScreen() {
               tintColor={colors.primary}
             />
           }
-          contentContainerClassName={`p-4 pb-16 w-full ${isWide ? "self-stretch max-w-none px-6" : "self-center"}`}
+          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-44"}`}
         >
           {isWide ? (
             <Box className="w-full flex-row items-start gap-6">
@@ -365,6 +398,8 @@ export default function TodayScreen() {
         onSelect={(key) => setDateKey(key)}
         onClose={() => setPickerOpen(false)}
       />
+
+      {fabCluster}
     </Box>
   )
 }
