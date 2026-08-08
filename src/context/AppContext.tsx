@@ -56,11 +56,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        await getDatabase();
-        if (cancelled) return;
-        await refreshSettings();
-        if (cancelled) return;
-        await refreshAuth();
+        // All three reads are local — boot takes as long as the slowest one.
+        await Promise.all([getDatabase(), refreshSettings(), refreshAuth()]);
       } catch {
         // Boot must never hang on a failure — a spinner with no recovery is worse
         // than starting up with local-only state.
