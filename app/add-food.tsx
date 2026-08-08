@@ -32,7 +32,6 @@ import {
 } from '@/utils/food-display';
 import { routeParam } from '@/utils/route';
 import { toDateKey } from '@/utils/date';
-import { MEAL_LABELS } from '@/utils/meals';
 import { NutritionFactsCard } from '@/components/NutritionFactsCard';
 import { PageContainer } from '@/components/PageContainer';
 import { ModalContainer } from '@/components/ModalContainer';
@@ -41,8 +40,26 @@ import { useTheme } from '@/hooks/useTheme';
 import { useLayout } from '@/hooks/useLayout';
 import { useToast } from '@/context/ToastContext';
 import { spacing, type ColorPalette } from '@/theme';
+import { MEAL_LABELS, MEAL_TYPES } from '@/utils/meals';
 
-const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+/**
+ * Normalize a serving option against a product: per-100g products (detail API)
+ * keep the ref amount so nutrient scaling stays correct.
+ */
+function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServing {
+  const unit = food.base_unit || 'g';
+  const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
+  const perHundred = Boolean(food.servings?.length) && ref === 100;
+  return {
+    serving: option.serving,
+    amount: option.amount,
+    serving_quantity: perHundred
+      ? ref
+      : option.serving_quantity > 0
+        ? option.serving_quantity
+        : option.amount,
+  };
+}
 
 export default function AddFoodScreen() {
   const router = useRouter();
@@ -124,20 +141,9 @@ export default function AddFoodScreen() {
           return;
         }
         const initialServing = resolved.servings?.[0] ?? resolved.serving;
-        const unit = resolved.base_unit || 'g';
-        const ref = resolveNutrientsRefAmount(resolved.nutrients, resolved.serving, unit);
-        const perHundred = Boolean(resolved.servings?.length) && ref === 100;
         setFood({
           ...resolved,
-          serving: {
-            serving: initialServing.serving,
-            amount: initialServing.amount,
-            serving_quantity: perHundred
-              ? ref
-              : initialServing.serving_quantity > 0
-                ? initialServing.serving_quantity
-                : initialServing.amount,
-          },
+          serving: resolveServing(resolved, initialServing),
         });
         setIsFavorite(await getIsFavorite(resolved.product_id));
       } catch {
@@ -178,24 +184,9 @@ export default function AddFoodScreen() {
         }
         if (!cancelled && resolved) {
           const initialServing = resolved.servings?.[0] ?? resolved.serving;
-          const unit = resolved.base_unit || 'g';
-          const ref = resolveNutrientsRefAmount(
-            resolved.nutrients,
-            resolved.serving,
-            unit,
-          );
-          const perHundred = Boolean(resolved.servings?.length) && ref === 100;
           setFood({
             ...resolved,
-            serving: {
-              serving: initialServing.serving,
-              amount: initialServing.amount,
-              serving_quantity: perHundred
-                ? ref
-                : initialServing.serving_quantity > 0
-                  ? initialServing.serving_quantity
-                  : initialServing.amount,
-            },
+            serving: resolveServing(resolved, initialServing),
           });
           setAmount(String(initialServing.amount));
           setIsFavorite(await getIsFavorite(productId));
@@ -238,21 +229,7 @@ export default function AddFoodScreen() {
   const selectServing = useCallback(
     (option: FoodServing) => {
       if (!food) return;
-      const unit = food.base_unit || 'g';
-      const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit);
-      const perHundredProduct = Boolean(food.servings?.length) && ref === 100;
-      setFood({
-        ...food,
-        serving: {
-          serving: option.serving,
-          amount: option.amount,
-          serving_quantity: perHundredProduct
-            ? ref
-            : option.serving_quantity > 0
-              ? option.serving_quantity
-              : option.amount,
-        },
-      });
+      setFood({ ...food, serving: resolveServing(food, option) });
       setAmount(String(option.amount));
     },
     [food],
@@ -333,6 +310,7 @@ export default function AddFoodScreen() {
     >
       <ModalContainer maxWidth={560}>
         <ScrollView
+          style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
@@ -369,19 +347,19 @@ export default function AddFoodScreen() {
             <>
               <Text style={styles.label}>Meal</Text>
               <View style={styles.mealRow}>
-                {MEALS.map((meal) => {
+                {MEAL_TYPES.map((meal) => {
                   const active = meal === selectedMeal;
                   return (
                     <Pressable
                       key={meal}
-                      style={[styles.mealChip, active && styles.mealChipSelected]}
+                      style={[styles.chip, active && styles.chipSelected]}
                       onPress={() => setSelectedMeal(meal)}
                       accessibilityRole="button"
                       accessibilityLabel={MEAL_LABELS[meal]}
                       accessibilityState={{ selected: active }}
                     >
                       <Text
-                        style={[styles.mealChipText, active && styles.mealChipTextSelected]}
+                        style={[styles.chipText, active && styles.chipTextSelected]}
                       >
                         {MEAL_LABELS[meal]}
                       </Text>
@@ -405,7 +383,7 @@ export default function AddFoodScreen() {
               return (
                 <Pressable
                   key={key}
-                  style={[styles.servingChip, selected && styles.servingChipSelected]}
+                  style={[styles.chip, selected && styles.chipSelected]}
                   onPress={() => selectServing(option)}
                   accessibilityRole="button"
                   accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
@@ -413,8 +391,8 @@ export default function AddFoodScreen() {
                 >
                   <Text
                     style={[
-                      styles.servingChipText,
-                      selected && styles.servingChipTextSelected,
+                      styles.chipText,
+                      selected && styles.chipTextSelected,
                     ]}
                   >
                     {formatServingOption(option, unit)}
@@ -439,7 +417,10 @@ export default function AddFoodScreen() {
               servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
             />
           )}
+          </PageContainer>
+        </ScrollView>
 
+        <View style={styles.footer}>
           <Pressable
             style={[styles.saveBtn, saving && styles.saveDisabled]}
             onPress={handleSave}
@@ -460,8 +441,7 @@ export default function AddFoodScreen() {
           >
             <Text style={styles.cancelText}>Cancel</Text>
           </Pressable>
-        </PageContainer>
-      </ScrollView>
+        </View>
       </ModalContainer>
     </KeyboardAvoidingView>
   );
@@ -470,6 +450,7 @@ export default function AddFoodScreen() {
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+    scroll: { flex: 1 },
     content: { flexGrow: 1 },
     page: { padding: spacing.lg },
     center: {
@@ -515,7 +496,7 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
       marginBottom: spacing.lg,
     },
-    mealChip: {
+    chip: {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       borderRadius: 20,
@@ -523,42 +504,22 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    mealChipSelected: {
+    chipSelected: {
       backgroundColor: colors.primary,
       borderColor: colors.primary,
     },
-    mealChipText: {
+    chipText: {
       fontSize: 14,
       color: colors.text,
       fontWeight: '500',
     },
-    mealChipTextSelected: {
+    chipTextSelected: {
       color: colors.onPrimary,
     },
     servingRow: {
       flexDirection: 'row',
       gap: spacing.sm,
       paddingBottom: spacing.md,
-    },
-    servingChip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      borderRadius: 20,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    servingChipSelected: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    servingChipText: {
-      fontSize: 14,
-      color: colors.text,
-      fontWeight: '500',
-    },
-    servingChipTextSelected: {
-      color: colors.onPrimary,
     },
     label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
     input: {
@@ -571,6 +532,14 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       marginBottom: spacing.lg,
     },
+    footer: {
+      padding: spacing.lg,
+      paddingTop: spacing.md,
+      gap: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+    },
     saveBtn: {
       backgroundColor: colors.primary,
       borderRadius: 10,
@@ -579,6 +548,6 @@ const createStyles = (colors: ColorPalette) =>
     },
     saveDisabled: { opacity: 0.6 },
     saveText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
-    cancel: { alignItems: 'center', marginTop: spacing.lg },
+    cancel: { alignItems: 'center' },
     cancelText: { color: colors.textMuted },
   });

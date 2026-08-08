@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -121,7 +122,7 @@ export default function ManualEntryScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-4 pb-8"
+        contentContainerClassName="px-4 pb-4"
         keyboardShouldPersistTaps="handled"
       >
         <Text size="sm" className="text-typography-500 mb-4">
@@ -158,7 +159,9 @@ export default function ManualEntryScreen() {
           <MacroInput label="Carbs (g)" value={carbs} onChange={setCarbs} styles={styles} />
           <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} />
         </Box>
+      </ScrollView>
 
+      <View style={styles.footer}>
         <Pressable
           style={[styles.saveBtn, saving && styles.saveDisabled]}
           onPress={handleSave}
@@ -168,7 +171,7 @@ export default function ManualEntryScreen() {
         >
           <Text style={styles.saveText}>{saving ? 'Saving...' : 'Add to diary'}</Text>
         </Pressable>
-      </ScrollView>
+      </View>
       </ModalContainer>
     </KeyboardAvoidingView>
   );
@@ -194,12 +197,18 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       marginBottom: spacing.md,
     },
+    footer: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+    },
     saveBtn: {
       backgroundColor: colors.primary,
       borderRadius: 10,
       padding: spacing.md,
       alignItems: 'center',
-      marginTop: spacing.md,
     },
     saveDisabled: { opacity: 0.6 },
     saveText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
