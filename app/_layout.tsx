@@ -1,4 +1,5 @@
 import { Stack, useRouter, useSegments } from "expo-router"
+import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
@@ -34,7 +35,11 @@ function RootNavigator() {
   if (!ready) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          accessibilityLabel="Loading Dietinator"
+        />
       </View>
     )
   }
@@ -71,19 +76,28 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <AppErrorBoundary>
-      <GluestackUIProvider mode={gluestackMode}>
-        <NetworkProvider>
-          <AppProvider>
-            <ToastProvider>
-              <UpdateProvider>
-                <RootNavigator />
-              </UpdateProvider>
-            </ToastProvider>
-          </AppProvider>
-        </NetworkProvider>
-      </GluestackUIProvider>
-    </AppErrorBoundary>
+    <>
+      <Head>
+        <title>Dietinator — Calorie & macro tracker</title>
+        <meta
+          name="description"
+          content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
+        />
+      </Head>
+      <AppErrorBoundary>
+        <GluestackUIProvider mode={gluestackMode}>
+          <NetworkProvider>
+            <AppProvider>
+              <ToastProvider>
+                <UpdateProvider>
+                  <RootNavigator />
+                </UpdateProvider>
+              </ToastProvider>
+            </AppProvider>
+          </NetworkProvider>
+        </GluestackUIProvider>
+      </AppErrorBoundary>
+    </>
   )
 }
 
