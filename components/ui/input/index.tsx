@@ -1,7 +1,7 @@
 "use client"
-import React from "react"
+import React, { useLayoutEffect, useRef } from "react"
 import { createInput } from "@gluestack-ui/core/input/creator"
-import { View, Pressable, TextInput } from "react-native"
+import { Platform, View, Pressable, TextInput } from "react-native"
 import { tva, withStyleContext, useStyleContext } from "@gluestack-ui/utils/nativewind-utils"
 import { cssInterop } from "nativewind"
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
@@ -174,10 +174,30 @@ type IInputFieldProps = React.ComponentProps<typeof UIInput.Input> &
 const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, IInputFieldProps>(
   function InputField({ className, ...props }, ref) {
     const { variant: parentVariant, size: parentSize } = useStyleContext(SCOPE)
+    const hostRef = useRef<TextInput | React.ComponentProps<typeof UIInput.Input> | null>(null)
+
+    // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
+    // value of a controlled input when it was set programmatically (not typed)
+    // until the input receives focus — e.g. goal fields appear empty on load.
+    // A focus()+blur() cycle repaints the text. Skipped while the user is
+    // typing (document.activeElement === node) so focus/selection is never
+    // disturbed.
+    useLayoutEffect(() => {
+      if (Platform.OS !== "web" || props.value == null) return
+      const node = hostRef.current as unknown as HTMLInputElement | null
+      if (node && typeof document !== "undefined" && document.activeElement !== node) {
+        node.focus()
+        node.blur()
+      }
+    })
 
     return (
       <UIInput.Input
-        ref={ref}
+        ref={(node) => {
+          hostRef.current = node
+          if (typeof ref === "function") ref(node)
+          else if (ref) ref.current = node
+        }}
         {...props}
         className={inputFieldStyle({
           parentVariants: {
