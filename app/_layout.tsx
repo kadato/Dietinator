@@ -2,7 +2,9 @@ import { Stack, useRouter, useSegments } from "expo-router"
 import { useEffect, useMemo } from "react"
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
+import { AppErrorBoundary } from "@/components/AppErrorBoundary"
 import { AppProvider, useApp } from "@/context/AppContext"
+import { NetworkProvider } from "@/context/NetworkContext"
 import { ToastProvider } from "@/context/ToastContext"
 import { UpdateProvider } from "@/context/UpdateContext"
 import { useTheme } from "@/hooks/useTheme"
@@ -68,15 +70,19 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <GluestackUIProvider mode={gluestackMode}>
-      <AppProvider>
-        <ToastProvider>
-          <UpdateProvider>
-            <RootNavigator />
-          </UpdateProvider>
-        </ToastProvider>
-      </AppProvider>
-    </GluestackUIProvider>
+    <AppErrorBoundary>
+      <GluestackUIProvider mode={gluestackMode}>
+        <NetworkProvider>
+          <AppProvider>
+            <ToastProvider>
+              <UpdateProvider>
+                <RootNavigator />
+              </UpdateProvider>
+            </ToastProvider>
+          </AppProvider>
+        </NetworkProvider>
+      </GluestackUIProvider>
+    </AppErrorBoundary>
   )
 }
 
