@@ -9,7 +9,7 @@ import {
   TextInput,
 } from "react-native"
 import { useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Markdown } from "@/components/Markdown"
 import { useAiChat } from "@/hooks/useAiChat"
@@ -75,6 +75,14 @@ export default function AiChatScreen() {
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
 
+  const safeClose = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }, [router])
+
   const configured = settings.ai_enabled === 1
 
   const submit = useCallback(() => {
@@ -102,7 +110,11 @@ export default function AiChatScreen() {
           <Box className="mb-3 w-full flex-row justify-end pl-12">
             <Box
               className="max-w-full rounded-2xl rounded-br-md px-3.5 py-2.5"
-              style={{ backgroundColor: colors.primary }}
+              style={{
+                backgroundColor: colors.primary,
+                boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.18)",
+                elevation: 2,
+              }}
             >
               <Text size="sm" className="leading-5" style={{ color: colors.onPrimary }}>
                 {item.content}
@@ -127,9 +139,13 @@ export default function AiChatScreen() {
         <Box className="mb-3 w-full flex-row gap-2.5 pr-12">
           <Box
             className="h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: colors.primaryMuted }}
+            style={{
+              backgroundColor: colors.primaryMuted,
+              borderWidth: 2,
+              borderColor: `${colors.primaryMuted}55`,
+            }}
           >
-            <Ionicons name="sparkles" size={15} color={colors.onPrimary} />
+            <MaterialCommunityIcons name="robot" size={15} color={colors.onPrimary} />
           </Box>
           <Box
             className={`max-w-full flex-1 rounded-2xl rounded-bl-md border px-3.5 py-2.5 ${
@@ -167,10 +183,12 @@ export default function AiChatScreen() {
 
   const emptyState = (
     <Box className="items-center px-5 pb-6 pt-8">
-      <Box className="h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/10">
-        <Ionicons name="sparkles" size={30} color={colors.primary} />
+      <Box className="h-20 w-20 items-center justify-center rounded-full bg-primary-500/10">
+        <Box className="h-14 w-14 items-center justify-center rounded-full bg-primary-500/15">
+          <MaterialCommunityIcons name="robot-outline" size={30} color={colors.primary} />
+        </Box>
       </Box>
-      <Text size="lg" bold className="mt-4 text-center text-typography-900">
+      <Text size="xl" bold className="mt-4 text-center text-typography-900">
         How can I help you eat well?
       </Text>
       <Text
@@ -180,26 +198,58 @@ export default function AiChatScreen() {
       >
         Ask about your diary, search foods, log a snack, or adjust your daily goals — all on device.
       </Text>
-      <Box className="mt-6 w-full flex-row flex-wrap justify-center gap-2">
-        {suggestionPrompts.map((preset) => (
-          <Pressable
-            key={preset.id}
-            onPress={() => runPreset(preset)}
-            accessibilityRole="button"
-            accessibilityLabel={`Preset: ${preset.title}`}
-            className="w-[calc(50%-4px)] max-w-[240px] rounded-2xl border border-outline-100 bg-background-50 p-3 active:opacity-80"
+
+      <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
+        {[
+          { icon: "calendar-outline", label: "Review my day" },
+          { icon: "barbell-outline", label: "Check protein" },
+          { icon: "restaurant-outline", label: "Plan dinner" },
+          { icon: "flag-outline", label: "Update goals" },
+        ].map((chip) => (
+          <Box
+            key={chip.label}
+            className="flex-row items-center gap-1.5 rounded-full border border-outline-100 bg-background-50 px-3 py-1.5"
           >
-            <Box className="flex-row items-center gap-2">
-              <Ionicons name={preset.icon} size={18} color={colors.primary} />
-              <Text size="sm" bold className="flex-1 text-typography-900">
-                {preset.title}
-              </Text>
-            </Box>
-            <Text size="xs" className="mt-1.5 leading-4 text-typography-500">
-              {preset.subtitle}
+            <Ionicons
+              name={chip.icon as keyof typeof Ionicons.glyphMap}
+              size={13}
+              color={colors.primary}
+            />
+            <Text size="xs" bold className="text-typography-700">
+              {chip.label}
             </Text>
-          </Pressable>
+          </Box>
         ))}
+      </Box>
+
+      <Box className="mt-7 w-full">
+        <Text size="xs" bold className="mb-2.5 text-center text-typography-400">
+          TRY ONE OF THESE
+        </Text>
+        <Box className="w-full flex-row flex-wrap justify-center gap-2">
+          {suggestionPrompts.map((preset) => (
+            <Pressable
+              key={preset.id}
+              onPress={() => runPreset(preset)}
+              accessibilityRole="button"
+              accessibilityLabel={`Preset: ${preset.title}`}
+              className="w-[calc(50%-4px)] max-w-[240px] rounded-2xl border border-outline-100 bg-background-50 p-3 active:opacity-80"
+              style={{ boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)", elevation: 1 }}
+            >
+              <Box className="flex-row items-center gap-2">
+                <Box className="h-8 w-8 items-center justify-center rounded-full bg-primary-500/15">
+                  <Ionicons name={preset.icon} size={16} color={colors.primary} />
+                </Box>
+                <Text size="sm" bold className="flex-1 text-typography-900">
+                  {preset.title}
+                </Text>
+              </Box>
+              <Text size="xs" className="mt-1.5 leading-4 text-typography-500">
+                {preset.subtitle}
+              </Text>
+            </Pressable>
+          ))}
+        </Box>
       </Box>
     </Box>
   )
@@ -271,42 +321,61 @@ export default function AiChatScreen() {
     <ModalContainer outerClassName="bg-background-0" maxWidth={720}>
       <Box className="flex-1">
         {/* Header */}
-        <Box className="flex-row items-center justify-between border-b border-outline-100 px-4 py-3">
-          <Box className="flex-row items-center gap-2.5">
-            <Box
-              className="h-9 w-9 items-center justify-center rounded-full"
-              style={{ backgroundColor: colors.primary }}
-            >
-              <Ionicons name="sparkles" size={18} color={colors.onPrimary} />
+        <Box style={{ backgroundColor: colors.primary }} className="px-4 pb-3.5 pt-3">
+          <Box className="flex-row items-center justify-between">
+            <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">
+              <Box
+                className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+              >
+                <MaterialCommunityIcons name="robot" size={20} color={colors.onPrimary} />
+              </Box>
+              <Box className="min-w-0">
+                <Text size="md" bold style={{ color: colors.onPrimary }}>
+                  Dietinator AI
+                </Text>
+                <Text size="xs" style={{ color: colors.onPrimary, opacity: 0.78 }}>
+                  Your nutrition assistant
+                </Text>
+              </Box>
             </Box>
-            <Box>
-              <Text size="md" bold className="text-typography-900">
-                Dietinator AI
-              </Text>
-              <Text size="xs" className="text-typography-500">
-                Your nutrition assistant
-              </Text>
+            <Box className="ml-2 flex-row items-center gap-1">
+              <Box
+                className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
+                style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+              >
+                <Box className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                <Text size="2xs" bold style={{ color: colors.onPrimary }}>
+                  ON DEVICE
+                </Text>
+              </Box>
+              <Pressable
+                onPress={() => void clear()}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear chat history"
+                className="ml-1 h-9 w-9 items-center justify-center rounded-full"
+                style={({ pressed }) => [
+                  { backgroundColor: "rgba(255,255,255,0.18)" },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Ionicons name="trash-outline" size={19} color={colors.onPrimary} />
+              </Pressable>
+              <Pressable
+                onPress={safeClose}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close AI chat"
+                className="h-9 w-9 items-center justify-center rounded-full"
+                style={({ pressed }) => [
+                  { backgroundColor: "rgba(255,255,255,0.18)" },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Ionicons name="close" size={22} color={colors.onPrimary} />
+              </Pressable>
             </Box>
-          </Box>
-          <Box className="flex-row items-center gap-1">
-            <Pressable
-              onPress={() => void clear()}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Clear chat history"
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
-            >
-              <Ionicons name="trash-outline" size={19} color={colors.textMuted} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Close AI chat"
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
-            >
-              <Ionicons name="close" size={22} color={colors.text} />
-            </Pressable>
           </Box>
         </Box>
 
@@ -339,9 +408,12 @@ export default function AiChatScreen() {
           {confirmationCard}
 
           {/* Composer */}
-          <Box className="border-t border-outline-100 px-3 pb-3 pt-2">
+          <Box className="border-t border-outline-100 bg-background-0 px-3 pb-3 pt-2">
             <Box className="flex-row items-end gap-2">
-              <Box className="flex-1 rounded-[22px] border border-outline-200 bg-background-50 px-4 py-2">
+              <Box
+                className="min-w-0 flex-1 rounded-[22px] border border-outline-200 bg-background-100 px-4"
+                style={{ boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)", elevation: 1 }}
+              >
                 <TextInput
                   value={draft}
                   onChangeText={setDraft}
@@ -352,6 +424,7 @@ export default function AiChatScreen() {
                   editable={configured}
                   multiline
                   style={[styles.input, { color: colors.text }]}
+                  selectionColor={colors.primary}
                   accessibilityLabel="Message the AI assistant"
                   onSubmitEditing={canSend ? submit : undefined}
                 />
@@ -361,7 +434,7 @@ export default function AiChatScreen() {
                   onPress={stop}
                   accessibilityRole="button"
                   accessibilityLabel="Stop generating"
-                  className="h-11 w-11 items-center justify-center rounded-full bg-background-100 active:opacity-80"
+                  className="h-11 w-11 shrink-0 items-center justify-center rounded-full border border-outline-200 bg-background-100 active:opacity-80"
                 >
                   <Ionicons name="stop" size={20} color={colors.danger} />
                 </Pressable>
@@ -371,8 +444,17 @@ export default function AiChatScreen() {
                   disabled={!canSend}
                   accessibilityRole="button"
                   accessibilityLabel="Send message"
-                  className="h-11 w-11 items-center justify-center rounded-full"
-                  style={{ backgroundColor: canSend ? colors.primary : colors.surfaceAlt }}
+                  className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                  style={({ pressed }) => [
+                    {
+                      backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: canSend ? colors.primary : colors.border,
+                      boxShadow: canSend ? "0px 3px 12px rgba(0, 0, 0, 0.25)" : undefined,
+                      elevation: canSend ? 4 : 0,
+                    },
+                    pressed && canSend && { transform: [{ scale: 0.92 }] },
+                  ]}
                 >
                   <Ionicons
                     name="arrow-up"
@@ -391,11 +473,11 @@ export default function AiChatScreen() {
 
 const styles = StyleSheet.create({
   input: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
     maxHeight: 110,
+    minHeight: 44,
     paddingTop: 2,
     paddingBottom: 2,
-    minHeight: 24,
   },
 })

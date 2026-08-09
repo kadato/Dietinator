@@ -25,6 +25,7 @@ type Block =
   | { type: "code"; code: string }
   | { type: "quote"; text: string }
   | { type: "hr" }
+  | { type: "table"; header: string[]; rows: string[][] }
   | { type: "paragraph"; text: string }
 
 const INLINE_PATTERN = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
@@ -64,6 +65,40 @@ function parseInline(source: string): InlineToken[] {
 const BULLET = /^[-*]\s+(.*)$/
 const NUMBERED = /^\d+\.\s+(.*)$/
 const HEADING = /^(#{1,3})\s+(.*)$/
+
+/** GFM-style pipe table row splitter (controlled AI content, no escaped pipes). */
+function splitRow(line: string): string[] | null {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return null
+  return trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((cell) => cell.trim())
+}
+
+/** Separator row like `|---|---|` — every cell is dashes with optional colons. */
+function isSeparatorRow(line: string): boolean {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return false
+  const cells = trimmed.slice(1, -1).split("|")
+  return cells.length > 0 && cells.every((cell) => /^\s*:?-+:?\s*$/.test(cell))
+}
+
+/** Parse a GFM table starting at `lines[i]`; returns the block or null. */
+function parseTable(lines: string[], i: number): { block: Block; next: number } | null {
+  const header = splitRow(lines[i])
+  if (!header || !isSeparatorRow(lines[i + 1] ?? "")) return null
+  const rows: string[][] = []
+  let cursor = i + 2
+  while (cursor < lines.length) {
+    const row = splitRow(lines[cursor])
+    if (!row) break
+    rows.push(row)
+    cursor += 1
+  }
+  if (rows.length === 0) return null
+  return { block: { type: "table", header, rows }, next: cursor }
+}
 
 function parseBlocks(source: string): Block[] {
   const lines = source.replace(/\r\n/g, "\n").split("\n")
@@ -124,6 +159,14 @@ function parseBlocks(source: string): Block[] {
       }
       blocks.push({ type: "list", ordered, items })
       continue
+    }
+    if (trimmed.startsWith("|")) {
+      const table = parseTable(lines, i)
+      if (table) {
+        blocks.push(table.block)
+        i = table.next
+        continue
+      }
     }
     const paragraph: string[] = [trimmed]
     i += 1
@@ -259,6 +302,27 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
       )
     case "hr":
       return <Box className="border-t border-outline-200" />
+    case "table":
+      return (
+        <Box className="overflow-hidden rounded-lg border border-outline-200">
+          <Box className="flex-row bg-background-100">
+            {block.header.map((cell, index) => (
+              <Text key={index} size="xs" bold className="flex-1 px-2 py-1.5 text-typography-900">
+                {cell}
+              </Text>
+            ))}
+          </Box>
+          {block.rows.map((row, rowIndex) => (
+            <Box key={rowIndex} className="flex-row border-t border-outline-100">
+              {row.map((cell, cellIndex) => (
+                <Text key={cellIndex} size="xs" className="flex-1 px-2 py-1.5 text-typography-600">
+                  {cell}
+                </Text>
+              ))}
+            </Box>
+          ))}
+        </Box>
+      )
     default:
       return (
         <Text size="sm" className="leading-[20px] text-typography-900">
