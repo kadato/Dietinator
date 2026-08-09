@@ -176,13 +176,22 @@ export async function getIsFavorite(productId: string): Promise<boolean> {
   return row?.is_favorite === 1
 }
 
-export async function toggleFavorite(productId: string): Promise<boolean> {
+/**
+ * Flip a food's favorite flag. When the food is not cached yet (e.g. a fresh
+ * search result) it is upserted first so the star change actually sticks.
+ * Returns the new favorite state.
+ */
+export async function toggleFavorite(productId: string, food?: SearchFoodResult): Promise<boolean> {
   const db = await getDatabase()
   const row = await db.getFirstAsync<{ is_favorite: number }>(
     "SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?",
     productId,
   )
-  const next = row?.is_favorite ? 0 : 1
+  if (!row && food) {
+    await saveFoodToCache(food, null, true)
+  }
+  const current = row?.is_favorite ?? 0
+  const next = current ? 0 : 1
   await db.runAsync(
     "UPDATE food_cache SET is_favorite = ? WHERE yazio_product_id = ?",
     next,

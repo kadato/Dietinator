@@ -59,10 +59,10 @@ export async function seedDemoSession(): Promise<void> {
   await setDemoLoggedIn()
   await updateSettings({ yazio_sync_enabled: 0, calorie_goal: 2000 })
 
-  await saveFoodToCache(banana, null, true)
-  await saveFoodToCache(oatmeal, null, true)
-  await saveFoodToCache(coffee, null, true)
-  await saveFoodToCache(chicken, null, true)
+  await saveFoodToCache(banana)
+  await saveFoodToCache(oatmeal)
+  await saveFoodToCache(coffee)
+  await saveFoodToCache(chicken)
 
   const today = toDateKey()
   const yesterday = shiftDateKey(today, -1)

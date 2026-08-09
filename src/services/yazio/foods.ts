@@ -98,7 +98,9 @@ export async function searchFoodsRemote(
   )
   const mapped = results.map((r) => mapSearchResult(r, energyUnit))
   // Cache writes run in parallel; a slow write must not stall the search UI.
-  await Promise.all(mapped.map((food) => foodCacheDb.saveFoodToCache(food)))
+  // Searching or browsing is not consuming: preserve last_used_at so the
+  // "Recent" list only ever shows foods that were actually logged.
+  await Promise.all(mapped.map((food) => foodCacheDb.saveFoodToCache(food, null, true)))
   return mapped
 }
 
@@ -154,7 +156,8 @@ export async function getFoodRemote(
   }
 
   const barcode = product.eans?.[0] ?? null
-  await foodCacheDb.saveFoodToCache(food, barcode)
+  // Viewing a product is not consuming it — don't touch its "recently used" marker.
+  await foodCacheDb.saveFoodToCache(food, barcode, true)
   return food
 }
 

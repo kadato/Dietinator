@@ -1,25 +1,25 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, View } from "react-native"
+import { ActivityIndicator, FlatList } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
-import { Fab } from "@/components/Fab"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useApp } from "@/context/AppContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
-import { mergeFoodResults } from "@/utils/food-search"
-import { toggleFavorite, getFavoriteFoods, searchLocalFoods } from "@/db/food-cache"
+import { toggleFavorite, getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
 import type { MealType, SearchFoodResult } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField, InputIcon } from "@ui/input"
+import { SegmentedControl } from "@/components/SegmentedControl"
+
+type ListMode = "recents" | "favorites"
 
 export default function SearchScreen() {
   const router = useRouter()
@@ -31,6 +31,7 @@ export default function SearchScreen() {
   const { isWide } = useLayout()
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
+  const [listMode, setListMode] = useState<ListMode>("recents")
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
 
   const loadFavorites = useCallback(async () => {
@@ -46,9 +47,9 @@ export default function SearchScreen() {
   )
 
   const emptyQuery = useCallback(async () => {
-    const [favs, recents] = await Promise.all([getFavoriteFoods(), searchLocalFoods("")])
-    return mergeFoodResults(favs, recents)
-  }, [])
+    if (listMode === "favorites") return getFavoriteFoods()
+    return getRecentFoods()
+  }, [listMode])
 
   const { foods, loading } = useFoodSearch(debounced, { emptyQuery })
 
@@ -66,31 +67,12 @@ export default function SearchScreen() {
     [addDate, addMeal, router],
   )
 
-  const insets = useSafeAreaInsets()
-
-  const scanFab = !isWide ? (
-    <View
-      style={{
-        position: "absolute",
-        right: 20,
-        bottom: 64 + insets.bottom + 16,
-      }}
-      pointerEvents="box-none"
-    >
-      <Fab
-        icon="barcode-outline"
-        onPress={() => router.push({ pathname: "/scan", params: { meal: addMeal, date: addDate } })}
-        accessibilityLabel="Scan barcode"
-      />
-    </View>
-  ) : null
-
-  const handleToggleFavorite = useCallback(async (productId: string) => {
-    const isFav = await toggleFavorite(productId)
+  const handleToggleFavorite = useCallback(async (food: SearchFoodResult) => {
+    const isFav = await toggleFavorite(food.product_id, food)
     setFavoriteIds((prev) => {
       const next = new Set(prev)
-      if (isFav) next.add(productId)
-      else next.delete(productId)
+      if (isFav) next.add(food.product_id)
+      else next.delete(food.product_id)
       return next
     })
   }, [])
@@ -101,7 +83,7 @@ export default function SearchScreen() {
         food={item}
         onPress={() => openFood(item)}
         isFavorite={favoriteIds.has(item.product_id)}
-        onToggleFavorite={() => handleToggleFavorite(item.product_id)}
+        onToggleFavorite={() => handleToggleFavorite(item)}
       />
     ),
     [favoriteIds, handleToggleFavorite, openFood],
@@ -118,6 +100,25 @@ export default function SearchScreen() {
           </Text>
           <Text size="sm" className="mt-1 text-center text-typography-500">
             Try a different spelling or a shorter name.
+          </Text>
+        </Box>
+      )
+    }
+    if (listMode === "favorites") {
+      return (
+        <Box className="items-center px-6 pb-10">
+          <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
+            <Ionicons name="star-outline" size={36} color={colors.warning} />
+          </Box>
+          <Text size="lg" bold className="mt-5 text-center text-typography-900">
+            No favorites yet
+          </Text>
+          <Text
+            size="sm"
+            className="mt-2 text-center leading-5 text-typography-500"
+            style={{ maxWidth: 420 }}
+          >
+            Tap the star on any food to keep it here for quick logging.
           </Text>
         </Box>
       )
@@ -140,7 +141,7 @@ export default function SearchScreen() {
         </Text>
       </Box>
     )
-  }, [colors.textMuted, colors.primary, debounced, loading])
+  }, [colors.textMuted, colors.primary, colors.warning, debounced, listMode, loading])
 
   return (
     <Box className="flex-1 bg-background-0">
@@ -155,7 +156,7 @@ export default function SearchScreen() {
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
             <InputField
-              placeholder="Search foods..."
+              placeholder="e.g. banana, oats, chicken"
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
@@ -164,10 +165,17 @@ export default function SearchScreen() {
           </Input>
         </Box>
         {loading ? <ActivityIndicator className="mb-2" color={colors.primary} /> : null}
-        {!debounced && foods.length > 0 ? (
-          <Text size="sm" className="mb-2 px-5 text-typography-500">
-            Recent and favorite foods appear when the search is empty.
-          </Text>
+        {!debounced ? (
+          <Box className="mb-3 px-4">
+            <SegmentedControl<ListMode>
+              value={listMode}
+              options={[
+                { value: "recents", label: "Recents" },
+                { value: "favorites", label: "Favorites" },
+              ]}
+              onChange={setListMode}
+            />
+          </Box>
         ) : null}
         <FlatList
           className="flex-1"
@@ -178,8 +186,6 @@ export default function SearchScreen() {
           ListEmptyComponent={emptyContent}
         />
       </PageContainer>
-
-      {scanFab}
     </Box>
   )
 }
