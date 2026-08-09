@@ -21,9 +21,17 @@ function nutrientsDiffer(a: FoodNutrients, b: FoodNutrients): boolean {
  * Resolve cache rows in one query; refetch from YAZIO only when the cache is
  * missing or still holds legacy per-gram values (search rows are per-gram by
  * design and are normalized on save, so per-gram cache rows are always stale).
+ *
+ * Pass `remote: false` for the first paint: the diary renders straight from
+ * SQLite (nutrients are stored scaled per entry) and stale entries get refined
+ * by a background pass.
  */
-export async function getDiaryEntriesForDate(date: string): Promise<DiaryEntry[]> {
+export async function getDiaryEntriesForDate(
+  date: string,
+  options?: { remote?: boolean },
+): Promise<DiaryEntry[]> {
   const entries = await diaryDb.getDiaryEntriesForDate(date)
+  if (options?.remote === false) return entries
   const foodIds = entries.map((e) => e.food_id).filter((id): id is string => Boolean(id))
   const cached = await foodCacheDb.getFoodsByIds(foodIds)
 

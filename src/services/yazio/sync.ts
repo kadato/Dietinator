@@ -21,6 +21,15 @@ export type YazioDailySummary = {
 /** Single-flight per entry: concurrent callers share one push instead of duplicating it. */
 const inFlightSyncs = new Map<string, Promise<boolean>>()
 
+/**
+ * In-memory import throttle: the dashboard focuses the diary on every tab
+ * switch, and re-importing the same day back-to-back just repeats YAZIO
+ * round-trips. Results are reused within a short window; pull-to-refresh and
+ * the refresh button force a real sync.
+ */
+const importCache = new Map<string, { at: number; result: DiaryImportResult }>()
+const IMPORT_TTL_MS = 2 * 60_000
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
@@ -320,13 +329,22 @@ async function importRecipePortion(
   return "imported"
 }
 
-export async function importDiaryFromYazio(date: string = toDateKey()): Promise<DiaryImportResult> {
+export async function importDiaryFromYazio(
+  date: string = toDateKey(),
+  options?: { force?: boolean },
+): Promise<DiaryImportResult> {
   const empty: DiaryImportResult = {
     imported: 0,
     skipped: 0,
     failed: 0,
     mealGoals: {},
     summary: null,
+  }
+
+  const now = Date.now()
+  const cached = importCache.get(date)
+  if (!options?.force && cached && now - cached.at < IMPORT_TTL_MS) {
+    return cached.result
   }
 
   const yazio = await ensureYazioClient()
@@ -372,17 +390,25 @@ export async function importDiaryFromYazio(date: string = toDateKey()): Promise<
       else failed += 1
     }
 
-    return { imported, skipped, failed, mealGoals, summary }
+    const result: DiaryImportResult = { imported, skipped, failed, mealGoals, summary }
+    importCache.set(date, { at: now, result })
+    if (importCache.size > 10) {
+      const oldest = importCache.keys().next().value
+      if (oldest !== undefined) importCache.delete(oldest)
+    }
+    return result
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not reach YAZIO."
-    return { ...empty, mealGoals, error: message }
+    const result: DiaryImportResult = { ...empty, mealGoals, error: message }
+    importCache.set(date, { at: now, result })
+    return result
   }
 }
 
 /** Import daily goals and consumed foods from YAZIO for one date. */
 export async function importFromYazio(date: string = toDateKey()): Promise<DiaryImportResult> {
   await loadGoalsFromYazio(date)
-  return importDiaryFromYazio(date)
+  return importDiaryFromYazio(date, { force: true })
 }
 
 export async function loadGoalsFromYazio(date: string = toDateKey()): Promise<void> {
