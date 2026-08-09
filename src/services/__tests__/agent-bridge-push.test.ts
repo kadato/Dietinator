@@ -53,6 +53,7 @@ function settingsRow() {
     ai_model: "",
     ai_system_prompt: "",
     agent_bridge_rev: 0,
+    theme_preference: "system" as const,
   }
 }
 

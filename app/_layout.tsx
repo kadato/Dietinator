@@ -1,13 +1,14 @@
 import { Stack, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
-import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native"
+import { ActivityIndicator, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
 import { AppProvider, useApp } from "@/context/AppContext"
 import { NetworkProvider } from "@/context/NetworkContext"
 import { ToastProvider } from "@/context/ToastContext"
 import { UpdateProvider } from "@/context/UpdateContext"
+import { ThemeProvider } from "@/context/ThemeContext"
 import { useTheme } from "@/hooks/useTheme"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import type { ColorPalette } from "@/theme"
@@ -65,9 +66,6 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
-  const gluestackMode = colorScheme === "light" ? "light" : "dark"
-
   useEffect(() => {
     // Once React has painted, swap the inlined pre-JS shell for the real app
     // and register the service worker for offline + instant repeat loads.
@@ -85,19 +83,34 @@ export default function RootLayout() {
         />
       </Head>
       <AppErrorBoundary>
-        <GluestackUIProvider mode={gluestackMode}>
-          <NetworkProvider>
-            <AppProvider>
-              <ToastProvider>
-                <UpdateProvider>
-                  <RootNavigator />
-                </UpdateProvider>
-              </ToastProvider>
-            </AppProvider>
-          </NetworkProvider>
-        </GluestackUIProvider>
+        <AppProvider>
+          <ThemeProvider>
+            <ThemedApp />
+          </ThemeProvider>
+        </AppProvider>
       </AppErrorBoundary>
     </>
+  )
+}
+
+/**
+ * Everything that renders themed UI. Lives inside ThemeProvider so the
+ * gluestack mode and the status bar follow the user's explicit theme choice.
+ */
+function ThemedApp() {
+  const { isDark } = useTheme()
+  const gluestackMode = isDark ? "dark" : "light"
+
+  return (
+    <GluestackUIProvider mode={gluestackMode}>
+      <NetworkProvider>
+        <ToastProvider>
+          <UpdateProvider>
+            <RootNavigator />
+          </UpdateProvider>
+        </ToastProvider>
+      </NetworkProvider>
+    </GluestackUIProvider>
   )
 }
 

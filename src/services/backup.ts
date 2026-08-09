@@ -95,9 +95,9 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
       await db.runAsync(
         `INSERT INTO settings (
           id, calorie_goal, protein_goal, carbs_goal, fat_goal, units,
-          yazio_sync_enabled, food_database_country, update_check_enabled
+          yazio_sync_enabled, food_database_country, update_check_enabled, theme_preference
         ) VALUES (
-          1, ?, ?, ?, ?, ?, ?, ?, ?
+          1, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )`,
         Number(payload.settings.calorie_goal ?? 2000),
         Number(payload.settings.protein_goal ?? 150),
@@ -107,6 +107,7 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
         payload.settings.yazio_sync_enabled ? 1 : 0,
         String(payload.settings.food_database_country ?? ""),
         payload.settings.update_check_enabled === 0 ? 0 : 1,
+        String(payload.settings.theme_preference ?? "system"),
       )
     } else {
       await db.runAsync(`INSERT INTO settings (id) VALUES (1)`)

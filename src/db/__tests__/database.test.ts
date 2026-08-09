@@ -40,6 +40,7 @@ function createMockDb(options: {
             "ai_model",
             "ai_system_prompt",
             "agent_bridge_rev",
+            "theme_preference",
           ]
         ).map((name) => ({ name }))
       }
@@ -94,6 +95,7 @@ describe("migrate", () => {
         "settings.ai_model",
         "settings.ai_system_prompt",
         "settings.agent_bridge_rev",
+        "settings.theme_preference",
         "food_cache.base_unit",
       ]),
     )

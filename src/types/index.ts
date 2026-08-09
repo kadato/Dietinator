@@ -56,6 +56,8 @@ export interface AppSettings {
   ai_system_prompt: string
   /** Last-applied agent (MCP) change revision — web snapshot bridge only. */
   agent_bridge_rev: number
+  /** Explicit app theme: follow the system, or force light/dark. */
+  theme_preference: "system" | "light" | "dark"
 }
 
 export interface FoodNutrients {

@@ -37,6 +37,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ai_model: "",
     ai_system_prompt: "",
     agent_bridge_rev: 0,
+    theme_preference: "system",
   })
   const [yazioAvailable, setYazioAvailable] = useState(true)
 

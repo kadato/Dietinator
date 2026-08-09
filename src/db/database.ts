@@ -161,6 +161,11 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       `ALTER TABLE settings ADD COLUMN agent_bridge_rev INTEGER NOT NULL DEFAULT 0`,
     )
   }
+  if (!settingsColumns.some((column) => column.name === "theme_preference")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN theme_preference TEXT NOT NULL DEFAULT 'system'`,
+    )
+  }
 
   const foodCacheColumns = await database.getAllAsync<{ name: string }>(
     "PRAGMA table_info(food_cache)",

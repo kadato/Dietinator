@@ -147,6 +147,7 @@ describe("get_diary_summary", () => {
       ai_model: "",
       ai_system_prompt: "",
       agent_bridge_rev: 0,
+      theme_preference: "system" as const,
       ai_provider: "openai" as const,
     })
 
@@ -176,6 +177,7 @@ describe("set_goals", () => {
       ai_model: "",
       ai_system_prompt: "",
       agent_bridge_rev: 0,
+      theme_preference: "system" as const,
       ai_provider: "openai" as const,
     })
 
@@ -306,6 +308,7 @@ describe("get_settings / set_units", () => {
       ai_model: "",
       ai_system_prompt: "",
       agent_bridge_rev: 0,
+      theme_preference: "system" as const,
     })
     const result = (await byName("get_settings").execute({})) as Record<string, unknown>
     expect(result).toMatchObject({

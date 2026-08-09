@@ -85,6 +85,7 @@ const settingsRow = {
   ai_model: "",
   ai_system_prompt: "",
   agent_bridge_rev: 0,
+  theme_preference: "system" as const,
 }
 
 async function* chunksOf(chunks: StreamingChunk[]): AsyncGenerator<StreamingChunk> {
