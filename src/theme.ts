@@ -68,11 +68,13 @@ export function getColors(scheme: string | null | undefined): ColorPalette {
 }
 
 export const spacing = {
+  "2xs": 2,
   xs: 4,
   sm: 8,
   md: 16,
   lg: 24,
   xl: 32,
+  "2xl": 40,
 }
 
 /** Breakpoints and max widths for tablet / desktop / web layouts. */
@@ -83,4 +85,6 @@ export const layout = {
   maxWidthContent: 720,
   maxWidthWide: 1100,
   sideTabWidth: 120,
+  /** Fixed bottom tab bar height on phones (excluding the safe-area inset). */
+  tabBarHeight: 64,
 }
