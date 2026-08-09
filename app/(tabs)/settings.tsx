@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
 import { Platform, Pressable, ScrollView, Share, View } from "react-native"
 import { useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
@@ -22,7 +23,7 @@ import {
   saveAiApiKey,
 } from "@/db/ai-settings"
 import { fetchAvailableModels, testProviderConnection } from "@/services/ai/openai-client"
-import type { AiProviderId, AiProviderSettings } from "@/types"
+import type { AiProviderId, AiProviderSettings, AppSettings } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
 import { SettingsSection } from "@/components/SettingsSection"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
@@ -135,6 +136,7 @@ function GoalInput({
           onChangeText={onChange}
           className="text-right"
           accessibilityLabel={`${label} goal`}
+          maxFontSizeMultiplier={1.4}
         />
       </Input>
     </View>
@@ -171,25 +173,22 @@ const SETTINGS_TABS = [
 
 type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"]
 
-export default function SettingsScreen() {
-  const router = useRouter()
-  const { settings, updateSettings, refreshAuth, refreshSettings } = useApp()
-  const { showSuccess, showError } = useToast()
-  const { checking, checkForUpdates } = useUpdates()
+/**
+ * Goals tab owns its own form state so typing in one field never re-renders
+ * the rest of the settings screen. Values re-sync when settings change
+ * elsewhere (e.g. a YAZIO import) via the React-recommended
+ * "adjust state during render" pattern.
+ */
+function GoalsSettings({ settings }: { settings: AppSettings }) {
+  const { updateSettings } = useApp()
+  const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
   const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal))
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal))
   const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal))
   const [fatGoal, setFatGoal] = useState(String(settings.fat_goal))
   const [goalError, setGoalError] = useState<string | null>(null)
-  const [countryPickerOpen, setCountryPickerOpen] = useState(false)
-  const [profileCountry, setProfileCountry] = useState<string | null>(null)
-  const [mcpExpanded, setMcpExpanded] = useState(false)
-  const [activeTab, setActiveTab] = useState<SettingsTabId>("goals")
 
-  // Keep local fields in step when settings change elsewhere (e.g. YAZIO
-  // import) via the React-recommended "adjust state during render" pattern.
   const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}`
   const [syncedGoalsKey, setSyncedGoalsKey] = useState(goalsKey)
   if (goalsKey !== syncedGoalsKey) {
@@ -199,29 +198,6 @@ export default function SettingsScreen() {
     setCarbsGoal(String(settings.carbs_goal))
     setFatGoal(String(settings.fat_goal))
   }
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const profile = await getYazioProfile()
-        if (!cancelled) {
-          setProfileCountry(profile?.food_database_country ?? null)
-        }
-      } catch {
-        if (!cancelled) setProfileCountry(null)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const effectiveCountry = resolveFoodDatabaseCountry(
-    settings.food_database_country,
-    profileCountry,
-  )
-  const countryUsesProfileDefault = !settings.food_database_country?.trim()
 
   const saveGoals = async () => {
     const values = {
@@ -252,16 +228,47 @@ export default function SettingsScreen() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      await logoutYazio()
-    } catch (error) {
-      showError(error, "Could not clear stored credentials.", "Sign out")
-    }
-    await refreshAuth()
-    router.replace("/login")
-  }
+  return (
+    <SettingsSection title="Daily goals">
+      <GoalInput
+        icon="flame-outline"
+        label="Calories (kcal)"
+        value={calorieGoal}
+        onChange={setCalorieGoal}
+      />
+      <GoalInput
+        icon="fish-outline"
+        label="Protein (g)"
+        value={proteinGoal}
+        onChange={setProteinGoal}
+      />
+      <GoalInput
+        icon="nutrition-outline"
+        label="Carbs (g)"
+        value={carbsGoal}
+        onChange={setCarbsGoal}
+      />
+      <GoalInput icon="water-outline" label="Fat (g)" value={fatGoal} onChange={setFatGoal} last />
+      <View className="gap-2 border-t border-outline-100 p-4">
+        {goalError ? (
+          <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+            {goalError}
+          </Text>
+        ) : null}
+        <Button size="md" onPress={saveGoals}>
+          <ButtonText>Save goals</ButtonText>
+        </Button>
+      </View>
+    </SettingsSection>
+  )
+}
 
+/** AI tab form — isolated state so typing an API key or model never re-renders the screen. */
+function AiSettingsForm({ settings }: { settings: AppSettings }) {
+  const router = useRouter()
+  const { updateSettings } = useApp()
+  const { showError, showSuccess } = useToast()
+  const { colors } = useTheme()
   const [aiBaseUrl, setAiBaseUrl] = useState("")
   const [aiModel, setAiModel] = useState("")
   const [aiApiKey, setAiApiKey] = useState("")
@@ -374,6 +381,263 @@ export default function SettingsScreen() {
     }
   }
 
+  if (!aiFormLoaded) return null
+
+  return (
+    <View className="border-t border-outline-100">
+      <SettingsField label="Provider preset">
+        <Box className="flex-row flex-wrap gap-1.5">
+          {AI_PROVIDER_IDS.map((provider) => {
+            const selected = provider === aiProvider
+            return (
+              <Pressable
+                key={provider}
+                onPress={() => selectAiProvider(provider)}
+                accessibilityRole="button"
+                accessibilityLabel={`AI provider ${provider}`}
+                accessibilityState={{ selected }}
+                className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
+                  selected
+                    ? "border-primary-500 bg-primary-500/10"
+                    : "border-outline-200 bg-background-50"
+                }`}
+              >
+                <Text
+                  size="xs"
+                  bold={selected}
+                  style={{ color: selected ? colors.primary : colors.textMuted }}
+                >
+                  {AI_PROVIDER_PRESETS[provider].label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </Box>
+        <Text size="xs" className="mt-2 text-typography-500">
+          Picking a preset fills the base URL and a default model. Then add your API key.
+        </Text>
+      </SettingsField>
+      <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">
+        <Input size="sm" variant="outline">
+          <InputField
+            value={aiBaseUrl}
+            onChangeText={setAiBaseUrl}
+            placeholder="https://api.openai.com/v1"
+            autoCapitalize="none"
+            autoCorrect={false}
+            accessibilityLabel="AI provider base URL"
+            maxFontSizeMultiplier={1.4}
+          />
+        </Input>
+      </SettingsField>
+      <SettingsField label="Model">
+        <Input size="sm" variant="outline">
+          <InputField
+            value={aiModel}
+            onChangeText={setAiModel}
+            placeholder="gpt-4o-mini"
+            autoCapitalize="none"
+            autoCorrect={false}
+            accessibilityLabel="AI model name"
+            maxFontSizeMultiplier={1.4}
+          />
+        </Input>
+        {fetchedModels.length > 0 ? (
+          <Box className="mt-2 flex-row flex-wrap gap-1.5">
+            {fetchedModels.map((model) => (
+              <Pressable
+                key={model}
+                onPress={() => setAiModel(model)}
+                accessibilityRole="button"
+                accessibilityLabel={`Use model ${model}`}
+                className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
+                  model === aiModel
+                    ? "border-primary-500 bg-primary-500/10"
+                    : "border-outline-200 bg-background-50"
+                }`}
+              >
+                <Text
+                  size="xs"
+                  style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
+                >
+                  {model}
+                </Text>
+              </Pressable>
+            ))}
+          </Box>
+        ) : null}
+      </SettingsField>
+      <SettingsField label="API key (stored in the device keystore)">
+        <Box className="flex-row items-center gap-2">
+          <Box className="flex-1">
+            <Input size="sm" variant="outline">
+              <InputField
+                value={aiApiKey}
+                onChangeText={(value) => {
+                  setAiApiKey(value)
+                  setTestResult(null)
+                }}
+                placeholder="sk-…"
+                secureTextEntry={!showApiKey}
+                autoCapitalize="none"
+                autoCorrect={false}
+                accessibilityLabel="AI API key"
+                maxFontSizeMultiplier={1.4}
+              />
+            </Input>
+          </Box>
+          <Pressable
+            onPress={() => setShowApiKey((v) => !v)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
+            className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+          >
+            <Ionicons
+              name={showApiKey ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={colors.textMuted}
+            />
+          </Pressable>
+        </Box>
+      </SettingsField>
+      <SettingsField label="Extra instructions (optional)" last>
+        <Input size="sm" variant="outline">
+          <InputField
+            value={aiSystemPrompt}
+            onChangeText={setAiSystemPrompt}
+            placeholder="e.g. Keep answers short and use metric units"
+            multiline
+            accessibilityLabel="AI extra instructions"
+          />
+        </Input>
+      </SettingsField>
+      <View className="gap-2 border-t border-outline-100 p-4">
+        {aiError ? (
+          <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+            {aiError}
+          </Text>
+        ) : null}
+        {testResult ? (
+          <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
+            <Ionicons
+              name={testResult.ok ? "checkmark-circle" : "close-circle"}
+              size={18}
+              color={testResult.ok ? colors.primary : colors.danger}
+            />
+            <Text size="xs" className="flex-1 text-typography-600">
+              {testResult.message}
+            </Text>
+          </Box>
+        ) : null}
+        <Button size="md" onPress={saveAiSettings} disabled={aiSaving}>
+          <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
+        </Button>
+        <Box className="flex-row flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            className="min-w-[140px] flex-1"
+            onPress={() => void fetchAiModels()}
+            disabled={fetchingModels}
+          >
+            <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            className="min-w-[140px] flex-1"
+            onPress={() => void testAiConnection()}
+            disabled={testingConnection}
+          >
+            <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            className="min-w-[140px] flex-1"
+            onPress={() => router.push("/ai-chat")}
+          >
+            <ButtonText>Open AI chat</ButtonText>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            className="min-w-[140px] flex-1"
+            onPress={() =>
+              confirmAction({
+                title: "Clear chat history?",
+                message: "Removes the saved AI conversation from this device.",
+                confirmLabel: "Clear",
+                onConfirm: async () => {
+                  try {
+                    await clearChatMessages()
+                    showSuccess("Chat history cleared.", "Done")
+                  } catch (error) {
+                    showError(error, "Could not clear chat history.")
+                  }
+                },
+              })
+            }
+          >
+            <ButtonText>Clear chat history</ButtonText>
+          </Button>
+        </Box>
+      </View>
+    </View>
+  )
+}
+
+export default function SettingsScreen() {
+  const router = useRouter()
+  const { settings, updateSettings, refreshAuth, refreshSettings } = useApp()
+  const { showSuccess, showError } = useToast()
+  const { checking, checkForUpdates } = useUpdates()
+  const { colors } = useTheme()
+  const { isWide } = useLayout()
+  const insets = useSafeAreaInsets()
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false)
+  const [profileCountry, setProfileCountry] = useState<string | null>(null)
+  const [mcpExpanded, setMcpExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<SettingsTabId>("goals")
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const profile = await getYazioProfile()
+        if (!cancelled) {
+          setProfileCountry(profile?.food_database_country ?? null)
+        }
+      } catch {
+        if (!cancelled) setProfileCountry(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const effectiveCountry = resolveFoodDatabaseCountry(
+    settings.food_database_country,
+    profileCountry,
+  )
+  const countryUsesProfileDefault = !settings.food_database_country?.trim()
+
+  const handleLogout = async () => {
+    try {
+      await logoutYazio()
+    } catch (error) {
+      showError(error, "Could not clear stored credentials.", "Sign out")
+    }
+    await refreshAuth()
+    router.replace("/login")
+  }
+
   const handleExport = async (format: "json" | "csv") => {
     try {
       const content = format === "json" ? await exportDiaryJson() : await exportDiaryCsv()
@@ -417,21 +681,12 @@ export default function SettingsScreen() {
     <ScrollView className="flex-1 bg-background-0" contentContainerClassName="pb-16">
       <PageContainer
         grow={false}
-        contentStyle={[{ padding: 16 }, isWide ? { maxWidth: 860 } : undefined]}
+        contentStyle={[
+          { padding: 16, paddingTop: insets.top + 24 },
+          isWide ? { maxWidth: 860 } : undefined,
+        ]}
       >
-        <Text size={isWide ? "3xl" : "2xl"} bold className="mb-1 text-typography-900">
-          Settings
-        </Text>
-        <Text size="sm" className="mb-4 text-typography-500">
-          Goals, sync, and your data
-        </Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="-mx-4 mb-5"
-          contentContainerClassName="gap-1.5 px-4"
-        >
+        <Box className="-mx-4 mb-6 flex-row flex-wrap gap-1.5 px-4">
           {SETTINGS_TABS.map((tab) => {
             const active = tab.id === activeTab
             return (
@@ -462,47 +717,9 @@ export default function SettingsScreen() {
               </Pressable>
             )
           })}
-        </ScrollView>
+        </Box>
 
-        {activeTab === "goals" ? (
-          <SettingsSection title="Daily goals">
-            <GoalInput
-              icon="flame-outline"
-              label="Calories (kcal)"
-              value={calorieGoal}
-              onChange={setCalorieGoal}
-            />
-            <GoalInput
-              icon="fish-outline"
-              label="Protein (g)"
-              value={proteinGoal}
-              onChange={setProteinGoal}
-            />
-            <GoalInput
-              icon="nutrition-outline"
-              label="Carbs (g)"
-              value={carbsGoal}
-              onChange={setCarbsGoal}
-            />
-            <GoalInput
-              icon="water-outline"
-              label="Fat (g)"
-              value={fatGoal}
-              onChange={setFatGoal}
-              last
-            />
-            <View className="gap-2 border-t border-outline-100 p-4">
-              {goalError ? (
-                <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-                  {goalError}
-                </Text>
-              ) : null}
-              <Button size="md" onPress={saveGoals}>
-                <ButtonText>Save goals</ButtonText>
-              </Button>
-            </View>
-          </SettingsSection>
-        ) : null}
+        {activeTab === "goals" ? <GoalsSettings settings={settings} /> : null}
 
         {activeTab === "general" ? (
           <SettingsSection title="Preferences">
@@ -643,210 +860,7 @@ export default function SettingsScreen() {
               last={!settings.ai_enabled}
             />
 
-            {settings.ai_enabled === 1 && aiFormLoaded ? (
-              <View className="border-t border-outline-100">
-                <SettingsField label="Provider preset">
-                  <Box className="flex-row flex-wrap gap-1.5">
-                    {AI_PROVIDER_IDS.map((provider) => {
-                      const selected = provider === aiProvider
-                      return (
-                        <Pressable
-                          key={provider}
-                          onPress={() => selectAiProvider(provider)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`AI provider ${provider}`}
-                          accessibilityState={{ selected }}
-                          className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
-                            selected
-                              ? "border-primary-500 bg-primary-500/10"
-                              : "border-outline-200 bg-background-50"
-                          }`}
-                        >
-                          <Text
-                            size="xs"
-                            bold={selected}
-                            style={{ color: selected ? colors.primary : colors.textMuted }}
-                          >
-                            {AI_PROVIDER_PRESETS[provider].label}
-                          </Text>
-                        </Pressable>
-                      )
-                    })}
-                  </Box>
-                  <Text size="xs" className="mt-2 text-typography-500">
-                    Picking a preset fills the base URL and a default model — then add your API key.
-                  </Text>
-                </SettingsField>
-                <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">
-                  <Input size="sm" variant="outline">
-                    <InputField
-                      value={aiBaseUrl}
-                      onChangeText={setAiBaseUrl}
-                      placeholder="https://api.openai.com/v1"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      accessibilityLabel="AI provider base URL"
-                    />
-                  </Input>
-                </SettingsField>
-                <SettingsField label="Model">
-                  <Input size="sm" variant="outline">
-                    <InputField
-                      value={aiModel}
-                      onChangeText={setAiModel}
-                      placeholder="gpt-4o-mini"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      accessibilityLabel="AI model name"
-                    />
-                  </Input>
-                  {fetchedModels.length > 0 ? (
-                    <Box className="mt-2 flex-row flex-wrap gap-1.5">
-                      {fetchedModels.map((model) => (
-                        <Pressable
-                          key={model}
-                          onPress={() => setAiModel(model)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Use model ${model}`}
-                          className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
-                            model === aiModel
-                              ? "border-primary-500 bg-primary-500/10"
-                              : "border-outline-200 bg-background-50"
-                          }`}
-                        >
-                          <Text
-                            size="xs"
-                            style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
-                          >
-                            {model}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </Box>
-                  ) : null}
-                </SettingsField>
-                <SettingsField label="API key (stored in the device keystore)">
-                  <Box className="flex-row items-center gap-2">
-                    <Box className="flex-1">
-                      <Input size="sm" variant="outline">
-                        <InputField
-                          value={aiApiKey}
-                          onChangeText={(value) => {
-                            setAiApiKey(value)
-                            setTestResult(null)
-                          }}
-                          placeholder="sk-…"
-                          secureTextEntry={!showApiKey}
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          accessibilityLabel="AI API key"
-                        />
-                      </Input>
-                    </Box>
-                    <Pressable
-                      onPress={() => setShowApiKey((v) => !v)}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
-                      className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
-                    >
-                      <Ionicons
-                        name={showApiKey ? "eye-off-outline" : "eye-outline"}
-                        size={20}
-                        color={colors.textMuted}
-                      />
-                    </Pressable>
-                  </Box>
-                </SettingsField>
-                <SettingsField label="Extra instructions (optional)" last>
-                  <Input size="sm" variant="outline">
-                    <InputField
-                      value={aiSystemPrompt}
-                      onChangeText={setAiSystemPrompt}
-                      placeholder="e.g. Keep answers short and use metric units"
-                      multiline
-                      accessibilityLabel="AI extra instructions"
-                    />
-                  </Input>
-                </SettingsField>
-                <View className="gap-2 border-t border-outline-100 p-4">
-                  {aiError ? (
-                    <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-                      {aiError}
-                    </Text>
-                  ) : null}
-                  {testResult ? (
-                    <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
-                      <Ionicons
-                        name={testResult.ok ? "checkmark-circle" : "close-circle"}
-                        size={18}
-                        color={testResult.ok ? colors.primary : colors.danger}
-                      />
-                      <Text size="xs" className="flex-1 text-typography-600">
-                        {testResult.message}
-                      </Text>
-                    </Box>
-                  ) : null}
-                  <Button size="md" onPress={saveAiSettings} disabled={aiSaving}>
-                    <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
-                  </Button>
-                  <Box className="flex-row flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="secondary"
-                      className="min-w-[140px] flex-1"
-                      onPress={() => void fetchAiModels()}
-                      disabled={fetchingModels}
-                    >
-                      <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="secondary"
-                      className="min-w-[140px] flex-1"
-                      onPress={() => void testAiConnection()}
-                      disabled={testingConnection}
-                    >
-                      <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="secondary"
-                      className="min-w-[140px] flex-1"
-                      onPress={() => router.push("/ai-chat")}
-                    >
-                      <ButtonText>Open AI chat</ButtonText>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="secondary"
-                      className="min-w-[140px] flex-1"
-                      onPress={() =>
-                        confirmAction({
-                          title: "Clear chat history?",
-                          message: "Removes the saved AI conversation from this device.",
-                          confirmLabel: "Clear",
-                          onConfirm: async () => {
-                            try {
-                              await clearChatMessages()
-                              showSuccess("Chat history cleared.", "Done")
-                            } catch (error) {
-                              showError(error, "Could not clear chat history.")
-                            }
-                          },
-                        })
-                      }
-                    >
-                      <ButtonText>Clear chat history</ButtonText>
-                    </Button>
-                  </Box>
-                </View>
-              </View>
-            ) : null}
+            {settings.ai_enabled === 1 ? <AiSettingsForm settings={settings} /> : null}
           </SettingsSection>
         ) : null}
 

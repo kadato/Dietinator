@@ -1,7 +1,9 @@
-import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList } from "react-native"
+import { useCallback, useMemo, useRef, useState, type ComponentRef } from "react"
+import { ActivityIndicator, FlatList, View, type TextInput } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
+import { Fab } from "@/components/Fab"
 import { FoodListItem } from "@/components/FoodListItem"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
@@ -14,6 +16,7 @@ import { toggleFavorite, getFavoriteFoods, getRecentFoods } from "@/db/food-cach
 import type { MealType, SearchFoodResult } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
+import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField, InputIcon } from "@ui/input"
@@ -29,6 +32,8 @@ export default function SearchScreen() {
   const { yazioAvailable } = useApp()
   const { colors } = useTheme()
   const { isWide } = useLayout()
+  const insets = useSafeAreaInsets()
+  const inputRef = useRef<ComponentRef<typeof InputField>>(null)
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
   const [listMode, setListMode] = useState<ListMode>("recents")
@@ -76,6 +81,17 @@ export default function SearchScreen() {
       return next
     })
   }, [])
+
+  const switchListMode = useCallback((mode: ListMode) => {
+    // A typed query means search results, not recents/favorites — clear it
+    // so the selected list actually shows. The tabs stay visible either way.
+    setQuery("")
+    setListMode(mode)
+  }, [])
+
+  const openScan = useCallback(() => {
+    router.push({ pathname: "/scan", params: { meal: addMeal, date: addDate } })
+  }, [addDate, addMeal, router])
 
   const renderItem = useCallback(
     ({ item }: { item: SearchFoodResult }) => (
@@ -147,15 +163,16 @@ export default function SearchScreen() {
     <Box className="flex-1 bg-background-0">
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
-        <Box className={`${isWide ? "px-8" : "px-4"} pb-3 pt-2`}>
-          <Text size={isWide ? "3xl" : "2xl"} bold className="mb-3 text-typography-900">
-            Search foods
-          </Text>
+        <Box
+          className={`${isWide ? "px-8" : "px-4"} pb-3`}
+          style={{ paddingTop: insets.top + spacing.md }}
+        >
           <Input size="lg" variant="rounded" className="bg-background-50">
             <InputIcon>
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
             <InputField
+              ref={inputRef}
               placeholder="e.g. banana, oats, chicken"
               value={query}
               onChangeText={setQuery}
@@ -163,20 +180,18 @@ export default function SearchScreen() {
               returnKeyType="search"
             />
           </Input>
-        </Box>
-        {loading ? <ActivityIndicator className="mb-2" color={colors.primary} /> : null}
-        {!debounced ? (
-          <Box className="mb-3 px-4">
+          <Box className="mt-3">
             <SegmentedControl<ListMode>
               value={listMode}
               options={[
                 { value: "recents", label: "Recents" },
                 { value: "favorites", label: "Favorites" },
               ]}
-              onChange={setListMode}
+              onChange={switchListMode}
             />
           </Box>
-        ) : null}
+        </Box>
+        {loading ? <ActivityIndicator className="mb-2" color={colors.primary} /> : null}
         <FlatList
           className="flex-1"
           data={foods}
@@ -186,6 +201,23 @@ export default function SearchScreen() {
           ListEmptyComponent={emptyContent}
         />
       </PageContainer>
+
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: layout.tabBarHeight + insets.bottom + 16,
+          gap: 12,
+        }}
+        pointerEvents="box-none"
+      >
+        <Fab icon="barcode-outline" onPress={openScan} accessibilityLabel="Scan barcode" />
+        <Fab
+          icon="search"
+          onPress={() => (inputRef.current as unknown as TextInput | null)?.focus()}
+          accessibilityLabel="Focus search"
+        />
+      </View>
     </Box>
   )
 }

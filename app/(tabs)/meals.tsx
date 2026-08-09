@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
@@ -12,7 +13,8 @@ import { confirmAction } from "@/utils/confirm"
 import { MEAL_LABELS } from "@/utils/meals"
 import type { Meal, MealType } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
-import { spacing, type ColorPalette } from "@/theme"
+import { Fab } from "@/components/Fab"
+import { layout, spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -20,6 +22,7 @@ export default function MealsScreen() {
   const router = useRouter()
   const { colors } = useTheme()
   const { isWide } = useLayout()
+  const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
@@ -183,9 +186,8 @@ export default function MealsScreen() {
         className="mt-2 text-center leading-5 text-typography-500"
         style={{ maxWidth: 420 }}
       >
-        Combine foods you often eat together into a meal, then log it all in one tap. Use the
-        {" “New meal” "}
-        button above to create your first one.
+        Combine foods you often eat together into a meal, then log it all in one tap. Tap the New
+        meal button to create your first one.
       </Text>
     </Box>
   )
@@ -193,43 +195,38 @@ export default function MealsScreen() {
   return (
     <Box className="flex-1 bg-background-0">
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
-        <Box className={`${isWide ? "px-8" : "px-4"} pb-3 pt-2`}>
-          <Box className="mb-3 flex-row items-center justify-between">
-            <Text size={isWide ? "3xl" : "2xl"} bold className="text-typography-900">
-              Meals
-            </Text>
-            <Pressable
-              className="h-11 flex-row items-center gap-1.5 rounded-full bg-primary-500 px-4 active:opacity-85"
-              onPress={() => openBuilder()}
-              accessibilityRole="button"
-              accessibilityLabel="Create a new meal"
-            >
-              <Ionicons name="add" size={20} color={colors.onPrimary} />
-              <Text size="sm" bold style={{ color: colors.onPrimary }}>
-                New meal
-              </Text>
-            </Pressable>
-          </Box>
-          <Text size="sm" className="mb-3 text-typography-500">
-            Saved combos — log them into any meal slot in one tap.
-          </Text>
-        </Box>
-
         {loading ? (
           <ActivityIndicator className="mt-6" color={colors.primary} />
         ) : (
           <FlatList
             className="flex-1"
             data={meals}
-            keyExtractor={(item) => item.id}
             contentContainerClassName={
               meals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"
             }
+            contentContainerStyle={{ paddingTop: insets.top + spacing.md }}
+            keyExtractor={(item) => item.id}
             renderItem={renderMeal}
             ListEmptyComponent={emptyState}
           />
         )}
       </PageContainer>
+
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: layout.tabBarHeight + insets.bottom + 16,
+        }}
+        pointerEvents="box-none"
+      >
+        <Fab
+          icon="add"
+          label="New meal"
+          onPress={() => openBuilder()}
+          accessibilityLabel="Create a new meal"
+        />
+      </View>
 
       <MealSlotModal
         meal={pendingLog}

@@ -22,6 +22,7 @@ import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
+import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -45,7 +46,7 @@ export default function TodayScreen() {
   const { settings, yazioAvailable, authenticated } = useApp()
   const { showError, showSuccess, showWarning } = useToast()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isMedium } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -70,30 +71,36 @@ export default function TodayScreen() {
   }, [entries])
 
   const load = useCallback(
-    async (options?: { quiet?: boolean }) => {
+    async (options?: { quiet?: boolean; force?: boolean }) => {
       // 0. Agent bridge (web only): apply any changes external AI agents made
       //    through the /mcp endpoint before rendering the diary.
       await pullAgentChanges().catch(() => undefined)
 
-      // 1. Local first — the diary renders from SQLite before any network is touched.
+      // 1. Local first — the diary renders from SQLite before any network is
+      //    touched. Stale nutrient values are refined in the background below.
       let list: DiaryEntry[]
       try {
-        list = await getDiaryEntriesForDate(dateKey)
+        list = await getDiaryEntriesForDate(dateKey, { remote: false })
         setEntries(list)
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
       }
 
-      // 2. Background sync — imports and goals refresh without blocking the render.
+      // 2. Background — refine stale nutrients, then import. Never blocks the
+      //    render; the import is throttled so tab switches don't re-hit YAZIO.
       if (!authenticated) return
       setImporting(true)
       try {
-        const result = await importDiaryFromYazio(dateKey)
+        const refreshed = await getDiaryEntriesForDate(dateKey)
+        setEntries(refreshed)
+        const result = await importDiaryFromYazio(dateKey, { force: options?.force })
         setMealGoals(result.mealGoals)
         setSummary(result.summary)
+        // Imports wrote to SQLite — a final local read (no network) is the
+        // source of truth and also covers entries added while importing.
         if (result.imported > 0 || result.failed > 0 || result.error) {
-          const updated = await getDiaryEntriesForDate(dateKey)
+          const updated = await getDiaryEntriesForDate(dateKey, { remote: false })
           setEntries(updated)
         }
         if (result.error && !options?.quiet) {
@@ -152,7 +159,7 @@ export default function TodayScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await load()
+    await load({ force: true })
     setRefreshing(false)
   }
 
@@ -209,14 +216,14 @@ export default function TodayScreen() {
         style={{
           position: "absolute",
           right: 20,
-          bottom: isWide ? insets.bottom + 24 : 64 + insets.bottom + 16,
+          bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 16,
         }}
         pointerEvents="box-none"
       >
         <Fab
           icon="robot-outline"
           IconComponent={MaterialCommunityIcons}
-          label="Ask AI"
+          label={isMedium ? "Ask AI" : undefined}
           onPress={() => router.push("/ai-chat")}
           accessibilityLabel="Open AI assistant"
         />
@@ -284,7 +291,7 @@ export default function TodayScreen() {
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
-        <Box className="px-6 pb-2 pt-3">
+        <Box className="px-6 pb-2" style={{ paddingTop: insets.top + spacing.sm }}>
           <Card variant="elevated" className="flex-row items-center px-2 py-2">
             <Pressable
               onPress={() => shiftDate(-1)}
@@ -324,7 +331,7 @@ export default function TodayScreen() {
               </Pressable>
               {authenticated ? (
                 <Pressable
-                  onPress={() => load()}
+                  onPress={() => load({ force: true })}
                   disabled={importing || refreshing}
                   className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
                   accessibilityRole="button"

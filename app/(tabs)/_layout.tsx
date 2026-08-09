@@ -1,12 +1,16 @@
 import { Tabs } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { layout, spacing } from "@/theme"
 
 export default function TabLayout() {
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isMedium, width } = useLayout()
+  const insets = useSafeAreaInsets()
+  // Below 360px a "beside-icon" label row truncates even short labels.
+  const narrowPhone = width < 360
 
   return (
     <Tabs
@@ -16,7 +20,7 @@ export default function TabLayout() {
         headerShown: !isWide,
         tabBarPosition: isWide ? "left" : "bottom",
         tabBarVariant: isWide ? "material" : "uikit",
-        tabBarLabelPosition: isWide ? "below-icon" : "beside-icon",
+        tabBarLabelPosition: isWide || narrowPhone ? "below-icon" : "beside-icon",
         tabBarStyle: isWide
           ? {
               width: layout.sideTabWidth,
@@ -30,18 +34,22 @@ export default function TabLayout() {
           : {
               backgroundColor: colors.surface,
               borderTopWidth: 0,
-              height: 64,
+              // Fixed height would drop react-navigation's automatic bottom
+              // inset — add the home-indicator inset explicitly so icons never
+              // sit under it on large-inset devices.
+              height: layout.tabBarHeight + insets.bottom,
               paddingTop: 6,
-              paddingBottom: 8,
+              paddingBottom: insets.bottom + 8,
               elevation: 12,
               boxShadow: "0px -2px 8px rgba(0, 0, 0, 0.08)",
             },
         tabBarItemStyle: isWide
           ? { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, alignItems: "center" }
-          : undefined,
+          : { paddingHorizontal: narrowPhone ? 4 : 8 },
         tabBarActiveTintColor: isWide ? colors.primaryStrong : colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 2 },
+        // At phone widths an 11px "Settings" label truncates inside its tab.
+        tabBarLabelStyle: { fontSize: isMedium ? 11 : 10, fontWeight: "600", marginTop: 2 },
       }}
     >
       <Tabs.Screen
