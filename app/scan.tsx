@@ -23,6 +23,7 @@ import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
@@ -69,8 +70,15 @@ function BarcodeMatchesList({
 function ScanHeader({ onClose, overlay = false }: { onClose: () => void; overlay?: boolean }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const insets = useSafeAreaInsets()
   return (
-    <View style={overlay ? styles.headerOverlay : styles.headerFlow} pointerEvents="box-none">
+    <View
+      style={[
+        overlay ? styles.headerOverlay : styles.headerFlow,
+        { paddingTop: insets.top + spacing.md },
+      ]}
+      pointerEvents="box-none"
+    >
       <View style={[styles.headerBar, { backgroundColor: colors.background }]}>
         <View style={styles.headerTitleWrap}>
           <Ionicons name="barcode-outline" size={20} color={colors.primary} />
@@ -418,11 +426,9 @@ const createStyles = (colors: ColorPalette) =>
       left: 0,
       right: 0,
       paddingHorizontal: spacing.md,
-      paddingTop: spacing.md,
     },
     headerFlow: {
       paddingHorizontal: spacing.md,
-      paddingTop: spacing.md,
       paddingBottom: spacing.sm,
     },
     headerBar: {

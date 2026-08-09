@@ -10,10 +10,12 @@ import {
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
 import { MEAL_LABELS } from "@/utils/meals"
@@ -29,15 +31,18 @@ function MacroInput({
   onChange,
   placeholder = "0",
   styles,
+  stacked,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
   styles: ReturnType<typeof createStyles>
+  /** On very narrow screens the three macro fields stack instead of crowding. */
+  stacked?: boolean
 }) {
   return (
-    <Box className="flex-1">
+    <Box className={stacked ? "w-full" : "flex-1"}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         style={styles.input}
@@ -47,6 +52,7 @@ function MacroInput({
         placeholder={placeholder}
         placeholderTextColor="#9ca3af"
         accessibilityLabel={label}
+        maxFontSizeMultiplier={1.4}
       />
     </Box>
   )
@@ -61,6 +67,8 @@ export default function ManualEntryScreen() {
   const { showError, showWarning } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const insets = useSafeAreaInsets()
+  const { width } = useLayout()
   const [name, setName] = useState("")
   const [kcal, setKcal] = useState("")
   const [protein, setProtein] = useState("")
@@ -105,7 +113,7 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer hug maxWidth={520}>
-        <Box className="flex-row items-center px-4 pb-2 pt-4">
+        <Box className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 16 }}>
           <Pressable
             onPress={() => router.back()}
             hitSlop={12}
@@ -139,6 +147,7 @@ export default function ManualEntryScreen() {
                 placeholder="e.g. Homemade soup"
                 placeholderTextColor="#9ca3af"
                 accessibilityLabel="Food name"
+                maxFontSizeMultiplier={1.4}
               />
             </>
           ) : null}
@@ -152,13 +161,39 @@ export default function ManualEntryScreen() {
             placeholder="0"
             placeholderTextColor="#9ca3af"
             accessibilityLabel="Calories"
+            maxFontSizeMultiplier={1.4}
           />
 
-          <Box className="flex-row gap-3">
-            <MacroInput label="Protein (g)" value={protein} onChange={setProtein} styles={styles} />
-            <MacroInput label="Carbs (g)" value={carbs} onChange={setCarbs} styles={styles} />
-            <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} />
-          </Box>
+          {width < 360 ? (
+            <Box className="gap-3">
+              <MacroInput
+                label="Protein (g)"
+                value={protein}
+                onChange={setProtein}
+                styles={styles}
+                stacked
+              />
+              <MacroInput
+                label="Carbs (g)"
+                value={carbs}
+                onChange={setCarbs}
+                styles={styles}
+                stacked
+              />
+              <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} stacked />
+            </Box>
+          ) : (
+            <Box className="flex-row gap-3">
+              <MacroInput
+                label="Protein (g)"
+                value={protein}
+                onChange={setProtein}
+                styles={styles}
+              />
+              <MacroInput label="Carbs (g)" value={carbs} onChange={setCarbs} styles={styles} />
+              <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} />
+            </Box>
+          )}
         </ScrollView>
 
         <View style={styles.footer}>

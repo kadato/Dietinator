@@ -1,6 +1,7 @@
 import { Pressable, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
 import { ModalContainer } from "@/components/ModalContainer"
@@ -62,6 +63,7 @@ export default function CreateOptionsScreen() {
   const date = routeParam(params.date) ?? toDateKey()
   const { showWarning } = useToast()
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
 
   const onSelect = (option: CreateOption) => {
     if (!option.available) {
@@ -86,7 +88,7 @@ export default function CreateOptionsScreen() {
 
   return (
     <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
-      <Box className="px-4 pt-4">
+      <Box className="px-4" style={{ paddingTop: insets.top + 16 }}>
         <Pressable
           onPress={() => router.back()}
           hitSlop={12}

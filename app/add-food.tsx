@@ -13,11 +13,17 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote } from "@/services/yazio/foods"
-import { getFoodById, getIsFavorite, toggleFavorite } from "@/db/food-cache"
+import {
+  cachedToSearchResult,
+  getCachedFoodById,
+  getFoodById,
+  getIsFavorite,
+  toggleFavorite,
+} from "@/db/food-cache"
 import { getDiaryEntryById } from "@/db/diary"
 import type { FoodServing, MealType, SearchFoodResult } from "@/types"
 import {
-  isPerGramNutrients,
+  normalizePerGramFood,
   nutrientsForAmount,
   resolveNutrientsRefAmount,
 } from "@/utils/nutrients"
@@ -32,6 +38,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
+import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useToast } from "@/context/ToastContext"
 import { spacing, type ColorPalette } from "@/theme"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
@@ -55,6 +62,39 @@ function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServin
   }
 }
 
+/**
+ * Resolve a product for the add-food screen. Renders instantly from any
+ * cached row — per-gram search rows are normalized for display — and patches
+ * in the real product detail when the network answers, so the nutrition
+ * preview never waits for YAZIO when the food has been seen before.
+ */
+async function resolveFoodForDisplay(
+  productId: string,
+  cancelled: boolean,
+): Promise<{ food: SearchFoodResult; favorite: boolean } | null> {
+  const cachedRow = await getCachedFoodById(productId)
+  if (!cancelled && cachedRow) {
+    const cachedFood = cachedToSearchResult(cachedRow)
+    if (cachedFood) {
+      const perGram =
+        cachedRow.source === "search" &&
+        (cachedFood.base_unit === "g" || cachedFood.base_unit === "ml")
+      const display = perGram ? normalizePerGramFood(cachedFood) : cachedFood
+      return { food: { ...display }, favorite: cachedRow.is_favorite === 1 }
+    }
+  }
+
+  // Background: real detail (or a fresh cache refresh) replaces the instant
+  // render when it arrives; the screen is already usable meanwhile.
+  const resolved = (await getFoodRemote(productId)) ?? (await getFoodById(productId))
+  if (!resolved) return null
+  const initialServing = resolved.servings?.[0] ?? resolved.serving
+  return {
+    food: { ...resolved, serving: resolveServing(resolved, initialServing) },
+    favorite: await getIsFavorite(resolved.product_id),
+  }
+}
+
 export default function AddFoodScreen() {
   const router = useRouter()
 
@@ -70,6 +110,7 @@ export default function AddFoodScreen() {
   const { isWide } = useLayout()
   const { showError, showWarning } = useToast()
   const insets = useSafeAreaInsets()
+  const keyboardOpen = useKeyboardVisible()
   const params = useLocalSearchParams<{
     meal: string
     date: string
@@ -132,19 +173,11 @@ export default function AddFoodScreen() {
           setLoadingFood(false)
           return
         }
-        const resolved = (await getFoodRemote(entry.food_id)) ?? (await getFoodById(entry.food_id))
-        if (cancelled) return
-        if (!resolved) {
-          showError(new Error("Could not load food details"), "Try again or pick another item.")
-          setLoadingFood(false)
-          return
+        const resolved = await resolveFoodForDisplay(entry.food_id, cancelled)
+        if (!cancelled && resolved) {
+          setFood(resolved.food)
+          setIsFavorite(resolved.favorite)
         }
-        const initialServing = resolved.servings?.[0] ?? resolved.serving
-        setFood({
-          ...resolved,
-          serving: resolveServing(resolved, initialServing),
-        })
-        setIsFavorite(await getIsFavorite(resolved.product_id))
       } catch {
         if (!cancelled) {
           showError(new Error("Could not load food details"), "Try again or pick another item.")
@@ -165,26 +198,11 @@ export default function AddFoodScreen() {
     ;(async () => {
       setLoadingFood(true)
       try {
-        let resolved = (await getFoodRemote(productId)) ?? (await getFoodById(productId))
-        if (
-          resolved &&
-          isPerGramNutrients(
-            resolved.nutrients,
-            resolved.base_unit || "g",
-            resolved.serving.serving_quantity,
-          )
-        ) {
-          const refreshed = await getFoodRemote(productId)
-          if (refreshed) resolved = refreshed
-        }
+        const resolved = await resolveFoodForDisplay(productId, cancelled)
         if (!cancelled && resolved) {
-          const initialServing = resolved.servings?.[0] ?? resolved.serving
-          setFood({
-            ...resolved,
-            serving: resolveServing(resolved, initialServing),
-          })
-          setAmount(String(initialServing.amount))
-          setIsFavorite(await getIsFavorite(productId))
+          setFood(resolved.food)
+          setAmount(String(resolved.food.serving.amount))
+          setIsFavorite(resolved.favorite)
         }
       } catch {
         if (!cancelled) {
@@ -297,7 +315,10 @@ export default function AddFoodScreen() {
       <ModalContainer maxWidth={560}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + spacing.md, paddingBottom: 120 },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
           <PageContainer
@@ -384,6 +405,7 @@ export default function AddFoodScreen() {
               value={amount}
               onChangeText={setAmount}
               accessibilityLabel={`Amount in ${unit}`}
+              maxFontSizeMultiplier={1.4}
             />
 
             {preview && (
@@ -396,17 +418,21 @@ export default function AddFoodScreen() {
         </ScrollView>
       </ModalContainer>
 
-      <View style={[styles.fabWrap, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
-        <View style={styles.fabRow}>
-          <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
-          <Fab
-            icon="checkmark"
-            onPress={handleSave}
-            disabled={saving}
-            accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
-          />
+      {!keyboardOpen ? (
+        <View style={styles.fabLayer} pointerEvents="box-none">
+          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+            <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
+          </View>
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+            <Fab
+              icon="checkmark"
+              onPress={handleSave}
+              disabled={saving}
+              accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
+            />
+          </View>
         </View>
-      </View>
+      ) : null}
     </KeyboardAvoidingView>
   )
 }
@@ -496,14 +522,21 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       marginBottom: spacing.lg,
     },
-    fabWrap: {
+    fabLayer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    fabLeft: {
+      position: "absolute",
+      left: 20,
+      alignItems: "flex-start",
+    },
+    fabRight: {
       position: "absolute",
       right: 20,
       alignItems: "flex-end",
-    },
-    fabRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
     },
   })

@@ -19,6 +19,7 @@ import { OfflineBanner } from "@/components/OfflineBanner"
 import { Fab } from "@/components/Fab"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
+import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getSuggestedFoods } from "@/services/yazio/foods"
@@ -68,6 +69,7 @@ export default function LogMealScreen() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
+  const keyboardOpen = useKeyboardVisible()
 
   const safeBack = useCallback(() => {
     if (router.canGoBack()) {
@@ -207,6 +209,14 @@ export default function LogMealScreen() {
     return map
   }, [meals])
 
+  // Meals are stored locally — the query filters them by name so the search
+  // box stays useful when browsing the "Meals" category.
+  const filteredMeals = useMemo(() => {
+    const q = debounced.trim().toLowerCase()
+    if (!q) return meals
+    return meals.filter((meal) => meal.name.toLowerCase().includes(q))
+  }, [debounced, meals])
+
   const renderMeal = useCallback(
     ({ item }: { item: Meal }) => {
       const totals = mealTotalsById.get(item.id) ?? ZERO_TOTALS
@@ -268,6 +278,7 @@ export default function LogMealScreen() {
 
   const emptyMessage = useMemo(() => {
     if (category === "meals") {
+      if (debounced.trim()) return "No meals match your search."
       return "No meals yet. Create one and it will show up here."
     }
     if (debounced.trim()) return "No foods found. Try a different search."
@@ -282,17 +293,17 @@ export default function LogMealScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer surface>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
           <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
           <View style={styles.headerActions}>
             <Pressable
-              style={styles.headerIconBtn}
+              style={[styles.headerIconBtn, styles.scanBtn, { backgroundColor: `${accent}1a` }]}
               onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Scan"
             >
-              <Ionicons name="barcode-outline" size={22} color={colors.textMuted} />
+              <Ionicons name="barcode-outline" size={26} color={accent} />
             </Pressable>
             <Pressable
               style={styles.headerIconBtn}
@@ -308,20 +319,18 @@ export default function LogMealScreen() {
           </View>
         </View>
 
-        {category === "foods" ? (
-          <View style={styles.searchWrap}>
-            <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
-            <TextInput
-              style={[styles.searchInput, { borderColor: accent }]}
-              placeholder="Search foods…"
-              placeholderTextColor={colors.textMuted}
-              value={query}
-              onChangeText={setQuery}
-              autoCorrect={false}
-              returnKeyType="search"
-            />
-          </View>
-        ) : null}
+        <View style={styles.searchWrap}>
+          <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
+          <TextInput
+            style={[styles.searchInput, { borderColor: accent }]}
+            placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
+            placeholderTextColor={colors.textMuted}
+            value={query}
+            onChangeText={setQuery}
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+        </View>
 
         <View style={styles.filters}>
           <SegmentedControl<FoodCategory>
@@ -371,11 +380,11 @@ export default function LogMealScreen() {
         ) : (
           <FlatList
             style={styles.list}
-            data={meals}
+            data={filteredMeals}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              meals.length === 0 && !loading ? "grow justify-center" : "pb-24"
+              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-24"
             }
             ListHeaderComponent={
               <Pressable
@@ -394,12 +403,16 @@ export default function LogMealScreen() {
         )}
       </ModalContainer>
 
-      <View style={[styles.fabWrap, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
-        <View style={styles.fabRow}>
-          <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
-          <Fab icon="checkmark" onPress={safeBack} accessibilityLabel="Done" />
+      {!keyboardOpen ? (
+        <View style={styles.fabLayer} pointerEvents="box-none">
+          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+            <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
+          </View>
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+            <Fab icon="checkmark" onPress={safeBack} accessibilityLabel="Done" />
+          </View>
         </View>
-      </View>
+      ) : null}
     </KeyboardAvoidingView>
   )
 }
@@ -412,20 +425,24 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: spacing.md,
-      paddingTop: spacing.md,
       paddingBottom: spacing.sm,
     },
     headerActions: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.xs,
+      gap: spacing.sm,
     },
     headerIconBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
+    },
+    scanBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
     },
     title: {
       fontSize: 22,
@@ -529,14 +546,21 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    fabWrap: {
+    fabLayer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    fabLeft: {
+      position: "absolute",
+      left: 20,
+      alignItems: "flex-start",
+    },
+    fabRight: {
       position: "absolute",
       right: 20,
       alignItems: "flex-end",
-    },
-    fabRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
     },
   })
