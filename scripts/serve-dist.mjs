@@ -67,10 +67,13 @@ async function proxyYazioRequest(req, res) {
   const hasBody = req.method !== "GET" && req.method !== "HEAD"
   const body = hasBody ? await readRequestBody(req) : undefined
 
+  // A hung upstream must fail fast as a 502, not leave the browser spinning —
+  // the app wraps YAZIO calls in withRetry and will retry a 502.
   const upstream = await fetch(targetUrl, {
     method: req.method,
     headers,
     body: body?.length ? body : undefined,
+    signal: AbortSignal.timeout(15_000),
   })
 
   res.statusCode = upstream.status

@@ -2,6 +2,7 @@ import { Yazio } from "yazio"
 import { getSettings } from "@/db/settings"
 import { clearAuth, getCredentials, getToken, saveToken, type StoredToken } from "./auth-storage"
 import { resolveFoodDatabaseCountry } from "@/utils/food-database-country"
+import { withRetry } from "@/utils/retry"
 import { installYazioWebFetch } from "./web-fetch"
 
 installYazioWebFetch()
@@ -104,8 +105,11 @@ export async function loginWithCredentials(username: string, password: string): 
   })
 
   // Validate credentials BEFORE persisting them — a failed login must not
-  // leave stale credentials behind that poison every later session.
-  await yazio.user.get()
+  // leave stale credentials behind that poison every later session. The
+  // oauth/token handshake is a flaky unofficial endpoint: transient network
+  // failures (e.g. a dev-server proxy 502) are retried, hard auth errors
+  // (401 wrong password) are not.
+  await withRetry(() => yazio.user.get())
   clearYazioProfileCache()
   const { getToken: readStoredToken } = await import("./auth-storage")
   const stored = await readStoredToken()
