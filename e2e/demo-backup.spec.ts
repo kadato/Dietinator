@@ -58,7 +58,7 @@ test.describe("backup and restore (offline)", () => {
 
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await expect(page.getByText("Goals, sync, and your data")).toBeVisible()
+    await expect(page.getByRole("button", { name: "Goals settings" })).toBeVisible()
     await page.getByRole("button", { name: "Data settings" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),

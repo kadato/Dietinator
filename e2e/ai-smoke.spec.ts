@@ -54,7 +54,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 
-  test("barcode scanning lives inside food tracking only", async ({ page }) => {
+  test("barcode scanning is available in food tracking and the Search tab", async ({ page }) => {
     await bootAuthenticated(page)
 
     // No direct scanner shortcut on the dashboard anymore.
@@ -65,9 +65,9 @@ test.describe("AI assistant + FABs (offline)", () => {
     await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
     await page.getByRole("button", { name: "Cancel" }).click()
 
-    // The Search tab carries no duplicate scanner.
+    // The Search tab has a scan FAB.
     await page.getByText("Search", { exact: true }).click()
-    await expect(page.getByText("Search foods", { exact: true })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeHidden()
+    await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
+    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeVisible()
   })
 })

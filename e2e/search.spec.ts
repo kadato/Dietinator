@@ -5,9 +5,15 @@ test.describe("food search (offline)", () => {
     await bootAuthenticated(page)
 
     await page.getByText("Search", { exact: true }).click()
-    await expect(page.getByText("Search foods", { exact: true })).toBeVisible()
+    await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
+    await expect(page.getByText("Favorites", { exact: true })).toBeVisible()
 
+    // The search FAB focuses the search box.
+    await page.getByRole("button", { name: "Focus search" }).click()
+    await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeFocused()
     await page.getByPlaceholder("e.g. banana, oats, chicken").fill("oats")
+    // Recents/Favorites must stay visible while searching.
+    await expect(page.getByText("Recents", { exact: true })).toBeVisible()
     // No YAZIO in tests → remote fails, offline banner appears, cached list stays usable.
     // (Both the dashboard and this tab may show the banner — assert the first.)
     await expect(page.getByText(/YAZIO unavailable/i).first()).toBeVisible({
