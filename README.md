@@ -3,6 +3,7 @@
 <div align="center">
 
 [![CI](https://img.shields.io/github/actions/workflow/status/tothKarolyDavid/Dietinator/ci.yml?label=CI&logo=github)](https://github.com/tothKarolyDavid/Dietinator/actions)
+[![Android APK](https://img.shields.io/badge/Android-latest%20APK-3ddc84?logo=android&logoColor=white)](https://github.com/tothKarolyDavid/Dietinator/releases/latest/download/Dietinator-Android.apk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Expo SDK 56](https://img.shields.io/badge/Expo-SDK%2056-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -15,6 +16,22 @@ your account is optional and best-effort. No account needed to try it.
 
 > **Try it:** build the web app and open `/?demo=1` — or tap **Explore the demo**
 > on the login screen. A full demo session seeds itself, no account required.
+
+## Download
+
+**Android** — install the latest signed build directly:
+
+<div align="center">
+
+[![Download Dietinator for Android](https://img.shields.io/badge/Download-Dietinator%20Android%20APK-0d9488?style=for-the-badge&logo=android&logoColor=white)](https://github.com/tothKarolyDavid/Dietinator/releases/latest/download/Dietinator-Android.apk)
+
+</div>
+
+- The link always points at the newest release — every tag push rebuilds and
+  re-attaches the signed APK via `.github/workflows/release.yml`.
+- On first install, allow **Install unknown apps** for your browser when prompted.
+- The app checks GitHub for newer versions on startup (Settings → Updates) and
+  offers a one-tap download when one is out. Updates never touch your local diary.
 
 ## Preview
 
@@ -162,7 +179,8 @@ through every tool, and validates the change feed.
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — data model, local-first flow, release pipeline
 - [CHANGELOG.md](CHANGELOG.md) — version history (`npm run release` cuts a new one)
-- Releases build a signed Android APK via `.github/workflows/release.yml`
+- Releases build a signed Android APK via `.github/workflows/release.yml` —
+  see [Download](#download) for the latest APK and how in-app updates work
 
 > **Note:** uses a reverse-engineered, unofficial YAZIO API — personal use only,
 > may break without notice. The local-first design keeps the app fully usable
