@@ -58,7 +58,7 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
       <Text style={styles.servingNote}>{servingLabel}</Text>
 
       <View style={styles.calorieBlock}>
-        <Text style={styles.calorieValue} testID="preview-kcal">
+        <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={1.4}>
           {nutrients.kcal}
         </Text>
         <Text style={styles.calorieUnit}>kcal</Text>

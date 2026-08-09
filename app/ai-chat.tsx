@@ -10,11 +10,13 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Markdown } from "@/components/Markdown"
 import { useAiChat } from "@/hooks/useAiChat"
 import { useApp } from "@/context/AppContext"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
@@ -72,8 +74,13 @@ export default function AiChatScreen() {
   const router = useRouter()
   const { settings } = useApp()
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
+  const { width } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
+  // On very narrow phones the fixed 48px bubble side margins eat ~25% of the
+  // line width — tighten them below 360px.
+  const compact = width < 360
 
   const safeClose = useCallback(() => {
     if (router.canGoBack()) {
@@ -107,7 +114,7 @@ export default function AiChatScreen() {
     ({ item }: { item: AiChatMessage }) => {
       if (item.role === "user") {
         return (
-          <Box className="mb-3 w-full flex-row justify-end pl-12">
+          <Box className={`mb-3 w-full flex-row justify-end ${compact ? "pl-6" : "pl-12"}`}>
             <Box
               className="max-w-full rounded-2xl rounded-br-md px-3.5 py-2.5"
               style={{
@@ -136,7 +143,7 @@ export default function AiChatScreen() {
       const hasToolCalls = (item.tool_calls?.length ?? 0) > 0
       const thinking = item.content === "" && !item.is_error && !hasToolCalls
       return (
-        <Box className="mb-3 w-full flex-row gap-2.5 pr-12">
+        <Box className={`mb-3 w-full flex-row gap-2.5 ${compact ? "pr-6" : "pr-12"}`}>
           <Box
             className="h-8 w-8 items-center justify-center rounded-full"
             style={{
@@ -178,7 +185,7 @@ export default function AiChatScreen() {
         </Box>
       )
     },
-    [colors],
+    [colors, compact],
   )
 
   const emptyState = (
@@ -321,7 +328,10 @@ export default function AiChatScreen() {
     <ModalContainer outerClassName="bg-background-0" maxWidth={720}>
       <Box className="flex-1">
         {/* Header */}
-        <Box style={{ backgroundColor: colors.primary }} className="px-4 pb-3.5 pt-3">
+        <Box
+          style={{ backgroundColor: colors.primary, paddingTop: insets.top + 12 }}
+          className="px-4 pb-3.5"
+        >
           <Box className="flex-row items-center justify-between">
             <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">
               <Box
@@ -408,11 +418,18 @@ export default function AiChatScreen() {
           {confirmationCard}
 
           {/* Composer */}
-          <Box className="border-t border-outline-100 bg-background-0 px-3 pb-3 pt-2">
+          <Box
+            className="border-t border-outline-100 bg-background-0 px-3 pt-2"
+            style={{ paddingBottom: insets.bottom + 12 }}
+          >
             <Box className="flex-row items-end gap-2">
               <Box
-                className="min-w-0 flex-1 rounded-[22px] border border-outline-200 bg-background-100 px-4"
-                style={{ boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)", elevation: 1 }}
+                className="min-w-0 flex-1 justify-center rounded-[22px] border border-outline-200 bg-background-100 px-4"
+                style={{
+                  minHeight: 44,
+                  boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)",
+                  elevation: 1,
+                }}
               >
                 <TextInput
                   value={draft}
@@ -476,8 +493,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     maxHeight: 110,
-    minHeight: 44,
-    paddingTop: 2,
-    paddingBottom: 2,
+    // Slightly more bottom padding optically centers the text inside the
+    // pill — glyph ascenders are taller than descenders, so symmetric
+    // padding reads as top-heavy.
+    paddingTop: 1,
+    paddingBottom: 4,
   },
 })

@@ -15,3 +15,17 @@ html.dark {
   --color-background-200: 55 55 61;
   --color-background-300: 70 70 78;
 }
+
+/*
+ * Hide native scrollbars on web. react-native-web renders every ScrollView /
+ * FlatList as a scrolling div, and the OS scrollbars they draw look out of
+ * place in a mobile-sized UI. Scrolling still works; only the bar is gone.
+ * (Native builds are unaffected — they never show these bars.)
+ */
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
