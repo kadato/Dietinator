@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
 import { Platform, Pressable, ScrollView, Share, View } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -40,42 +40,136 @@ import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
 import { Switch } from "@ui/switch"
 
-function SettingsRow({ children, bordered = true }: { children: ReactNode; bordered?: boolean }) {
-  return (
-    <Box className={`px-4 py-3 ${bordered ? "border-b border-outline-100" : ""}`}>{children}</Box>
+type IconName = ComponentProps<typeof Ionicons>["name"]
+
+function SettingsRow({
+  icon,
+  title,
+  subtitle,
+  right,
+  onPress,
+  danger = false,
+  last = false,
+  accessibilityLabel,
+}: {
+  icon: IconName
+  title: string
+  subtitle?: string
+  right?: ReactNode
+  onPress?: () => void
+  danger?: boolean
+  last?: boolean
+  accessibilityLabel?: string
+}) {
+  const { colors } = useTheme()
+  const tint = danger ? colors.danger : colors.primary
+
+  const content = (
+    <>
+      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-muted">
+        <Ionicons name={icon} size={20} color={tint} />
+      </Box>
+      <Box className="min-w-0 flex-1">
+        <Text size="sm" className="text-typography-900">
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
+            {subtitle}
+          </Text>
+        ) : null}
+      </Box>
+      {right}
+    </>
   )
+
+  const rowClassName = `flex-row items-center gap-3 px-4 py-3.5 ${
+    !last ? "border-b border-outline-100" : ""
+  }`
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? title}
+        className={`${rowClassName} active:opacity-70`}
+      >
+        {content}
+      </Pressable>
+    )
+  }
+
+  return <View className={rowClassName}>{content}</View>
 }
 
 function GoalInput({
+  icon,
   label,
   value,
   onChange,
-  bordered = true,
+  last = false,
 }: {
+  icon: IconName
   label: string
   value: string
   onChange: (v: string) => void
-  bordered?: boolean
+  last?: boolean
 }) {
   const { isWide } = useLayout()
+  const { colors: themeColors } = useTheme()
   return (
-    <SettingsRow bordered={bordered}>
-      <Box className="flex-row items-center">
-        <Text size="md" className="flex-1 text-typography-900">
-          {label}
-        </Text>
-        <Input size="sm" variant="outline" className={isWide ? "w-[140px]" : "w-[100px]"}>
-          <InputField
-            keyboardType="numeric"
-            value={value}
-            onChangeText={onChange}
-            className="text-right"
-          />
-        </Input>
+    <View
+      className={`flex-row items-center gap-3 px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}
+    >
+      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-muted">
+        <Ionicons name={icon} size={20} color={themeColors.primary} />
       </Box>
-    </SettingsRow>
+      <Text size="sm" className="min-w-0 flex-1 text-typography-900">
+        {label}
+      </Text>
+      <Input size="sm" variant="outline" className={isWide ? "w-[140px]" : "w-[100px]"}>
+        <InputField
+          keyboardType="numeric"
+          value={value}
+          onChangeText={onChange}
+          className="text-right"
+          accessibilityLabel={`${label} goal`}
+        />
+      </Input>
+    </View>
   )
 }
+
+function SettingsField({
+  label,
+  children,
+  last = false,
+}: {
+  label: string
+  children: ReactNode
+  last?: boolean
+}) {
+  return (
+    <View className={`px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}>
+      <Text size="xs" className="mb-1.5 text-typography-500">
+        {label}
+      </Text>
+      {children}
+    </View>
+  )
+}
+
+const SETTINGS_TABS = [
+  { id: "goals", label: "Goals", icon: "flag-outline" },
+  { id: "general", label: "General", icon: "options-outline" },
+  { id: "ai", label: "AI", icon: "sparkles-outline" },
+  { id: "sync", label: "Sync", icon: "sync-outline" },
+  { id: "data", label: "Data", icon: "folder-open-outline" },
+  { id: "about", label: "About", icon: "information-circle-outline" },
+] as const
+
+type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"]
 
 export default function SettingsScreen() {
   const router = useRouter()
@@ -91,6 +185,8 @@ export default function SettingsScreen() {
   const [goalError, setGoalError] = useState<string | null>(null)
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
+  const [mcpExpanded, setMcpExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<SettingsTabId>("goals")
 
   // Keep local fields in step when settings change elsewhere (e.g. YAZIO
   // import) via the React-recommended "adjust state during render" pattern.
@@ -326,28 +422,472 @@ export default function SettingsScreen() {
         <Text size={isWide ? "3xl" : "2xl"} bold className="mb-1 text-typography-900">
           Settings
         </Text>
-        <Text size="sm" className="mb-6 text-typography-500">
+        <Text size="sm" className="mb-4 text-typography-500">
           Goals, sync, and your data
         </Text>
 
-        <SettingsSection title="Daily goals">
-          <GoalInput label="Calories (kcal)" value={calorieGoal} onChange={setCalorieGoal} />
-          <GoalInput label="Protein (g)" value={proteinGoal} onChange={setProteinGoal} />
-          <GoalInput label="Carbs (g)" value={carbsGoal} onChange={setCarbsGoal} />
-          <GoalInput label="Fat (g)" value={fatGoal} onChange={setFatGoal} bordered={false} />
-          <View className="gap-2 border-t border-outline-100 p-4">
-            {goalError ? (
-              <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-                {goalError}
-              </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-4 mb-5"
+          contentContainerClassName="gap-1.5 px-4"
+        >
+          {SETTINGS_TABS.map((tab) => {
+            const active = tab.id === activeTab
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => setActiveTab(tab.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${tab.label} settings`}
+                accessibilityState={{ selected: active }}
+                className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
+                  active
+                    ? "border-primary-500 bg-primary-500/10"
+                    : "border-outline-200 bg-background-50"
+                }`}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={15}
+                  color={active ? colors.primary : colors.textMuted}
+                />
+                <Text
+                  size="sm"
+                  bold={active}
+                  style={{ color: active ? colors.primary : colors.textMuted }}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+
+        {activeTab === "goals" ? (
+          <SettingsSection title="Daily goals">
+            <GoalInput
+              icon="flame-outline"
+              label="Calories (kcal)"
+              value={calorieGoal}
+              onChange={setCalorieGoal}
+            />
+            <GoalInput
+              icon="fish-outline"
+              label="Protein (g)"
+              value={proteinGoal}
+              onChange={setProteinGoal}
+            />
+            <GoalInput
+              icon="nutrition-outline"
+              label="Carbs (g)"
+              value={carbsGoal}
+              onChange={setCarbsGoal}
+            />
+            <GoalInput
+              icon="water-outline"
+              label="Fat (g)"
+              value={fatGoal}
+              onChange={setFatGoal}
+              last
+            />
+            <View className="gap-2 border-t border-outline-100 p-4">
+              {goalError ? (
+                <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+                  {goalError}
+                </Text>
+              ) : null}
+              <Button size="md" onPress={saveGoals}>
+                <ButtonText>Save goals</ButtonText>
+              </Button>
+            </View>
+          </SettingsSection>
+        ) : null}
+
+        {activeTab === "general" ? (
+          <SettingsSection title="Preferences">
+            <SettingsRow
+              icon="globe-outline"
+              title="Food database country"
+              subtitle={
+                countryUsesProfileDefault && profileCountry
+                  ? `Using your YAZIO profile (${getFoodDatabaseCountryLabel(profileCountry)}) until you pick one`
+                  : getFoodDatabaseCountryLabel(effectiveCountry)
+              }
+              onPress={() => setCountryPickerOpen(true)}
+              accessibilityLabel="Change food database country"
+              right={<Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
+            />
+            <SettingsRow
+              icon="speedometer-outline"
+              title="Units"
+              subtitle={
+                settings.units === "imperial"
+                  ? "Weight and water in pounds and fluid ounces"
+                  : "Weight and water in kilograms and liters"
+              }
+              right={
+                <SegmentedControl
+                  value={settings.units === "imperial" ? "imperial" : "metric"}
+                  options={[
+                    { value: "metric", label: "Metric" },
+                    { value: "imperial", label: "Imperial" },
+                  ]}
+                  onChange={async (units) => {
+                    try {
+                      await updateSettings({ units })
+                    } catch (error) {
+                      showError(error, "Could not update units.")
+                    }
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              icon="contrast-outline"
+              title="Theme"
+              subtitle={
+                settings.theme_preference === "light"
+                  ? "Always light"
+                  : settings.theme_preference === "dark"
+                    ? "Always dark"
+                    : "Follow your device setting"
+              }
+              last
+              right={
+                <SegmentedControl
+                  value={settings.theme_preference ?? "system"}
+                  options={[
+                    { value: "system", label: "System" },
+                    { value: "light", label: "Light" },
+                    { value: "dark", label: "Dark" },
+                  ]}
+                  onChange={async (theme) => {
+                    try {
+                      await updateSettings({ theme_preference: theme })
+                    } catch (error) {
+                      showError(error, "Could not update theme.")
+                    }
+                  }}
+                />
+              }
+            />
+          </SettingsSection>
+        ) : null}
+
+        {activeTab === "general" ? (
+          <SettingsSection title="Updates">
+            <SettingsRow
+              icon="arrow-down-circle-outline"
+              title="Check for updates"
+              subtitle="Look for new versions on GitHub when the app starts"
+              right={
+                <Switch
+                  value={settings.update_check_enabled === 1}
+                  accessibilityLabel="Check for updates on startup"
+                  onValueChange={async (v) => {
+                    try {
+                      await updateSettings({ update_check_enabled: v ? 1 : 0 })
+                    } catch (error) {
+                      showError(error, "Could not update update-check setting.")
+                    }
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              icon="refresh-outline"
+              title={checking ? "Checking…" : "Check now"}
+              subtitle={`Version ${getCurrentVersion()} · releases on GitHub`}
+              last
+              onPress={() => void checkForUpdates({ manual: true })}
+              accessibilityLabel="Check for updates now"
+            />
+          </SettingsSection>
+        ) : null}
+
+        <FoodDatabaseCountryPicker
+          visible={countryPickerOpen}
+          selectedCode={effectiveCountry}
+          onClose={() => setCountryPickerOpen(false)}
+          onSelect={async (code) => {
+            try {
+              await updateSettings({ food_database_country: code })
+              setProfileCountry(null)
+              showSuccess(`Search now uses ${getFoodDatabaseCountryLabel(code)}.`, "Food database")
+            } catch (error) {
+              showError(error, "Could not save food database country.")
+            }
+          }}
+        />
+
+        {activeTab === "ai" ? (
+          <SettingsSection title="AI assistant">
+            <SettingsRow
+              icon="sparkles-outline"
+              title="AI assistant"
+              subtitle="Chat with your diary on device. Your API key never leaves the app"
+              right={
+                <Switch
+                  value={settings.ai_enabled === 1}
+                  accessibilityLabel="Enable AI assistant"
+                  onValueChange={async (v) => {
+                    try {
+                      await updateSettings({ ai_enabled: v ? 1 : 0 })
+                    } catch (error) {
+                      showError(error, "Could not update AI setting.")
+                    }
+                  }}
+                />
+              }
+              last={!settings.ai_enabled}
+            />
+
+            {settings.ai_enabled === 1 && aiFormLoaded ? (
+              <View className="border-t border-outline-100">
+                <SettingsField label="Provider preset">
+                  <Box className="flex-row flex-wrap gap-1.5">
+                    {AI_PROVIDER_IDS.map((provider) => {
+                      const selected = provider === aiProvider
+                      return (
+                        <Pressable
+                          key={provider}
+                          onPress={() => selectAiProvider(provider)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`AI provider ${provider}`}
+                          accessibilityState={{ selected }}
+                          className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
+                            selected
+                              ? "border-primary-500 bg-primary-500/10"
+                              : "border-outline-200 bg-background-50"
+                          }`}
+                        >
+                          <Text
+                            size="xs"
+                            bold={selected}
+                            style={{ color: selected ? colors.primary : colors.textMuted }}
+                          >
+                            {AI_PROVIDER_PRESETS[provider].label}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </Box>
+                  <Text size="xs" className="mt-2 text-typography-500">
+                    Picking a preset fills the base URL and a default model — then add your API key.
+                  </Text>
+                </SettingsField>
+                <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">
+                  <Input size="sm" variant="outline">
+                    <InputField
+                      value={aiBaseUrl}
+                      onChangeText={setAiBaseUrl}
+                      placeholder="https://api.openai.com/v1"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      accessibilityLabel="AI provider base URL"
+                    />
+                  </Input>
+                </SettingsField>
+                <SettingsField label="Model">
+                  <Input size="sm" variant="outline">
+                    <InputField
+                      value={aiModel}
+                      onChangeText={setAiModel}
+                      placeholder="gpt-4o-mini"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      accessibilityLabel="AI model name"
+                    />
+                  </Input>
+                  {fetchedModels.length > 0 ? (
+                    <Box className="mt-2 flex-row flex-wrap gap-1.5">
+                      {fetchedModels.map((model) => (
+                        <Pressable
+                          key={model}
+                          onPress={() => setAiModel(model)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Use model ${model}`}
+                          className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
+                            model === aiModel
+                              ? "border-primary-500 bg-primary-500/10"
+                              : "border-outline-200 bg-background-50"
+                          }`}
+                        >
+                          <Text
+                            size="xs"
+                            style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
+                          >
+                            {model}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </Box>
+                  ) : null}
+                </SettingsField>
+                <SettingsField label="API key (stored in the device keystore)">
+                  <Box className="flex-row items-center gap-2">
+                    <Box className="flex-1">
+                      <Input size="sm" variant="outline">
+                        <InputField
+                          value={aiApiKey}
+                          onChangeText={(value) => {
+                            setAiApiKey(value)
+                            setTestResult(null)
+                          }}
+                          placeholder="sk-…"
+                          secureTextEntry={!showApiKey}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          accessibilityLabel="AI API key"
+                        />
+                      </Input>
+                    </Box>
+                    <Pressable
+                      onPress={() => setShowApiKey((v) => !v)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
+                      className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+                    >
+                      <Ionicons
+                        name={showApiKey ? "eye-off-outline" : "eye-outline"}
+                        size={20}
+                        color={colors.textMuted}
+                      />
+                    </Pressable>
+                  </Box>
+                </SettingsField>
+                <SettingsField label="Extra instructions (optional)" last>
+                  <Input size="sm" variant="outline">
+                    <InputField
+                      value={aiSystemPrompt}
+                      onChangeText={setAiSystemPrompt}
+                      placeholder="e.g. Keep answers short and use metric units"
+                      multiline
+                      accessibilityLabel="AI extra instructions"
+                    />
+                  </Input>
+                </SettingsField>
+                <View className="gap-2 border-t border-outline-100 p-4">
+                  {aiError ? (
+                    <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+                      {aiError}
+                    </Text>
+                  ) : null}
+                  {testResult ? (
+                    <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
+                      <Ionicons
+                        name={testResult.ok ? "checkmark-circle" : "close-circle"}
+                        size={18}
+                        color={testResult.ok ? colors.primary : colors.danger}
+                      />
+                      <Text size="xs" className="flex-1 text-typography-600">
+                        {testResult.message}
+                      </Text>
+                    </Box>
+                  ) : null}
+                  <Button size="md" onPress={saveAiSettings} disabled={aiSaving}>
+                    <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
+                  </Button>
+                  <Box className="flex-row flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="secondary"
+                      className="min-w-[140px] flex-1"
+                      onPress={() => void fetchAiModels()}
+                      disabled={fetchingModels}
+                    >
+                      <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="secondary"
+                      className="min-w-[140px] flex-1"
+                      onPress={() => void testAiConnection()}
+                      disabled={testingConnection}
+                    >
+                      <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="secondary"
+                      className="min-w-[140px] flex-1"
+                      onPress={() => router.push("/ai-chat")}
+                    >
+                      <ButtonText>Open AI chat</ButtonText>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="secondary"
+                      className="min-w-[140px] flex-1"
+                      onPress={() =>
+                        confirmAction({
+                          title: "Clear chat history?",
+                          message: "Removes the saved AI conversation from this device.",
+                          confirmLabel: "Clear",
+                          onConfirm: async () => {
+                            try {
+                              await clearChatMessages()
+                              showSuccess("Chat history cleared.", "Done")
+                            } catch (error) {
+                              showError(error, "Could not clear chat history.")
+                            }
+                          },
+                        })
+                      }
+                    >
+                      <ButtonText>Clear chat history</ButtonText>
+                    </Button>
+                  </Box>
+                </View>
+              </View>
             ) : null}
-            <Button size="md" onPress={saveGoals}>
-              <ButtonText>Save goals</ButtonText>
-            </Button>
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
+          </SettingsSection>
+        ) : null}
+
+        {activeTab === "sync" ? (
+          <SettingsSection title="YAZIO sync">
+            <SettingsRow
+              icon="sync-outline"
+              title="Sync diary to YAZIO"
+              subtitle="Upload new entries as you log them (best-effort)"
+              right={
+                <Switch
+                  value={settings.yazio_sync_enabled === 1}
+                  accessibilityLabel="Sync diary to YAZIO"
+                  onValueChange={async (v) => {
+                    try {
+                      await updateSettings({ yazio_sync_enabled: v ? 1 : 0 })
+                    } catch (error) {
+                      showError(error, "Could not update sync setting.")
+                    }
+                  }}
+                />
+              }
+            />
+            <SettingsRow
+              icon="cloud-upload-outline"
+              title="Sync pending entries now"
+              subtitle="Send unsynced diary entries to YAZIO"
+              onPress={async () => {
+                try {
+                  const count = await syncPendingEntries()
+                  showSuccess(count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`, "Sync")
+                } catch (error) {
+                  showError(error, "Could not sync entries to YAZIO.")
+                }
+              }}
+            />
+            <SettingsRow
+              icon="cloud-download-outline"
+              title="Import today from YAZIO"
+              subtitle="Pull today's foods and refresh your goals"
+              last
               onPress={async () => {
                 try {
                   const { imported, skipped, failed } = await importFromYazio(toDateKey())
@@ -370,427 +910,34 @@ export default function SettingsScreen() {
                   showError(error, "Could not import from YAZIO.")
                 }
               }}
-            >
-              <ButtonText>Import today from YAZIO</ButtonText>
-            </Button>
-          </View>
-        </SettingsSection>
-
-        <SettingsSection title="Food search">
-          <Pressable
-            className="flex-row items-center gap-2 px-4 py-3.5 active:opacity-80"
-            onPress={() => setCountryPickerOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Change food database country"
-          >
-            <Box className="h-9 w-9 items-center justify-center rounded-full bg-background-muted">
-              <Ionicons name="globe-outline" size={18} color={colors.primary} />
-            </Box>
-            <Box className="flex-1">
-              <Text size="sm" className="text-typography-900">
-                Food database country
-              </Text>
-              <Text size="md" className="mt-0.5 text-typography-500">
-                {getFoodDatabaseCountryLabel(effectiveCountry)}
-              </Text>
-              {countryUsesProfileDefault && profileCountry ? (
-                <Text size="xs" className="mt-1 text-typography-500">
-                  Using your YAZIO profile until you pick a country here.
-                </Text>
-              ) : null}
-            </Box>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </Pressable>
-        </SettingsSection>
-        <FoodDatabaseCountryPicker
-          visible={countryPickerOpen}
-          selectedCode={effectiveCountry}
-          onClose={() => setCountryPickerOpen(false)}
-          onSelect={async (code) => {
-            try {
-              await updateSettings({ food_database_country: code })
-              setProfileCountry(null)
-              showSuccess(`Search now uses ${getFoodDatabaseCountryLabel(code)}.`, "Food database")
-            } catch (error) {
-              showError(error, "Could not save food database country.")
-            }
-          }}
-        />
-
-        <SettingsSection title="Units">
-          <SettingsRow bordered={false}>
-            <Text size="sm" className="mb-2 text-typography-900">
-              Units for weight and water
-            </Text>
-            <SegmentedControl
-              value={settings.units === "imperial" ? "imperial" : "metric"}
-              options={[
-                { value: "metric", label: "Metric (kg, L)" },
-                { value: "imperial", label: "Imperial (lb, fl oz)" },
-              ]}
-              onChange={async (units) => {
-                try {
-                  await updateSettings({ units })
-                } catch (error) {
-                  showError(error, "Could not update units.")
-                }
-              }}
             />
-            <Text size="xs" className="mt-2 text-typography-500">
-              {settings.units === "imperial"
-                ? "Weight and water show in pounds and fluid ounces."
-                : "Weight and water show in kilograms and liters."}
-            </Text>
-          </SettingsRow>
-        </SettingsSection>
-
-        <SettingsSection title="AI assistant">
-          <SettingsRow>
-            <Box className="flex-row items-center justify-between">
-              <Box className="mr-4 flex-1">
-                <Text size="sm" className="text-typography-900">
-                  AI assistant
-                </Text>
-                <Text size="xs" className="mt-0.5 text-typography-500">
-                  Chat with your diary on device. Your API key never leaves the app
-                </Text>
-              </Box>
-              <Switch
-                value={settings.ai_enabled === 1}
-                accessibilityLabel="Enable AI assistant"
-                onValueChange={async (v) => {
-                  try {
-                    await updateSettings({ ai_enabled: v ? 1 : 0 })
-                  } catch (error) {
-                    showError(error, "Could not update AI setting.")
-                  }
-                }}
-              />
-            </Box>
-          </SettingsRow>
-
-          {aiFormLoaded ? (
-            <>
-              <SettingsRow>
-                <Text size="xs" className="mb-2 text-typography-500">
-                  Provider preset
-                </Text>
-                <Box className="flex-row flex-wrap gap-1.5">
-                  {AI_PROVIDER_IDS.map((provider) => {
-                    const selected = provider === aiProvider
-                    return (
-                      <Pressable
-                        key={provider}
-                        onPress={() => selectAiProvider(provider)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`AI provider ${provider}`}
-                        accessibilityState={{ selected }}
-                        className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
-                          selected
-                            ? "border-primary-500 bg-primary-500/10"
-                            : "border-outline-200 bg-background-50"
-                        }`}
-                      >
-                        <Text
-                          size="xs"
-                          bold={selected}
-                          style={{ color: selected ? colors.primary : colors.textMuted }}
-                        >
-                          {AI_PROVIDER_PRESETS[provider].label}
-                        </Text>
-                      </Pressable>
-                    )
-                  })}
-                </Box>
-                <Text size="xs" className="mt-2 text-typography-500">
-                  Picking a preset fills the base URL and a default model — then add your API key.
-                </Text>
-              </SettingsRow>
-              <SettingsRow>
-                <Text size="xs" className="mb-1.5 text-typography-500">
-                  Base URL (OpenAI, OpenRouter, Ollama…)
-                </Text>
-                <Input size="sm" variant="outline">
-                  <InputField
-                    value={aiBaseUrl}
-                    onChangeText={setAiBaseUrl}
-                    placeholder="https://api.openai.com/v1"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    accessibilityLabel="AI provider base URL"
-                  />
-                </Input>
-              </SettingsRow>
-              <SettingsRow>
-                <Text size="xs" className="mb-1.5 text-typography-500">
-                  Model
-                </Text>
-                <Input size="sm" variant="outline">
-                  <InputField
-                    value={aiModel}
-                    onChangeText={setAiModel}
-                    placeholder="gpt-4o-mini"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    accessibilityLabel="AI model name"
-                  />
-                </Input>
-                {fetchedModels.length > 0 ? (
-                  <Box className="mt-2 flex-row flex-wrap gap-1.5">
-                    {fetchedModels.map((model) => (
-                      <Pressable
-                        key={model}
-                        onPress={() => setAiModel(model)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Use model ${model}`}
-                        className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
-                          model === aiModel
-                            ? "border-primary-500 bg-primary-500/10"
-                            : "border-outline-200 bg-background-50"
-                        }`}
-                      >
-                        <Text
-                          size="xs"
-                          style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
-                        >
-                          {model}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </Box>
-                ) : null}
-              </SettingsRow>
-              <SettingsRow>
-                <Text size="xs" className="mb-1.5 text-typography-500">
-                  API key (stored in the device keystore)
-                </Text>
-                <Box className="flex-row items-center gap-2">
-                  <Box className="flex-1">
-                    <Input size="sm" variant="outline">
-                      <InputField
-                        value={aiApiKey}
-                        onChangeText={(value) => {
-                          setAiApiKey(value)
-                          setTestResult(null)
-                        }}
-                        placeholder="sk-…"
-                        secureTextEntry={!showApiKey}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        accessibilityLabel="AI API key"
-                      />
-                    </Input>
-                  </Box>
-                  <Pressable
-                    onPress={() => setShowApiKey((v) => !v)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
-                    className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
-                  >
-                    <Ionicons
-                      name={showApiKey ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color={colors.textMuted}
-                    />
-                  </Pressable>
-                </Box>
-              </SettingsRow>
-              <SettingsRow bordered={false}>
-                <Text size="xs" className="mb-1.5 text-typography-500">
-                  Extra instructions (optional)
-                </Text>
-                <Input size="sm" variant="outline">
-                  <InputField
-                    value={aiSystemPrompt}
-                    onChangeText={setAiSystemPrompt}
-                    placeholder="e.g. Keep answers short and use metric units"
-                    multiline
-                    accessibilityLabel="AI extra instructions"
-                  />
-                </Input>
-              </SettingsRow>
-              <View className="gap-2 border-t border-outline-100 p-4">
-                {aiError ? (
-                  <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-                    {aiError}
-                  </Text>
-                ) : null}
-                {testResult ? (
-                  <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
-                    <Ionicons
-                      name={testResult.ok ? "checkmark-circle" : "close-circle"}
-                      size={18}
-                      color={testResult.ok ? colors.primary : colors.danger}
-                    />
-                    <Text size="xs" className="flex-1 text-typography-600">
-                      {testResult.message}
-                    </Text>
-                  </Box>
-                ) : null}
-                <Box className="flex-row gap-2">
-                  <Button size="md" className="flex-1" onPress={saveAiSettings} disabled={aiSaving}>
-                    <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
-                  </Button>
-                  <Button
-                    size="md"
-                    variant="outline"
-                    action="secondary"
-                    onPress={() => void fetchAiModels()}
-                    disabled={fetchingModels}
-                  >
-                    <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
-                  </Button>
-                </Box>
-                <Button
-                  size="md"
-                  variant="outline"
-                  action="secondary"
-                  onPress={() => void testAiConnection()}
-                  disabled={testingConnection}
-                >
-                  <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
-                </Button>
-                <Button
-                  size="md"
-                  variant="outline"
-                  action="secondary"
-                  onPress={() => router.push("/ai-chat")}
-                >
-                  <ButtonText>Open AI chat</ButtonText>
-                </Button>
-                <Button
-                  size="md"
-                  variant="outline"
-                  action="secondary"
-                  onPress={() =>
-                    confirmAction({
-                      title: "Clear chat history?",
-                      message: "Removes the saved AI conversation from this device.",
-                      confirmLabel: "Clear",
-                      onConfirm: async () => {
-                        try {
-                          await clearChatMessages()
-                          showSuccess("Chat history cleared.", "Done")
-                        } catch (error) {
-                          showError(error, "Could not clear chat history.")
-                        }
-                      },
-                    })
-                  }
-                >
-                  <ButtonText>Clear chat history</ButtonText>
-                </Button>
-              </View>
-            </>
-          ) : null}
-        </SettingsSection>
-
-        {Platform.OS === "web" ? (
-          <SettingsSection title="Agent API (MCP)">
-            <View className="gap-1 p-4">
-              <Text size="sm" className="leading-5 text-typography-500">
-                This web build exposes its diary to AI agents over the Model Context Protocol at{" "}
-                <Text size="sm" className="text-typography-900">
-                  {getMcpOrigin()}/mcp
-                </Text>
-                . Point Claude Desktop, Cursor or any MCP client there.
-              </Text>
-              <Text size="xs" className="mt-2 leading-4 text-typography-500">
-                Set MCP_API_KEY on the server to protect the endpoint (required in production). The
-                snapshot bridge is same-origin only and never stores data on disk.
-              </Text>
-              <Box className="mt-2 flex-row flex-wrap gap-1.5">
-                {[
-                  "get_diary",
-                  "get_diary_stats",
-                  "get_goals",
-                  "get_settings",
-                  "get_meals",
-                  "log_food",
-                  "log_meal",
-                  "update_food_entry",
-                  "delete_food_entry",
-                  "set_goals",
-                  "set_units",
-                ].map((tool) => (
-                  <Box
-                    key={tool}
-                    className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
-                  >
-                    <Text size="xs" className="font-mono text-typography-600">
-                      {tool}
-                    </Text>
-                  </Box>
-                ))}
-              </Box>
-            </View>
           </SettingsSection>
         ) : null}
 
-        <SettingsSection title="YAZIO sync">
-          <SettingsRow>
-            <Box className="flex-row items-center justify-between">
-              <Text size="sm" className="mr-4 flex-1 text-typography-900">
-                Sync diary to YAZIO (best-effort)
-              </Text>
-              <Switch
-                value={settings.yazio_sync_enabled === 1}
-                accessibilityLabel="Sync diary to YAZIO"
-                onValueChange={async (v) => {
-                  try {
-                    await updateSettings({ yazio_sync_enabled: v ? 1 : 0 })
-                  } catch (error) {
-                    showError(error, "Could not update sync setting.")
-                  }
-                }}
-              />
-            </Box>
-          </SettingsRow>
-          <View className="border-t border-outline-100 p-4">
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              onPress={async () => {
-                try {
-                  const count = await syncPendingEntries()
-                  showSuccess(count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`, "Sync")
-                } catch (error) {
-                  showError(error, "Could not sync entries to YAZIO.")
-                }
-              }}
-            >
-              <ButtonText>Sync pending entries now</ButtonText>
-            </Button>
-          </View>
-        </SettingsSection>
-
-        <SettingsSection title="Data">
-          <View className="gap-2 p-4">
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              onPress={() => handleExport("json")}
-            >
-              <ButtonText>Export diary (JSON)</ButtonText>
-            </Button>
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              onPress={() => handleExport("csv")}
-            >
-              <ButtonText>Export diary (CSV)</ButtonText>
-            </Button>
-            <Button size="md" variant="outline" action="secondary" onPress={handleBackup}>
-              <ButtonText>Back up all data</ButtonText>
-            </Button>
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
+        {activeTab === "data" ? (
+          <SettingsSection title="Data">
+            <SettingsRow
+              icon="download-outline"
+              title="Export diary (JSON)"
+              subtitle="All entries as a JSON file"
+              onPress={() => void handleExport("json")}
+            />
+            <SettingsRow
+              icon="document-text-outline"
+              title="Export diary (CSV)"
+              subtitle="All entries as a spreadsheet file"
+              onPress={() => void handleExport("csv")}
+            />
+            <SettingsRow
+              icon="archive-outline"
+              title="Back up all data"
+              subtitle="Diary, cached foods and meals in one file"
+              onPress={handleBackup}
+            />
+            <SettingsRow
+              icon="file-tray-full-outline"
+              title="Restore from backup"
+              subtitle="Replace local data with a backup file"
               onPress={() =>
                 confirmAction({
                   title: "Restore backup?",
@@ -800,13 +947,13 @@ export default function SettingsScreen() {
                   onConfirm: handleRestore,
                 })
               }
-            >
-              <ButtonText>Restore from backup</ButtonText>
-            </Button>
-            <Button
-              size="md"
-              variant="outline"
-              action="negative"
+            />
+            <SettingsRow
+              icon="trash-outline"
+              title="Clear food cache"
+              subtitle="Remove cached YAZIO foods"
+              danger
+              last
               onPress={() => {
                 confirmAction({
                   title: "Clear cache?",
@@ -822,55 +969,79 @@ export default function SettingsScreen() {
                   },
                 })
               }}
-            >
-              <ButtonText>Clear food cache</ButtonText>
-            </Button>
-          </View>
-        </SettingsSection>
+            />
+          </SettingsSection>
+        ) : null}
 
-        <SettingsSection title="Updates">
-          <SettingsRow>
-            <Box className="flex-row items-center justify-between">
-              <Box className="mr-4 flex-1">
-                <Text size="sm" className="text-typography-900">
-                  Check for updates
-                </Text>
-                <Text size="xs" className="mt-0.5 text-typography-500">
-                  Look for new versions on GitHub when the app starts
-                </Text>
-              </Box>
-              <Switch
-                value={settings.update_check_enabled === 1}
-                accessibilityLabel="Check for updates on startup"
-                onValueChange={async (v) => {
-                  try {
-                    await updateSettings({ update_check_enabled: v ? 1 : 0 })
-                  } catch (error) {
-                    showError(error, "Could not update update-check setting.")
+        {activeTab === "about" ? (
+          <>
+            {Platform.OS === "web" ? (
+              <SettingsSection title="Agent API (MCP)">
+                <SettingsRow
+                  icon="terminal-outline"
+                  title="Agent API (MCP)"
+                  subtitle="Let AI agents read and log to your diary"
+                  last={!mcpExpanded}
+                  onPress={() => setMcpExpanded((v) => !v)}
+                  accessibilityLabel={
+                    mcpExpanded ? "Hide Agent API details" : "Show Agent API details"
                   }
-                }}
-              />
-            </Box>
-          </SettingsRow>
-          <View className="gap-2 border-t border-outline-100 p-4">
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              onPress={() => checkForUpdates({ manual: true })}
-              disabled={checking}
-            >
-              <ButtonText>{checking ? "Checking…" : "Check now"}</ButtonText>
-            </Button>
-            <Text size="xs" className="text-typography-500">
-              Version {getCurrentVersion()} · releases on GitHub
-            </Text>
-          </View>
-        </SettingsSection>
+                  right={
+                    <Ionicons
+                      name={mcpExpanded ? "chevron-down" : "chevron-forward"}
+                      size={20}
+                      color={colors.textMuted}
+                    />
+                  }
+                />
+                {mcpExpanded ? (
+                  <View className="gap-1 border-t border-outline-100 p-4">
+                    <Text size="sm" className="leading-5 text-typography-500">
+                      Point Claude Desktop, Cursor or any MCP client at{" "}
+                      <Text size="sm" className="text-typography-900">
+                        {getMcpOrigin()}/mcp
+                      </Text>{" "}
+                      to work with your diary.
+                    </Text>
+                    <Text size="xs" className="mt-2 leading-4 text-typography-500">
+                      Set MCP_API_KEY on the server to protect the endpoint (required in
+                      production). The snapshot bridge is same-origin only and never stores data on
+                      disk.
+                    </Text>
+                    <Box className="mt-2 flex-row flex-wrap gap-1.5">
+                      {[
+                        "get_diary",
+                        "get_diary_stats",
+                        "get_goals",
+                        "get_settings",
+                        "get_meals",
+                        "log_food",
+                        "log_meal",
+                        "update_food_entry",
+                        "delete_food_entry",
+                        "set_goals",
+                        "set_units",
+                      ].map((tool) => (
+                        <Box
+                          key={tool}
+                          className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
+                        >
+                          <Text size="xs" className="font-mono text-typography-600">
+                            {tool}
+                          </Text>
+                        </Box>
+                      ))}
+                    </Box>
+                  </View>
+                ) : null}
+              </SettingsSection>
+            ) : null}
 
-        <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
-          <ButtonText>Sign out</ButtonText>
-        </Button>
+            <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
+              <ButtonText>Sign out</ButtonText>
+            </Button>
+          </>
+        ) : null}
       </PageContainer>
     </ScrollView>
   )
