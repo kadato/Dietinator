@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote } from "@/services/yazio/foods"
-import { getFoodById, getIsFavorite, saveFoodToCache, toggleFavorite } from "@/db/food-cache"
+import { getFoodById, getIsFavorite, toggleFavorite } from "@/db/food-cache"
 import { getDiaryEntryById } from "@/db/diary"
 import type { FoodServing, MealType, SearchFoodResult } from "@/types"
 import {
@@ -27,6 +27,8 @@ import { toDateKey } from "@/utils/date"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
@@ -55,10 +57,19 @@ function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServin
 
 export default function AddFoodScreen() {
   const router = useRouter()
+
+  const safeBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }, [router])
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const { showError, showWarning } = useToast()
+  const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{
     meal: string
     date: string
@@ -81,9 +92,9 @@ export default function AddFoodScreen() {
 
   useEffect(() => {
     if (!productId && !entryId) {
-      router.back()
+      safeBack()
     }
-  }, [productId, entryId, router])
+  }, [productId, entryId, safeBack])
 
   // Edit mode: load the existing entry and resolve its food (cache → remote).
   useEffect(() => {
@@ -95,7 +106,7 @@ export default function AddFoodScreen() {
         const entry = await getDiaryEntryById(entryId)
         if (!entry) {
           showError(new Error("Entry not found."), "It may have been deleted.")
-          router.back()
+          safeBack()
           return
         }
         setSelectedMeal(entry.meal_type)
@@ -145,7 +156,7 @@ export default function AddFoodScreen() {
     return () => {
       cancelled = true
     }
-  }, [entryId, router, showError])
+  }, [entryId, safeBack, showError])
 
   // New-entry mode: load product details.
   useEffect(() => {
@@ -214,8 +225,7 @@ export default function AddFoodScreen() {
   const handleToggleFavorite = async () => {
     if (!food || !productId) return
     try {
-      await saveFoodToCache(food)
-      const next = await toggleFavorite(productId)
+      const next = await toggleFavorite(productId, food)
       setIsFavorite(next)
     } catch (error) {
       showError(error, "Could not update favorite.")
@@ -241,7 +251,7 @@ export default function AddFoodScreen() {
         }
         await logFood({ date, mealType: selectedMeal, food: resolved, amount: amt })
       }
-      router.back()
+      safeBack()
     } catch (error) {
       showError(error, "Could not save entry.")
     } finally {
@@ -267,7 +277,7 @@ export default function AddFoodScreen() {
           <ActivityIndicator color={colors.primary} size="large" />
           <Text style={styles.loadingText}>Could not load this food.</Text>
           {productId || entryId ? (
-            <Pressable onPress={() => router.back()} accessibilityRole="button">
+            <Pressable onPress={() => safeBack()} accessibilityRole="button">
               <Text style={styles.link}>Go back</Text>
             </Pressable>
           ) : null}
@@ -287,7 +297,7 @@ export default function AddFoodScreen() {
       <ModalContainer maxWidth={560}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
           keyboardShouldPersistTaps="handled"
         >
           <PageContainer
@@ -384,30 +394,19 @@ export default function AddFoodScreen() {
             )}
           </PageContainer>
         </ScrollView>
+      </ModalContainer>
 
-        <View style={styles.footer}>
-          <Pressable
-            style={[styles.saveBtn, saving && styles.saveDisabled]}
+      <View style={[styles.fabWrap, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+        <View style={styles.fabRow}>
+          <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
+          <Fab
+            icon="checkmark"
             onPress={handleSave}
             disabled={saving}
-            accessibilityRole="button"
             accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
-          >
-            <Text style={styles.saveText}>
-              {saving ? "Saving..." : isEditing ? "Update entry" : "Add to diary"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.cancel}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
+          />
         </View>
-      </ModalContainer>
+      </View>
     </KeyboardAvoidingView>
   )
 }
@@ -497,22 +496,14 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       marginBottom: spacing.lg,
     },
-    footer: {
-      padding: spacing.lg,
-      paddingTop: spacing.md,
-      gap: spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      backgroundColor: colors.surface,
+    fabWrap: {
+      position: "absolute",
+      right: 20,
+      alignItems: "flex-end",
     },
-    saveBtn: {
-      backgroundColor: colors.primary,
-      borderRadius: 10,
-      padding: spacing.md,
+    fabRow: {
+      flexDirection: "row",
       alignItems: "center",
+      gap: spacing.md,
     },
-    saveDisabled: { opacity: 0.6 },
-    saveText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
-    cancel: { alignItems: "center" },
-    cancelText: { color: colors.textMuted },
   })

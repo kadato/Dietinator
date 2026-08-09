@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
 } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { MealLogFoodRow } from "@/components/MealLogFoodRow"
 import { SegmentedControl } from "@/components/SegmentedControl"
 import { OfflineBanner } from "@/components/OfflineBanner"
+import { Fab } from "@/components/Fab"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useApp } from "@/context/AppContext"
@@ -24,25 +26,17 @@ import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
 import type { FoodNutrients, Meal, MealType, SearchFoodResult } from "@/types"
 import { mergeFoodResults } from "@/utils/food-search"
-import { MEAL_LABELS, MEAL_PLACEHOLDERS } from "@/utils/meals"
+import { MEAL_LABELS } from "@/utils/meals"
 import { formatServingOption } from "@/utils/food-display"
-import { formatDisplayDate, toDateKey } from "@/utils/date"
+import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { ModalContainer } from "@/components/ModalContainer"
 import { spacing, type ColorPalette } from "@/theme"
 
-type LogMode = "search" | "camera" | "barcode" | "more"
 type FoodCategory = "foods" | "meals"
 type ListMode = "frequent" | "recent" | "favorites"
-
-const MODE_OPTIONS: { id: LogMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: "search", label: "Search", icon: "search" },
-  { id: "camera", label: "Camera", icon: "camera" },
-  { id: "barcode", label: "Barcode", icon: "barcode-outline" },
-  { id: "more", label: "More", icon: "ellipsis-horizontal" },
-]
 
 const CATEGORY_OPTIONS: { value: FoodCategory; label: string }[] = [
   { value: "foods", label: "Foods" },
@@ -73,28 +67,49 @@ export default function LogMealScreen() {
   const { showError, showWarning, showSuccess } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const insets = useSafeAreaInsets()
+
+  const safeBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }, [router])
 
   const accent = colors[mealType]
 
-  const [mode, setMode] = useState<LogMode>("search")
+  const [category, setCategory] = useState<FoodCategory>("foods")
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
-  const [category, setCategory] = useState<FoodCategory>("foods")
   const [listMode, setListMode] = useState<ListMode>("frequent")
   const [meals, setMeals] = useState<Meal[]>([])
   const [loggingMealId, setLoggingMealId] = useState<string | null>(null)
+  // YAZIO's suggestions for this meal slot arrive async and patch into the
+  // "Frequent" list — the local favorites/recents render instantly instead of
+  // waiting on the network.
+  const [suggestions, setSuggestions] = useState<SearchFoodResult[]>([])
+
+  useEffect(() => {
+    if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
+    let cancelled = false
+    getSuggestedFoods(date, mealType, 5)
+      .then((items) => {
+        if (!cancelled) setSuggestions(items)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [category, date, debounced, listMode, mealType])
 
   const emptyQuery = useCallback(async () => {
-    if (listMode === "favorites") return getFavoriteFoods()
-    if (listMode === "recent") return getRecentFoods(20)
-    // Frequent list: YAZIO's suggestions for this meal slot, then favorites + recents.
-    const [suggested, favorites, recent] = await Promise.all([
-      getSuggestedFoods(date, mealType, 5),
-      getFavoriteFoods(),
-      getRecentFoods(20),
-    ])
-    return mergeFoodResults(mergeFoodResults(suggested, favorites), recent)
-  }, [date, listMode, mealType])
+    const [favorites, recent] = await Promise.all([getFavoriteFoods(), getRecentFoods(20)])
+    if (listMode === "favorites") return favorites
+    if (listMode === "recent") return recent
+    // Frequent list: local picks first, YAZIO's suggestions patch in when ready.
+    return mergeFoodResults(mergeFoodResults(suggestions, favorites), recent)
+  }, [listMode, suggestions])
 
   const handleSearchError = useCallback(
     (error: unknown) => showError(error, "Could not load foods."),
@@ -135,18 +150,6 @@ export default function LogMealScreen() {
     },
     [date, mealType, router],
   )
-
-  const handleMode = (next: LogMode) => {
-    if (next === "barcode" || next === "camera") {
-      router.push({ pathname: "/scan", params: { meal: mealType, date } })
-      return
-    }
-    if (next === "more") {
-      router.push({ pathname: "/create-options", params: { meal: mealType, date } })
-      return
-    }
-    setMode(next)
-  }
 
   const handleLogMeal = useCallback(
     async (meal: Meal) => {
@@ -235,7 +238,7 @@ export default function LogMealScreen() {
             onPress={() =>
               router.push({
                 pathname: "/meal-builder",
-                params: { meal: mealType, date, mealId: item.id },
+                params: { mealId: item.id },
               })
             }
             hitSlop={8}
@@ -260,7 +263,7 @@ export default function LogMealScreen() {
         </View>
       )
     },
-    [accent, colors, handleLogMeal, loggingMealId, mealTotalsById, mealType, date, router, styles],
+    [accent, colors, handleLogMeal, loggingMealId, mealTotalsById, router, styles],
   )
 
   const emptyMessage = useMemo(() => {
@@ -280,38 +283,29 @@ export default function LogMealScreen() {
     >
       <ModalContainer surface>
         <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={28} color={colors.text} />
-          </Pressable>
           <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
-        <View style={styles.modeRow}>
-          {MODE_OPTIONS.map((item) => {
-            const active = mode === item.id && item.id === "search"
-            return (
-              <Pressable
-                key={item.id}
-                style={[styles.modeBtn, active && { borderColor: accent }]}
-                onPress={() => handleMode(item.id)}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-              >
-                <Ionicons
-                  name={item.icon}
-                  size={22}
-                  color={item.id === "search" ? accent : colors.textMuted}
-                />
-                <Text style={[styles.modeLabel, active && { color: accent }]}>{item.label}</Text>
-              </Pressable>
-            )
-          })}
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Scan"
+            >
+              <Ionicons name="barcode-outline" size={22} color={colors.textMuted} />
+            </Pressable>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() =>
+                router.push({ pathname: "/create-options", params: { meal: mealType, date } })
+              }
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="More"
+            >
+              <Ionicons name="ellipsis-horizontal" size={24} color={colors.textMuted} />
+            </Pressable>
+          </View>
         </View>
 
         {category === "foods" ? (
@@ -319,7 +313,7 @@ export default function LogMealScreen() {
             <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { borderColor: accent }]}
-              placeholder={MEAL_PLACEHOLDERS[mealType]}
+              placeholder="Search foods…"
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
@@ -360,7 +354,7 @@ export default function LogMealScreen() {
             keyExtractor={(item) => item.product_id}
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              foods.length === 0 && !loading ? "grow justify-center" : undefined
+              foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-24"
             }
             renderItem={renderFood}
             ListEmptyComponent={
@@ -381,14 +375,12 @@ export default function LogMealScreen() {
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              meals.length === 0 && !loading ? "grow justify-center" : undefined
+              meals.length === 0 && !loading ? "grow justify-center" : "pb-24"
             }
             ListHeaderComponent={
               <Pressable
                 style={styles.newMealBtn}
-                onPress={() =>
-                  router.push({ pathname: "/meal-builder", params: { meal: mealType, date } })
-                }
+                onPress={() => router.push({ pathname: "/meal-builder" })}
                 accessibilityRole="button"
                 accessibilityLabel="Create a new meal"
               >
@@ -400,22 +392,14 @@ export default function LogMealScreen() {
             ListEmptyComponent={!loading ? <Text style={styles.empty}>{emptyMessage}</Text> : null}
           />
         )}
-
-        <View style={styles.footer}>
-          <View style={styles.footerContext}>
-            <Text style={styles.footerContextDate}>{formatDisplayDate(date)}</Text>
-            <Text style={styles.footerContextMeal}>{MEAL_LABELS[mealType]}</Text>
-          </View>
-          <Pressable
-            style={styles.doneBtn}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Done"
-          >
-            <Text style={styles.doneText}>Done</Text>
-          </Pressable>
-        </View>
       </ModalContainer>
+
+      <View style={[styles.fabWrap, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+        <View style={styles.fabRow}>
+          <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
+          <Fab icon="checkmark" onPress={safeBack} accessibilityLabel="Done" />
+        </View>
+      </View>
     </KeyboardAvoidingView>
   )
 }
@@ -426,39 +410,27 @@ const createStyles = (colors: ColorPalette) =>
     header: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
       paddingHorizontal: spacing.md,
       paddingTop: spacing.md,
       paddingBottom: spacing.sm,
     },
-    headerSpacer: { width: 28 },
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs,
+    },
+    headerIconBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     title: {
-      flex: 1,
-      textAlign: "center",
       fontSize: 22,
       fontWeight: "700",
       color: colors.text,
-    },
-    modeRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: spacing.md,
-      gap: spacing.sm,
-      marginBottom: spacing.md,
-    },
-    modeBtn: {
-      flex: 1,
-      alignItems: "center",
-      paddingVertical: spacing.sm,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      gap: 4,
-    },
-    modeLabel: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: colors.textMuted,
     },
     searchWrap: {
       flexDirection: "row",
@@ -557,38 +529,14 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    footer: {
+    fabWrap: {
+      position: "absolute",
+      right: 20,
+      alignItems: "flex-end",
+    },
+    fabRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
-      paddingBottom: spacing.lg,
-      backgroundColor: colors.primary,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-    },
-    footerContext: { minWidth: 88 },
-    footerContextDate: {
-      color: colors.onPrimary,
-      fontSize: 12,
-      fontWeight: "700",
-    },
-    footerContextMeal: {
-      color: colors.onPrimary,
-      fontSize: 11,
-      opacity: 0.85,
-    },
-    doneBtn: {
-      flex: 1,
-      backgroundColor: colors.primaryMuted,
-      borderRadius: 28,
-      paddingVertical: spacing.md,
-      alignItems: "center",
-    },
-    doneText: {
-      color: colors.onPrimary,
-      fontSize: 17,
-      fontWeight: "700",
     },
   })

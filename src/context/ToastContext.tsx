@@ -90,8 +90,8 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
   return (
     <View
       style={[
-        Platform.OS === "web" ? styles.hostBottom : styles.host,
-        Platform.OS !== "web" ? { paddingTop: insets.top + spacing.sm } : undefined,
+        styles.host,
+        { paddingTop: Platform.OS !== "web" ? insets.top + spacing.sm : spacing.sm },
         { pointerEvents: "box-none" },
       ]}
     >
@@ -193,15 +193,6 @@ const createToastStyles = (colors: ColorPalette) =>
     host: {
       position: "absolute",
       top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 9999,
-      alignItems: "center",
-      paddingHorizontal: spacing.md,
-    },
-    hostBottom: {
-      position: "absolute",
-      bottom: spacing.lg,
       left: 0,
       right: 0,
       zIndex: 9999,

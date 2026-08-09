@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { Pressable, RefreshControl, ScrollView, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
@@ -203,30 +203,25 @@ export default function TodayScreen() {
   const weight = summary?.weight
   const insets = useSafeAreaInsets()
 
-  const fabCluster = !isWide ? (
-    <View
-      style={{
-        position: "absolute",
-        right: 20,
-        bottom: 64 + insets.bottom + 16,
-        alignItems: "flex-end",
-        gap: 12,
-      }}
-      pointerEvents="box-none"
-    >
-      <Fab
-        icon="sparkles"
-        onPress={() => router.push("/ai-chat")}
-        accessibilityLabel="Open AI assistant"
-      />
-      <Fab
-        icon="add"
-        label="Add food"
-        onPress={() => router.push({ pathname: "/log-meal", params: { date: dateKey } })}
-        accessibilityLabel="Add food"
-      />
-    </View>
-  ) : null
+  const fabCluster =
+    settings.ai_enabled === 1 ? (
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: isWide ? insets.bottom + 24 : 64 + insets.bottom + 16,
+        }}
+        pointerEvents="box-none"
+      >
+        <Fab
+          icon="robot-outline"
+          IconComponent={MaterialCommunityIcons}
+          label="Ask AI"
+          onPress={() => router.push("/ai-chat")}
+          accessibilityLabel="Open AI assistant"
+        />
+      </View>
+    ) : null
 
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
@@ -279,25 +274,9 @@ export default function TodayScreen() {
 
   const nutritionHeader = (
     <Box className="mb-4 flex-row items-center justify-between px-1">
-      <Box>
-        <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
-          Meals
-        </Text>
-        <Text size="sm" style={{ color: colors.textMuted }} className="mt-0.5">
-          Tap + to log food
-        </Text>
-      </Box>
-      <Pressable
-        className="h-11 flex-row items-center gap-1.5 rounded-full bg-primary-500 px-4 active:opacity-85"
-        onPress={() => router.push({ pathname: "/scan", params: { meal: "lunch", date: dateKey } })}
-        accessibilityRole="button"
-        accessibilityLabel="Scan barcode"
-      >
-        <Ionicons name="barcode-outline" size={20} color={colors.onPrimary} />
-        <Text size="sm" bold style={{ color: colors.onPrimary }}>
-          Scan
-        </Text>
-      </Pressable>
+      <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+        Meals
+      </Text>
     </Box>
   )
 

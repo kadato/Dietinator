@@ -66,6 +66,30 @@ function BarcodeMatchesList({
   )
 }
 
+function ScanHeader({ onClose, overlay = false }: { onClose: () => void; overlay?: boolean }) {
+  const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
+  return (
+    <View style={overlay ? styles.headerOverlay : styles.headerFlow} pointerEvents="box-none">
+      <View style={[styles.headerBar, { backgroundColor: colors.background }]}>
+        <View style={styles.headerTitleWrap}>
+          <Ionicons name="barcode-outline" size={20} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Scan barcode</Text>
+        </View>
+        <Pressable
+          style={[styles.headerClose, { backgroundColor: colors.surfaceAlt }]}
+          onPress={onClose}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Close scanner"
+        >
+          <Ionicons name="close" size={22} color={colors.text} />
+        </Pressable>
+      </View>
+    </View>
+  )
+}
+
 export default function ScanScreen() {
   const router = useRouter()
   const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>()
@@ -157,22 +181,20 @@ export default function ScanScreen() {
     })
   }
 
+  const close = () => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }
+
   if (MANUAL_SCAN_ON_WEB) {
     return (
       <View style={styles.container}>
         <ModalContainer hug maxWidth={640}>
+          <ScanHeader onClose={close} overlay={!results.length} />
           <Box className="flex-1" style={styles.webScanContent}>
-            <Box className="mb-2 flex-row items-center justify-between">
-              <Text style={styles.webScanTitle}>Scan barcode</Text>
-              <Pressable
-                onPress={() => router.back()}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <Ionicons name="close" size={28} color={colors.text} />
-              </Pressable>
-            </Box>
             <Text style={styles.webScanHint}>
               Camera scanning is not available in the browser. Enter the barcode number from the
               product label instead (EAN-13 / UPC).
@@ -253,6 +275,9 @@ export default function ScanScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
+          <Box className="h-20 w-20 items-center justify-center rounded-full bg-background-50">
+            <Ionicons name="camera-outline" size={36} color={colors.primary} />
+          </Box>
           <Text style={styles.message}>Camera permission is required to scan barcodes.</Text>
           {permission.canAskAgain === false ? (
             <>
@@ -278,7 +303,7 @@ export default function ScanScreen() {
               <Text style={styles.btnText}>Grant permission</Text>
             </Pressable>
           )}
-          <Pressable style={styles.close} onPress={() => router.back()} accessibilityRole="button">
+          <Pressable style={styles.close} onPress={close} accessibilityRole="button">
             <Text style={styles.closeText}>Cancel</Text>
           </Pressable>
         </PageContainer>
@@ -313,20 +338,40 @@ export default function ScanScreen() {
           />
         </PageContainer>
       )}
+
+      {!results.length ? (
+        <View style={styles.viewfinder} pointerEvents="none">
+          <View style={styles.frame} />
+          <View style={styles.frameHint}>
+            <Ionicons name="scan-outline" size={16} color="#ffffff" />
+            <Text style={styles.frameHintText}>Align the barcode inside the frame</Text>
+          </View>
+        </View>
+      ) : null}
+
+      <ScanHeader onClose={close} />
+
       {loading && (
         <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.overlayText}>Looking up {lastBarcode}...</Text>
+          <View style={styles.overlayCard}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.overlayText, { color: colors.text }]}>
+              Looking up {lastBarcode}...
+            </Text>
+          </View>
         </View>
       )}
-      <Pressable
-        style={styles.closeFab}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel="Close scanner"
-      >
-        <Text style={styles.closeText}>Close</Text>
-      </Pressable>
+
+      <View style={styles.closeFabWrap} pointerEvents="box-none">
+        <Pressable
+          style={styles.closeFab}
+          onPress={close}
+          accessibilityRole="button"
+          accessibilityLabel="Close scanner"
+        >
+          <Ionicons name="close" size={26} color="#ffffff" />
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -336,12 +381,7 @@ const createStyles = (colors: ColorPalette) =>
     container: { flex: 1, backgroundColor: colors.background },
     camera: { flex: 1 },
     list: { flex: 1 },
-    webScanContent: { padding: spacing.lg, paddingTop: spacing.md },
-    webScanTitle: {
-      color: colors.text,
-      fontSize: 22,
-      fontWeight: "700",
-    },
+    webScanContent: { padding: spacing.lg, paddingTop: spacing.sm },
     webScanHint: {
       color: colors.textMuted,
       fontSize: 14,
@@ -372,6 +412,80 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.primary,
     },
     scanAgainText: { color: colors.onPrimary, fontWeight: "700" },
+    headerOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+    },
+    headerFlow: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.sm,
+    },
+    headerBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderRadius: 16,
+      paddingLeft: spacing.md,
+      paddingRight: spacing.sm,
+      paddingVertical: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    headerTitleWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerClose: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    viewfinder: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    frame: {
+      width: 250,
+      height: 250,
+      borderRadius: 28,
+      borderWidth: 3,
+      borderColor: "rgba(255,255,255,0.85)",
+      backgroundColor: "transparent",
+      shadowColor: "#000",
+      shadowOpacity: 0.35,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 0 },
+    },
+    frameHint: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginTop: spacing.md,
+      backgroundColor: "rgba(0,0,0,0.55)",
+      borderRadius: 20,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    frameHintText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
     center: {
       flex: 1,
       backgroundColor: colors.background,
@@ -382,34 +496,67 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       padding: spacing.lg,
     },
-    message: { color: colors.text, textAlign: "center", marginBottom: spacing.sm },
+    message: {
+      color: colors.text,
+      textAlign: "center",
+      marginTop: spacing.md,
+      fontSize: 16,
+      fontWeight: "600",
+    },
     hint: {
       color: colors.textMuted,
       textAlign: "center",
       marginBottom: spacing.lg,
+      marginTop: spacing.sm,
       maxWidth: 280,
     },
     btn: {
       backgroundColor: colors.primary,
-      padding: spacing.md,
-      borderRadius: 10,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      borderRadius: 28,
     },
     btnText: { color: colors.onPrimary, fontWeight: "700" },
     overlay: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: "rgba(0,0,0,0.6)",
+      backgroundColor: "rgba(0,0,0,0.55)",
       alignItems: "center",
       justifyContent: "center",
     },
-    overlayText: { color: "#ffffff", marginTop: spacing.md },
-    closeFab: {
+    overlayCard: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: spacing.lg,
+      minWidth: 200,
+      shadowColor: "#000",
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 8,
+    },
+    overlayText: { marginTop: spacing.md, fontSize: 14, fontWeight: "600" },
+    closeFabWrap: {
       position: "absolute",
       bottom: 40,
-      alignSelf: "center",
-      backgroundColor: colors.surface,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-      borderRadius: 24,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+    },
+    closeFab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0,0,0,0.6)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.25)",
+      shadowColor: "#000",
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 8,
     },
     close: { marginTop: spacing.md },
     closeText: { color: colors.text, fontWeight: "600" },
