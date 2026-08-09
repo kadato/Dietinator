@@ -6,9 +6,11 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  View,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useTheme } from "@/hooks/useTheme"
@@ -19,6 +21,7 @@ import { nutrientsForAmount } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -34,6 +37,7 @@ export default function MealBuilderScreen() {
   const isEditing = Boolean(mealId)
 
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
 
   const [name, setName] = useState("")
@@ -173,7 +177,7 @@ export default function MealBuilderScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer maxWidth={640}>
-        <Box className="flex-row items-center px-4 pb-2 pt-4">
+        <Box className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 16 }}>
           <Pressable
             onPress={() => router.back()}
             hitSlop={12}
@@ -190,7 +194,7 @@ export default function MealBuilderScreen() {
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-8"
+          contentContainerClassName="px-4 pb-32"
           keyboardShouldPersistTaps="handled"
         >
           <Text size="sm" className="mb-4 text-typography-500">
@@ -234,6 +238,7 @@ export default function MealBuilderScreen() {
                     value={item.amount === 0 ? "" : String(item.amount)}
                     onChangeText={(value) => setItemAmount(item.product_id, value)}
                     accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
+                    maxFontSizeMultiplier={1.4}
                   />
                   <Text size="xs" className="w-6 text-typography-500">
                     {item.base_unit}
@@ -299,22 +304,9 @@ export default function MealBuilderScreen() {
             </Text>
           ) : null}
 
-          <Pressable
-            className={`mt-6 items-center rounded-xl py-3.5 ${saving ? "opacity-60" : ""}`}
-            style={{ backgroundColor: colors.primary }}
-            onPress={handleSave}
-            disabled={saving}
-            accessibilityRole="button"
-            accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
-          >
-            <Text size="md" bold className="text-typography-0">
-              {saving ? "Saving..." : isEditing ? "Save changes" : "Create meal"}
-            </Text>
-          </Pressable>
-
           {isEditing ? (
             <Pressable
-              className="mt-4 items-center"
+              className="mt-8 items-center"
               onPress={handleDelete}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
@@ -326,6 +318,23 @@ export default function MealBuilderScreen() {
           ) : null}
         </ScrollView>
       </ModalContainer>
+
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: insets.bottom + 16,
+        }}
+        pointerEvents="box-none"
+      >
+        <Fab
+          icon="checkmark"
+          label={isEditing ? "Save changes" : "Create meal"}
+          onPress={() => void handleSave()}
+          disabled={saving}
+          accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+        />
+      </View>
     </KeyboardAvoidingView>
   )
 }
