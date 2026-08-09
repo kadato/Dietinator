@@ -19,7 +19,8 @@ export async function seedAuthenticated(page: Page): Promise<void> {
 export async function bootAuthenticated(page: Page): Promise<void> {
   await seedAuthenticated(page)
   await page.goto("/")
-  await expect(page.getByText("Meals", { exact: true })).toBeVisible({
+  // The Today screen's calendar button is unique to the dashboard.
+  await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
     timeout: 30_000,
   })
 }

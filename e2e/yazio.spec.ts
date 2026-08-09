@@ -29,7 +29,7 @@ test.describe("YAZIO (real account)", () => {
     await page.getByPlaceholder("Password").fill(PASSWORD!)
     await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
     // Login imports today's diary from YAZIO — wait for the dashboard to settle.
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 60_000,
     })
     await expect(page.getByText(/YAZIO unavailable/i)).toBeHidden()
@@ -37,13 +37,7 @@ test.describe("YAZIO (real account)", () => {
 
   async function logFoodViaSearch(page: Page, meal: string, query: string) {
     await page.getByRole("button", { name: `Add food to ${meal}` }).click()
-    const placeholders: Record<string, string> = {
-      Breakfast: "What did you have for breakfast?",
-      Lunch: "What did you have for lunch?",
-      Dinner: "What did you have for dinner?",
-      Snacks: "What did you have for a snack?",
-    }
-    const searchBox = page.getByPlaceholder(placeholders[meal])
+    const searchBox = page.getByPlaceholder("Search foods…")
     await expect(searchBox).toBeVisible()
     await searchBox.fill(query)
 
@@ -63,15 +57,19 @@ test.describe("YAZIO (real account)", () => {
 
   test("signs in with real credentials and reaches the dashboard", async ({ page }) => {
     await login(page)
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
+    // The scanner lives inside food tracking, not on the dashboard.
+    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeHidden()
+    await page.getByRole("button", { name: "Add food to Lunch" }).click()
+    await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
+    await page.getByRole("button", { name: "Cancel" }).click()
   })
 
   test("searches the live YAZIO food database", async ({ page }) => {
     await login(page)
 
     await page.getByText("Search", { exact: true }).click()
-    await page.getByPlaceholder("Search foods...").fill("banana")
+    await page.getByPlaceholder("e.g. banana, oats, chicken").fill("banana")
 
     // Remote results arrive with real product rows (aria-label "<name>, <kcal> calories").
     const rows = page.locator('[aria-label$=" calories"]')

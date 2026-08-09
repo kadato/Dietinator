@@ -22,7 +22,9 @@ test.describe("demo mode", () => {
 
     await page.getByRole("button", { name: "Explore the demo (no account)" }).click()
 
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
+      timeout: 30_000,
+    })
     // Seeded demo entries are rendered inside the meal section buttons.
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
@@ -32,7 +34,9 @@ test.describe("demo mode", () => {
 
   test("?demo=1 boots straight into a demo session", async ({ page }) => {
     await page.goto("/?demo=1")
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
@@ -55,6 +59,7 @@ test.describe("backup and restore (offline)", () => {
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
     await expect(page.getByText("Goals, sync, and your data")).toBeVisible()
+    await page.getByRole("button", { name: "Data settings" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Back up all data" }).click(),
@@ -73,6 +78,7 @@ test.describe("backup and restore (offline)", () => {
 
     // Restore from the downloaded file: confirm dialog, then file picker.
     await page.getByRole("tab", { name: /Settings/ }).click()
+    await page.getByRole("button", { name: "Data settings" }).click()
     page.once("dialog", (dialog) => void dialog.accept())
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser"),

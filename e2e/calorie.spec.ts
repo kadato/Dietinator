@@ -13,7 +13,7 @@ const PASSWORD = process.env.YAZIO_PASSWORD
 
 async function openFoodPreview(page: import("@playwright/test").Page, query: string) {
   await page.getByRole("button", { name: "Add food to Lunch" }).click()
-  const searchBox = page.getByPlaceholder("What did you have for lunch?")
+  const searchBox = page.getByPlaceholder("Search foods…")
   await expect(searchBox).toBeVisible()
   const firstRow = page.getByRole("button", { name: /, \d+ calories/ }).first()
   const suggestionLabel = await firstRow.getAttribute("aria-label")
@@ -57,7 +57,7 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     await page.getByPlaceholder("YAZIO email").fill(EMAIL!)
     await page.getByPlaceholder("Password").fill(PASSWORD!)
     await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 60_000,
     })
   })

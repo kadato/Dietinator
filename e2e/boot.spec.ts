@@ -15,7 +15,7 @@ test.describe("app boot", () => {
     }, "calorie_tracker_yazio_logged_in")
     await page.goto("/")
 
-    await expect(page.getByText("Meals", { exact: true })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
     // Fully usable without YAZIO — local-first. (No banner on boot: nothing has failed yet.)

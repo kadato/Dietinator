@@ -75,43 +75,47 @@ describe("MCP server: snapshot bridge", () => {
     store = createSnapshotStore()
   })
 
-  const snapshot = () => ({
-    updated_at: "2026-08-08T10:00:00.000Z",
-    settings: {
-      calorie_goal: 2000,
-      protein_goal: 150,
-      carbs_goal: 200,
-      fat_goal: 65,
-      units: "metric",
-      yazio_sync_enabled: 0,
-    },
-    diary: [
-      {
-        id: "e1",
-        date: "2026-08-08",
-        meal_type: "lunch",
-        food_name: "Rice",
-        amount: 1,
-        unit: "serving",
-        kcal: 200,
-        protein: 4,
-        carbs: 45,
-        fat: 0.5,
-        created_at: "2026-08-08T12:00:00.000Z",
+  const snapshot = () => {
+    // Derived from "now" so per-day stats tests hold on any real-world date.
+    const today = new Date().toISOString().slice(0, 10)
+    return {
+      updated_at: "2026-08-08T10:00:00.000Z",
+      settings: {
+        calorie_goal: 2000,
+        protein_goal: 150,
+        carbs_goal: 200,
+        fat_goal: 65,
+        units: "metric",
+        yazio_sync_enabled: 0,
       },
-    ],
-    meals: [
-      {
-        id: "meal-1",
-        name: "Cornflakes with milk",
-        kcal: 150,
-        protein: 3,
-        carbs: 33,
-        fat: 0.5,
-        items_count: 1,
-      },
-    ],
-  })
+      diary: [
+        {
+          id: "e1",
+          date: today,
+          meal_type: "lunch",
+          food_name: "Rice",
+          amount: 1,
+          unit: "serving",
+          kcal: 200,
+          protein: 4,
+          carbs: 45,
+          fat: 0.5,
+          created_at: "2026-08-08T12:00:00.000Z",
+        },
+      ],
+      meals: [
+        {
+          id: "meal-1",
+          name: "Cornflakes with milk",
+          kcal: 150,
+          protein: 3,
+          carbs: 33,
+          fat: 0.5,
+          items_count: 1,
+        },
+      ],
+    }
+  }
 
   it("accepts a valid snapshot and rejects malformed ones", () => {
     expect(handleSnapshot(store, snapshot()).ok).toBe(true)
