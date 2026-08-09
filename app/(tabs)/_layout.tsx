@@ -65,6 +65,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="meals"
+        options={{
+          title: "Meals",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="restaurant-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

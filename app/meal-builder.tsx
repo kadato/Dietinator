@@ -14,11 +14,9 @@ import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useTheme } from "@/hooks/useTheme"
 import { useToast } from "@/context/ToastContext"
 import { deleteMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
-import type { MealItem, MealType, SearchFoodResult } from "@/types"
-import { MEAL_LABELS } from "@/utils/meals"
+import type { MealItem, SearchFoodResult } from "@/types"
 import { nutrientsForAmount } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
-import { toDateKey } from "@/utils/date"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Box } from "@ui/box"
@@ -31,9 +29,7 @@ function servingAmountFor(food: SearchFoodResult): number {
 
 export default function MealBuilderScreen() {
   const router = useRouter()
-  const params = useLocalSearchParams<{ meal?: string; date?: string; mealId?: string }>()
-  const mealType = (routeParam(params.meal) ?? "lunch") as MealType
-  const date = routeParam(params.date) ?? toDateKey()
+  const params = useLocalSearchParams<{ mealId?: string }>()
   const mealId = routeParam(params.mealId)
   const isEditing = Boolean(mealId)
 
@@ -198,7 +194,7 @@ export default function MealBuilderScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text size="sm" className="mb-4 text-typography-500">
-            {MEAL_LABELS[mealType]} · {date}
+            Saved meals are ready to log into any meal slot.
           </Text>
 
           <Text size="xs" bold className="mb-1.5 text-typography-600">

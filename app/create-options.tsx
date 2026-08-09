@@ -30,14 +30,6 @@ const OPTIONS: CreateOption[] = [
     available: true,
   },
   {
-    id: "barcode-food",
-    title: "New food with barcode",
-    description: "Individual item (e.g. Raisin Bran, Kellogg's)",
-    icon: "nutrition",
-    iconColor: "#f97316",
-    available: true,
-  },
-  {
     id: "manual-food",
     title: "New food without barcode",
     description: "Individual item (e.g. Bread roll)",
@@ -77,11 +69,8 @@ export default function CreateOptionsScreen() {
       return
     }
     switch (option.id) {
-      case "barcode-food":
-        router.push({ pathname: "/scan", params: { meal: mealType, date } })
-        break
       case "meal":
-        router.push({ pathname: "/meal-builder", params: { meal: mealType, date } })
+        router.push({ pathname: "/meal-builder" })
         break
       case "manual-food":
       case "quick-add":

@@ -9,13 +9,6 @@ export const MEAL_LABELS: Record<MealType, string> = {
   snack: "Snacks",
 }
 
-export const MEAL_PLACEHOLDERS: Record<MealType, string> = {
-  breakfast: "What did you have for breakfast?",
-  lunch: "What did you have for lunch?",
-  dinner: "What did you have for dinner?",
-  snack: "What did you have for a snack?",
-}
-
 export const MEAL_ICONS: Record<
   MealType,
   keyof typeof import("@expo/vector-icons").Ionicons.glyphMap
