@@ -59,7 +59,8 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       base_unit TEXT NOT NULL DEFAULT 'g',
       cached_at TEXT NOT NULL,
       is_favorite INTEGER NOT NULL DEFAULT 0,
-      last_used_at TEXT
+      last_used_at TEXT,
+      source TEXT
     );
 
     CREATE TABLE IF NOT EXISTS deleted_yazio_items (
@@ -174,6 +175,11 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     await database.execAsync(
       `ALTER TABLE food_cache ADD COLUMN base_unit TEXT NOT NULL DEFAULT 'g'`,
     )
+  }
+  if (!foodCacheColumns.some((column) => column.name === "source")) {
+    // 'search' rows hold per-gram nutrients (never served cache-first);
+    // 'detail' rows are normalized per 100 g/ml and are safe to serve locally.
+    await database.execAsync(`ALTER TABLE food_cache ADD COLUMN source TEXT`)
   }
 
   // One-time cleanup (user_version 0 → 1): drop cached foods whose stored

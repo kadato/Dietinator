@@ -1,6 +1,7 @@
 import type { CachedFood, FoodNutrients, FoodServing, SearchFoodResult } from "@/types"
 import { getDatabase } from "./database"
 import { parseJson } from "@/utils/json"
+import { isPerGramNutrients } from "@/utils/nutrients"
 
 function rowToCached(row: Record<string, unknown>): CachedFood {
   return {
@@ -14,6 +15,7 @@ function rowToCached(row: Record<string, unknown>): CachedFood {
     cached_at: String(row.cached_at),
     is_favorite: Number(row.is_favorite),
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
+    source: row.source ? String(row.source) : null,
   }
 }
 
@@ -62,6 +64,16 @@ export async function getFoodById(productId: string): Promise<SearchFoodResult |
     productId,
   )
   return row ? cachedToSearchResult(rowToCached(row)) : null
+}
+
+/** Cache row including its source marker ('search' | 'detail' | null). */
+export async function getCachedFoodById(productId: string): Promise<CachedFood | null> {
+  const db = await getDatabase()
+  const row = await db.getFirstAsync<Record<string, unknown>>(
+    "SELECT * FROM food_cache WHERE yazio_product_id = ?",
+    productId,
+  )
+  return row ? rowToCached(row) : null
 }
 
 /** Batch cache lookup — avoids N+1 reads when resolving a list of entries. */
@@ -123,19 +135,29 @@ export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {
  * `preserveLastUsedAt` keeps recent-usage markers untouched: fresh rows are
  * stored with no usage date and existing rows keep theirs. Use it for silent
  * cache warm-ups (e.g. saving a meal) where the food was not consumed.
+ *
+ * `source` records whether the row holds per-gram search data ('search') or
+ * normalized product details ('detail'). When omitted it is inferred from the
+ * nutrient values, so silent warm-ups still tag rows correctly.
  */
 export async function saveFoodToCache(
   food: SearchFoodResult,
   barcode: string | null = null,
   preserveLastUsedAt = false,
+  source?: "search" | "detail",
 ): Promise<void> {
   const db = await getDatabase()
   const now = new Date().toISOString()
+  const rowSource =
+    source ??
+    (isPerGramNutrients(food.nutrients, food.base_unit || "g", food.serving.serving_quantity)
+      ? "search"
+      : "detail")
   await db.runAsync(
     `INSERT INTO food_cache (
       yazio_product_id, barcode, name, producer, nutrients_json, serving_json, base_unit,
-      cached_at, is_favorite, last_used_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?)
+      cached_at, is_favorite, last_used_at, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, ?)
     ON CONFLICT(yazio_product_id) DO UPDATE SET
       barcode = COALESCE(excluded.barcode, food_cache.barcode),
       name = excluded.name,
@@ -144,7 +166,8 @@ export async function saveFoodToCache(
       serving_json = excluded.serving_json,
       base_unit = excluded.base_unit,
       cached_at = excluded.cached_at,
-      last_used_at = ${preserveLastUsedAt ? "food_cache.last_used_at" : "excluded.last_used_at"}`,
+      last_used_at = ${preserveLastUsedAt ? "food_cache.last_used_at" : "excluded.last_used_at"},
+      source = excluded.source`,
     food.product_id,
     barcode,
     food.name,
@@ -155,6 +178,45 @@ export async function saveFoodToCache(
     now,
     food.product_id,
     preserveLastUsedAt ? null : now,
+    rowSource,
+  )
+}
+
+/**
+ * Warm the cache from a search response. Search rows hold per-gram nutrients
+ * and would otherwise clobber the normalized 'detail' row a user already
+ * opened — which forces a redundant refetch on the next visit. Search only
+ * fills gaps: existing 'detail' rows are left untouched.
+ */
+export async function saveSearchResultToCache(food: SearchFoodResult): Promise<void> {
+  const db = await getDatabase()
+  const now = new Date().toISOString()
+  await db.runAsync(
+    `INSERT INTO food_cache (
+      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, base_unit,
+      cached_at, is_favorite, last_used_at, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, 'search')
+    ON CONFLICT(yazio_product_id) DO UPDATE SET
+      barcode = COALESCE(excluded.barcode, food_cache.barcode),
+      name = excluded.name,
+      producer = excluded.producer,
+      nutrients_json = excluded.nutrients_json,
+      serving_json = excluded.serving_json,
+      base_unit = excluded.base_unit,
+      cached_at = excluded.cached_at,
+      last_used_at = food_cache.last_used_at,
+      source = 'search'
+    WHERE food_cache.source IS NOT 'detail'`,
+    food.product_id,
+    null,
+    food.name,
+    food.producer,
+    JSON.stringify(food.nutrients),
+    JSON.stringify(food.serving),
+    food.base_unit || "g",
+    now,
+    food.product_id,
+    null,
   )
 }
 

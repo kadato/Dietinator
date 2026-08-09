@@ -28,6 +28,12 @@ export interface CachedFood {
   cached_at: string
   is_favorite: number
   last_used_at: string | null
+  /**
+   * Where the row came from: 'search' (per-gram nutrients — stale by design,
+   * never served cache-first) or 'detail' (normalized per 100 g/ml — safe to
+   * serve locally). Null for rows written before this column existed.
+   */
+  source: string | null
 }
 
 /** Provider presets mirroring Physiquinator (base URL + default model per provider). */

@@ -1,6 +1,7 @@
 import {
   isPerGramNutrients,
   isPerGramRawNutrients,
+  normalizePerGramFood,
   nutrientsForAmount,
   nutrientsFromYazio,
   nutrientsReferenceAmount,
@@ -8,7 +9,7 @@ import {
   sumNutrients,
   toKcal,
 } from "../nutrients"
-import type { FoodNutrients, FoodServing } from "@/types"
+import type { FoodNutrients, FoodServing, SearchFoodResult } from "@/types"
 
 const serving = (overrides: Partial<FoodServing> = {}): FoodServing => ({
   serving: "100 g",
@@ -176,5 +177,31 @@ describe("sumNutrients", () => {
 
   it("returns zeros for an empty list", () => {
     expect(sumNutrients([])).toEqual({ kcal: 0, protein: 0, carbs: 0, fat: 0 })
+  })
+})
+
+describe("normalizePerGramFood", () => {
+  const perGram: SearchFoodResult = {
+    product_id: "oil-1",
+    name: "Olive oil",
+    producer: "",
+    nutrients: { kcal: 8.84, protein: 0, carbs: 0, fat: 1 },
+    serving: { serving: "100 ml", amount: 100, serving_quantity: 100 },
+    base_unit: "ml",
+    is_verified: true,
+  }
+
+  it("scales per-gram nutrients to per-100 with a matching serving", () => {
+    const normalized = normalizePerGramFood(perGram)
+    expect(normalized.nutrients).toEqual({ kcal: 884, protein: 0, carbs: 0, fat: 100 })
+    expect(normalized.serving).toEqual({ serving: "100 ml", amount: 100, serving_quantity: 100 })
+    // 100 g/ml of the normalized food must equal the per-gram × 100 math.
+    expect(nutrientsForAmount(normalized.nutrients, normalized.serving, 100, "ml").kcal).toBe(884)
+    expect(normalized.servings).toBeUndefined()
+  })
+
+  it("labels gram rows as 100 g", () => {
+    const normalized = normalizePerGramFood({ ...perGram, base_unit: "g" })
+    expect(normalized.serving.serving).toBe("100 g")
   })
 })

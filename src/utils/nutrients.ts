@@ -1,4 +1,4 @@
-import type { FoodNutrients, FoodServing } from "@/types"
+import type { FoodNutrients, FoodServing, SearchFoodResult } from "@/types"
 
 /** Convert YAZIO energy to kcal using the account's `unit_energy` (kcal or kj). */
 export function toKcal(energy: number, unitEnergy = "kcal"): number {
@@ -154,6 +154,30 @@ export function nutrientsForAmount(
 ): FoodNutrients {
   const ref = resolveNutrientsRefAmount(base, serving, baseUnit)
   return scaleNutrients(base, ref, targetAmount)
+}
+
+/**
+ * Convert a per-gram/per-ml cache row (search data) into a normalized per-100
+ * display food, so a preview can render instantly from the cache. Only valid
+ * for g/ml rows — search rows for countable units (pieces, scoops) hold
+ * per-item nutrients and must not be multiplied.
+ */
+export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
+  return {
+    ...food,
+    nutrients: {
+      kcal: food.nutrients.kcal * 100,
+      protein: food.nutrients.protein * 100,
+      carbs: food.nutrients.carbs * 100,
+      fat: food.nutrients.fat * 100,
+    },
+    serving: {
+      serving: food.base_unit === "ml" ? "100 ml" : "100 g",
+      amount: 100,
+      serving_quantity: 100,
+    },
+    servings: undefined,
+  }
 }
 
 function roundMacro(value: number): number {
