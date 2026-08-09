@@ -179,9 +179,10 @@ const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, II
     // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
     // value of a controlled input when it was set programmatically (not typed)
     // until the input receives focus — e.g. goal fields appear empty on load.
-    // A focus()+blur() cycle repaints the text. Skipped while the user is
-    // typing (document.activeElement === node) so focus/selection is never
-    // disturbed.
+    // A focus()+blur() cycle repaints the text. Runs only when the value
+    // changes: without deps it fires on every parent re-render and yanks
+    // focus away from whichever input is being typed in. Skipped while this
+    // input itself is focused so typing is never disturbed.
     useLayoutEffect(() => {
       if (Platform.OS !== "web" || props.value == null) return
       const node = hostRef.current as unknown as HTMLInputElement | null
@@ -189,7 +190,7 @@ const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, II
         node.focus()
         node.blur()
       }
-    })
+    }, [props.value])
 
     return (
       <UIInput.Input
