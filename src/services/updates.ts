@@ -4,6 +4,9 @@ import { withRetry } from "@/utils/retry"
 /** GitHub repository that publishes Dietinator releases (APK + changelog). */
 export const GITHUB_REPO = "tothKarolyDavid/Dietinator"
 
+/** GitHub web URL of the repository — used by the quota-free redirect fallback. */
+export const RELEASE_PAGE_URL = `https://github.com/${GITHUB_REPO}`
+
 /** Release asset name published by `.github/workflows/release.yml`. */
 export const ANDROID_APK_ASSET = "Dietinator-Android.apk"
 
@@ -57,23 +60,68 @@ export function getApkAsset(release: GitHubRelease): GitHubReleaseAsset | null {
 /**
  * Fetch the latest published release from GitHub. Returns null when the
  * repository has no releases yet. Throws on network/5xx (retried).
+ *
+ * When the JSON API is unavailable (unauthenticated rate limit, outage) the
+ * check falls back to the redirect-based variant so updates keep working.
  */
 export async function fetchLatestRelease(): Promise<GitHubRelease | null> {
-  const response = await withRetry(async () => {
-    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "Dietinator-Updater",
-      },
+  try {
+    const response = await withRetry(async () => {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "Dietinator-Updater",
+        },
+      })
+      if (!res.ok && res.status >= 500) {
+        throw new Error(`GitHub responded (${res.status})`)
+      }
+      return res
     })
-    if (!res.ok && res.status >= 500) {
-      throw new Error(`GitHub responded (${res.status})`)
-    }
-    return res
+    if (response.status === 404) return null
+    if (!response.ok) throw new Error(`GitHub responded (${response.status})`)
+    return parseRelease(await response.json())
+  } catch {
+    return fetchLatestReleaseViaRedirect()
+  }
+}
+
+/**
+ * Extract the release tag (vX.Y.Z) from a "latest" redirect target URL,
+ * e.g. …/releases/latest → …/releases/tag/v1.2.3.
+ */
+export function parseTagFromRedirectUrl(url: string): string | null {
+  const match = /\/releases\/tag\/(v\d+\.\d+\.\d+)/.exec(url)
+  return match?.[1] ?? null
+}
+
+/**
+ * Quota-free fallback update check. GitHub redirects /releases/latest to the
+ * newest release page, so the version can be read out of the final URL. The
+ * APK asset is exposed through its stable "latest download" URL, which always
+ * points at the newest signed build. Returns null when nothing resolves.
+ */
+export async function fetchLatestReleaseViaRedirect(): Promise<GitHubRelease | null> {
+  const response = await fetch(`${RELEASE_PAGE_URL}/releases/latest`, {
+    headers: { "User-Agent": "Dietinator-Updater" },
   })
-  if (response.status === 404) return null
-  if (!response.ok) throw new Error(`GitHub responded (${response.status})`)
-  return parseRelease(await response.json())
+  if (!response.ok) return null
+  const tag = parseTagFromRedirectUrl(response.url)
+  if (!tag) return null
+  return {
+    tag,
+    name: tag,
+    notes: null,
+    publishedAt: null,
+    prerelease: false,
+    assets: [
+      {
+        name: ANDROID_APK_ASSET,
+        downloadUrl: `${RELEASE_PAGE_URL}/releases/latest/download/${ANDROID_APK_ASSET}`,
+        sizeBytes: 0,
+      },
+    ],
+  }
 }
 
 /** Parse a GitHub releases/latest JSON payload into a GitHubRelease. */
