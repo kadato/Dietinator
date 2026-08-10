@@ -322,10 +322,25 @@ export default function MealBuilderScreen() {
       <View
         style={{
           position: "absolute",
+          left: 20,
+          bottom: insets.bottom + 16,
+          pointerEvents: "box-none",
+        }}
+      >
+        <Fab
+          tone="surface"
+          icon="close"
+          onPress={() => router.back()}
+          accessibilityLabel="Cancel"
+        />
+      </View>
+      <View
+        style={{
+          position: "absolute",
           right: 20,
           bottom: insets.bottom + 16,
+          pointerEvents: "box-none",
         }}
-        pointerEvents="box-none"
       >
         <Fab
           icon="checkmark"

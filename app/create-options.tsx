@@ -1,10 +1,10 @@
-import { Pressable, ScrollView } from "react-native"
+import { Pressable, ScrollView, View } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useToast } from "@/context/ToastContext"
-import { useTheme } from "@/hooks/useTheme"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
 import type { MealType } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -62,9 +62,7 @@ export default function CreateOptionsScreen() {
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
   const { showWarning } = useToast()
-  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-
   const onSelect = (option: CreateOption) => {
     if (!option.available) {
       showWarning("Creating recipes on YAZIO is not supported by this app yet.", "Coming soon")
@@ -87,58 +85,64 @@ export default function CreateOptionsScreen() {
   }
 
   return (
-    <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
-      <Box className="px-4" style={{ paddingTop: insets.top + 16 }}>
-        <Pressable
+    <View style={{ flex: 1 }}>
+      <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
+        <Text size="3xl" bold className="mb-6 mt-6 px-6 text-typography-900">
+          What would you like to create?
+        </Text>
+
+        <ScrollView className="flex-1" contentContainerClassName="px-4 pb-24 gap-2">
+          {OPTIONS.map((option) => (
+            <Pressable
+              key={option.id}
+              onPress={() => onSelect(option)}
+              accessibilityRole="button"
+              accessibilityLabel={option.title}
+              accessibilityState={{ disabled: !option.available }}
+              disabled={!option.available}
+              className={option.available ? "" : "opacity-60"}
+            >
+              <Card variant="outline" className="flex-row items-start gap-4 rounded-2xl p-4">
+                <Box
+                  className="h-11 w-11 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${option.iconColor}22` }}
+                >
+                  <Ionicons name={option.icon} size={24} color={option.iconColor} />
+                </Box>
+                <Box className="flex-1">
+                  <Text size="lg" bold className="mb-1 text-typography-900">
+                    {option.title}
+                    {!option.available ? (
+                      <Text size="xs" className="ml-2 text-typography-500">
+                        · Soon
+                      </Text>
+                    ) : null}
+                  </Text>
+                  <Text size="sm" className="leading-5 text-typography-500">
+                    {option.description}
+                  </Text>
+                </Box>
+              </Card>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </ModalContainer>
+
+      <View
+        style={{
+          position: "absolute",
+          left: 20,
+          bottom: insets.bottom + 16,
+          pointerEvents: "box-none",
+        }}
+      >
+        <Fab
+          tone="surface"
+          icon="close"
           onPress={() => router.back()}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-          className="self-start"
-        >
-          <Ionicons name="close" size={28} color={colors.text} />
-        </Pressable>
-      </Box>
-
-      <Text size="3xl" bold className="mb-6 mt-2 px-6 text-typography-900">
-        What would you like to create?
-      </Text>
-
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 gap-2">
-        {OPTIONS.map((option) => (
-          <Pressable
-            key={option.id}
-            onPress={() => onSelect(option)}
-            accessibilityRole="button"
-            accessibilityLabel={option.title}
-            accessibilityState={{ disabled: !option.available }}
-            disabled={!option.available}
-            className={option.available ? "" : "opacity-60"}
-          >
-            <Card variant="outline" className="flex-row items-start gap-4 rounded-2xl p-4">
-              <Box
-                className="h-11 w-11 items-center justify-center rounded-xl"
-                style={{ backgroundColor: `${option.iconColor}22` }}
-              >
-                <Ionicons name={option.icon} size={24} color={option.iconColor} />
-              </Box>
-              <Box className="flex-1">
-                <Text size="lg" bold className="mb-1 text-typography-900">
-                  {option.title}
-                  {!option.available ? (
-                    <Text size="xs" className="ml-2 text-typography-500">
-                      · Soon
-                    </Text>
-                  ) : null}
-                </Text>
-                <Text size="sm" className="leading-5 text-typography-500">
-                  {option.description}
-                </Text>
-              </Box>
-            </Card>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </ModalContainer>
+          accessibilityLabel="Cancel"
+        />
+      </View>
+    </View>
   )
 }

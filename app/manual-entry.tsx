@@ -2,24 +2,22 @@ import { useState } from "react"
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
 import { MEAL_LABELS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
 import type { MealType } from "@/types"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
@@ -65,7 +63,6 @@ export default function ManualEntryScreen() {
   const date = routeParam(params.date) ?? toDateKey()
   const isQuickAdd = routeParam(params.quickAdd) === "1"
   const { showError, showWarning } = useToast()
-  const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { width } = useLayout()
@@ -113,21 +110,9 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer hug maxWidth={520}>
-        <Box className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 16 }}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={28} color={colors.text} />
-          </Pressable>
-          <Text size="2xl" bold className="flex-1 text-center text-typography-900">
-            {isQuickAdd ? "Quick Add" : "Manual entry"}
-          </Text>
-          <Box className="w-7" />
-        </Box>
-
+        <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
+          {isQuickAdd ? "Quick Add" : "Manual entry"}
+        </Text>
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-4"
@@ -195,19 +180,26 @@ export default function ManualEntryScreen() {
             </Box>
           )}
         </ScrollView>
+      </ModalContainer>
 
-        <View style={styles.footer}>
-          <Pressable
-            style={[styles.saveBtn, saving && styles.saveDisabled]}
+      <View style={styles.fabLayer}>
+        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
+          <Fab
+            tone="surface"
+            icon="close"
+            onPress={() => router.back()}
+            accessibilityLabel="Cancel"
+          />
+        </View>
+        <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+          <Fab
+            icon="checkmark"
             onPress={handleSave}
             disabled={saving}
-            accessibilityRole="button"
             accessibilityLabel="Add to diary"
-          >
-            <Text style={styles.saveText}>{saving ? "Saving..." : "Add to diary"}</Text>
-          </Pressable>
+          />
         </View>
-      </ModalContainer>
+      </View>
     </KeyboardAvoidingView>
   )
 }
@@ -215,6 +207,26 @@ export default function ManualEntryScreen() {
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+    fabLayer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: "box-none",
+    },
+    fabLeft: {
+      position: "absolute",
+      left: 20,
+      alignItems: "flex-start",
+      pointerEvents: "box-none",
+    },
+    fabRight: {
+      position: "absolute",
+      right: 20,
+      alignItems: "flex-end",
+      pointerEvents: "box-none",
+    },
     label: {
       color: colors.textMuted,
       fontSize: 13,
@@ -232,22 +244,4 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       marginBottom: spacing.md,
     },
-    footer: {
-      flexDirection: "row",
-      justifyContent: "flex-end",
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      backgroundColor: colors.surfaceAlt,
-    },
-    saveBtn: {
-      backgroundColor: colors.primary,
-      borderRadius: 28,
-      paddingHorizontal: 32,
-      paddingVertical: spacing.md,
-      alignItems: "center",
-    },
-    saveDisabled: { opacity: 0.6 },
-    saveText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
   })
