@@ -4,7 +4,7 @@ test.describe("food search (offline)", () => {
   test("search tab renders cached-first and shows the offline banner", async ({ page }) => {
     await bootAuthenticated(page)
 
-    await page.getByText("Search", { exact: true }).click()
+    await page.getByRole("tab", { name: "Search" }).click()
     await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
     await expect(page.getByText("Favorites", { exact: true })).toBeVisible()
 
@@ -36,7 +36,7 @@ test.describe("food search (offline)", () => {
   test("settings screen tabs group goals, sync, and about sections", async ({ page }) => {
     await bootAuthenticated(page)
 
-    await page.getByText("Settings", { exact: true }).click()
+    await page.getByRole("tab", { name: "Settings" }).click()
 
     // Goals tab is the default.
     await expect(page.getByText("Daily goals", { exact: true })).toBeVisible()

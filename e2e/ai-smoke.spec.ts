@@ -66,7 +66,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("button", { name: "Cancel" }).click()
 
     // The Search tab has a scan FAB.
-    await page.getByText("Search", { exact: true }).click()
+    await page.getByRole("tab", { name: "Search" }).click()
     await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
     await expect(page.getByRole("button", { name: "Scan barcode" })).toBeVisible()
   })
