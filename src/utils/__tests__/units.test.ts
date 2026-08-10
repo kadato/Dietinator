@@ -1,4 +1,4 @@
-import { formatWaterAmount, formatWeight, isImperial } from "../units"
+import { formatWaterAmount, formatWeight, isImperial, parseWeightInput, weightToKg } from "../units"
 
 describe("isImperial", () => {
   it("detects imperial only", () => {
@@ -26,5 +26,34 @@ describe("formatWaterAmount", () => {
 
   it("converts to fluid ounces in imperial", () => {
     expect(formatWaterAmount(750, "imperial")).toBe("25 fl oz")
+  })
+})
+
+describe("weightToKg", () => {
+  it("passes metric through", () => {
+    expect(weightToKg(72.5, "metric")).toBe(72.5)
+  })
+
+  it("converts pounds to kilograms in imperial", () => {
+    expect(weightToKg(158.7, "imperial")).toBeCloseTo(72, 1)
+  })
+})
+
+describe("parseWeightInput", () => {
+  it("parses a metric weight with decimal comma or dot", () => {
+    expect(parseWeightInput("75.2", "metric")).toBeCloseTo(75.2)
+    expect(parseWeightInput("75,2", "metric")).toBeCloseTo(75.2)
+  })
+
+  it("parses pounds as kilograms in imperial", () => {
+    expect(parseWeightInput("165.4", "imperial")).toBeCloseTo(75.02, 1)
+  })
+
+  it("rejects empty, negative and non-numeric input", () => {
+    expect(parseWeightInput("", "metric")).toBeNull()
+    expect(parseWeightInput("abc", "metric")).toBeNull()
+    expect(parseWeightInput("-5", "metric")).toBeNull()
+    expect(parseWeightInput("0", "metric")).toBeNull()
+    expect(parseWeightInput("3000", "metric")).toBeNull()
   })
 })
