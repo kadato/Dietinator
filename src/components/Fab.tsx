@@ -79,7 +79,7 @@ export function Fab({
         accessibilityState={{ disabled }}
         style={({ pressed }) => [
           styles.extended,
-          { backgroundColor: bg, shadowColor: "#000" },
+          { backgroundColor: bg },
           tone === "surface" && { borderWidth: 1, borderColor: colors.border },
           pressed && pressedStyle,
         ]}
@@ -101,7 +101,7 @@ export function Fab({
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
         styles.round,
-        { backgroundColor: bg, shadowColor: "#000" },
+        { backgroundColor: bg },
         tone === "surface" && { borderWidth: 1, borderColor: colors.border },
         pressed && pressedStyle,
       ]}
@@ -119,9 +119,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.28)",
   },
   extended: {
     minHeight: 56,
@@ -131,9 +129,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     elevation: 8,
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.28)",
   },
   pressed: {
     transform: [{ scale: 0.94 }],

@@ -56,10 +56,7 @@ export function ModalContainer({
           backgroundColor: colors.surface,
           borderWidth: 1,
           borderColor: colors.border,
-          shadowColor: "#000",
-          shadowOpacity: 0.08,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 4 },
+          boxShadow: "0px 4px 24px rgba(0, 0, 0, 0.08)",
         }}
       >
         {children}
