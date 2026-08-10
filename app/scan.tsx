@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -18,6 +19,7 @@ import { getFoodByBarcode, searchFoodsRemote } from "@/services/yazio/foods"
 import { FoodListItem } from "@/components/FoodListItem"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -31,6 +33,154 @@ import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
 
 const MANUAL_SCAN_ON_WEB = Platform.OS === "web"
+const FRAME_SIZE = 260
+
+/** Camera-overlay styles: fixed white-on-dark look, independent of the theme. */
+const cameraStyles = StyleSheet.create({
+  viewfinder: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+  },
+  frame: {
+    width: FRAME_SIZE,
+    height: FRAME_SIZE,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  corner: {
+    position: "absolute",
+    width: 46,
+    height: 46,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 16 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 16 },
+  cornerBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 16,
+  },
+  cornerBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 16,
+  },
+  scanLine: {
+    position: "absolute",
+    top: 0,
+    left: 12,
+    right: 12,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.8,
+  },
+  frameHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 16,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  frameHintText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
+  headerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    pointerEvents: "box-none",
+  },
+  headerBarOverlay: {
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  headerTitle: { color: "#ffffff", fontSize: 17, fontWeight: "700" },
+  headerClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+})
+
+/**
+ * Animated horizontal line that sweeps the viewfinder while the camera is
+ * waiting for a barcode — signals "live" scanning at a glance.
+ */
+function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
+  const [progress] = useState(() => new Animated.Value(0))
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(progress, {
+          toValue: 1,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(progress, {
+          toValue: 0,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+      ]),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [progress])
+
+  const translateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, FRAME_SIZE],
+  })
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        cameraStyles.scanLine,
+        {
+          backgroundColor: color,
+          transform: [{ translateY }],
+        },
+      ]}
+    />
+  )
+}
+
+/** Barcode frame with corner brackets + sweeping scan line. */
+function Viewfinder() {
+  const { colors } = useTheme()
+  return (
+    <View style={cameraStyles.viewfinder} pointerEvents="none">
+      <View style={cameraStyles.frame}>
+        <View style={[cameraStyles.corner, cameraStyles.cornerTL]} />
+        <View style={[cameraStyles.corner, cameraStyles.cornerTR]} />
+        <View style={[cameraStyles.corner, cameraStyles.cornerBL]} />
+        <View style={[cameraStyles.corner, cameraStyles.cornerBR]} />
+        <ScanLine color={colors.primary} />
+      </View>
+      <View style={cameraStyles.frameHint}>
+        <Ionicons name="scan-outline" size={16} color="#ffffff" />
+        <Text style={cameraStyles.frameHintText}>Align the barcode inside the frame</Text>
+      </View>
+    </View>
+  )
+}
 
 function BarcodeMatchesList({
   results,
@@ -43,6 +193,7 @@ function BarcodeMatchesList({
   onPick: (food: SearchFoodResult) => void
   onRescan: () => void
 }) {
+  const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   return (
     <FlatList
@@ -50,48 +201,65 @@ function BarcodeMatchesList({
       data={results}
       keyExtractor={(item) => item.product_id}
       ListHeaderComponent={
-        <>
-          <Text style={styles.pickerTitle}>Multiple matches for {lastBarcode}</Text>
+        <View style={styles.matchesHeader}>
+          <View style={styles.matchesTitleWrap}>
+            <Ionicons name="pricetags-outline" size={18} color={colors.primary} />
+            <Text style={styles.pickerTitle}>
+              {results.length} matches for {lastBarcode}
+            </Text>
+          </View>
           <Pressable
             style={styles.scanAgainBtn}
             onPress={onRescan}
             accessibilityRole="button"
             accessibilityLabel="Scan another barcode"
           >
+            <Ionicons name="scan-outline" size={16} color={colors.onPrimary} />
             <Text style={styles.scanAgainText}>Scan another</Text>
           </Pressable>
-        </>
+        </View>
       }
+      contentContainerClassName="pb-28"
       renderItem={({ item }) => <FoodListItem food={item} onPress={() => onPick(item)} />}
     />
   )
 }
 
+/** Floating header pill — dark glass over the camera feed, theme surface in the browser. */
 function ScanHeader({ onClose, overlay = false }: { onClose: () => void; overlay?: boolean }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
+  const tint = overlay ? "#ffffff" : colors.text
   return (
     <View
       style={[
-        overlay ? styles.headerOverlay : styles.headerFlow,
-        { paddingTop: insets.top + spacing.md },
+        overlay ? cameraStyles.headerOverlay : styles.headerFlow,
+        { paddingTop: overlay ? insets.top + spacing.md : insets.top + 16 },
       ]}
-      pointerEvents="box-none"
     >
-      <View style={[styles.headerBar, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.headerBar,
+          overlay
+            ? cameraStyles.headerBarOverlay
+            : { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
         <View style={styles.headerTitleWrap}>
           <Ionicons name="barcode-outline" size={20} color={colors.primary} />
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Scan barcode</Text>
+          <Text style={[overlay ? cameraStyles.headerTitle : styles.headerTitle, { color: tint }]}>
+            Scan barcode
+          </Text>
         </View>
         <Pressable
-          style={[styles.headerClose, { backgroundColor: colors.surfaceAlt }]}
+          style={cameraStyles.headerClose}
           onPress={onClose}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Close scanner"
         >
-          <Ionicons name="close" size={22} color={colors.text} />
+          <Ionicons name="close" size={22} color={tint} />
         </Pressable>
       </View>
     </View>
@@ -107,6 +275,7 @@ export default function ScanScreen() {
   const { showError } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const insets = useSafeAreaInsets()
   const [permission, requestPermission] = useCameraPermissions()
   const [scanned, setScanned] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -114,6 +283,7 @@ export default function ScanScreen() {
   const [lastBarcode, setLastBarcode] = useState("")
   const [manualBarcode, setManualBarcode] = useState("")
   const [notFound, setNotFound] = useState(false)
+  const [torchOn, setTorchOn] = useState(false)
 
   useEffect(() => {
     if (!MANUAL_SCAN_ON_WEB && !permission?.granted && permission?.canAskAgain !== false) {
@@ -127,6 +297,7 @@ export default function ScanScreen() {
     setLastBarcode("")
     setNotFound(false)
     setManualBarcode("")
+    setTorchOn(false)
   }
 
   const lookupBarcode = async (barcode: string) => {
@@ -200,14 +371,21 @@ export default function ScanScreen() {
   if (MANUAL_SCAN_ON_WEB) {
     return (
       <View style={styles.container}>
-        <ModalContainer hug maxWidth={640}>
-          <ScanHeader onClose={close} overlay={!results.length} />
-          <Box className="flex-1" style={styles.webScanContent}>
+        <ModalContainer maxWidth={640}>
+          <ScanHeader onClose={close} />
+          <Box className="flex-1 justify-center px-6" style={styles.webScanContent}>
+            <Box
+              className="mb-5 h-20 w-20 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${colors.primary}1a` }}
+            >
+              <Ionicons name="barcode-outline" size={40} color={colors.primary} />
+            </Box>
+            <Text style={styles.webScanTitle}>No camera here</Text>
             <Text style={styles.webScanHint}>
               Camera scanning is not available in the browser. Enter the barcode number from the
               product label instead (EAN-13 / UPC).
             </Text>
-            <Input size="lg" variant="rounded" className="mb-3 bg-background-50">
+            <Input size="lg" variant="rounded" className="mb-4 bg-background-50">
               <InputField
                 placeholder="e.g. 4000539012345"
                 keyboardType="number-pad"
@@ -227,7 +405,7 @@ export default function ScanScreen() {
             </Button>
 
             {notFound ? (
-              <Box className="mt-8 items-center">
+              <Box className="mt-10 items-center">
                 <Ionicons name="search-outline" size={44} color={colors.textMuted} />
                 <Text style={styles.notFoundText}>No YAZIO match for {lastBarcode}.</Text>
                 <Button
@@ -267,6 +445,12 @@ export default function ScanScreen() {
             ) : null}
           </Box>
         </ModalContainer>
+
+        <View style={styles.fabLayer}>
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+            <Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />
+          </View>
+        </View>
       </View>
     )
   }
@@ -319,11 +503,14 @@ export default function ScanScreen() {
     )
   }
 
+  const cameraActive = !results.length && !loading && !notFound
+
   return (
     <View style={styles.container}>
-      {!results.length ? (
+      {cameraActive || scanned ? (
         <CameraView
           style={styles.camera}
+          enableTorch={torchOn}
           barcodeScannerSettings={{
             barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"],
           }}
@@ -338,24 +525,45 @@ export default function ScanScreen() {
         />
       ) : (
         <PageContainer>
-          <BarcodeMatchesList
-            results={results}
-            lastBarcode={lastBarcode}
-            onPick={openFood}
-            onRescan={resetForNextScan}
-          />
+          {notFound ? (
+            <Box className="flex-1 items-center justify-center px-6">
+              <Box
+                className="h-16 w-16 items-center justify-center rounded-full"
+                style={{ backgroundColor: `${colors.warning}22` }}
+              >
+                <Ionicons name="warning-outline" size={30} color={colors.warning} />
+              </Box>
+              <Text style={styles.notFoundText}>No YAZIO match for {lastBarcode}.</Text>
+              <Button
+                size="md"
+                variant="outline"
+                action="secondary"
+                className="mt-4"
+                onPress={confirmNotFound}
+              >
+                <ButtonText>Search for a food instead</ButtonText>
+              </Button>
+              <Pressable
+                style={styles.linkBtn}
+                onPress={resetForNextScan}
+                accessibilityRole="button"
+                accessibilityLabel="Scan another barcode"
+              >
+                <Text style={styles.linkBtnText}>Scan another barcode</Text>
+              </Pressable>
+            </Box>
+          ) : (
+            <BarcodeMatchesList
+              results={results}
+              lastBarcode={lastBarcode}
+              onPick={openFood}
+              onRescan={resetForNextScan}
+            />
+          )}
         </PageContainer>
       )}
 
-      {!results.length ? (
-        <View style={styles.viewfinder} pointerEvents="none">
-          <View style={styles.frame} />
-          <View style={styles.frameHint}>
-            <Ionicons name="scan-outline" size={16} color="#ffffff" />
-            <Text style={styles.frameHintText}>Align the barcode inside the frame</Text>
-          </View>
-        </View>
-      ) : null}
+      {cameraActive ? <Viewfinder /> : null}
 
       <ScanHeader onClose={close} />
 
@@ -370,15 +578,20 @@ export default function ScanScreen() {
         </View>
       )}
 
-      <View style={styles.closeFabWrap} pointerEvents="box-none">
-        <Pressable
-          style={styles.closeFab}
-          onPress={close}
-          accessibilityRole="button"
-          accessibilityLabel="Close scanner"
-        >
-          <Ionicons name="close" size={26} color="#ffffff" />
-        </Pressable>
+      <View style={styles.fabLayer}>
+        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
+          <Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />
+        </View>
+        {cameraActive ? (
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+            <Fab
+              tone={torchOn ? "primary" : "surface"}
+              icon={torchOn ? "flashlight" : "flashlight-outline"}
+              onPress={() => setTorchOn((v) => !v)}
+              accessibilityLabel={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
+            />
+          </View>
+        ) : null}
       </View>
     </View>
   )
@@ -390,11 +603,19 @@ const createStyles = (colors: ColorPalette) =>
     camera: { flex: 1 },
     list: { flex: 1 },
     webScanContent: { padding: spacing.lg, paddingTop: spacing.sm },
+    webScanTitle: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: spacing.xs,
+      textAlign: "center",
+    },
     webScanHint: {
       color: colors.textMuted,
       fontSize: 14,
       lineHeight: 20,
-      marginBottom: spacing.md,
+      marginBottom: spacing.lg,
+      textAlign: "center",
     },
     notFoundText: {
       color: colors.text,
@@ -402,31 +623,34 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
       marginTop: spacing.sm,
     },
-    linkBtn: { marginTop: spacing.md },
+    linkBtn: { marginTop: spacing.md, padding: spacing.xs },
     linkBtnText: { color: colors.primary, fontWeight: "600", fontSize: 15 },
+    matchesHeader: {
+      padding: spacing.md,
+      gap: spacing.md,
+    },
+    matchesTitleWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
     pickerTitle: {
       color: colors.text,
       fontSize: 16,
       fontWeight: "600",
-      padding: spacing.md,
+      flex: 1,
     },
     scanAgainBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
       alignSelf: "flex-start",
-      marginHorizontal: spacing.md,
-      marginBottom: spacing.md,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm,
       borderRadius: 20,
       backgroundColor: colors.primary,
     },
     scanAgainText: { color: colors.onPrimary, fontWeight: "700" },
-    headerOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      paddingHorizontal: spacing.md,
-    },
     headerFlow: {
       paddingHorizontal: spacing.md,
       paddingBottom: spacing.sm,
@@ -435,63 +659,18 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      borderRadius: 16,
+      borderRadius: 20,
       paddingLeft: spacing.md,
       paddingRight: spacing.sm,
       paddingVertical: spacing.sm,
       borderWidth: 1,
-      borderColor: colors.border,
-      shadowColor: "#000",
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 6,
     },
     headerTitleWrap: {
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
     },
-    headerTitle: { fontSize: 17, fontWeight: "700" },
-    headerClose: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    viewfinder: {
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    frame: {
-      width: 250,
-      height: 250,
-      borderRadius: 28,
-      borderWidth: 3,
-      borderColor: "rgba(255,255,255,0.85)",
-      backgroundColor: "transparent",
-      shadowColor: "#000",
-      shadowOpacity: 0.35,
-      shadowRadius: 24,
-      shadowOffset: { width: 0, height: 0 },
-    },
-    frameHint: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginTop: spacing.md,
-      backgroundColor: "rgba(0,0,0,0.55)",
-      borderRadius: 20,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-    },
-    frameHintText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
+    headerTitle: { color: colors.text, fontSize: 17, fontWeight: "700" },
     center: {
       flex: 1,
       backgroundColor: colors.background,
@@ -535,35 +714,30 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 20,
       padding: spacing.lg,
       minWidth: 200,
-      shadowColor: "#000",
-      shadowOpacity: 0.25,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 6 },
+      boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.25)",
       elevation: 8,
     },
     overlayText: { marginTop: spacing.md, fontSize: 14, fontWeight: "600" },
-    closeFabWrap: {
+    fabLayer: {
       position: "absolute",
-      bottom: 40,
+      top: 0,
       left: 0,
       right: 0,
-      alignItems: "center",
+      bottom: 0,
+      pointerEvents: "box-none",
     },
-    closeFab: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(0,0,0,0.6)",
-      borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.25)",
-      shadowColor: "#000",
-      shadowOpacity: 0.3,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 8,
+    fabLeft: {
+      position: "absolute",
+      left: 20,
+      alignItems: "flex-start",
+      pointerEvents: "box-none",
     },
-    close: { marginTop: spacing.md },
+    fabRight: {
+      position: "absolute",
+      right: 20,
+      alignItems: "flex-end",
+      pointerEvents: "box-none",
+    },
+    close: { marginTop: spacing.md, padding: spacing.xs },
     closeText: { color: colors.text, fontWeight: "600" },
   })
