@@ -208,8 +208,8 @@ export default function SearchScreen() {
           right: 20,
           bottom: layout.tabBarHeight + insets.bottom + 16,
           gap: 12,
+          pointerEvents: "box-none",
         }}
-        pointerEvents="box-none"
       >
         <Fab icon="barcode-outline" onPress={openScan} accessibilityLabel="Scan barcode" />
         <Fab

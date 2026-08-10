@@ -419,11 +419,11 @@ export default function AddFoodScreen() {
       </ModalContainer>
 
       {!keyboardOpen ? (
-        <View style={styles.fabLayer} pointerEvents="box-none">
-          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+        <View style={styles.fabLayer}>
+          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
             <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
           </View>
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
             <Fab
               icon="checkmark"
               onPress={handleSave}
@@ -528,15 +528,18 @@ const createStyles = (colors: ColorPalette) =>
       left: 0,
       right: 0,
       bottom: 0,
+      pointerEvents: "box-none",
     },
     fabLeft: {
       position: "absolute",
       left: 20,
       alignItems: "flex-start",
+      pointerEvents: "box-none",
     },
     fabRight: {
       position: "absolute",
       right: 20,
       alignItems: "flex-end",
+      pointerEvents: "box-none",
     },
   })

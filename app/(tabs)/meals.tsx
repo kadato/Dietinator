@@ -217,8 +217,8 @@ export default function MealsScreen() {
           position: "absolute",
           right: 20,
           bottom: layout.tabBarHeight + insets.bottom + 16,
+          pointerEvents: "box-none",
         }}
-        pointerEvents="box-none"
       >
         <Fab
           icon="add"
