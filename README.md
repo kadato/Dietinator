@@ -38,25 +38,30 @@ your account is optional and best-effort. No account needed to try it.
 <div align="center">
 
 <p align="center">
-<strong>Diary</strong> · <strong>Food search</strong> · <strong>Log a food</strong><br><br>
+<strong>Diary</strong> · <strong>AI assistant</strong> · <strong>Food search</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/dashboard-dark.png">
   <img alt="Daily dashboard with calorie ring and meal sections" src="./docs/screenshots/dashboard-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
-  <img alt="Live YAZIO food search results" src="./docs/screenshots/search-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/ai-chat-dark.png">
+  <img alt="AI chat answering a dinner question from your diary" src="./docs/screenshots/ai-chat-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/add-food-dark.png">
-  <img alt="Serving size and nutrition preview" src="./docs/screenshots/add-food-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
+  <img alt="Live YAZIO food search results" src="./docs/screenshots/search-light.png" width="190">
 </picture>
 </p>
 
 <p align="center">
-<strong>Quick Add</strong> · <strong>Meal builder</strong> · <strong>Diary details</strong><br><br>
+<strong>Log a food</strong> · <strong>Quick Add</strong> · <strong>Meal builder</strong><br><br>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/add-food-dark.png">
+  <img alt="Serving size and nutrition preview" src="./docs/screenshots/add-food-light.png" width="190">
+</picture>
+&nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/quick-add-dark.png">
   <img alt="Quick Add manual entry" src="./docs/screenshots/quick-add-light.png" width="190">
@@ -66,15 +71,15 @@ your account is optional and best-effort. No account needed to try it.
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/meal-builder-dark.png">
   <img alt="Compose reusable meals" src="./docs/screenshots/meal-builder-light.png" width="190">
 </picture>
-&nbsp;&nbsp;
+</p>
+
+<p align="center">
+<strong>Diary details</strong> · <strong>Settings</strong> · <strong>Login</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/log-meal-dark.png">
   <img alt="Logged entries with macros" src="./docs/screenshots/log-meal-light.png" width="190">
 </picture>
-</p>
-
-<p align="center">
-<strong>Settings</strong> · <strong>Login</strong><br><br>
+&nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/settings-dark.png">
   <img alt="Goals, units and data management" src="./docs/screenshots/settings-light.png" width="190">
