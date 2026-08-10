@@ -1,10 +1,12 @@
 import { Stack, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
-import { ActivityIndicator, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
+import { AiChatModal } from "@/components/AiChatModal"
 import { AppProvider, useApp } from "@/context/AppContext"
+import { AiChatModalProvider } from "@/context/AiChatContext"
 import { NetworkProvider } from "@/context/NetworkContext"
 import { ToastProvider } from "@/context/ToastContext"
 import { UpdateProvider } from "@/context/UpdateContext"
@@ -59,7 +61,6 @@ function RootNavigator() {
         <Stack.Screen name="meal-builder" options={{ presentation: "modal" }} />
         <Stack.Screen name="scan" options={{ presentation: "modal" }} />
         <Stack.Screen name="add-food" options={{ presentation: "modal" }} />
-        <Stack.Screen name="ai-chat" options={{ presentation: "modal" }} />
       </Stack>
     </>
   )
@@ -106,7 +107,10 @@ function ThemedApp() {
       <NetworkProvider>
         <ToastProvider>
           <UpdateProvider>
-            <RootNavigator />
+            <AiChatModalProvider>
+              <RootNavigator />
+              <AiChatModal />
+            </AiChatModalProvider>
           </UpdateProvider>
         </ToastProvider>
       </NetworkProvider>

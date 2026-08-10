@@ -4,6 +4,7 @@ import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
+import { useAiChatModal } from "@/context/AiChatContext"
 import { useToast } from "@/context/ToastContext"
 import { useUpdates } from "@/context/UpdateContext"
 import { getCurrentVersion } from "@/services/updates"
@@ -265,7 +266,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
 
 /** AI tab form — isolated state so typing an API key or model never re-renders the screen. */
 function AiSettingsForm({ settings }: { settings: AppSettings }) {
-  const router = useRouter()
+  const { openAiChat } = useAiChatModal()
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
@@ -559,7 +560,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             variant="outline"
             action="secondary"
             className="min-w-[140px] flex-1"
-            onPress={() => router.push("/ai-chat")}
+            onPress={openAiChat}
           >
             <ButtonText>Open AI chat</ButtonText>
           </Button>

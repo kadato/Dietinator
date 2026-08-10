@@ -11,6 +11,7 @@ import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
+import { useAiChatModal } from "@/context/AiChatContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
@@ -44,6 +45,7 @@ function sumEntries(list: DiaryEntry[]): Totals {
 export default function TodayScreen() {
   const router = useRouter()
   const { settings, yazioAvailable, authenticated } = useApp()
+  const { openAiChat } = useAiChatModal()
   const { showError, showSuccess, showWarning } = useToast()
   const { colors } = useTheme()
   const { isWide, isMedium } = useLayout()
@@ -217,14 +219,14 @@ export default function TodayScreen() {
           position: "absolute",
           right: 20,
           bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 16,
+          pointerEvents: "box-none",
         }}
-        pointerEvents="box-none"
       >
         <Fab
           icon="robot-outline"
           IconComponent={MaterialCommunityIcons}
           label={isMedium ? "Ask AI" : undefined}
-          onPress={() => router.push("/ai-chat")}
+          onPress={openAiChat}
           accessibilityLabel="Open AI assistant"
         />
       </View>
