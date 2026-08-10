@@ -107,6 +107,16 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_meals_last_used ON meals(last_used_at DESC);
 
+    CREATE TABLE IF NOT EXISTS weight_entries (
+      id TEXT PRIMARY KEY NOT NULL,
+      date TEXT NOT NULL UNIQUE,
+      weight_kg REAL NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_weight_date ON weight_entries(date);
+
     CREATE TABLE IF NOT EXISTS meal_items (
       meal_id TEXT NOT NULL,
       position INTEGER NOT NULL,

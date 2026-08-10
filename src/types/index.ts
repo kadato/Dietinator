@@ -115,6 +115,16 @@ export interface Meal {
   items: MealItem[]
 }
 
+/** One logged bodyweight. At most one row per date (upsert on save). */
+export interface WeightEntry {
+  id: string
+  date: string
+  /** Always stored in kilograms regardless of the display unit system. */
+  weight_kg: number
+  note: string | null
+  created_at: string
+}
+
 // ── AI assistant ────────────────────────────────────────────────────────────
 
 export type AiMessageRole = "system" | "user" | "assistant" | "tool"

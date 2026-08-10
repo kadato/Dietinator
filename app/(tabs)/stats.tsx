@@ -1,0 +1,319 @@
+import { useCallback, useMemo, useState } from "react"
+import { ActivityIndicator, ScrollView, View } from "react-native"
+import { useFocusEffect } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { PageContainer } from "@/components/PageContainer"
+import { SegmentedControl } from "@/components/SegmentedControl"
+import { TrendChart } from "@/components/TrendChart"
+import { LogWeightModal } from "@/components/LogWeightModal"
+import { useApp } from "@/context/AppContext"
+import { useToast } from "@/context/ToastContext"
+import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
+import { getWeightEntries, deleteWeightEntry } from "@/db/weight"
+import { getCalorieHistory, type DailyKcal } from "@/db/stats"
+import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
+import { formatWeight } from "@/utils/units"
+import { confirmAction } from "@/utils/confirm"
+import type { WeightEntry } from "@/types"
+import { spacing } from "@/theme"
+import { Box } from "@ui/box"
+import { Text } from "@ui/text"
+import { Card } from "@ui/card"
+import { Button, ButtonText } from "@ui/button"
+
+type RangeId = "1w" | "1m" | "3m" | "6m" | "1y"
+
+const RANGES: { id: RangeId; label: string; days: number }[] = [
+  { id: "1w", label: "1W", days: 7 },
+  { id: "1m", label: "1M", days: 30 },
+  { id: "3m", label: "3M", days: 90 },
+  { id: "6m", label: "6M", days: 180 },
+  { id: "1y", label: "1Y", days: 365 },
+]
+
+function formatAxisDate(dateKey: string, range: RangeId): string {
+  const [y, m, d] = dateKey.split("-").map(Number)
+  const date = new Date(y, m - 1, d)
+  if (Number.isNaN(date.getTime())) return ""
+  if (range === "1y") {
+    return date.toLocaleDateString(undefined, { month: "short" })
+  }
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+}
+
+export default function StatsScreen() {
+  const { settings } = useApp()
+  const { showError, showSuccess } = useToast()
+  const { colors } = useTheme()
+  const { isWide } = useLayout()
+  const insets = useSafeAreaInsets()
+  const [range, setRange] = useState<RangeId>("1m")
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
+  const [latest, setLatest] = useState<WeightEntry | null>(null)
+  const [previous, setPrevious] = useState<WeightEntry | null>(null)
+  const [calories, setCalories] = useState<DailyKcal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [logWeightOpen, setLogWeightOpen] = useState(false)
+
+  const fromKey = useMemo(
+    () => shiftDateKey(toDateKey(), -RANGES.find((r) => r.id === range)!.days),
+    [range],
+  )
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [allWeights, kcalHistory] = await Promise.all([
+        getWeightEntries(),
+        getCalorieHistory(fromKey),
+      ])
+      setWeightEntries(allWeights.filter((entry) => entry.date >= fromKey))
+      setLatest(allWeights[allWeights.length - 1] ?? null)
+      setPrevious(allWeights[allWeights.length - 2] ?? null)
+      setCalories(kcalHistory)
+    } catch (error) {
+      showError(error, "Could not load stats.")
+    } finally {
+      setLoading(false)
+    }
+  }, [fromKey, showError])
+
+  useFocusEffect(
+    useCallback(() => {
+      void load()
+    }, [load]),
+  )
+
+  const closeLogWeight = useCallback(() => {
+    setLogWeightOpen(false)
+    void load()
+  }, [load])
+
+  const openLogWeight = useCallback(() => setLogWeightOpen(true), [])
+
+  const onDeleteLatest = useCallback(() => {
+    const entry = latest
+    if (!entry) return
+    confirmAction({
+      title: "Delete weight?",
+      message: `Remove ${formatWeight(entry.weight_kg, settings.units)} from ${formatDisplayDate(entry.date)}?`,
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await deleteWeightEntry(entry.id)
+          await load()
+          showSuccess("Weight entry deleted.", "Done")
+        } catch (error) {
+          showError(error, "Could not delete weight entry.")
+        }
+      },
+    })
+  }, [latest, load, settings.units, showError, showSuccess])
+
+  const weightChartData = useMemo(
+    () => weightEntries.map((entry) => ({ date: entry.date, value: entry.weight_kg })),
+    [weightEntries],
+  )
+  const calorieChartData = useMemo(
+    () => calories.map((day) => ({ date: day.date, value: day.kcal })),
+    [calories],
+  )
+
+  const rawDelta = latest && previous ? latest.weight_kg - previous.weight_kg : null
+  // Float subtraction (75.5 − 74.8) can produce 0.7000000000000028 — round to
+  // the display precision before formatting.
+  const weightDelta = rawDelta !== null ? Math.round(rawDelta * 10) / 10 : null
+
+  const avgKcal =
+    calorieChartData.length > 0
+      ? Math.round(
+          calorieChartData.reduce((sum, day) => sum + day.value, 0) / calorieChartData.length,
+        )
+      : null
+
+  const weightEmptyState = (
+    <Box className="items-center px-6 pb-6 pt-8">
+      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+        <Ionicons name="scale-outline" size={22} color={colors.primary} />
+      </Box>
+      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
+        No weight logged {range === "1w" ? "this week" : "in this range"} yet.
+      </Text>
+      <Button size="sm" className="mt-4" onPress={openLogWeight} accessibilityLabel="Log weight">
+        <ButtonText>Log weight</ButtonText>
+      </Button>
+    </Box>
+  )
+
+  const caloriesEmptyState = (
+    <Box className="items-center px-6 py-8">
+      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+        <Ionicons name="flame-outline" size={22} color={colors.primary} />
+      </Box>
+      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
+        No diary entries {range === "1w" ? "this week" : "in this range"} yet.
+      </Text>
+    </Box>
+  )
+
+  return (
+    <Box className="flex-1 bg-background-0">
+      <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
+        <Box className="px-6 pb-2" style={{ paddingTop: insets.top + spacing.md }}>
+          <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+            Stats
+          </Text>
+          <Text size="xs" className="mt-1 text-typography-500">
+            Bodyweight and calorie trends
+          </Text>
+        </Box>
+
+        <ScrollView
+          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-16"}`}
+        >
+          <SegmentedControl
+            value={range}
+            options={RANGES.map((r) => ({ value: r.id, label: r.label }))}
+            onChange={setRange}
+          />
+
+          {loading ? (
+            <Box className="items-center justify-center py-20">
+              <ActivityIndicator size="large" color={colors.primary} />
+            </Box>
+          ) : (
+            <Box className="mt-4 gap-4">
+              {/* Body weight */}
+              <Card variant="elevated" className="p-4">
+                <Box className="flex-row items-center gap-2.5">
+                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Ionicons name="scale-outline" size={18} color={colors.primary} />
+                  </Box>
+                  <Box className="min-w-0 flex-1">
+                    <Text size="md" bold className="text-typography-900">
+                      Body weight
+                    </Text>
+                    {latest ? (
+                      <Box className="flex-row items-center gap-1.5">
+                        <Text size="xs" className="text-typography-500">
+                          {formatDisplayDate(latest.date)}
+                        </Text>
+                        {weightDelta !== null && weightDelta !== 0 ? (
+                          <Box className="flex-row items-center gap-0.5">
+                            <Ionicons
+                              name={weightDelta < 0 ? "arrow-down" : "arrow-up"}
+                              size={11}
+                              color={weightDelta < 0 ? colors.primary : colors.danger}
+                            />
+                            <Text
+                              size="xs"
+                              bold
+                              style={{ color: weightDelta < 0 ? colors.primary : colors.danger }}
+                            >
+                              {formatWeight(Math.abs(weightDelta), settings.units)}
+                            </Text>
+                          </Box>
+                        ) : null}
+                      </Box>
+                    ) : (
+                      <Text size="xs" className="text-typography-500">
+                        Not logged yet
+                      </Text>
+                    )}
+                  </Box>
+                  <Text size="lg" bold className="text-typography-900">
+                    {latest ? formatWeight(latest.weight_kg, settings.units) : "—"}
+                  </Text>
+                </Box>
+
+                <View className="mt-3">
+                  {weightChartData.length > 0 ? (
+                    <TrendChart
+                      data={weightChartData}
+                      color={colors.primary}
+                      rangeStart={fromKey}
+                      rangeEnd={toDateKey()}
+                      formatValue={(value) => formatWeight(value, settings.units)}
+                      formatDate={(dateKey) => formatAxisDate(dateKey, range)}
+                      height={170}
+                      accessibilityLabel={`Body weight trend, ${formatWeight(weightChartData[0].value, settings.units)} to ${formatWeight(weightChartData[weightChartData.length - 1].value, settings.units)}`}
+                    />
+                  ) : (
+                    weightEmptyState
+                  )}
+                </View>
+
+                {weightChartData.length > 0 ? (
+                  <Box className="mt-3 flex-row gap-2">
+                    <Button
+                      size="sm"
+                      className="min-w-[140px] flex-1"
+                      onPress={openLogWeight}
+                      accessibilityLabel="Log weight"
+                    >
+                      <ButtonText>Log weight</ButtonText>
+                    </Button>
+                    {latest ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        action="secondary"
+                        className="w-24"
+                        onPress={onDeleteLatest}
+                        accessibilityLabel="Delete latest weight"
+                      >
+                        <ButtonText>Delete</ButtonText>
+                      </Button>
+                    ) : null}
+                  </Box>
+                ) : null}
+              </Card>
+
+              {/* Calories */}
+              <Card variant="elevated" className="p-4">
+                <Box className="flex-row items-center gap-2.5">
+                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Ionicons name="flame-outline" size={18} color={colors.primary} />
+                  </Box>
+                  <Box className="min-w-0 flex-1">
+                    <Text size="md" bold className="text-typography-900">
+                      Calories
+                    </Text>
+                    <Text size="xs" className="text-typography-500">
+                      {avgKcal !== null
+                        ? `Avg ${avgKcal.toLocaleString()} kcal/day · goal ${Math.round(settings.calorie_goal).toLocaleString()}`
+                        : `Goal ${Math.round(settings.calorie_goal).toLocaleString()} kcal/day`}
+                    </Text>
+                  </Box>
+                </Box>
+
+                <View className="mt-3">
+                  {calorieChartData.length > 0 ? (
+                    <TrendChart
+                      data={calorieChartData}
+                      color={colors.lunch}
+                      goalValue={settings.calorie_goal}
+                      variant="bars"
+                      rangeStart={fromKey}
+                      rangeEnd={toDateKey()}
+                      formatValue={(value) => Math.round(value).toLocaleString()}
+                      formatDate={(dateKey) => formatAxisDate(dateKey, range)}
+                      height={170}
+                      accessibilityLabel={`Calories per day, ${calorieChartData.length} days`}
+                    />
+                  ) : (
+                    caloriesEmptyState
+                  )}
+                </View>
+              </Card>
+            </Box>
+          )}
+        </ScrollView>
+      </PageContainer>
+
+      <LogWeightModal visible={logWeightOpen} onClose={closeLogWeight} />
+    </Box>
+  )
+}
