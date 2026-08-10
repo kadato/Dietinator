@@ -1,4 +1,6 @@
+import { useEffect } from "react"
 import type { ReactNode } from "react"
+import { Platform } from "react-native"
 import { Box } from "@ui/box"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
@@ -35,6 +37,16 @@ export function ModalContainer({
 }: Props) {
   const { isWide } = useLayout()
   const { colors } = useTheme()
+
+  // The screen behind a presented modal is marked aria-hidden by the
+  // navigator, but the button that opened the modal keeps focus — the browser
+  // then blocks the aria-hidden attribute ("Blocked aria-hidden on an element
+  // because its descendant retained focus"). Blur before that happens.
+  useEffect(() => {
+    if (Platform.OS !== "web") return
+    const active = document.activeElement as HTMLElement | null
+    active?.blur?.()
+  }, [])
 
   if (!isWide) {
     return (

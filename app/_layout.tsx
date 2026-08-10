@@ -74,6 +74,22 @@ export default function RootLayout() {
     registerWebServiceWorker()
   }, [])
 
+  // Presenting a modal marks the screen behind it aria-hidden. If the button
+  // that opened the modal still holds focus, the browser blocks the attribute
+  // ("Blocked aria-hidden on an element because its descendant retained
+  // focus"). Blur the pressed button before the navigation commit so the
+  // hidden screen never contains the focused element.
+  useEffect(() => {
+    if (Platform.OS !== "web") return
+    const blurPressedButton = (event: Event) => {
+      const target = event.target as HTMLElement | null
+      if (!target || !target.closest?.('button, [role="button"], a')) return
+      ;(document.activeElement as HTMLElement | null)?.blur?.()
+    }
+    document.addEventListener("click", blurPressedButton, true)
+    return () => document.removeEventListener("click", blurPressedButton, true)
+  }, [])
+
   return (
     <>
       <Head>

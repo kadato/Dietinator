@@ -18,9 +18,15 @@ function toProxiedUrl(url: string): string {
 /**
  * On web, route YAZIO `fetch` calls through the Metro dev server proxy so the
  * browser never talks to yzapi.yazio.com directly (CORS blocks that origin).
+ *
+ * Only installs in a real browser: the dev-server / SSR render process also
+ * reports `Platform.OS === "web"`, and rewriting `globalThis.fetch` there would
+ * break the proxy's own outbound fetch (absolute YAZIO URLs get rewritten to
+ * the relative `/api/yazio/...` path, which the server-side fetch rejects).
  */
 export function installYazioWebFetch(): void {
   if (Platform.OS !== "web") return
+  if (typeof window === "undefined") return
   if (globalThis.__dietinatorYazioWebFetchInstalled) return
 
   const nativeFetch = globalThis.fetch.bind(globalThis)
