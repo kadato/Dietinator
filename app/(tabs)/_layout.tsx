@@ -20,7 +20,9 @@ export default function TabLayout() {
         headerShown: !isWide,
         tabBarPosition: isWide ? "left" : "bottom",
         tabBarVariant: isWide ? "material" : "uikit",
-        tabBarLabelPosition: isWide || narrowPhone ? "below-icon" : "beside-icon",
+        // Small screens get icons only; labels return on medium+ (tablet/desktop).
+        tabBarShowLabel: isMedium,
+        tabBarLabelPosition: isWide ? "below-icon" : "beside-icon",
         tabBarStyle: isWide
           ? {
               width: layout.sideTabWidth,
@@ -57,6 +59,7 @@ export default function TabLayout() {
         options={{
           title: "Today",
           headerShown: false,
+          tabBarAccessibilityLabel: "Today",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="today-outline" size={size} color={color} />
           ),
@@ -67,6 +70,7 @@ export default function TabLayout() {
         options={{
           title: "Search",
           headerShown: false,
+          tabBarAccessibilityLabel: "Search",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search-outline" size={size} color={color} />
           ),
@@ -77,6 +81,7 @@ export default function TabLayout() {
         options={{
           title: "Meals",
           headerShown: false,
+          tabBarAccessibilityLabel: "Meals",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="restaurant-outline" size={size} color={color} />
           ),
@@ -98,6 +103,7 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           headerShown: false,
+          tabBarAccessibilityLabel: "Settings",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
