@@ -687,7 +687,7 @@ export default function SettingsScreen() {
           isWide ? { maxWidth: 860 } : undefined,
         ]}
       >
-        <Box className="-mx-4 mb-6 flex-row flex-wrap gap-1.5 px-4">
+        <Box className="mb-6 flex-row flex-wrap gap-2">
           {SETTINGS_TABS.map((tab) => {
             const active = tab.id === activeTab
             return (
@@ -697,21 +697,32 @@ export default function SettingsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`${tab.label} settings`}
                 accessibilityState={{ selected: active }}
-                className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
+                className={`min-w-[104px] flex-1 flex-row items-center justify-center gap-2 rounded-2xl border px-3.5 py-2.5 active:opacity-85 ${
                   active
                     ? "border-primary-500 bg-primary-500/10"
-                    : "border-outline-200 bg-background-50"
+                    : "border-outline-100 bg-background-50"
                 }`}
+                style={
+                  active
+                    ? { boxShadow: "0px 2px 8px rgba(13, 148, 136, 0.18)", elevation: 3 }
+                    : undefined
+                }
               >
-                <Ionicons
-                  name={tab.icon}
-                  size={15}
-                  color={active ? colors.primary : colors.textMuted}
-                />
+                <Box
+                  className={`h-7 w-7 items-center justify-center rounded-full ${
+                    active ? "bg-primary-500" : "bg-background-100"
+                  }`}
+                >
+                  <Ionicons
+                    name={tab.icon}
+                    size={15}
+                    color={active ? colors.onPrimary : colors.textMuted}
+                  />
+                </Box>
                 <Text
                   size="sm"
                   bold={active}
-                  style={{ color: active ? colors.primary : colors.textMuted }}
+                  style={{ color: active ? colors.primary : colors.text }}
                 >
                   {tab.label}
                 </Text>
