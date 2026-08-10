@@ -3,8 +3,10 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 10
+      # Monthly, minor/patch only. Major bumps (Expo SDK, tailwind, jest,
+      # gluestack) are deliberate project decisions — they need manual review.
+      interval: monthly
+    open-pull-requests-limit: 4
     groups:
       expo:
         patterns:
@@ -24,8 +26,10 @@ updates:
           - "@types/*"
     ignore:
       - dependency-name: "yazio"
+      - update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
