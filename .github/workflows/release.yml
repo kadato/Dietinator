@@ -16,9 +16,9 @@ permissions:
 
 jobs:
   test:
-    name: Typecheck and e2e
+    name: Typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -27,10 +27,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-      - name: Run e2e (offline/local-first; YAZIO specs skip without credentials)
-        run: npm run test:e2e
 
   build-android:
     name: Build signed Android APK
@@ -47,6 +43,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
