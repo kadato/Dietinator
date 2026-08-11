@@ -1,5 +1,9 @@
+// Hermes (Android release) implements a subset of Intl and lacks
+// Intl.DisplayNames — guard both so module scope never throws on native.
 const regionNames =
-  typeof Intl !== "undefined" ? new Intl.DisplayNames(["en"], { type: "region" }) : null
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames !== "undefined"
+    ? new Intl.DisplayNames(["en"], { type: "region" })
+    : null
 
 export function normalizeFoodDatabaseCountry(code: string): string {
   return code.trim().toUpperCase()
