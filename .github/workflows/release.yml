@@ -48,11 +48,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - name: Setup Android SDK
-        uses: react-native-community/setup-android-sdk@v2
+        uses: android-actions/setup-android@v4
         with:
-          cache-enabled: true
-          cache-key: android-sdk-dietinator
-          sdk-version: "36"
+          accept-android-sdk-licenses: true
       - name: Resolve version
         id: version
         shell: bash
