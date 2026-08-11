@@ -136,6 +136,7 @@ function render(opts) {
             r += (bg[0][0] + (bg[1][0] - bg[0][0]) * t) * (1 - cov) + (mark ? mark[0] * cov : 0)
             g += (bg[0][1] + (bg[1][1] - bg[0][1]) * t) * (1 - cov) + (mark ? mark[1] * cov : 0)
             b += (bg[0][2] + (bg[1][2] - bg[0][2]) * t) * (1 - cov) + (mark ? mark[2] * cov : 0)
+            a += 255
           } else if (cov > 0) {
             r += mark[0] * cov
             g += mark[1] * cov
