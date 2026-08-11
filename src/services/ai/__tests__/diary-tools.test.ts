@@ -5,6 +5,7 @@ import { searchFoodsRemote } from "@/services/yazio/foods"
 import { updateDiaryEntry as updateDiaryEntryService } from "@/services/diary"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
 import { createDiaryTools, summarizeEntries } from "../diary-tools"
+import { shiftDateKey, toDateKey } from "@/utils/date"
 import type { DiaryEntry, Meal, SearchFoodResult } from "@/types"
 
 jest.mock("@/db/diary", () => ({
@@ -365,8 +366,11 @@ describe("get_diary_stats", () => {
   beforeEach(() => jest.clearAllMocks())
 
   it("returns per-day totals for the requested window", async () => {
+    // Window is [today - (days - 1), today]; seed the oldest day so the test
+    // does not depend on the wall-clock date.
+    const seededDate = shiftDateKey(toDateKey(), -2)
     mockGetEntries.mockImplementation(async (date: string) =>
-      date === "2026-08-08" ? [entry({ kcal: 500 })] : [],
+      date === seededDate ? [entry({ kcal: 500 })] : [],
     )
     const result = (await byName("get_diary_stats").execute({ days: 3 })) as {
       success: boolean
@@ -378,7 +382,7 @@ describe("get_diary_stats", () => {
     expect(result.days_count).toBe(3)
     expect(result.days_logged).toBe(1)
     expect(result.days).toHaveLength(3)
-    expect(result.days.find((d) => d.date === "2026-08-08")?.kcal).toBe(500)
+    expect(result.days.find((d) => d.date === seededDate)?.kcal).toBe(500)
   })
 
   it("caps the window at 30 days", async () => {
