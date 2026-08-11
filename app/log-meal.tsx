@@ -24,12 +24,15 @@ import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getSuggestedFoods } from "@/services/yazio/foods"
 import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
+import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
-import type { FoodNutrients, Meal, MealType, SearchFoodResult } from "@/types"
+import type { DiaryEntry, FoodNutrients, Meal, MealType, SearchFoodResult } from "@/types"
 import { mergeFoodResults } from "@/utils/food-search"
+import { sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS } from "@/utils/meals"
-import { formatServingOption } from "@/utils/food-display"
-import { toDateKey } from "@/utils/date"
+import { displayUnit, formatServingOption } from "@/utils/food-display"
+import { confirmAction } from "@/utils/confirm"
+import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -91,6 +94,18 @@ export default function LogMealScreen() {
   // "Frequent" list — the local favorites/recents render instantly instead of
   // waiting on the network.
   const [suggestions, setSuggestions] = useState<SearchFoodResult[]>([])
+  const [loggedEntries, setLoggedEntries] = useState<DiaryEntry[]>([])
+  // The current recents/favorites list stays visible below search results.
+  const [contextual, setContextual] = useState<SearchFoodResult[]>([])
+
+  const loadLoggedEntries = useCallback(async () => {
+    try {
+      const entries = await getDiaryEntriesForDate(date, { remote: false })
+      setLoggedEntries(entries.filter((entry) => entry.meal_type === mealType))
+    } catch {
+      setLoggedEntries([])
+    }
+  }, [date, mealType])
 
   useEffect(() => {
     if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
@@ -113,6 +128,27 @@ export default function LogMealScreen() {
     return mergeFoodResults(mergeFoodResults(suggestions, favorites), recent)
   }, [listMode, suggestions])
 
+  // Keep the current recents/favorites list rendered below search results
+  // instead of replacing it the moment the user types.
+  // Reset synchronously when the query clears (render-adjustment pattern).
+  const [prevDebounced, setPrevDebounced] = useState(debounced)
+  if (prevDebounced !== debounced) {
+    setPrevDebounced(debounced)
+    if (!debounced.trim()) setContextual([])
+  }
+  useEffect(() => {
+    if (!debounced.trim()) return
+    let cancelled = false
+    emptyQuery()
+      .then((items) => {
+        if (!cancelled) setContextual(items)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [debounced, emptyQuery])
+
   const handleSearchError = useCallback(
     (error: unknown) => showError(error, "Could not load foods."),
     [showError],
@@ -132,15 +168,20 @@ export default function LogMealScreen() {
     }
   }, [showError])
 
-  // Refetch favorites/recent/meals when returning from add-food or meal-builder.
+  // Refetch favorites/recent/meals/logged entries when returning from add-food or meal-builder.
   useFocusEffect(
     useCallback(() => {
+      loadLoggedEntries()
       if (category === "meals") {
         loadMeals()
       } else if (!debounced.trim() && listMode !== "frequent") {
         refresh()
+      } else if (debounced.trim()) {
+        emptyQuery()
+          .then(setContextual)
+          .catch(() => undefined)
       }
-    }, [category, debounced, listMode, loadMeals, refresh]),
+    }, [category, debounced, emptyQuery, listMode, loadLoggedEntries, loadMeals, refresh]),
   )
 
   const openFood = useCallback(
@@ -151,6 +192,35 @@ export default function LogMealScreen() {
       })
     },
     [date, mealType, router],
+  )
+
+  const openEdit = useCallback(
+    (entry: DiaryEntry) => {
+      router.push({
+        pathname: "/add-food",
+        params: { entryId: entry.id, meal: mealType, date },
+      })
+    },
+    [date, mealType, router],
+  )
+
+  const onDeleteEntry = useCallback(
+    (entry: DiaryEntry) => {
+      confirmAction({
+        title: "Delete entry?",
+        message: `Remove "${entry.food_name}" from ${formatDisplayDate(date)}?`,
+        confirmLabel: "Delete",
+        onConfirm: async () => {
+          try {
+            await deleteFoodEntry(entry.id)
+            await loadLoggedEntries()
+          } catch (error) {
+            showError(error, "Could not delete entry.")
+          }
+        },
+      })
+    },
+    [date, loadLoggedEntries, showError],
   )
 
   const handleLogMeal = useCallback(
@@ -287,6 +357,55 @@ export default function LogMealScreen() {
     return "Search or scan a barcode to build your food list."
   }, [category, debounced, listMode])
 
+  const loggedSection =
+    category === "foods" && loggedEntries.length > 0 ? (
+      <View style={styles.loggedWrap}>
+        <View style={styles.loggedHeader}>
+          <Text style={styles.loggedTitle}>Logged in {MEAL_LABELS[mealType]}</Text>
+          <Text style={styles.loggedMeta}>
+            {loggedEntries.length} · {Math.round(sumNutrients(loggedEntries).kcal)} Cal
+          </Text>
+        </View>
+        {loggedEntries.map((entry) => (
+          <View key={entry.id} style={styles.loggedRow}>
+            <Pressable
+              style={styles.loggedMain}
+              onPress={() => openEdit(entry)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${entry.food_name}`}
+            >
+              <View style={styles.loggedInfo}>
+                <Text style={styles.loggedName} numberOfLines={1}>
+                  {entry.food_name}
+                </Text>
+                <Text style={styles.loggedSub} numberOfLines={1}>
+                  {entry.amount} {displayUnit(entry.unit)} · {Math.round(entry.kcal)} Cal
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.loggedIconBtn}
+              onPress={() => openEdit(entry)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${entry.food_name}`}
+            >
+              <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+            </Pressable>
+            <Pressable
+              style={styles.loggedIconBtn}
+              onPress={() => onDeleteEntry(entry)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${entry.food_name}`}
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </Pressable>
+          </View>
+        ))}
+      </View>
+    ) : null
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -330,6 +449,17 @@ export default function LogMealScreen() {
             autoCorrect={false}
             returnKeyType="search"
           />
+          {query.length > 0 ? (
+            <Pressable
+              style={styles.searchClear}
+              onPress={() => setQuery("")}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={styles.filters}>
@@ -365,6 +495,7 @@ export default function LogMealScreen() {
             contentContainerClassName={
               foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-24"
             }
+            ListHeaderComponent={loggedSection}
             renderItem={renderFood}
             ListEmptyComponent={
               !loading ? (
@@ -375,6 +506,29 @@ export default function LogMealScreen() {
                   <Text style={styles.empty}>{emptyMessage}</Text>
                 </View>
               ) : null
+            }
+            ListFooterComponent={
+              debounced && contextual.length > 0 ? (
+                <View style={styles.contextualWrap}>
+                  <Text style={styles.contextualTitle}>
+                    {listMode === "favorites"
+                      ? "Favorite picks"
+                      : listMode === "recent"
+                        ? "Recently used"
+                        : "Frequent picks"}
+                  </Text>
+                  {contextual.map((item) => (
+                    <MealLogFoodRow
+                      key={item.product_id}
+                      food={item}
+                      subtitle={subtitles.get(item.product_id)}
+                      accentColor={accent}
+                      onPress={() => openFood(item)}
+                      onAdd={() => openFood(item)}
+                    />
+                  ))}
+                </View>
+              ) : undefined
             }
           />
         ) : (
@@ -463,10 +617,11 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 2,
       paddingVertical: spacing.md,
       paddingLeft: spacing.xl + spacing.md,
-      paddingRight: spacing.md,
+      paddingRight: spacing.xl,
       fontSize: 16,
       color: colors.text,
     },
+    searchClear: { position: "absolute", right: spacing.md, zIndex: 1 },
     filters: {
       paddingHorizontal: spacing.md,
       marginBottom: spacing.sm,
@@ -545,6 +700,48 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 18,
       alignItems: "center",
       justifyContent: "center",
+    },
+    loggedWrap: {
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.md,
+      padding: spacing.md,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    loggedHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: spacing.sm,
+    },
+    loggedTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
+    loggedMeta: { fontSize: 13, color: colors.textMuted },
+    loggedRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs,
+      paddingVertical: spacing.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    loggedMain: { flex: 1, minWidth: 0 },
+    loggedInfo: { minWidth: 0 },
+    loggedName: { fontSize: 15, color: colors.text, fontWeight: "600" },
+    loggedSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
+    loggedIconBtn: { padding: 6 },
+    contextualWrap: {
+      paddingTop: spacing.md,
+      marginHorizontal: spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    contextualTitle: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.textMuted,
+      marginBottom: spacing.xs,
     },
     fabLayer: {
       position: "absolute",

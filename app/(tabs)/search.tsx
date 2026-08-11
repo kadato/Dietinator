@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState, type ComponentRef } from "react"
-import { ActivityIndicator, FlatList, View, type TextInput } from "react-native"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -33,7 +33,6 @@ export default function SearchScreen() {
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
-  const inputRef = useRef<ComponentRef<typeof InputField>>(null)
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
   const [listMode, setListMode] = useState<ListMode>("recents")
@@ -57,6 +56,28 @@ export default function SearchScreen() {
   }, [listMode])
 
   const { foods, loading } = useFoodSearch(debounced, { emptyQuery })
+
+  // Keep the current recents/favorites list rendered below search results
+  // instead of replacing it the moment the user types.
+  const [contextual, setContextual] = useState<SearchFoodResult[]>([])
+  // Reset synchronously when the query clears (render-adjustment pattern).
+  const [prevDebounced, setPrevDebounced] = useState(debounced)
+  if (prevDebounced !== debounced) {
+    setPrevDebounced(debounced)
+    if (!debounced.trim()) setContextual([])
+  }
+  useEffect(() => {
+    if (!debounced.trim()) return
+    let cancelled = false
+    emptyQuery()
+      .then((items) => {
+        if (!cancelled) setContextual(items)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [debounced, emptyQuery])
 
   const openFood = useCallback(
     (food: SearchFoodResult) => {
@@ -152,8 +173,7 @@ export default function SearchScreen() {
           className="mt-2 text-center leading-5 text-typography-500"
           style={{ maxWidth: 420 }}
         >
-          Type to search thousands of foods from the YAZIO database. Your recent and favorite picks
-          show up here too.
+          Type to search foods from the YAZIO database. Recent and favorite picks show up here.
         </Text>
       </Box>
     )
@@ -172,13 +192,23 @@ export default function SearchScreen() {
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
             <InputField
-              ref={inputRef}
               placeholder="e.g. banana, oats, chicken"
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
               returnKeyType="search"
             />
+            {query.length > 0 ? (
+              <Pressable
+                onPress={() => setQuery("")}
+                className="pr-3"
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
           </Input>
           <Box className="mt-3">
             <SegmentedControl<ListMode>
@@ -199,6 +229,24 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.product_id}
           renderItem={renderItem}
           ListEmptyComponent={emptyContent}
+          ListFooterComponent={
+            debounced && contextual.length > 0 ? (
+              <Box className="mt-4 border-t border-outline-200 pt-3">
+                <Text size="sm" bold className="px-4 pb-1 text-typography-500">
+                  {listMode === "favorites" ? "Favorite picks" : "Recently used"}
+                </Text>
+                {contextual.map((item) => (
+                  <FoodListItem
+                    key={item.product_id}
+                    food={item}
+                    onPress={() => openFood(item)}
+                    isFavorite={favoriteIds.has(item.product_id)}
+                    onToggleFavorite={() => handleToggleFavorite(item)}
+                  />
+                ))}
+              </Box>
+            ) : undefined
+          }
         />
       </PageContainer>
 
@@ -206,17 +254,11 @@ export default function SearchScreen() {
         style={{
           position: "absolute",
           right: 20,
-          bottom: layout.tabBarHeight + insets.bottom + 16,
-          gap: 12,
+          bottom: layout.tabBarHeight + insets.bottom + 24,
           pointerEvents: "box-none",
         }}
       >
         <Fab icon="barcode-outline" onPress={openScan} accessibilityLabel="Scan barcode" />
-        <Fab
-          icon="search"
-          onPress={() => (inputRef.current as unknown as TextInput | null)?.focus()}
-          accessibilityLabel="Focus search"
-        />
       </View>
     </Box>
   )

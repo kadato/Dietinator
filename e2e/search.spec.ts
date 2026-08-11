@@ -8,8 +8,9 @@ test.describe("food search (offline)", () => {
     await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
     await expect(page.getByText("Favorites", { exact: true })).toBeVisible()
 
-    // The search FAB focuses the search box.
-    await page.getByRole("button", { name: "Focus search" }).click()
+    // The search box is the single search affordance (the redundant
+    // focus-search FAB was removed in the phone UI pass).
+    await page.getByPlaceholder("e.g. banana, oats, chicken").click()
     await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeFocused()
     await page.getByPlaceholder("e.g. banana, oats, chicken").fill("oats")
     // Recents/Favorites must stay visible while searching.
