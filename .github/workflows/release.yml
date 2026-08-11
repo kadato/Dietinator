@@ -65,6 +65,10 @@ jobs:
         run: node scripts/ci-set-version.cjs ${{ steps.version.outputs.version }}
       - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
+      - name: Raise Gradle JVM memory
+        # The prebuild template caps Metaspace at 512m, which first-time Expo
+        # builds exhaust. The later org.gradle.jvmargs line wins.
+        run: echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m" >> android/gradle.properties
       - name: Decode signing keystore
         run: |
           mkdir -p keystore
