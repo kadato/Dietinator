@@ -186,8 +186,7 @@ export default function MealsScreen() {
         className="mt-2 text-center leading-5 text-typography-500"
         style={{ maxWidth: 420 }}
       >
-        Combine foods you often eat together into a meal, then log it all in one tap. Tap the New
-        meal button to create your first one.
+        Combine foods you often eat together, then log them all in one tap.
       </Text>
     </Box>
   )
@@ -216,7 +215,7 @@ export default function MealsScreen() {
         style={{
           position: "absolute",
           right: 20,
-          bottom: layout.tabBarHeight + insets.bottom + 16,
+          bottom: layout.tabBarHeight + insets.bottom + 24,
           pointerEvents: "box-none",
         }}
       >

@@ -65,7 +65,7 @@ export function CalorieRing({ consumed, goal, burned = 0, size = 140 }: Props) {
   const burnedStat = (
     <View style={styles.sideStat}>
       <Text maxFontSizeMultiplier={1.2} style={styles.sideValue}>
-        {burned > 0 ? Math.round(burned).toLocaleString() : "-"}
+        {burned > 0 ? Math.round(burned).toLocaleString() : "0"}
       </Text>
       <Text style={styles.sideLabel}>Burned</Text>
     </View>
