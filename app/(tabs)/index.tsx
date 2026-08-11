@@ -9,16 +9,19 @@ import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { LogWeightModal } from "@/components/LogWeightModal"
 import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
 import { useAiChatModal } from "@/context/AiChatContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
-import type { DiaryEntry, MealType } from "@/types"
+import type { DiaryEntry, MealType, WeightEntry } from "@/types"
 import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
+import { getLatestWeightEntry } from "@/db/weight"
 import { confirmAction } from "@/utils/confirm"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
+import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
@@ -27,20 +30,6 @@ import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
-
-type Totals = { kcal: number; protein: number; carbs: number; fat: number }
-
-function sumEntries(list: DiaryEntry[]): Totals {
-  return list.reduce(
-    (acc, e) => ({
-      kcal: acc.kcal + e.kcal,
-      protein: acc.protein + e.protein,
-      carbs: acc.carbs + e.carbs,
-      fat: acc.fat + e.fat,
-    }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  )
-}
 
 export default function TodayScreen() {
   const router = useRouter()
@@ -56,8 +45,10 @@ export default function TodayScreen() {
   const [mealGoals, setMealGoals] = useState<MealGoals>({})
   const [summary, setSummary] = useState<YazioDailySummary | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
+  const [logWeightOpen, setLogWeightOpen] = useState(false)
 
-  const totals = useMemo(() => sumEntries(entries), [entries])
+  const totals = useMemo(() => sumNutrients(entries), [entries])
 
   const mealEntries = useMemo(() => {
     const grouped: Record<MealType, DiaryEntry[]> = {
@@ -84,6 +75,7 @@ export default function TodayScreen() {
       try {
         list = await getDiaryEntriesForDate(dateKey, { remote: false })
         setEntries(list)
+        setLocalWeight(await getLatestWeightEntry())
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
@@ -209,7 +201,9 @@ export default function TodayScreen() {
     })
 
   const isToday = dateKey === toDateKey()
-  const weight = summary?.weight
+  const yazioWeight = summary?.weight
+  // Locally logged weigh-ins take precedence over the YAZIO profile weight.
+  const displayedWeight = localWeight?.weight_kg ?? yazioWeight
   const insets = useSafeAreaInsets()
 
   const fabCluster =
@@ -218,7 +212,7 @@ export default function TodayScreen() {
         style={{
           position: "absolute",
           right: 20,
-          bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 16,
+          bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24,
           pointerEvents: "box-none",
         }}
       >
@@ -248,36 +242,38 @@ export default function TodayScreen() {
         carbsGoal={settings.carbs_goal}
         fatGoal={settings.fat_goal}
       />
-      {summary && (summary.steps > 0 || summary.waterIntake > 0 || weight) ? (
-        <Box className="flex-row items-center justify-around border-t border-outline-200 px-2 py-3">
-          {summary.steps > 0 ? (
-            <Box className="flex-row items-center gap-1.5">
-              <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
-              <Text size="sm" className="text-typography-900">
-                {summary.steps.toLocaleString()}
-              </Text>
-            </Box>
-          ) : null}
-          {summary.waterIntake > 0 ? (
-            <Box className="flex-row items-center gap-1.5">
-              <Ionicons name="water-outline" size={16} color={colors.primary} />
-              <Text size="sm" className="text-typography-900">
-                {summary.waterGoal > 0
-                  ? `${formatWaterAmount(summary.waterIntake, settings.units)} / ${formatWaterAmount(summary.waterGoal, settings.units)}`
-                  : formatWaterAmount(summary.waterIntake, settings.units)}
-              </Text>
-            </Box>
-          ) : null}
-          {weight ? (
-            <Box className="flex-row items-center gap-1.5">
-              <Ionicons name="scale-outline" size={16} color={colors.primary} />
-              <Text size="sm" className="text-typography-900">
-                {formatWeight(weight, settings.units)}
-              </Text>
-            </Box>
-          ) : null}
-        </Box>
-      ) : null}
+      <Box className="flex-row items-center justify-around border-t border-outline-200 px-2 py-3">
+        {summary && summary.steps > 0 ? (
+          <Box className="flex-row items-center gap-1.5">
+            <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
+            <Text size="sm" className="text-typography-900">
+              {summary.steps.toLocaleString()}
+            </Text>
+          </Box>
+        ) : null}
+        {summary && summary.waterIntake > 0 ? (
+          <Box className="flex-row items-center gap-1.5">
+            <Ionicons name="water-outline" size={16} color={colors.primary} />
+            <Text size="sm" className="text-typography-900">
+              {summary.waterGoal > 0
+                ? `${formatWaterAmount(summary.waterIntake, settings.units)} / ${formatWaterAmount(summary.waterGoal, settings.units)}`
+                : formatWaterAmount(summary.waterIntake, settings.units)}
+            </Text>
+          </Box>
+        ) : null}
+        <Pressable
+          onPress={() => setLogWeightOpen(true)}
+          className="flex-row items-center gap-1.5"
+          accessibilityRole="button"
+          accessibilityLabel="Log weight"
+        >
+          <Ionicons name="scale-outline" size={16} color={colors.primary} />
+          <Text size="sm" className="text-typography-900">
+            {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "Log weight"}
+          </Text>
+          <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+        </Pressable>
+      </Box>
     </Card>
   )
 
@@ -305,7 +301,7 @@ export default function TodayScreen() {
               <Ionicons name="chevron-back" size={22} color={colors.text} />
             </Pressable>
             <Pressable
-              className="flex-1 items-center py-0.5"
+              className="min-h-11 flex-1 items-center justify-center"
               onPress={() => setPickerOpen(true)}
               accessibilityRole="button"
               accessibilityLabel="Open calendar"
@@ -385,6 +381,12 @@ export default function TodayScreen() {
         dateKey={dateKey}
         onSelect={(key) => setDateKey(key)}
         onClose={() => setPickerOpen(false)}
+      />
+
+      <LogWeightModal
+        visible={logWeightOpen}
+        onClose={() => setLogWeightOpen(false)}
+        onSaved={() => load({ quiet: true })}
       />
 
       {fabCluster}
