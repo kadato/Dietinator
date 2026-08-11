@@ -1,0 +1,119 @@
+import type { SQLiteDatabase } from "expo-sqlite"
+import {
+  cachedToSearchResult,
+  saveFoodToCache,
+  saveSearchResultToCache,
+  touchFoodUsed,
+} from "../food-cache"
+import { getDatabase } from "@/db/database"
+import type { CachedFood, SearchFoodResult } from "@/types"
+
+jest.mock("@/db/database", () => ({
+  getDatabase: jest.fn(),
+}))
+
+const mockGetDatabase = getDatabase as jest.MockedFunction<typeof getDatabase>
+
+const db = {
+  runAsync: jest.fn().mockResolvedValue(undefined),
+  getAllAsync: jest.fn().mockResolvedValue([]),
+  getFirstAsync: jest.fn().mockResolvedValue(null),
+}
+
+beforeEach(() => {
+  db.runAsync.mockClear()
+  mockGetDatabase.mockResolvedValue(db as unknown as SQLiteDatabase)
+})
+
+const food = (overrides: Partial<SearchFoodResult> = {}): SearchFoodResult => ({
+  product_id: "prod-1",
+  name: "Banana",
+  producer: "Dole",
+  nutrients: { kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3 },
+  serving: { serving: "whole.regular", amount: 150, serving_quantity: 100 },
+  servings: [
+    { serving: "whole.regular", amount: 150, serving_quantity: 100 },
+    { serving: "cup", amount: 240, serving_quantity: 100 },
+    { serving: "each", amount: 60, serving_quantity: 100 },
+  ],
+  base_unit: "g",
+  is_verified: true,
+  ...overrides,
+})
+
+describe("cachedToSearchResult", () => {
+  const cached = (overrides: Partial<CachedFood> = {}): CachedFood => ({
+    yazio_product_id: "prod-1",
+    barcode: null,
+    name: "Banana",
+    producer: "Dole",
+    nutrients_json: JSON.stringify(food().nutrients),
+    serving_json: JSON.stringify(food().serving),
+    servings_json: JSON.stringify(food().servings),
+    base_unit: "g",
+    cached_at: "2026-08-10T00:00:00.000Z",
+    is_favorite: 0,
+    last_used_at: null,
+    last_amount: null,
+    source: "detail",
+    ...overrides,
+  })
+
+  it("restores the named serving options (cup, each, whole)", () => {
+    const result = cachedToSearchResult(cached())
+    expect(result?.servings).toEqual(food().servings)
+    expect(result?.serving).toEqual(food().serving)
+  })
+
+  it("omits servings for rows without a servings column value", () => {
+    const result = cachedToSearchResult(cached({ servings_json: null }))
+    expect(result?.servings).toBeUndefined()
+  })
+
+  it("returns null for malformed rows", () => {
+    expect(cachedToSearchResult(cached({ nutrients_json: "not-json" }))).toBeNull()
+  })
+})
+
+describe("saveFoodToCache", () => {
+  it("persists the named serving options as JSON", async () => {
+    await saveFoodToCache(food(), null, true, "detail")
+    const sql = db.runAsync.mock.calls[0][0] as string
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(sql).toContain("servings_json")
+    expect(args).toContain(JSON.stringify(food().servings))
+  })
+
+  it("stores null servings for foods without options", async () => {
+    await saveFoodToCache(food({ servings: undefined }))
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(args).toContain(null)
+  })
+})
+
+describe("saveSearchResultToCache", () => {
+  it("never stores serving options on search rows", async () => {
+    await saveSearchResultToCache(food())
+    const sql = db.runAsync.mock.calls[0][0] as string
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(sql).toContain("servings_json")
+    expect(args).toContain(null)
+  })
+})
+
+describe("touchFoodUsed", () => {
+  it("remembers the last logged amount", async () => {
+    await touchFoodUsed("prod-1", 250)
+    const sql = db.runAsync.mock.calls[0][0] as string
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(sql).toContain("last_amount = COALESCE(?, last_amount)")
+    expect(args).toContain(250)
+    expect(args[0]).toEqual(expect.any(String))
+  })
+
+  it("keeps the stored amount when none is given", async () => {
+    await touchFoodUsed("prod-1")
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(args[1]).toBeNull()
+  })
+})

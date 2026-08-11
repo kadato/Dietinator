@@ -45,7 +45,9 @@ function createMockDb(options: {
         ).map((name) => ({ name }))
       }
       if (query.includes("table_info(food_cache)")) {
-        return (options.columns?.food_cache ?? ["base_unit", "source"]).map((name) => ({ name }))
+        return (
+          options.columns?.food_cache ?? ["base_unit", "source", "servings_json", "last_amount"]
+        ).map((name) => ({ name }))
       }
       return []
     }),
@@ -98,6 +100,7 @@ describe("migrate", () => {
         "settings.theme_preference",
         "food_cache.base_unit",
         "food_cache.source",
+        "food_cache.servings_json",
       ]),
     )
   })

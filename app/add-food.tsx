@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   Pressable,
   ScrollView,
@@ -12,7 +11,7 @@ import {
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { logFood, updateDiaryEntry } from "@/services/diary"
-import { getFoodRemote } from "@/services/yazio/foods"
+import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
 import {
   cachedToSearchResult,
   getCachedFoodById,
@@ -27,10 +26,11 @@ import {
   nutrientsForAmount,
   resolveNutrientsRefAmount,
 } from "@/utils/nutrients"
-import { formatNutrientsServingLabel, formatServingOption } from "@/utils/food-display"
+import { formatNutrientsServingLabel, formatServingOption, displayUnit } from "@/utils/food-display"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
+import { NumberStepper } from "@/components/NumberStepper"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Fab } from "@/components/Fab"
@@ -44,21 +44,22 @@ import { spacing, type ColorPalette } from "@/theme"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 
 /**
- * Normalize a serving option against a product: per-100g products (detail API)
- * keep the ref amount so nutrient scaling stays correct.
+ * Normalize a serving option against a product.
+ *
+ * `serving_quantity` always carries the amount of base units that the stored
+ * `nutrients` refer to (the nutrient reference amount). For per-100 g/ml
+ * products that is 100; for countable products (each, cup, serving, whole)
+ * it is 1 base unit (or the product's default portion). Scaling from this
+ * reference keeps calories correct for every named serving — picking
+ * "2 each" on a per-piece product must double, not match, the base energy.
  */
 function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServing {
   const unit = food.base_unit || "g"
   const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit)
-  const perHundred = Boolean(food.servings?.length) && ref === 100
   return {
     serving: option.serving,
     amount: option.amount,
-    serving_quantity: perHundred
-      ? ref
-      : option.serving_quantity > 0
-        ? option.serving_quantity
-        : option.amount,
+    serving_quantity: ref,
   }
 }
 
@@ -67,11 +68,22 @@ function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServin
  * cached row — per-gram search rows are normalized for display — and patches
  * in the real product detail when the network answers, so the nutrition
  * preview never waits for YAZIO when the food has been seen before.
+ *
+ * `needsRefresh` is true for rows that must be replaced by a fresh fetch:
+ * search rows (per-gram data, no serving options), legacy rows written before
+ * the source marker existed, and any row whose stored data is ambiguous.
+ * The caller then refreshes in the background and swaps the screen over.
  */
 async function resolveFoodForDisplay(
   productId: string,
   cancelled: boolean,
-): Promise<{ food: SearchFoodResult; favorite: boolean } | null> {
+): Promise<{
+  food: SearchFoodResult
+  favorite: boolean
+  needsRefresh: boolean
+  /** Base-unit amount logged the last time this food was consumed. */
+  lastAmount: number | null
+} | null> {
   const cachedRow = await getCachedFoodById(productId)
   if (!cancelled && cachedRow) {
     const cachedFood = cachedToSearchResult(cachedRow)
@@ -80,19 +92,35 @@ async function resolveFoodForDisplay(
         cachedRow.source === "search" &&
         (cachedFood.base_unit === "g" || cachedFood.base_unit === "ml")
       const display = perGram ? normalizePerGramFood(cachedFood) : cachedFood
-      return { food: { ...display }, favorite: cachedRow.is_favorite === 1 }
+      return {
+        food: { ...display },
+        favorite: cachedRow.is_favorite === 1,
+        needsRefresh: !isUsableCacheRow(cachedRow, cachedFood),
+        lastAmount: cachedRow.last_amount,
+      }
     }
   }
 
-  // Background: real detail (or a fresh cache refresh) replaces the instant
-  // render when it arrives; the screen is already usable meanwhile.
   const resolved = (await getFoodRemote(productId)) ?? (await getFoodById(productId))
   if (!resolved) return null
   const initialServing = resolved.servings?.[0] ?? resolved.serving
   return {
     food: { ...resolved, serving: resolveServing(resolved, initialServing) },
     favorite: await getIsFavorite(resolved.product_id),
+    needsRefresh: false,
+    lastAmount: null,
   }
+}
+
+/** Fresh product detail (with named serving options) for the background patch-in. */
+async function resolveFoodFresh(
+  productId: string,
+  cancelled: boolean,
+): Promise<SearchFoodResult | null> {
+  const fresh = await getFoodRemote(productId)
+  if (!fresh || cancelled) return null
+  const initialServing = fresh.servings?.[0] ?? fresh.serving
+  return { ...fresh, serving: resolveServing(fresh, initialServing) }
 }
 
 export default function AddFoodScreen() {
@@ -130,6 +158,9 @@ export default function AddFoodScreen() {
   const [amount, setAmount] = useState("")
   const [saving, setSaving] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<MealType>(mealType)
+  // True once the user edits the amount — background detail patches must not
+  // clobber a typed or history-prefilled portion.
+  const amountTouched = useRef(false)
 
   useEffect(() => {
     if (!productId && !entryId) {
@@ -177,6 +208,10 @@ export default function AddFoodScreen() {
         if (!cancelled && resolved) {
           setFood(resolved.food)
           setIsFavorite(resolved.favorite)
+          if (resolved.needsRefresh) {
+            const fresh = await resolveFoodFresh(entry.food_id, cancelled)
+            if (!cancelled && fresh) setFood(fresh)
+          }
         }
       } catch {
         if (!cancelled) {
@@ -201,8 +236,23 @@ export default function AddFoodScreen() {
         const resolved = await resolveFoodForDisplay(productId, cancelled)
         if (!cancelled && resolved) {
           setFood(resolved.food)
-          setAmount(String(resolved.food.serving.amount))
+          // Remember the portion used last time; fall back to the serving default.
+          setAmount(
+            resolved.lastAmount != null
+              ? String(resolved.lastAmount)
+              : String(resolved.food.serving.amount),
+          )
           setIsFavorite(resolved.favorite)
+          if (resolved.needsRefresh) {
+            const fresh = await resolveFoodFresh(productId, cancelled)
+            if (!cancelled && fresh) {
+              setFood(fresh)
+              // Only adopt the detail default when nothing was prefilled/typed.
+              if (!amountTouched.current && resolved.lastAmount == null) {
+                setAmount(String(fresh.serving.amount))
+              }
+            }
+          }
         }
       } catch {
         if (!cancelled) {
@@ -220,8 +270,16 @@ export default function AddFoodScreen() {
 
   const servingOptions = useMemo((): FoodServing[] => {
     if (!food) return []
-    if (food.servings?.length) return food.servings
-    return [food.serving]
+    const options = food.servings?.length ? food.servings : [food.serving]
+    // Some products ship duplicate serving entries (same name + amount) —
+    // keep the first occurrence so every chip maps to a distinct amount.
+    const seen = new Set<string>()
+    return options.filter((option) => {
+      const key = `${option.serving}-${option.amount}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
   }, [food])
 
   const preview = useMemo(() => {
@@ -398,14 +456,17 @@ export default function AddFoodScreen() {
               })}
             </ScrollView>
 
-            <Text style={styles.label}>Amount ({unit})</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="decimal-pad"
+            <Text style={styles.label}>Amount ({displayUnit(unit)})</Text>
+            <NumberStepper
               value={amount}
-              onChangeText={setAmount}
-              accessibilityLabel={`Amount in ${unit}`}
-              maxFontSizeMultiplier={1.4}
+              onChangeText={(text) => {
+                amountTouched.current = true
+                setAmount(text)
+              }}
+              step={unit === "g" || unit === "ml" ? 10 : 1}
+              decimals={1}
+              accessibilityLabel={`Amount in ${displayUnit(unit)}`}
+              style={{ marginBottom: spacing.lg }}
             />
 
             {preview && (

@@ -15,6 +15,8 @@ function rowToCached(row: Record<string, unknown>): CachedFood {
     cached_at: String(row.cached_at),
     is_favorite: Number(row.is_favorite),
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
+    last_amount: row.last_amount != null ? Number(row.last_amount) : null,
+    servings_json: row.servings_json ? String(row.servings_json) : null,
     source: row.source ? String(row.source) : null,
   }
 }
@@ -23,12 +25,14 @@ export function cachedToSearchResult(cached: CachedFood): SearchFoodResult | nul
   const nutrients = parseJson<FoodNutrients>(cached.nutrients_json)
   const serving = parseJson<FoodServing>(cached.serving_json)
   if (!nutrients || !serving || !serving.serving) return null
+  const servings = cached.servings_json ? parseJson<FoodServing[]>(cached.servings_json) : undefined
   return {
     product_id: cached.yazio_product_id,
     name: cached.name,
     producer: cached.producer ?? "",
     nutrients,
     serving,
+    servings: servings && servings.length > 0 ? servings : undefined,
     base_unit: cached.base_unit || "g",
     is_verified: true,
   }
@@ -155,15 +159,16 @@ export async function saveFoodToCache(
       : "detail")
   await db.runAsync(
     `INSERT INTO food_cache (
-      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, base_unit,
-      cached_at, is_favorite, last_used_at, source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, ?)
+      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, servings_json,
+      base_unit, cached_at, is_favorite, last_used_at, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, ?)
     ON CONFLICT(yazio_product_id) DO UPDATE SET
       barcode = COALESCE(excluded.barcode, food_cache.barcode),
       name = excluded.name,
       producer = excluded.producer,
       nutrients_json = excluded.nutrients_json,
       serving_json = excluded.serving_json,
+      servings_json = excluded.servings_json,
       base_unit = excluded.base_unit,
       cached_at = excluded.cached_at,
       last_used_at = ${preserveLastUsedAt ? "food_cache.last_used_at" : "excluded.last_used_at"},
@@ -174,6 +179,7 @@ export async function saveFoodToCache(
     food.producer,
     JSON.stringify(food.nutrients),
     JSON.stringify(food.serving),
+    food.servings?.length ? JSON.stringify(food.servings) : null,
     food.base_unit || "g",
     now,
     food.product_id,
@@ -193,9 +199,9 @@ export async function saveSearchResultToCache(food: SearchFoodResult): Promise<v
   const now = new Date().toISOString()
   await db.runAsync(
     `INSERT INTO food_cache (
-      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, base_unit,
-      cached_at, is_favorite, last_used_at, source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, 'search')
+      yazio_product_id, barcode, name, producer, nutrients_json, serving_json, servings_json,
+      base_unit, cached_at, is_favorite, last_used_at, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT is_favorite FROM food_cache WHERE yazio_product_id = ?), 0), ?, 'search')
     ON CONFLICT(yazio_product_id) DO UPDATE SET
       barcode = COALESCE(excluded.barcode, food_cache.barcode),
       name = excluded.name,
@@ -213,6 +219,7 @@ export async function saveSearchResultToCache(food: SearchFoodResult): Promise<v
     food.producer,
     JSON.stringify(food.nutrients),
     JSON.stringify(food.serving),
+    null,
     food.base_unit || "g",
     now,
     food.product_id,
@@ -220,11 +227,17 @@ export async function saveSearchResultToCache(food: SearchFoodResult): Promise<v
   )
 }
 
-export async function touchFoodUsed(productId: string): Promise<void> {
+/**
+ * Mark a food as recently consumed. When `amount` (base units) is given it is
+ * remembered as the portion used the last time — the add-food screen prefills
+ * it so repeat logging keeps the previous amount.
+ */
+export async function touchFoodUsed(productId: string, amount?: number): Promise<void> {
   const db = await getDatabase()
   await db.runAsync(
-    "UPDATE food_cache SET last_used_at = ? WHERE yazio_product_id = ?",
+    "UPDATE food_cache SET last_used_at = ?, last_amount = COALESCE(?, last_amount) WHERE yazio_product_id = ?",
     new Date().toISOString(),
+    typeof amount === "number" && Number.isFinite(amount) && amount > 0 ? amount : null,
     productId,
   )
 }

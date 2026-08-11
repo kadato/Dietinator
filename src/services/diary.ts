@@ -89,7 +89,7 @@ export async function logFood(params: {
 
   // Cache writes must never fail the log — the entry is already saved.
   foodCacheDb.saveFoodToCache(food).catch(() => undefined)
-  foodCacheDb.touchFoodUsed(food.product_id).catch(() => undefined)
+  foodCacheDb.touchFoodUsed(food.product_id, amount).catch(() => undefined)
 
   syncEntryToYazio(entry).catch(() => undefined)
   // Web-host agent bridge: keep the /mcp snapshot current (web only).

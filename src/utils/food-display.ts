@@ -1,12 +1,44 @@
 import type { FoodServing, SearchFoodResult } from "@/types"
 import { isPerGramNutrients, resolveNutrientsRefAmount } from "@/utils/nutrients"
 
+/** YAZIO serving keys are dotted ids ("whole.regular", "small.piece"); show readable labels. */
+export function formatServingLabel(label: string): string {
+  return label
+    .split(".")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+/** Human label for a YAZIO base unit (g/ml stay, countable units get English names). */
+export function displayUnit(baseUnit: string): string {
+  switch (baseUnit) {
+    case "stück":
+      return "each"
+    case "portion":
+      return "serving"
+    default:
+      return baseUnit || "g"
+  }
+}
+
 export function formatServingOption(serving: FoodServing, baseUnit: string): string {
   const label = serving.serving || baseUnit
-  if (label === "g" || label === "ml" || label === baseUnit) {
-    return `${serving.amount} ${baseUnit}`
+  const unit = displayUnit(baseUnit)
+  const pretty = formatServingLabel(label)
+  // Plain unit labels ("100 g", "250 ml") and countable labels that are just
+  // the unit ("each" on a stück product) render without the redundant
+  // parenthetical.
+  if (
+    label === "g" ||
+    label === "ml" ||
+    label === baseUnit ||
+    label.endsWith(` ${baseUnit}`) ||
+    pretty.toLowerCase() === unit
+  ) {
+    return `${serving.amount} ${unit}`
   }
-  return `${label} (${serving.amount} ${baseUnit})`
+  return `${pretty} (${serving.amount} ${unit})`
 }
 
 export function formatNutrientsServingLabel(
@@ -20,7 +52,7 @@ export function formatNutrientsServingLabel(
 
   const name = food.serving.serving
   if (name && name !== "g" && name !== "ml" && name !== unit) {
-    return `for ${amt} ${unit} · ${name}`
+    return `for ${amt} ${unit} · ${formatServingLabel(name)}`
   }
   return `for ${amt} ${unit}`
 }

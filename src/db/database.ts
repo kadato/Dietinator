@@ -56,10 +56,12 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       producer TEXT,
       nutrients_json TEXT NOT NULL,
       serving_json TEXT NOT NULL,
+      servings_json TEXT,
       base_unit TEXT NOT NULL DEFAULT 'g',
       cached_at TEXT NOT NULL,
       is_favorite INTEGER NOT NULL DEFAULT 0,
       last_used_at TEXT,
+      last_amount REAL,
       source TEXT
     );
 
@@ -190,6 +192,16 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     // 'search' rows hold per-gram nutrients (never served cache-first);
     // 'detail' rows are normalized per 100 g/ml and are safe to serve locally.
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN source TEXT`)
+  }
+  if (!foodCacheColumns.some((column) => column.name === "servings_json")) {
+    // All YAZIO serving options (cup, each, serving, whole, …) so the
+    // add-food chips survive cache round-trips and offline use.
+    await database.execAsync(`ALTER TABLE food_cache ADD COLUMN servings_json TEXT`)
+  }
+  if (!foodCacheColumns.some((column) => column.name === "last_amount")) {
+    // Base-unit amount used the last time the food was logged — prefills the
+    // add-food screen so repeat logging remembers the previous portion.
+    await database.execAsync(`ALTER TABLE food_cache ADD COLUMN last_amount REAL`)
   }
 
   // One-time cleanup (user_version 0 → 1): drop cached foods whose stored

@@ -96,7 +96,7 @@ describe("logFood", () => {
   it("warm-ups the cache and touches last-used best-effort", async () => {
     await logFood({ date: "2026-08-08", mealType: "lunch", food: food(), amount: 100 })
     expect(foodCacheDb.saveFoodToCache).toHaveBeenCalledWith(food())
-    expect(foodCacheDb.touchFoodUsed).toHaveBeenCalledWith("food-1")
+    expect(foodCacheDb.touchFoodUsed).toHaveBeenCalledWith("food-1", 100)
   })
 
   it("fires YAZIO sync without blocking the save", async () => {

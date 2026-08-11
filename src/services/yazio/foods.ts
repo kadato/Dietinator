@@ -59,7 +59,7 @@ function withoutLegacyPerGramCache(cached: SearchFoodResult | null): SearchFoodR
  *   per-gram or ambiguous (low kcal in g/ml) must refetch once and gets
  *   re-tagged 'detail' by that fetch.
  */
-function isUsableCacheRow(row: CachedFood, cached: SearchFoodResult | null): boolean {
+export function isUsableCacheRow(row: CachedFood, cached: SearchFoodResult | null): boolean {
   if (!cached) return false
   if (row.source === "detail") return true
   if (row.source === "search") return false
@@ -122,7 +122,10 @@ async function fetchFoodDetail(
     servings: product.servings.map((s) => ({
       serving: s.serving,
       amount: s.amount,
-      serving_quantity: s.amount,
+      // g/ml products: the option amount is the nutrient reference (matches
+      // per-100 g normalization). Countable units (each, cup, whole): amounts
+      // are piece counts, nutrients are per base unit — always 1.
+      serving_quantity: baseUnit === "g" || baseUnit === "ml" ? s.amount : 1,
     })),
     base_unit: product.base_unit,
     is_verified: product.is_verified,

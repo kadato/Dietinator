@@ -109,8 +109,11 @@ export function nutrientsReferenceAmount(
     return qty
   }
 
-  // Named portion (1 scoop, 1 bar, …) — nutrients match `amount`
-  if (qty <= 10 && Number.isInteger(qty) && amount > qty) {
+  // Named portion (1 scoop, 1 bar, …) — nutrients match `amount`. Only valid
+  // for g/ml products: for countable base units (each, cup, stück) nutrients
+  // are per base unit, so a multi-piece serving must scale from 1, not from
+  // the option's own amount.
+  if ((baseUnit === "g" || baseUnit === "ml") && qty <= 10 && Number.isInteger(qty) && amount > qty) {
     return amount
   }
 
@@ -176,7 +179,6 @@ export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
       amount: 100,
       serving_quantity: 100,
     },
-    servings: undefined,
   }
 }
 

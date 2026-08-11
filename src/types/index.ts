@@ -28,6 +28,13 @@ export interface CachedFood {
   cached_at: string
   is_favorite: number
   last_used_at: string | null
+  /** Base-unit amount logged the last time this food was consumed. */
+  last_amount: number | null
+  /**
+   * JSON array of all YAZIO serving options (cup, each, serving, whole, …).
+   * Null for rows cached before this column existed or from search results.
+   */
+  servings_json: string | null
   /**
    * Where the row came from: 'search' (per-gram nutrients — stale by design,
    * never served cache-first) or 'detail' (normalized per 100 g/ml — safe to

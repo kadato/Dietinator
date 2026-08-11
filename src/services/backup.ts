@@ -140,15 +140,16 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
     for (const row of payload.food_cache) {
       await db.runAsync(
         `INSERT OR REPLACE INTO food_cache (
-          yazio_product_id, barcode, name, producer, nutrients_json, serving_json,
+          yazio_product_id, barcode, name, producer, nutrients_json, serving_json, servings_json,
           base_unit, cached_at, is_favorite, last_used_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         String(row.yazio_product_id),
         row.barcode ? String(row.barcode) : null,
         String(row.name),
         row.producer ? String(row.producer) : null,
         String(row.nutrients_json ?? "{}"),
         String(row.serving_json ?? "{}"),
+        row.servings_json ? String(row.servings_json) : null,
         String(row.base_unit ?? "g"),
         String(row.cached_at ?? new Date().toISOString()),
         row.is_favorite ? 1 : 0,
