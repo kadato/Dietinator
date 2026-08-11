@@ -1,6 +1,3 @@
-/** Supported unit systems for weight and water display. */
-export type UnitSystem = "metric" | "imperial"
-
 export function isImperial(units: string): boolean {
   return units === "imperial"
 }

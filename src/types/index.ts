@@ -127,7 +127,7 @@ export interface WeightEntry {
 
 // ── AI assistant ────────────────────────────────────────────────────────────
 
-export type AiMessageRole = "system" | "user" | "assistant" | "tool"
+type AiMessageRole = "system" | "user" | "assistant" | "tool"
 
 export interface AiToolCallInfo {
   id: string

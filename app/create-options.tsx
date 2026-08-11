@@ -2,7 +2,6 @@ import { Pressable, ScrollView, View } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { useToast } from "@/context/ToastContext"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Fab } from "@/components/Fab"
 import type { MealType } from "@/types"
@@ -18,7 +17,6 @@ type CreateOption = {
   description: string
   icon: keyof typeof Ionicons.glyphMap
   iconColor: string
-  available: boolean
 }
 
 const OPTIONS: CreateOption[] = [
@@ -28,7 +26,6 @@ const OPTIONS: CreateOption[] = [
     description: "Track calories and nutrients without creating a new item",
     icon: "flash",
     iconColor: "#eab308",
-    available: true,
   },
   {
     id: "manual-food",
@@ -36,7 +33,6 @@ const OPTIONS: CreateOption[] = [
     description: "Individual item (e.g. Bread roll)",
     icon: "nutrition",
     iconColor: "#f97316",
-    available: true,
   },
   {
     id: "meal",
@@ -44,15 +40,6 @@ const OPTIONS: CreateOption[] = [
     description: "Foods you often eat together (e.g. Cornflakes with milk)",
     icon: "restaurant",
     iconColor: "#14b8a6",
-    available: true,
-  },
-  {
-    id: "recipe",
-    title: "New recipe",
-    description: "A recipe with optional instructions (e.g. Homemade Cream of Mushroom Soup)",
-    icon: "book",
-    iconColor: "#8b5cf6",
-    available: false,
   },
 ]
 
@@ -61,13 +48,8 @@ export default function CreateOptionsScreen() {
   const params = useLocalSearchParams<{ meal?: string; date?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
-  const { showWarning } = useToast()
   const insets = useSafeAreaInsets()
   const onSelect = (option: CreateOption) => {
-    if (!option.available) {
-      showWarning("Creating recipes on YAZIO is not supported by this app yet.", "Coming soon")
-      return
-    }
     switch (option.id) {
       case "meal":
         router.push({ pathname: "/meal-builder" })
@@ -87,7 +69,7 @@ export default function CreateOptionsScreen() {
   return (
     <View style={{ flex: 1 }}>
       <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
-        <Text size="3xl" bold className="mb-6 mt-6 px-6 text-typography-900">
+        <Text size="xl" bold className="mb-5 mt-5 px-6 text-typography-900">
           What would you like to create?
         </Text>
 
@@ -98,9 +80,6 @@ export default function CreateOptionsScreen() {
               onPress={() => onSelect(option)}
               accessibilityRole="button"
               accessibilityLabel={option.title}
-              accessibilityState={{ disabled: !option.available }}
-              disabled={!option.available}
-              className={option.available ? "" : "opacity-60"}
             >
               <Card variant="outline" className="flex-row items-start gap-4 rounded-2xl p-4">
                 <Box
@@ -112,11 +91,6 @@ export default function CreateOptionsScreen() {
                 <Box className="flex-1">
                   <Text size="lg" bold className="mb-1 text-typography-900">
                     {option.title}
-                    {!option.available ? (
-                      <Text size="xs" className="ml-2 text-typography-500">
-                        · Soon
-                      </Text>
-                    ) : null}
                   </Text>
                   <Text size="sm" className="leading-5 text-typography-500">
                     {option.description}

@@ -27,7 +27,7 @@ const MAX_TOOL_LOOPS = 6
 const MAX_TOOL_RESULT_CHARS = 8000
 
 let toolsRegistry: AiToolRegistry | null = null
-export function getToolRegistry(): AiToolRegistry {
+function getToolRegistry(): AiToolRegistry {
   if (!toolsRegistry) toolsRegistry = new AiToolRegistry(createDiaryTools())
   return toolsRegistry
 }
@@ -370,15 +370,6 @@ function parseToolArgs(json: string): Record<string, unknown> {
   } catch {
     return {}
   }
-}
-
-export function defaultSuggestionPrompts(): string[] {
-  return [
-    "How am I doing today?",
-    "What's my protein status?",
-    "Show me today's diary",
-    "Calories in a grilled chicken breast?",
-  ]
 }
 
 export { toDateKey }

@@ -93,16 +93,3 @@ export async function saveAiApiKey(apiKey: string): Promise<void> {
     await deleteSecureItem(API_KEY_KEY)
   }
 }
-
-export async function clearAiApiKey(): Promise<void> {
-  await deleteSecureItem(API_KEY_KEY)
-}
-
-/**
- * The key is held in secure storage (keystore on native, prefixed localStorage
- * on web) and only ever leaves the device as the Authorization header sent to
- * the user-configured provider endpoint.
- */
-export function hasApiKey(settings: AiProviderSettings): boolean {
-  return settings.api_key.trim().length > 0
-}

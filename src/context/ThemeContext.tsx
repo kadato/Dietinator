@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react"
+import React, { createContext, useMemo } from "react"
 import { useColorScheme } from "react-native"
 import { getColors, type ColorPalette } from "@/theme"
 import { useApp } from "./AppContext"
@@ -36,12 +36,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-}
-
-export function useThemeContext(): ThemeContextValue {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error("useThemeContext must be used within ThemeProvider")
-  return ctx
 }
 
 export { ThemeContext }
