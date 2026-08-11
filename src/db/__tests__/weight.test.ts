@@ -2,6 +2,7 @@ import { getDatabase } from "@/db/database"
 import {
   deleteWeightEntry,
   getLatestWeightEntry,
+  getRecentWeightEntries,
   getWeightEntries,
   getWeightEntryForDate,
   saveWeightEntry,
@@ -95,6 +96,20 @@ describe("weight entries", () => {
     const entry = await getLatestWeightEntry()
     expect(db.getFirstAsync.mock.calls[0][0]).toContain("ORDER BY date DESC LIMIT 1")
     expect(entry?.date).toBe("2026-08-11")
+  })
+
+  it("getRecentWeightEntries returns the latest N ordered by date descending", async () => {
+    const db = createMockDb()
+    db.getAllAsync.mockResolvedValue([
+      { id: "b", date: "2026-08-11", weight_kg: 71.5 },
+      { id: "a", date: "2026-08-01", weight_kg: 74 },
+    ])
+    const rows = await getRecentWeightEntries(2)
+    expect(db.getAllAsync.mock.calls[0][0]).toContain("ORDER BY date DESC")
+    expect(db.getAllAsync.mock.calls[0][0]).toContain("LIMIT ?")
+    expect(db.getAllAsync.mock.calls[0][1]).toEqual([2])
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.date).toBe("2026-08-11")
   })
 
   it("deleteWeightEntry targets the id", async () => {

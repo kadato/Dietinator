@@ -11,7 +11,12 @@ import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
-import { getWeightEntries, deleteWeightEntry } from "@/db/weight"
+import {
+  getWeightEntries,
+  getLatestWeightEntry,
+  getRecentWeightEntries,
+  deleteWeightEntry,
+} from "@/db/weight"
 import { getCalorieHistory, type DailyKcal } from "@/db/stats"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { formatWeight } from "@/utils/units"
@@ -65,13 +70,15 @@ export default function StatsScreen() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [allWeights, kcalHistory] = await Promise.all([
-        getWeightEntries(),
+      const [chartWeights, latestWeight, recentTwo, kcalHistory] = await Promise.all([
+        getWeightEntries(fromKey),
+        getLatestWeightEntry(),
+        getRecentWeightEntries(2),
         getCalorieHistory(fromKey),
       ])
-      setWeightEntries(allWeights.filter((entry) => entry.date >= fromKey))
-      setLatest(allWeights[allWeights.length - 1] ?? null)
-      setPrevious(allWeights[allWeights.length - 2] ?? null)
+      setWeightEntries(chartWeights)
+      setLatest(latestWeight)
+      setPrevious(recentTwo[1] ?? null)
       setCalories(kcalHistory)
     } catch (error) {
       showError(error, "Could not load stats.")
