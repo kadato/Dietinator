@@ -56,3 +56,6 @@ coverage/
 
 # Lighthouse reports
 lighthouse-reports/
+
+# Android release signing key and credentials
+keystore/
