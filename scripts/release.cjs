@@ -43,6 +43,10 @@ appJson.expo.version = version
 appJson.expo.android = { ...(appJson.expo.android ?? {}), versionCode }
 fs.writeFileSync("app.json", JSON.stringify(appJson, null, 2) + "\n")
 
+// Keep CI's format:check green: prettier collapses the single-element
+// permissions array, which plain JSON.stringify leaves expanded.
+execSync("npx prettier --write app.json", { stdio: "inherit" })
+
 execSync("git add app.json", { stdio: "inherit" })
 execSync(`git commit -m "chore(release): v${version}"`, { stdio: "inherit" })
 execSync(`git tag v${version}`, { stdio: "inherit" })
