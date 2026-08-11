@@ -68,7 +68,7 @@ jobs:
       - name: Raise Gradle JVM memory
         # The prebuild template caps Metaspace at 512m, which first-time Expo
         # builds exhaust. The later org.gradle.jvmargs line wins.
-        run: echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m" >> android/gradle.properties
+        run: echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
       - name: Decode signing keystore
         run: |
           mkdir -p keystore
@@ -78,7 +78,7 @@ jobs:
       - name: Wire release signing
         run: node scripts/inject-android-signing.cjs
       - name: Build release APK
-        run: cd android && ./gradlew assembleRelease --no-daemon
+        run: cd android && ./gradlew assembleRelease --no-daemon --info --stacktrace
         env:
           DIETINATOR_KEYSTORE_FILE: ${{ github.workspace }}/keystore/dietinator-release.keystore
           DIETINATOR_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
