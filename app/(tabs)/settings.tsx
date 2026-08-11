@@ -27,6 +27,7 @@ import { fetchAvailableModels, testProviderConnection } from "@/services/ai/open
 import type { AiProviderId, AiProviderSettings, AppSettings } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
 import { SettingsSection } from "@/components/SettingsSection"
+import { NumberStepper } from "@/components/NumberStepper"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
 import { SegmentedControl } from "@/components/SegmentedControl"
 import {
@@ -110,15 +111,16 @@ function GoalInput({
   label,
   value,
   onChange,
+  step,
   last = false,
 }: {
   icon: IconName
   label: string
   value: string
   onChange: (v: string) => void
+  step: number
   last?: boolean
 }) {
-  const { isWide } = useLayout()
   const { colors: themeColors } = useTheme()
   return (
     <View
@@ -130,16 +132,13 @@ function GoalInput({
       <Text size="sm" className="min-w-0 flex-1 text-typography-900">
         {label}
       </Text>
-      <Input size="sm" variant="outline" className={isWide ? "w-[140px]" : "w-[100px]"}>
-        <InputField
-          keyboardType="numeric"
-          value={value}
-          onChangeText={onChange}
-          className="text-right"
-          accessibilityLabel={`${label} goal`}
-          maxFontSizeMultiplier={1.4}
-        />
-      </Input>
+      <NumberStepper
+        value={value}
+        onChangeText={onChange}
+        step={step}
+        size="sm"
+        accessibilityLabel={`${label} goal`}
+      />
     </View>
   )
 }
@@ -236,20 +235,30 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
         label="Calories (kcal)"
         value={calorieGoal}
         onChange={setCalorieGoal}
+        step={50}
       />
       <GoalInput
         icon="fish-outline"
         label="Protein (g)"
         value={proteinGoal}
         onChange={setProteinGoal}
+        step={5}
       />
       <GoalInput
         icon="nutrition-outline"
         label="Carbs (g)"
         value={carbsGoal}
         onChange={setCarbsGoal}
+        step={5}
       />
-      <GoalInput icon="water-outline" label="Fat (g)" value={fatGoal} onChange={setFatGoal} last />
+      <GoalInput
+        icon="water-outline"
+        label="Fat (g)"
+        value={fatGoal}
+        onChange={setFatGoal}
+        step={5}
+        last
+      />
       <View className="gap-2 border-t border-outline-100 p-4">
         {goalError ? (
           <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
@@ -419,7 +428,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         </Text>
       </SettingsField>
       <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">
-        <Input size="sm" variant="outline">
+        <Input size="md" variant="outline">
           <InputField
             value={aiBaseUrl}
             onChangeText={setAiBaseUrl}
@@ -432,7 +441,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         </Input>
       </SettingsField>
       <SettingsField label="Model">
-        <Input size="sm" variant="outline">
+        <Input size="md" variant="outline">
           <InputField
             value={aiModel}
             onChangeText={setAiModel}
@@ -471,7 +480,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
       <SettingsField label="API key (stored in the device keystore)">
         <Box className="flex-row items-center gap-2">
           <Box className="flex-1">
-            <Input size="sm" variant="outline">
+            <Input size="md" variant="outline">
               <InputField
                 value={aiApiKey}
                 onChangeText={(value) => {
@@ -503,7 +512,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         </Box>
       </SettingsField>
       <SettingsField label="Extra instructions (optional)" last>
-        <Input size="sm" variant="outline">
+        <Input size="md" variant="outline">
           <InputField
             value={aiSystemPrompt}
             onChangeText={setAiSystemPrompt}
@@ -687,6 +696,14 @@ export default function SettingsScreen() {
           isWide ? { maxWidth: 860 } : undefined,
         ]}
       >
+        <Box className="mb-4">
+          <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+            Settings
+          </Text>
+          <Text size="xs" className="mt-1 text-typography-500">
+            Goals, preferences and data
+          </Text>
+        </Box>
         <Box className="mb-6 flex-row flex-wrap gap-2">
           {SETTINGS_TABS.map((tab) => {
             const active = tab.id === activeTab

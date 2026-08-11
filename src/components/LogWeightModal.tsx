@@ -6,12 +6,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
@@ -127,16 +127,14 @@ export function LogWeightModal({ visible, onClose, onSaved }: Props) {
 
           <Text style={styles.label}>Weight ({isImperial(settings.units) ? "lb" : "kg"})</Text>
           <Box className="flex-row items-center gap-2">
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              keyboardType="decimal-pad"
+            <NumberStepper
               value={weightText}
               onChangeText={setWeightText}
-              placeholder={isImperial(settings.units) ? "e.g. 165.4" : "e.g. 75.2"}
-              placeholderTextColor="#9ca3af"
+              step={0.1}
+              decimals={1}
               accessibilityLabel="Weight"
-              maxFontSizeMultiplier={1.4}
-              autoFocus
+              placeholder={isImperial(settings.units) ? "e.g. 165.4" : "e.g. 75.2"}
+              style={{ flex: 1 }}
             />
             <Text size="sm" bold className="text-typography-500">
               {isImperial(settings.units) ? "lb" : "kg"}

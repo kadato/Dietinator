@@ -13,10 +13,12 @@ import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useLayout } from "@/hooks/useLayout"
+import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { routeParam } from "@/utils/route"
-import { toDateKey } from "@/utils/date"
+import { toDateKey, formatDisplayDate } from "@/utils/date"
 import { MEAL_LABELS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
+import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import type { MealType } from "@/types"
 import { spacing, type ColorPalette } from "@/theme"
@@ -42,15 +44,13 @@ function MacroInput({
   return (
     <Box className={stacked ? "w-full" : "flex-1"}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="decimal-pad"
+      <NumberStepper
         value={value}
         onChangeText={onChange}
+        step={1}
+        size="sm"
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
         accessibilityLabel={label}
-        maxFontSizeMultiplier={1.4}
       />
     </Box>
   )
@@ -66,6 +66,7 @@ export default function ManualEntryScreen() {
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { width } = useLayout()
+  const keyboardOpen = useKeyboardVisible()
   const [name, setName] = useState("")
   const [kcal, setKcal] = useState("")
   const [protein, setProtein] = useState("")
@@ -119,7 +120,7 @@ export default function ManualEntryScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text size="sm" className="mb-4 text-typography-500">
-            {MEAL_LABELS[mealType]} · {date}
+            {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
           </Text>
 
           {!isQuickAdd ? (
@@ -138,15 +139,13 @@ export default function ManualEntryScreen() {
           ) : null}
 
           <Text style={styles.label}>Calories (kcal)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="decimal-pad"
+          <NumberStepper
             value={kcal}
             onChangeText={setKcal}
-            placeholder="0"
-            placeholderTextColor="#9ca3af"
+            step={10}
             accessibilityLabel="Calories"
-            maxFontSizeMultiplier={1.4}
+            placeholder="0"
+            style={{ marginBottom: spacing.md }}
           />
 
           {width < 360 ? (
@@ -182,24 +181,26 @@ export default function ManualEntryScreen() {
         </ScrollView>
       </ModalContainer>
 
-      <View style={styles.fabLayer}>
-        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-          <Fab
-            tone="surface"
-            icon="close"
-            onPress={() => router.back()}
-            accessibilityLabel="Cancel"
-          />
+      {!keyboardOpen ? (
+        <View style={styles.fabLayer}>
+          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
+            <Fab
+              tone="surface"
+              icon="close"
+              onPress={() => router.back()}
+              accessibilityLabel="Cancel"
+            />
+          </View>
+          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+            <Fab
+              icon="checkmark"
+              onPress={handleSave}
+              disabled={saving}
+              accessibilityLabel="Add to diary"
+            />
+          </View>
         </View>
-        <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
-          <Fab
-            icon="checkmark"
-            onPress={handleSave}
-            disabled={saving}
-            accessibilityLabel="Add to diary"
-          />
-        </View>
-      </View>
+      ) : null}
     </KeyboardAvoidingView>
   )
 }

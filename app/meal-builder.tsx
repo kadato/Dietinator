@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  TextInput,
   View,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
@@ -13,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
+import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useTheme } from "@/hooks/useTheme"
 import { useToast } from "@/context/ToastContext"
 import { deleteMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
@@ -21,6 +21,7 @@ import { nutrientsForAmount } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
+import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -39,6 +40,7 @@ export default function MealBuilderScreen() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
+  const keyboardOpen = useKeyboardVisible()
 
   const [name, setName] = useState("")
   const [items, setItems] = useState<MealItem[]>([])
@@ -232,13 +234,13 @@ export default function MealBuilderScreen() {
                       {Math.round(itemKcal(item))} kcal
                     </Text>
                   </Box>
-                  <TextInput
-                    className="w-20 rounded-lg border border-outline-300 bg-background-0 px-3 py-2 text-right text-typography-900"
-                    keyboardType="decimal-pad"
+                  <NumberStepper
                     value={item.amount === 0 ? "" : String(item.amount)}
                     onChangeText={(value) => setItemAmount(item.product_id, value)}
+                    step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
+                    decimals={1}
+                    size="sm"
                     accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
-                    maxFontSizeMultiplier={1.4}
                   />
                   <Text size="xs" className="w-6 text-typography-500">
                     {item.base_unit}
@@ -319,37 +321,41 @@ export default function MealBuilderScreen() {
         </ScrollView>
       </ModalContainer>
 
-      <View
-        style={{
-          position: "absolute",
-          left: 20,
-          bottom: insets.bottom + 16,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Fab
-          tone="surface"
-          icon="close"
-          onPress={() => router.back()}
-          accessibilityLabel="Cancel"
-        />
-      </View>
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: insets.bottom + 16,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Fab
-          icon="checkmark"
-          label={isEditing ? "Save changes" : "Create meal"}
-          onPress={() => void handleSave()}
-          disabled={saving}
-          accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
-        />
-      </View>
+      {!keyboardOpen ? (
+        <View
+          style={{
+            position: "absolute",
+            left: 20,
+            bottom: insets.bottom + 16,
+            pointerEvents: "box-none",
+          }}
+        >
+          <Fab
+            tone="surface"
+            icon="close"
+            onPress={() => router.back()}
+            accessibilityLabel="Cancel"
+          />
+        </View>
+      ) : null}
+      {!keyboardOpen ? (
+        <View
+          style={{
+            position: "absolute",
+            right: 20,
+            bottom: insets.bottom + 16,
+            pointerEvents: "box-none",
+          }}
+        >
+          <Fab
+            icon="checkmark"
+            label={isEditing ? "Save changes" : "Create meal"}
+            onPress={() => void handleSave()}
+            disabled={saving}
+            accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+          />
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   )
 }
