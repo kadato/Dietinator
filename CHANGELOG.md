@@ -6,6 +6,31 @@ All notable changes to Dietinator. Format follows
 (see `scripts/release.cjs`), which tags `vX.Y.Z`; the release pipeline then
 builds the signed APK and posts the changelog to the GitHub release.
 
+## [1.1.0] - 2026-08-11
+
+### Added
+
+- Weight logging right from the dashboard weight row, with locally logged
+  weigh-ins shown ahead of the YAZIO profile value
+- Named serving sizes, cup, whole, each and more, with correct calorie
+  scaling for countable units
+- Remembered amounts, the portion logged last time prefills when a food is
+  reopened
+- Minus and plus steppers on every numeric input, with press and hold repeat
+- A clear button on food search, plus recents and favorites that stay
+  visible while typing
+- The logging screen lists what is already logged for the day with edit and
+  delete right there
+
+### Performance
+
+- Redundant database indexes dropped
+- Weight history reads use indexed queries instead of full scans
+
+### Fixed
+
+- The diary stats tool test no longer depends on the wall clock date
+
 ## [1.0.0] - 2026-08-08
 
 First public release.
@@ -46,4 +71,5 @@ First public release.
 - Playwright e2e suite (phone viewport, offline/local-first flows)
 - CI runs typecheck, lint, format check, unit tests, e2e, and secret scan
 
+[1.1.0]: https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.1.0
 [1.0.0]: https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.0.0
