@@ -73,9 +73,28 @@ jobs:
       - name: Decode signing keystore
         run: |
           mkdir -p keystore
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > keystore/dietinator-release.keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n' | base64 -d > keystore/dietinator-release.keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      - name: Verify signing keystore
+        # Fails in seconds instead of after a ~30 minute build when a secret
+        # is wrong. Each check reports which secret is at fault.
+        run: |
+          STORE=keystore/dietinator-release.keystore
+          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret is not set}"
+          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret is not set}"
+          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret is not set}"
+          [ -s "$STORE" ] || { echo "::error::ANDROID_KEYSTORE_BASE64 decoded to an empty file — check the secret"; exit 1; }
+          keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null 2>&1 \
+            || { echo "::error::ANDROID_KEYSTORE_PASSWORD does not match the keystore store password"; exit 1; }
+          keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" -keypass "$ANDROID_KEY_PASSWORD" >/dev/null 2>&1 \
+            || { echo "::error::ANDROID_KEY_ALIAS or ANDROID_KEY_PASSWORD does not match the keystore"; exit 1; }
+          echo "Signing keystore verified: store password, alias '$ANDROID_KEY_ALIAS' and key password all match."
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       - name: Wire release signing
         run: node scripts/inject-android-signing.cjs
       - name: Build release APK
