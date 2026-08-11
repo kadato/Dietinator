@@ -113,7 +113,12 @@ export function nutrientsReferenceAmount(
   // for g/ml products: for countable base units (each, cup, stück) nutrients
   // are per base unit, so a multi-piece serving must scale from 1, not from
   // the option's own amount.
-  if ((baseUnit === "g" || baseUnit === "ml") && qty <= 10 && Number.isInteger(qty) && amount > qty) {
+  if (
+    (baseUnit === "g" || baseUnit === "ml") &&
+    qty <= 10 &&
+    Number.isInteger(qty) &&
+    amount > qty
+  ) {
     return amount
   }
 

@@ -41,15 +41,17 @@ test.describe("serving sizes (real account)", () => {
     const row = page.locator(`[aria-label^="${productName}, "]`).first()
     // Local cache rows can push remote results below the fold and FlatList
     // only renders visible rows — scroll until the target row exists in DOM.
-    await expect(row).toHaveCount(1, { timeout: 30_000 }).catch(async () => {
-      for (let i = 0; i < 30; i += 1) {
-        if ((await row.count()) > 0) break
-        await page.mouse.move(195, 420)
-        await page.mouse.wheel(0, 900)
-        await page.waitForTimeout(120)
-      }
-      await expect(row).toHaveCount(1, { timeout: 10_000 })
-    })
+    await expect(row)
+      .toHaveCount(1, { timeout: 30_000 })
+      .catch(async () => {
+        for (let i = 0; i < 30; i += 1) {
+          if ((await row.count()) > 0) break
+          await page.mouse.move(195, 420)
+          await page.mouse.wheel(0, 900)
+          await page.waitForTimeout(120)
+        }
+        await expect(row).toHaveCount(1, { timeout: 10_000 })
+      })
     await row.scrollIntoViewIfNeeded()
     await row.click()
     await expect(page.getByRole("button", { name: "Add to diary" })).toBeVisible({
@@ -102,9 +104,9 @@ test.describe("serving sizes (real account)", () => {
     await page.getByRole("button", { name: "Cancel" }).click()
     await openFood(page, "banane", "Banán")
 
-    await expect(
-      page.getByRole("button", { name: "Serving: Cup Mashed (225 g)" }),
-    ).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole("button", { name: "Serving: Cup Mashed (225 g)" })).toBeVisible({
+      timeout: 5_000,
+    })
     await page.getByRole("button", { name: "Serving: Cup Mashed (225 g)" }).click()
     expect(await previewKcal(page)).toBe(200)
   })

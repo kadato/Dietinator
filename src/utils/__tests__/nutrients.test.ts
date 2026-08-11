@@ -202,7 +202,9 @@ describe("normalizePerGramFood", () => {
 
   it("keeps the named serving options for the serving picker", () => {
     const normalized = normalizePerGramFood(perGram)
-    expect(normalized.servings).toEqual([{ serving: "tablespoon", amount: 15, serving_quantity: 15 }])
+    expect(normalized.servings).toEqual([
+      { serving: "tablespoon", amount: 15, serving_quantity: 15 },
+    ])
   })
 
   it("labels gram rows as 100 g", () => {
