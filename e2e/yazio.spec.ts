@@ -9,6 +9,10 @@ import { expect, test, type Page } from "./helpers"
  *
  * Side effects on the real YAZIO account are kept minimal: one consumed item is
  * created and then removed again at the end of the sync test.
+ *
+ * Foods are targeted by name (aria-labels start with the product name): a real
+ * account's "Frequent" list leads with the user's most-used foods, so picking
+ * the first row would log (and later delete) the wrong product.
  */
 const EMAIL = process.env.YAZIO_EMAIL
 const PASSWORD = process.env.YAZIO_PASSWORD
@@ -35,13 +39,13 @@ test.describe("YAZIO (real account)", () => {
     await expect(page.getByText(/YAZIO unavailable/i)).toBeHidden()
   }
 
-  async function logFoodViaSearch(page: Page, meal: string, query: string) {
+  async function logFoodViaSearch(page: Page, meal: string, query: string, foodName: string) {
     await page.getByRole("button", { name: `Add food to ${meal}` }).click()
     const searchBox = page.getByPlaceholder("Search foods…")
     await expect(searchBox).toBeVisible()
     await searchBox.fill(query)
 
-    const row = page.getByRole("button", { name: /, \d+ calories/ }).first()
+    const row = page.locator(`[aria-label^="${foodName}, "]`).first()
     await expect(row).toBeVisible({ timeout: 30_000 })
     await row.click()
 
@@ -53,6 +57,11 @@ test.describe("YAZIO (real account)", () => {
 
     // Back in the log-meal modal → close it to reach the dashboard.
     await page.getByRole("button", { name: "Done" }).click()
+  }
+
+  /** The diary row for a specific food (labels are `<name>, N calories`). */
+  function mealEntry(page: Page, foodName: string) {
+    return page.getByRole("button", { name: new RegExp(`^${foodName}, \\d+ calories`) }).first()
   }
 
   test("signs in with real credentials and reaches the dashboard", async ({ page }) => {
@@ -69,7 +78,7 @@ test.describe("YAZIO (real account)", () => {
     await login(page)
 
     await page.getByRole("tab", { name: "Search" }).click()
-    await page.getByPlaceholder("e.g. banana, oats, chicken").fill("banana")
+    await page.getByPlaceholder("e.g. banana, oats, chicken").fill("banane")
 
     // Remote results arrive with real product rows (aria-label "<name>, <kcal> calories").
     const rows = page.locator('[aria-label$=" calories"]')
@@ -79,11 +88,11 @@ test.describe("YAZIO (real account)", () => {
 
   test("logs a real YAZIO food into the diary", async ({ page }) => {
     await login(page)
-    await logFoodViaSearch(page, "Lunch", "banana")
+    await logFoodViaSearch(page, "Lunch", "banane", "Banán")
 
     // Back on the dashboard, the lunch card lists the entry.
     await page.getByRole("button", { name: /^Lunch, / }).click()
-    const entry = page.getByRole("button", { name: /, \d+ calories/ }).first()
+    const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
   })
 
@@ -97,11 +106,11 @@ test.describe("YAZIO (real account)", () => {
     await expect(page.getByRole("switch", { name: "Sync diary to YAZIO" })).toBeChecked()
 
     await page.getByRole("tab", { name: /Today/ }).click()
-    await logFoodViaSearch(page, "Dinner", "banana")
+    await logFoodViaSearch(page, "Dinner", "banane", "Banán")
 
     // Wait for the entry, then delete it (long-press → confirm).
     await page.getByRole("button", { name: /^Dinner, / }).click()
-    const entry = page.getByRole("button", { name: /, \d+ calories/ }).first()
+    const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
 
     // Accept the confirmation dialog BEFORE the long-press fires it.
