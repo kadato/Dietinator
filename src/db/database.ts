@@ -97,7 +97,9 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       created_at TEXT NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_ai_chat_created ON ai_chat_messages(id);
+    -- Redundant index from an earlier schema: id is the rowid alias (already
+    -- indexed by INTEGER PRIMARY KEY). Dropped for existing databases too.
+    DROP INDEX IF EXISTS idx_ai_chat_created;
 
     CREATE TABLE IF NOT EXISTS meals (
       id TEXT PRIMARY KEY NOT NULL,
@@ -117,7 +119,9 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       created_at TEXT NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_weight_date ON weight_entries(date);
+    -- Redundant index from an earlier schema: date is UNIQUE (auto-indexed).
+    -- Dropped for existing databases too.
+    DROP INDEX IF EXISTS idx_weight_date;
 
     CREATE TABLE IF NOT EXISTS meal_items (
       meal_id TEXT NOT NULL,
