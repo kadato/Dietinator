@@ -4,13 +4,12 @@ Guidance for AI agents and contributors working on this codebase.
 
 ## Project summary
 
-**Dietinator** is a personal, ad-free calorie tracker built with **Expo SDK 56** and **React Native**. It is **local-first**: diary entries live in **SQLite** on device; food search and optional sync use the **unofficial** [`yazio`](https://www.npmjs.com/package/yazio) npm client (reverse-engineered API). No analytics SDKs.
+**Dietinator** is a personal calorie tracker built with **Expo SDK 56** and **React Native**. It is **local-first**: diary entries live in **SQLite** on device; food search and optional sync use the **unofficial** [`yazio`](https://www.npmjs.com/package/yazio) npm client (reverse-engineered API). No analytics SDKs.
 
 **Constraints agents must respect:**
 
 - Personal use only; do not productize or redistribute YAZIO API access.
 - Never commit credentials, tokens, or `.env` secrets.
-- Do not add ads, tracking, or third-party analytics.
 - YAZIO integration may break without notice — keep offline/local paths working.
 
 ## Tech stack
