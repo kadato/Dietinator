@@ -22,7 +22,7 @@ type Props = {
 }
 
 function formatFoodPreview(entries: DiaryEntry[]): string {
-  if (entries.length === 0) return "No foods logged yet"
+  if (entries.length === 0) return "Nothing logged yet"
   const names = entries.map((e) => e.food_name)
   const joined = names.join(", ")
   return joined.length > 72 ? `${joined.slice(0, 69)}…` : joined

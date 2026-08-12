@@ -61,7 +61,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
             <Ionicons name="close" size={28} color={styles.closeIcon.color} />
           </Pressable>
         </View>
-        <Text style={styles.hint}>Product search uses this country&apos;s YAZIO food catalog.</Text>
+        <Text style={styles.hint}>Search uses this country&apos;s YAZIO catalog.</Text>
         <TextInput
           style={styles.search}
           placeholder="Search country…"

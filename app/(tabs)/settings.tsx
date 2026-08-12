@@ -306,8 +306,8 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           </Text>
         ) : null}
         <Text size="xs" className="mb-1 leading-4 text-typography-500">
-          Height and target weight are optional (set to 0 to disable). BMI shows on the Stats tab
-          once both height and a weight are logged.
+          Height and target weight are optional (set to 0 to disable). BMI shows on Stats once
+          height and weight are logged.
         </Text>
         <Button size="md" onPress={saveGoals}>
           <ButtonText>Save goals</ButtonText>
@@ -468,7 +468,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           })}
         </Box>
         <Text size="xs" className="mt-2 text-typography-500">
-          Picking a preset fills the base URL and a default model. Then add your API key.
+          Presets fill the URL and model. Then add your API key.
         </Text>
       </SettingsField>
       <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">

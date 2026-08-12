@@ -205,7 +205,7 @@ export function AiChatModal() {
         className="mt-2 text-center leading-5 text-typography-500"
         style={{ maxWidth: 380 }}
       >
-        Ask about your diary, search foods, log a snack, or adjust your daily goals — all on device.
+        Ask about your diary, log foods, or adjust goals. All on device.
       </Text>
 
       <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
@@ -271,7 +271,7 @@ export function AiChatModal() {
           AI Assistant needs setup
         </Text>
         <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
-          Enable it and add an API key (OpenAI, OpenRouter, Ollama…) in Settings.
+          Enable it and add an API key in Settings.
         </Text>
       </Box>
       <Pressable

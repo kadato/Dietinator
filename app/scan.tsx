@@ -176,7 +176,7 @@ function Viewfinder() {
       </View>
       <View style={cameraStyles.frameHint}>
         <Ionicons name="scan-outline" size={16} color="#ffffff" />
-        <Text style={cameraStyles.frameHintText}>Align the barcode inside the frame</Text>
+        <Text style={cameraStyles.frameHintText}>Align barcode in frame</Text>
       </View>
     </View>
   )
@@ -338,7 +338,7 @@ export default function ScanScreen() {
   const confirmNotFound = () => {
     confirmAction({
       title: "Not found",
-      message: "No YAZIO match for this barcode. Try manual search.",
+      message: "No match for this barcode. Search manually?",
       confirmLabel: "Search",
       onConfirm: () =>
         router.replace({
@@ -382,8 +382,8 @@ export default function ScanScreen() {
             </Box>
             <Text style={styles.webScanTitle}>No camera here</Text>
             <Text style={styles.webScanHint}>
-              Camera scanning is not available in the browser. Enter the barcode number from the
-              product label instead (EAN-13 / UPC).
+              No camera in the browser. Enter the barcode number from the label instead (EAN-13 /
+              UPC).
             </Text>
             <Input size="lg" variant="rounded" className="mb-4 bg-background-50">
               <InputField
@@ -401,13 +401,13 @@ export default function ScanScreen() {
               />
             </Input>
             <Button size="lg" onPress={handleManualLookup} disabled={loading}>
-              <ButtonText>{loading ? "Looking up..." : "Look up barcode"}</ButtonText>
+              <ButtonText>{loading ? "Looking up..." : "Look up"}</ButtonText>
             </Button>
 
             {notFound ? (
               <Box className="mt-10 items-center">
                 <Ionicons name="search-outline" size={44} color={colors.textMuted} />
-                <Text style={styles.notFoundText}>No YAZIO match for {lastBarcode}.</Text>
+                <Text style={styles.notFoundText}>No match for {lastBarcode}.</Text>
                 <Button
                   size="md"
                   variant="outline"
@@ -415,7 +415,7 @@ export default function ScanScreen() {
                   className="mt-4"
                   onPress={confirmNotFound}
                 >
-                  <ButtonText>Search for a food instead</ButtonText>
+                  <ButtonText>Search foods</ButtonText>
                 </Button>
                 <Pressable
                   style={styles.linkBtn}
@@ -423,7 +423,7 @@ export default function ScanScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Clear barcode"
                 >
-                  <Text style={styles.linkBtnText}>Try another barcode</Text>
+                  <Text style={styles.linkBtnText}>Scan again</Text>
                 </Pressable>
               </Box>
             ) : null}
@@ -470,11 +470,11 @@ export default function ScanScreen() {
           <Box className="h-20 w-20 items-center justify-center rounded-full bg-background-50">
             <Ionicons name="camera-outline" size={36} color={colors.primary} />
           </Box>
-          <Text style={styles.message}>Camera permission is required to scan barcodes.</Text>
+          <Text style={styles.message}>Camera access is needed to scan.</Text>
           {permission.canAskAgain === false ? (
             <>
               <Text style={styles.hint}>
-                Permission was denied permanently. Open system settings to allow the camera.
+                Permission denied permanently. Allow the camera in system settings.
               </Text>
               <Pressable
                 style={styles.btn}
@@ -533,7 +533,7 @@ export default function ScanScreen() {
               >
                 <Ionicons name="warning-outline" size={30} color={colors.warning} />
               </Box>
-              <Text style={styles.notFoundText}>No YAZIO match for {lastBarcode}.</Text>
+              <Text style={styles.notFoundText}>No match for {lastBarcode}.</Text>
               <Button
                 size="md"
                 variant="outline"
@@ -541,7 +541,7 @@ export default function ScanScreen() {
                 className="mt-4"
                 onPress={confirmNotFound}
               >
-                <ButtonText>Search for a food instead</ButtonText>
+                <ButtonText>Search foods</ButtonText>
               </Button>
               <Pressable
                 style={styles.linkBtn}
@@ -549,7 +549,7 @@ export default function ScanScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Scan another barcode"
               >
-                <Text style={styles.linkBtnText}>Scan another barcode</Text>
+                <Text style={styles.linkBtnText}>Scan again</Text>
               </Pressable>
             </Box>
           ) : (

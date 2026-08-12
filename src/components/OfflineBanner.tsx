@@ -20,9 +20,7 @@ export function OfflineBanner({
   // always knows why live features are degraded.
   if (!visible && isOnline) return null
 
-  const text = isOnline
-    ? message
-    : "You're offline — diary works from this device, syncing will resume later"
+  const text = isOnline ? message : "Offline — diary works, sync resumes later"
 
   return (
     <Box className="flex-row items-center justify-center gap-2 border-b border-outline-200 bg-background-warning px-4 py-2.5">

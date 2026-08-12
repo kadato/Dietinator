@@ -23,21 +23,21 @@ const OPTIONS: CreateOption[] = [
   {
     id: "quick-add",
     title: "Quick Add",
-    description: "Track calories and nutrients without creating a new item",
+    description: "Log calories, no item saved",
     icon: "flash",
     iconColor: "#eab308",
   },
   {
     id: "manual-food",
-    title: "New food without barcode",
-    description: "Individual item (e.g. Bread roll)",
+    title: "New food",
+    description: "Single item without barcode",
     icon: "nutrition",
     iconColor: "#f97316",
   },
   {
     id: "meal",
     title: "New meal",
-    description: "Foods you often eat together (e.g. Cornflakes with milk)",
+    description: "Foods you eat together",
     icon: "restaurant",
     iconColor: "#14b8a6",
   },
@@ -70,7 +70,7 @@ export default function CreateOptionsScreen() {
     <View style={{ flex: 1 }}>
       <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
         <Text size="xl" bold className="mb-5 mt-5 px-6 text-typography-900">
-          What would you like to create?
+          Create
         </Text>
 
         <ScrollView className="flex-1" contentContainerClassName="px-4 pb-24 gap-2">

@@ -105,7 +105,7 @@ export default function LoginScreen() {
             size={isWide ? "md" : "md"}
             className="mt-2 max-w-[340px] text-center leading-[24px] text-typography-500"
           >
-            Fast, ad-free logging with your YAZIO account and food database.
+            Fast, ad-free food logging.
           </Text>
         </Box>
 
@@ -160,11 +160,7 @@ export default function LoginScreen() {
           </Box>
 
           <Button size="lg" onPress={handleLogin} isDisabled={loading} className="mt-1">
-            {loading ? (
-              <ButtonSpinner color="white" />
-            ) : (
-              <ButtonText>Sign in with YAZIO</ButtonText>
-            )}
+            {loading ? <ButtonSpinner color="white" /> : <ButtonText>Sign in</ButtonText>}
           </Button>
 
           <Button
@@ -186,7 +182,7 @@ export default function LoginScreen() {
               }
             }}
           >
-            <ButtonText>Explore the demo (no account)</ButtonText>
+            <ButtonText>Try the demo</ButtonText>
           </Button>
         </Card>
 
@@ -212,17 +208,15 @@ export default function LoginScreen() {
           </Pressable>
           {googleHelpExpanded ? (
             <Text size="sm" className="mt-1 px-4 pb-4 leading-5 text-typography-500">
-              This app signs in with your YAZIO email and password, not Google directly. In the
-              official YAZIO app: sign out, log in with email (use the same address as your Google
-              account), tap Forgot password, and set a new password. Then sign in here with that
-              email and password.
+              In the YAZIO app: sign out, log in with email, tap Forgot password, and set a new
+              password. Then sign in here with that email and password.
             </Text>
           ) : null}
         </Card>
 
         <Text size="xs" className="mt-8 px-2 text-center leading-4 text-typography-500">
-          Uses an unofficial YAZIO API. For personal use only. With Remember me, your sign-in
-          details are stored securely on this device for the next visit.
+          Unofficial YAZIO API — personal use only. Remember me stores your login securely on this
+          device.
         </Text>
       </PageContainer>
     </KeyboardAvoidingView>
