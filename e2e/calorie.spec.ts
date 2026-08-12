@@ -123,8 +123,8 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     const kcal100 = await previewKcalAt(page, amount, kcal, "100")
     await amount.fill("120")
     await page.getByRole("button", { name: "Add to diary" }).click()
-    // Back in the log-meal modal — close it via the header X.
-    await page.getByRole("button", { name: "Close" }).click()
+    // Back in the log-meal modal — close it via the cancel FAB.
+    await page.getByRole("button", { name: "Cancel" }).click()
 
     // Tomorrow's dashboard shows the entry; recorded kcal matches the preview
     // math (preview at 100 g × 1.2), i.e. no conversion drift through the pipeline.

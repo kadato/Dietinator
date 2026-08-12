@@ -55,8 +55,8 @@ test.describe("YAZIO (real account)", () => {
     })
     await page.getByRole("button", { name: "Add to diary" }).click()
 
-    // Back in the log-meal modal → close it via the header X to reach the dashboard.
-    await page.getByRole("button", { name: "Close" }).click()
+    // Back in the log-meal modal → close it via the cancel FAB to reach the dashboard.
+    await page.getByRole("button", { name: "Cancel" }).click()
   }
 
   /** The diary row for a specific food (labels are `<name>, N calories`). */
@@ -71,7 +71,7 @@ test.describe("YAZIO (real account)", () => {
     await expect(page.getByRole("button", { name: "Scan barcode" })).toBeHidden()
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
-    await page.getByRole("button", { name: "Close" }).click()
+    await page.getByRole("button", { name: "Cancel" }).click()
   })
 
   test("searches the live YAZIO food database", async ({ page }) => {
