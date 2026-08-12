@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite"
 import {
   cachedToSearchResult,
+  getRecentFoodUsages,
   saveFoodToCache,
   saveSearchResultToCache,
   touchFoodUsed,
@@ -115,5 +116,59 @@ describe("touchFoodUsed", () => {
     await touchFoodUsed("prod-1")
     const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
     expect(args[1]).toBeNull()
+  })
+})
+
+describe("getRecentFoodUsages", () => {
+  const cacheRow = {
+    yazio_product_id: "prod-1",
+    barcode: null,
+    name: "Banana",
+    producer: "Dole",
+    nutrients_json: JSON.stringify(food().nutrients),
+    serving_json: JSON.stringify(food().serving),
+    servings_json: JSON.stringify(food().servings),
+    base_unit: "g",
+    cached_at: "2026-08-10T00:00:00.000Z",
+    is_favorite: 0,
+    last_used_at: null,
+    last_amount: 120,
+    source: "detail",
+  }
+
+  it("groups diary logs by food and amount, newest first", async () => {
+    db.getAllAsync
+      .mockResolvedValueOnce([
+        { food_id: "prod-1", amount: 120, last_logged: "2026-08-11T08:00:00.000Z" },
+        { food_id: "prod-1", amount: 90, last_logged: "2026-08-09T08:00:00.000Z" },
+      ])
+      .mockResolvedValueOnce([cacheRow])
+    const usages = await getRecentFoodUsages(10)
+    expect(usages).toHaveLength(2)
+    expect(usages[0].amount).toBe(120)
+    expect(usages[1].amount).toBe(90)
+    expect(usages[0].food.name).toBe("Banana")
+    const sql = db.getAllAsync.mock.calls[0][0] as string
+    expect(sql).toContain("GROUP BY d.food_id, d.amount")
+    expect(sql).toContain("ORDER BY last_logged DESC")
+    expect(db.getAllAsync.mock.calls[0][1]).toBe(10)
+  })
+
+  it("skips usage rows whose food is no longer cached", async () => {
+    db.getAllAsync
+      .mockResolvedValueOnce([
+        { food_id: "prod-ghost", amount: 50, last_logged: "2026-08-11T08:00:00.000Z" },
+      ])
+      .mockResolvedValueOnce([])
+    const usages = await getRecentFoodUsages()
+    expect(usages).toHaveLength(0)
+  })
+
+  it("returns an empty list when there are no logs", async () => {
+    db.getAllAsync.mockClear()
+    db.getAllAsync.mockResolvedValueOnce([])
+    const usages = await getRecentFoodUsages()
+    expect(usages).toHaveLength(0)
+    expect(db.getAllAsync).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { Pressable } from "react-native"
+import { ActivityIndicator, Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { formatListNutrientLine } from "@/utils/food-display"
@@ -13,6 +13,10 @@ type Props = {
   onToggleFavorite?: () => void
   isFavorite?: boolean
   subtitle?: string
+  /** Instant-add without the dialog. Adds a "+" button on the row. */
+  onQuickAdd?: () => void
+  /** True while this row's quick-add is in flight (shows a spinner). */
+  quickAdding?: boolean
 }
 
 export const FoodListItem = memo(function FoodListItem({
@@ -21,6 +25,8 @@ export const FoodListItem = memo(function FoodListItem({
   onToggleFavorite,
   isFavorite,
   subtitle,
+  onQuickAdd,
+  quickAdding,
 }: Props) {
   const { colors } = useTheme()
 
@@ -44,6 +50,22 @@ export const FoodListItem = memo(function FoodListItem({
           </Text>
         </Box>
       </Pressable>
+      {onQuickAdd ? (
+        <Pressable
+          onPress={onQuickAdd}
+          disabled={quickAdding}
+          hitSlop={12}
+          className="p-1 pl-2"
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${food.name} to diary`}
+        >
+          {quickAdding ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="add-circle" size={24} color={colors.primary} />
+          )}
+        </Pressable>
+      ) : null}
       {onToggleFavorite ? (
         <Pressable
           onPress={onToggleFavorite}

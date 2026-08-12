@@ -98,6 +98,30 @@ export async function logFood(params: {
   return entry
 }
 
+/**
+ * Quick-add a food straight from a list row, skipping the add-food dialog.
+ * Resolves the best available data (cache → remote → the passed row) and
+ * defaults the amount to the last logged amount, falling back to the default
+ * serving. Returns the entry plus the amount actually logged (for toasts).
+ */
+export async function quickLogFood(params: {
+  date: string
+  mealType: MealType
+  food: SearchFoodResult
+  amount?: number
+}): Promise<{ entry: DiaryEntry; amount: number }> {
+  const { date, mealType, food } = params
+  let amount = params.amount
+  if (amount == null || !Number.isFinite(amount) || amount <= 0) {
+    const cached = await foodCacheDb.getCachedFoodById(food.product_id)
+    amount =
+      cached?.last_amount && cached.last_amount > 0 ? cached.last_amount : food.serving.amount
+  }
+  const resolved = (await getFoodRemote(food.product_id)) ?? food
+  const entry = await logFood({ date, mealType, food: resolved, amount })
+  return { entry, amount }
+}
+
 /** Log a one-off entry (Quick Add / manual food) with no YAZIO product behind it. */
 export async function logManualEntry(params: {
   date: string

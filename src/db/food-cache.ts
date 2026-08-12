@@ -1,4 +1,10 @@
-import type { CachedFood, FoodNutrients, FoodServing, SearchFoodResult } from "@/types"
+import type {
+  CachedFood,
+  FoodNutrients,
+  FoodServing,
+  RecentFoodUsage,
+  SearchFoodResult,
+} from "@/types"
 import { getDatabase } from "./database"
 import { parseJson } from "@/utils/json"
 import { isPerGramNutrients } from "@/utils/nutrients"
@@ -123,6 +129,35 @@ export async function getRecentFoods(limit = 10): Promise<SearchFoodResult[]> {
     limit,
   )
   return mapRows(rows)
+}
+
+/**
+ * Recent usage rows for the recents list: one entry per distinct
+ * (food, amount) pair ever logged, newest log first. The same food shows up
+ * multiple times — once per past amount — so repeat logging is one tap away.
+ * Pairs whose food is no longer cached are skipped.
+ */
+export async function getRecentFoodUsages(limit = 20): Promise<RecentFoodUsage[]> {
+  const db = await getDatabase()
+  const rows = await db.getAllAsync<{ food_id: string; amount: number; last_logged: string }>(
+    `SELECT d.food_id, d.amount, MAX(d.created_at) AS last_logged
+     FROM diary_entries d
+     WHERE d.food_id IS NOT NULL
+     GROUP BY d.food_id, d.amount
+     ORDER BY last_logged DESC
+     LIMIT ?`,
+    limit,
+  )
+  if (rows.length === 0) return []
+
+  const foods = await getFoodsByIds(rows.map((row) => row.food_id))
+  const usages: RecentFoodUsage[] = []
+  for (const row of rows) {
+    const food = foods.get(row.food_id)
+    if (food)
+      usages.push({ food, amount: Number(row.amount) || 0, lastLoggedAt: String(row.last_logged) })
+  }
+  return usages
 }
 
 export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {

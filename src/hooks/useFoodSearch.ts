@@ -5,11 +5,11 @@ import { mergeFoodResults } from "@/utils/food-search"
 import { useApp } from "@/context/AppContext"
 import type { SearchFoodResult } from "@/types"
 
-type Options = {
+type Options<T> = {
   /** When false the hook clears its list and stops fetching (e.g. a category toggle). */
   enabled?: boolean
   /** Loads the list when the query is empty (favorites, recents, suggestions...). */
-  emptyQuery?: () => Promise<SearchFoodResult[]>
+  emptyQuery?: () => Promise<T[]>
   /** Local (SQLite) failures — remote failures just flip `yazioAvailable`. */
   onError?: (error: unknown) => void
 }
@@ -17,16 +17,17 @@ type Options = {
 /**
  * Local-first food search: cached matches render instantly, remote results
  * patch in when ready. Latest request wins; stale responses are dropped.
+ * `T` is the empty-query row type (plain foods, or usage rows with amounts).
  */
-export function useFoodSearch(
+export function useFoodSearch<T = SearchFoodResult>(
   debounced: string,
-  options?: Options,
-): { foods: SearchFoodResult[]; loading: boolean; refresh: () => void } {
+  options?: Options<T>,
+): { foods: T[]; loading: boolean; refresh: () => void } {
   const { setYazioAvailable } = useApp()
   const enabled = options?.enabled ?? true
   const emptyQuery = options?.emptyQuery
   const onError = options?.onError
-  const [foods, setFoods] = useState<SearchFoodResult[]>([])
+  const [foods, setFoods] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
   const [nonce, setNonce] = useState(0)
   const requestRef = useRef(0)
@@ -76,12 +77,12 @@ export function useFoodSearch(
       try {
         const cached = await searchLocalFoods(trimmed)
         if (requestId !== requestRef.current || cancelled) return
-        setFoods(cached)
+        setFoods(cached as T[])
         setLoading(false)
         try {
           const remote = await searchFoodsRemote(trimmed)
           if (requestId !== requestRef.current || cancelled) return
-          setFoods(mergeFoodResults(cached, remote))
+          setFoods(mergeFoodResults(cached, remote) as T[])
           setYazioAvailable(true)
         } catch {
           if (requestId === requestRef.current && !cancelled) {

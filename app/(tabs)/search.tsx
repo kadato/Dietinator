@@ -10,12 +10,16 @@ import { PageContainer } from "@/components/PageContainer"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
-import { toggleFavorite, getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
-import type { MealType, SearchFoodResult } from "@/types"
+import { toggleFavorite, getFavoriteFoods, getRecentFoodUsages } from "@/db/food-cache"
+import { quickLogFood } from "@/services/diary"
+import type { MealType, RecentFoodUsage, SearchFoodResult } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
+import { displayUnit, formatUsageAmountLine } from "@/utils/food-display"
+import { MEAL_LABELS } from "@/utils/meals"
 import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -23,6 +27,11 @@ import { Input, InputField, InputIcon } from "@ui/input"
 import { SegmentedControl } from "@/components/SegmentedControl"
 
 type ListMode = "recents" | "favorites"
+type FoodRow = SearchFoodResult | RecentFoodUsage
+
+function isUsageRow(row: FoodRow): row is RecentFoodUsage {
+  return "lastLoggedAt" in row
+}
 
 export default function SearchScreen() {
   const router = useRouter()
@@ -30,13 +39,15 @@ export default function SearchScreen() {
   const addMeal = (routeParam(routeParams.meal) ?? "lunch") as MealType
   const addDate = routeParam(routeParams.date) ?? toDateKey()
   const { yazioAvailable } = useApp()
+  const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
   const [listMode, setListMode] = useState<ListMode>("recents")
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  const [addingKey, setAddingKey] = useState<string | null>(null)
 
   const loadFavorites = useCallback(async () => {
     const favs = await getFavoriteFoods()
@@ -52,14 +63,14 @@ export default function SearchScreen() {
 
   const emptyQuery = useCallback(async () => {
     if (listMode === "favorites") return getFavoriteFoods()
-    return getRecentFoods()
+    return getRecentFoodUsages(10)
   }, [listMode])
 
-  const { foods, loading } = useFoodSearch(debounced, { emptyQuery })
+  const { foods, loading, refresh } = useFoodSearch<FoodRow>(debounced, { emptyQuery })
 
   // Keep the current recents/favorites list rendered below search results
   // instead of replacing it the moment the user types.
-  const [contextual, setContextual] = useState<SearchFoodResult[]>([])
+  const [contextual, setContextual] = useState<FoodRow[]>([])
   // Reset synchronously when the query clears (render-adjustment pattern).
   const [prevDebounced, setPrevDebounced] = useState(debounced)
   if (prevDebounced !== debounced) {
@@ -93,6 +104,32 @@ export default function SearchScreen() {
     [addDate, addMeal, router],
   )
 
+  const handleQuickAdd = useCallback(
+    async (food: SearchFoodResult, amount?: number) => {
+      const key = amount != null ? `${food.product_id}:${amount}` : food.product_id
+      if (addingKey === key) return
+      setAddingKey(key)
+      try {
+        const { amount: logged } = await quickLogFood({
+          date: addDate,
+          mealType: addMeal,
+          food,
+          amount,
+        })
+        showSuccess(
+          `Added ${food.name} · ${logged} ${displayUnit(food.base_unit || "g")} to ${MEAL_LABELS[addMeal]}.`,
+          "Added",
+        )
+        refresh()
+      } catch (error) {
+        showError(error, "Could not add food.")
+      } finally {
+        setAddingKey(null)
+      }
+    },
+    [addDate, addMeal, addingKey, refresh, showError, showSuccess],
+  )
+
   const handleToggleFavorite = useCallback(async (food: SearchFoodResult) => {
     const isFav = await toggleFavorite(food.product_id, food)
     setFavoriteIds((prev) => {
@@ -102,6 +139,35 @@ export default function SearchScreen() {
       return next
     })
   }, [])
+
+  const renderItem = useCallback(
+    ({ item }: { item: FoodRow }) => {
+      if (isUsageRow(item)) {
+        return (
+          <FoodListItem
+            food={item.food}
+            subtitle={formatUsageAmountLine(item.food, item.amount)}
+            onPress={() => openFood(item.food)}
+            onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
+            quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
+            isFavorite={favoriteIds.has(item.food.product_id)}
+            onToggleFavorite={() => handleToggleFavorite(item.food)}
+          />
+        )
+      }
+      return (
+        <FoodListItem
+          food={item}
+          onPress={() => openFood(item)}
+          onQuickAdd={() => handleQuickAdd(item)}
+          quickAdding={addingKey === item.product_id}
+          isFavorite={favoriteIds.has(item.product_id)}
+          onToggleFavorite={() => handleToggleFavorite(item)}
+        />
+      )
+    },
+    [addingKey, favoriteIds, handleQuickAdd, handleToggleFavorite, openFood],
+  )
 
   const switchListMode = useCallback((mode: ListMode) => {
     // A typed query means search results, not recents/favorites — clear it
@@ -114,18 +180,6 @@ export default function SearchScreen() {
     router.push({ pathname: "/scan", params: { meal: addMeal, date: addDate } })
   }, [addDate, addMeal, router])
 
-  const renderItem = useCallback(
-    ({ item }: { item: SearchFoodResult }) => (
-      <FoodListItem
-        food={item}
-        onPress={() => openFood(item)}
-        isFavorite={favoriteIds.has(item.product_id)}
-        onToggleFavorite={() => handleToggleFavorite(item)}
-      />
-    ),
-    [favoriteIds, handleToggleFavorite, openFood],
-  )
-
   const emptyContent = useMemo(() => {
     if (loading) return null
     if (debounced) {
@@ -136,7 +190,7 @@ export default function SearchScreen() {
             No foods found
           </Text>
           <Text size="sm" className="mt-1 text-center text-typography-500">
-            Try a different spelling or a shorter name.
+            Try a different spelling.
           </Text>
         </Box>
       )
@@ -155,7 +209,7 @@ export default function SearchScreen() {
             className="mt-2 text-center leading-5 text-typography-500"
             style={{ maxWidth: 420 }}
           >
-            Tap the star on any food to keep it here for quick logging.
+            Star foods to find them here fast.
           </Text>
         </Box>
       )
@@ -173,7 +227,7 @@ export default function SearchScreen() {
           className="mt-2 text-center leading-5 text-typography-500"
           style={{ maxWidth: 420 }}
         >
-          Type to search foods from the YAZIO database. Recent and favorite picks show up here.
+          Search the YAZIO database. Recents and favorites show up here.
         </Text>
       </Box>
     )
@@ -226,7 +280,9 @@ export default function SearchScreen() {
           className="flex-1"
           data={foods}
           contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"}
-          keyExtractor={(item) => item.product_id}
+          keyExtractor={(item) =>
+            isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
+          }
           renderItem={renderItem}
           ListEmptyComponent={emptyContent}
           ListFooterComponent={
@@ -237,11 +293,30 @@ export default function SearchScreen() {
                 </Text>
                 {contextual.map((item) => (
                   <FoodListItem
-                    key={item.product_id}
-                    food={item}
-                    onPress={() => openFood(item)}
-                    isFavorite={favoriteIds.has(item.product_id)}
-                    onToggleFavorite={() => handleToggleFavorite(item)}
+                    key={
+                      isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
+                    }
+                    food={isUsageRow(item) ? item.food : item}
+                    subtitle={
+                      isUsageRow(item) ? formatUsageAmountLine(item.food, item.amount) : undefined
+                    }
+                    onPress={() => openFood(isUsageRow(item) ? item.food : item)}
+                    onQuickAdd={() =>
+                      isUsageRow(item)
+                        ? handleQuickAdd(item.food, item.amount)
+                        : handleQuickAdd(item)
+                    }
+                    quickAdding={
+                      isUsageRow(item)
+                        ? addingKey === `${item.food.product_id}:${item.amount}`
+                        : addingKey === item.product_id
+                    }
+                    isFavorite={favoriteIds.has(
+                      isUsageRow(item) ? item.food.product_id : item.product_id,
+                    )}
+                    onToggleFavorite={() =>
+                      handleToggleFavorite(isUsageRow(item) ? item.food : item)
+                    }
                   />
                 ))}
               </Box>
@@ -260,7 +335,7 @@ export default function SearchScreen() {
       >
         <Fab
           icon="barcode-outline"
-          label="Scan"
+          label={isMedium ? "Scan" : undefined}
           onPress={openScan}
           accessibilityLabel="Scan barcode"
         />

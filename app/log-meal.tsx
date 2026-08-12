@@ -23,14 +23,21 @@ import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getSuggestedFoods } from "@/services/yazio/foods"
-import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
-import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
+import { getFavoriteFoods, getRecentFoodUsages } from "@/db/food-cache"
+import { deleteFoodEntry, getDiaryEntriesForDate, quickLogFood } from "@/services/diary"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
-import type { DiaryEntry, FoodNutrients, Meal, MealType, SearchFoodResult } from "@/types"
+import type {
+  DiaryEntry,
+  FoodNutrients,
+  Meal,
+  MealType,
+  RecentFoodUsage,
+  SearchFoodResult,
+} from "@/types"
 import { mergeFoodResults } from "@/utils/food-search"
 import { sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS } from "@/utils/meals"
-import { displayUnit, formatServingOption } from "@/utils/food-display"
+import { displayUnit, formatServingOption, formatUsageAmountLine } from "@/utils/food-display"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -60,6 +67,25 @@ function foodSubtitle(food: SearchFoodResult): string {
   const producer = food.producer?.trim()
   const serving = formatServingOption(food.serving, unit)
   return producer ? `${producer}, ${serving}` : serving
+}
+
+type FoodRow = SearchFoodResult | RecentFoodUsage
+
+function isUsageRow(row: FoodRow): row is RecentFoodUsage {
+  return "lastLoggedAt" in row
+}
+
+/** Distinct foods from usage rows, keeping the most-recently-used order. */
+function usageFoods(usages: RecentFoodUsage[]): SearchFoodResult[] {
+  const seen = new Set<string>()
+  const foods: SearchFoodResult[] = []
+  for (const usage of usages) {
+    if (!seen.has(usage.food.product_id)) {
+      seen.add(usage.food.product_id)
+      foods.push(usage.food)
+    }
+  }
+  return foods
 }
 
 export default function LogMealScreen() {
@@ -95,8 +121,8 @@ export default function LogMealScreen() {
   // waiting on the network.
   const [suggestions, setSuggestions] = useState<SearchFoodResult[]>([])
   const [loggedEntries, setLoggedEntries] = useState<DiaryEntry[]>([])
-  // The current recents/favorites list stays visible below search results.
-  const [contextual, setContextual] = useState<SearchFoodResult[]>([])
+  // Quick-add in-flight row key (product id, or product id + amount).
+  const [addingKey, setAddingKey] = useState<string | null>(null)
 
   const loadLoggedEntries = useCallback(async () => {
     try {
@@ -121,17 +147,18 @@ export default function LogMealScreen() {
   }, [category, date, debounced, listMode, mealType])
 
   const emptyQuery = useCallback(async () => {
-    const [favorites, recent] = await Promise.all([getFavoriteFoods(), getRecentFoods(20)])
-    if (listMode === "favorites") return favorites
-    if (listMode === "recent") return recent
+    if (listMode === "favorites") return getFavoriteFoods()
+    if (listMode === "recent") return getRecentFoodUsages(20)
     // Frequent list: local picks first, YAZIO's suggestions patch in when ready.
-    return mergeFoodResults(mergeFoodResults(suggestions, favorites), recent)
+    const [favorites, usages] = await Promise.all([getFavoriteFoods(), getRecentFoodUsages(20)])
+    return mergeFoodResults(mergeFoodResults(suggestions, favorites), usageFoods(usages))
   }, [listMode, suggestions])
 
   // Keep the current recents/favorites list rendered below search results
   // instead of replacing it the moment the user types.
   // Reset synchronously when the query clears (render-adjustment pattern).
   const [prevDebounced, setPrevDebounced] = useState(debounced)
+  const [contextual, setContextual] = useState<FoodRow[]>([])
   if (prevDebounced !== debounced) {
     setPrevDebounced(debounced)
     if (!debounced.trim()) setContextual([])
@@ -154,7 +181,7 @@ export default function LogMealScreen() {
     [showError],
   )
 
-  const { foods, loading, refresh } = useFoodSearch(debounced, {
+  const { foods, loading, refresh } = useFoodSearch<FoodRow>(debounced, {
     enabled: category === "foods",
     emptyQuery,
     onError: handleSearchError,
@@ -192,6 +219,33 @@ export default function LogMealScreen() {
       })
     },
     [date, mealType, router],
+  )
+
+  const handleQuickAdd = useCallback(
+    async (food: SearchFoodResult, amount?: number) => {
+      const key = amount != null ? `${food.product_id}:${amount}` : food.product_id
+      if (addingKey === key) return
+      setAddingKey(key)
+      try {
+        const { amount: logged } = await quickLogFood({
+          date,
+          mealType,
+          food,
+          amount,
+        })
+        showSuccess(
+          `Added ${food.name} · ${logged} ${displayUnit(food.base_unit || "g")} to ${MEAL_LABELS[mealType]}.`,
+          "Added",
+        )
+        await loadLoggedEntries()
+        refresh()
+      } catch (error) {
+        showError(error, "Could not add food.")
+      } finally {
+        setAddingKey(null)
+      }
+    },
+    [addingKey, date, loadLoggedEntries, mealType, refresh, showError, showSuccess],
   )
 
   const openEdit = useCallback(
@@ -255,22 +309,40 @@ export default function LogMealScreen() {
     [date, loggingMealId, mealType, router, showError, showSuccess, showWarning],
   )
 
-  const subtitles = useMemo(
-    () => new Map(foods.map((food) => [food.product_id, foodSubtitle(food)])),
-    [foods],
-  )
+  const subtitles = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of foods) {
+      if (!isUsageRow(item)) map.set(item.product_id, foodSubtitle(item))
+    }
+    return map
+  }, [foods])
 
   const renderFood = useCallback(
-    ({ item }: { item: SearchFoodResult }) => (
-      <MealLogFoodRow
-        food={item}
-        subtitle={subtitles.get(item.product_id)}
-        accentColor={accent}
-        onPress={() => openFood(item)}
-        onAdd={() => openFood(item)}
-      />
-    ),
-    [accent, openFood, subtitles],
+    ({ item }: { item: FoodRow }) => {
+      if (isUsageRow(item)) {
+        return (
+          <MealLogFoodRow
+            food={item.food}
+            subtitle={formatUsageAmountLine(item.food, item.amount)}
+            accentColor={accent}
+            onPress={() => openFood(item.food)}
+            onAdd={() => handleQuickAdd(item.food, item.amount)}
+            adding={addingKey === `${item.food.product_id}:${item.amount}`}
+          />
+        )
+      }
+      return (
+        <MealLogFoodRow
+          food={item}
+          subtitle={subtitles.get(item.product_id)}
+          accentColor={accent}
+          onPress={() => openFood(item)}
+          onAdd={() => handleQuickAdd(item)}
+          adding={addingKey === item.product_id}
+        />
+      )
+    },
+    [accent, addingKey, handleQuickAdd, openFood, subtitles],
   )
 
   const mealTotalsById = useMemo(() => {
@@ -349,12 +421,12 @@ export default function LogMealScreen() {
   const emptyMessage = useMemo(() => {
     if (category === "meals") {
       if (debounced.trim()) return "No meals match your search."
-      return "No meals yet. Create one and it will show up here."
+      return "No meals yet. Create one to see it here."
     }
     if (debounced.trim()) return "No foods found. Try a different search."
-    if (listMode === "favorites") return "No favorites yet. Star foods from search results."
+    if (listMode === "favorites") return "No favorites yet. Star foods to see them here."
     if (listMode === "recent") return "No recent foods yet. Log something to see it here."
-    return "Search or scan a barcode to build your food list."
+    return "Search or scan to log food."
   }, [category, debounced, listMode])
 
   const loggedSection =
@@ -490,7 +562,9 @@ export default function LogMealScreen() {
           <FlatList
             style={styles.list}
             data={foods}
-            keyExtractor={(item) => item.product_id}
+            keyExtractor={(item) =>
+              isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
+            }
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
               foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-24"
@@ -517,16 +591,29 @@ export default function LogMealScreen() {
                         ? "Recently used"
                         : "Frequent picks"}
                   </Text>
-                  {contextual.map((item) => (
-                    <MealLogFoodRow
-                      key={item.product_id}
-                      food={item}
-                      subtitle={subtitles.get(item.product_id)}
-                      accentColor={accent}
-                      onPress={() => openFood(item)}
-                      onAdd={() => openFood(item)}
-                    />
-                  ))}
+                  {contextual.map((item) =>
+                    isUsageRow(item) ? (
+                      <MealLogFoodRow
+                        key={`${item.food.product_id}-${item.amount}`}
+                        food={item.food}
+                        subtitle={formatUsageAmountLine(item.food, item.amount)}
+                        accentColor={accent}
+                        onPress={() => openFood(item.food)}
+                        onAdd={() => handleQuickAdd(item.food, item.amount)}
+                        adding={addingKey === `${item.food.product_id}:${item.amount}`}
+                      />
+                    ) : (
+                      <MealLogFoodRow
+                        key={item.product_id}
+                        food={item}
+                        subtitle={subtitles.get(item.product_id)}
+                        accentColor={accent}
+                        onPress={() => openFood(item)}
+                        onAdd={() => handleQuickAdd(item)}
+                        adding={addingKey === item.product_id}
+                      />
+                    ),
+                  )}
                 </View>
               ) : undefined
             }

@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { Pressable, Text, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Pressable, Text, StyleSheet, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { formatListNutrientLine } from "@/utils/food-display"
@@ -14,6 +14,8 @@ type Props = {
   accentColor: string
   onPress: () => void
   onAdd: () => void
+  /** True while this row's quick-add is in flight (shows a spinner). */
+  adding?: boolean
 }
 
 export const MealLogFoodRow = memo(function MealLogFoodRow({
@@ -22,6 +24,7 @@ export const MealLogFoodRow = memo(function MealLogFoodRow({
   accentColor,
   onPress,
   onAdd,
+  adding,
 }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
@@ -53,11 +56,16 @@ export const MealLogFoodRow = memo(function MealLogFoodRow({
       <Pressable
         style={[styles.addBtn, { backgroundColor: accentColor }]}
         onPress={onAdd}
+        disabled={adding}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={`Add ${food.name}`}
+        accessibilityLabel={`Add ${food.name} to diary`}
       >
-        <Ionicons name="add" size={22} color={colors.onPrimary} />
+        {adding ? (
+          <ActivityIndicator size="small" color={colors.onPrimary} />
+        ) : (
+          <Ionicons name="add" size={22} color={colors.onPrimary} />
+        )}
       </Pressable>
     </View>
   )

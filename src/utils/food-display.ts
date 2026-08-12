@@ -1,5 +1,9 @@
 import type { FoodServing, SearchFoodResult } from "@/types"
-import { isPerGramNutrients, resolveNutrientsRefAmount } from "@/utils/nutrients"
+import {
+  isPerGramNutrients,
+  nutrientsForAmount,
+  resolveNutrientsRefAmount,
+} from "@/utils/nutrients"
 
 /** YAZIO serving keys are dotted ids ("whole.regular", "small.piece"); show readable labels. */
 export function formatServingLabel(label: string): string {
@@ -72,4 +76,13 @@ export function formatListNutrientLine(food: SearchFoodResult): string {
       ? `${ref}${unit}`
       : `${ref}${unit} (default ${food.serving.amount}${unit})`
   return `${prefix}${food.nutrients.kcal} kcal / ${servingLabel}`
+}
+
+/** Subtitle for a recents usage row: the logged amount with its calories, e.g. "120 g · 92 Cal". */
+export function formatUsageAmountLine(food: SearchFoodResult, amount: number): string {
+  const unit = displayUnit(food.base_unit || "g")
+  const kcal = Math.round(
+    nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit || "g").kcal,
+  )
+  return `${amount} ${unit} · ${kcal} Cal`
 }

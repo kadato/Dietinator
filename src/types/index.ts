@@ -118,6 +118,19 @@ export interface MealItem {
   serving: FoodServing
 }
 
+/**
+ * One past (food, amount) log. The recents list renders these as separate
+ * quick-add rows, so the same food can appear multiple times with the amounts
+ * it was actually logged at.
+ */
+export interface RecentFoodUsage {
+  food: SearchFoodResult
+  /** Base-unit amount that was logged. */
+  amount: number
+  /** ISO timestamp of the most recent log of this food + amount pair. */
+  lastLoggedAt: string
+}
+
 /** A user-created meal: foods you often eat together. */
 export interface Meal {
   id: string
