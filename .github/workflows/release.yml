@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:coverage
 
   build-android:
     name: Build signed Android APK
@@ -43,15 +45,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+          cache-read-only: false
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
@@ -169,6 +166,16 @@ jobs:
             fi
           } > RELEASE_NOTES.md
           cat RELEASE_NOTES.md
+      - name: Append APK checksum
+        run: |
+          {
+            echo ""
+            echo "## Verify the download"
+            echo ""
+            echo '```text'
+            sha256sum release/Dietinator-Android.apk
+            echo '```'
+          } >> RELEASE_NOTES.md
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
