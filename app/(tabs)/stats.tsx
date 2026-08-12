@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { PageContainer } from "@/components/PageContainer"
 import { SegmentedControl } from "@/components/SegmentedControl"
-import { TrendChart } from "@/components/TrendChart"
+import { TrendChart, type TrendPoint } from "@/components/TrendChart"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
@@ -16,8 +16,9 @@ import {
   getLatestWeightEntry,
   getRecentWeightEntries,
   deleteWeightEntry,
+  saveWeightEntry,
 } from "@/db/weight"
-import { getCalorieHistory, type DailyKcal } from "@/db/stats"
+import { getCalorieHistory, getMacroHistory, type DailyKcal, type DailyMacros } from "@/db/stats"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { formatWeight } from "@/utils/units"
 import { confirmAction } from "@/utils/confirm"
@@ -29,6 +30,7 @@ import { Card } from "@ui/card"
 import { Button, ButtonText } from "@ui/button"
 
 type RangeId = "1w" | "1m" | "3m" | "6m" | "1y"
+type MacroMetric = "protein" | "carbs" | "fat"
 
 const RANGES: { id: RangeId; label: string; days: number }[] = [
   { id: "1w", label: "1W", days: 7 },
@@ -36,6 +38,12 @@ const RANGES: { id: RangeId; label: string; days: number }[] = [
   { id: "3m", label: "3M", days: 90 },
   { id: "6m", label: "6M", days: 180 },
   { id: "1y", label: "1Y", days: 365 },
+]
+
+const MACRO_METRICS: { value: MacroMetric; label: string }[] = [
+  { value: "protein", label: "Protein" },
+  { value: "carbs", label: "Carbs" },
+  { value: "fat", label: "Fat" },
 ]
 
 function formatAxisDate(dateKey: string, range: RangeId): string {
@@ -50,7 +58,7 @@ function formatAxisDate(dateKey: string, range: RangeId): string {
 
 export default function StatsScreen() {
   const { settings } = useApp()
-  const { showError, showSuccess } = useToast()
+  const { showError, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
@@ -59,8 +67,13 @@ export default function StatsScreen() {
   const [latest, setLatest] = useState<WeightEntry | null>(null)
   const [previous, setPrevious] = useState<WeightEntry | null>(null)
   const [calories, setCalories] = useState<DailyKcal[]>([])
+  const [macros, setMacros] = useState<DailyMacros[]>([])
   const [loading, setLoading] = useState(true)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
+  const [editWeightDate, setEditWeightDate] = useState<string | null>(null)
+  const [selectedWeight, setSelectedWeight] = useState<WeightEntry | null>(null)
+  const [selectedKcal, setSelectedKcal] = useState<TrendPoint | null>(null)
+  const [macroMetric, setMacroMetric] = useState<MacroMetric>("protein")
 
   const fromKey = useMemo(
     () => shiftDateKey(toDateKey(), -RANGES.find((r) => r.id === range)!.days),
@@ -70,16 +83,18 @@ export default function StatsScreen() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [chartWeights, latestWeight, recentTwo, kcalHistory] = await Promise.all([
+      const [chartWeights, latestWeight, recentTwo, kcalHistory, macroHistory] = await Promise.all([
         getWeightEntries(fromKey),
         getLatestWeightEntry(),
         getRecentWeightEntries(2),
         getCalorieHistory(fromKey),
+        getMacroHistory(fromKey),
       ])
       setWeightEntries(chartWeights)
       setLatest(latestWeight)
       setPrevious(recentTwo[1] ?? null)
       setCalories(kcalHistory)
+      setMacros(macroHistory)
     } catch (error) {
       showError(error, "Could not load stats.")
     } finally {
@@ -95,29 +110,55 @@ export default function StatsScreen() {
 
   const closeLogWeight = useCallback(() => {
     setLogWeightOpen(false)
+    setEditWeightDate(null)
     void load()
   }, [load])
 
-  const openLogWeight = useCallback(() => setLogWeightOpen(true), [])
+  const openLogWeight = useCallback(() => {
+    setEditWeightDate(null)
+    setLogWeightOpen(true)
+  }, [])
+
+  const onDeleteWeight = useCallback(
+    (entry: WeightEntry) => {
+      confirmAction({
+        title: "Delete weight?",
+        message: `Remove ${formatWeight(entry.weight_kg, settings.units)} from ${formatDisplayDate(entry.date)}?`,
+        confirmLabel: "Delete",
+        onConfirm: async () => {
+          try {
+            await deleteWeightEntry(entry.id)
+            setSelectedWeight(null)
+            await load()
+            showUndo("Weight entry removed.", () => {
+              saveWeightEntry({
+                date: entry.date,
+                weightKg: entry.weight_kg,
+                note: entry.note ?? undefined,
+              })
+                .then(() => load())
+                .catch(() => undefined)
+            })
+          } catch (error) {
+            showError(error, "Could not delete weight entry.")
+          }
+        },
+      })
+    },
+    [load, settings.units, showError, showUndo],
+  )
 
   const onDeleteLatest = useCallback(() => {
-    const entry = latest
-    if (!entry) return
-    confirmAction({
-      title: "Delete weight?",
-      message: `Remove ${formatWeight(entry.weight_kg, settings.units)} from ${formatDisplayDate(entry.date)}?`,
-      confirmLabel: "Delete",
-      onConfirm: async () => {
-        try {
-          await deleteWeightEntry(entry.id)
-          await load()
-          showSuccess("Weight entry deleted.", "Done")
-        } catch (error) {
-          showError(error, "Could not delete weight entry.")
-        }
-      },
-    })
-  }, [latest, load, settings.units, showError, showSuccess])
+    if (latest) onDeleteWeight(latest)
+  }, [latest, onDeleteWeight])
+
+  const onWeightPointPress = useCallback(
+    (point: TrendPoint) => {
+      const entry = weightEntries.find((item) => item.date === point.date) ?? null
+      setSelectedWeight(entry)
+    },
+    [weightEntries],
+  )
 
   const weightChartData = useMemo(
     () => weightEntries.map((entry) => ({ date: entry.date, value: entry.weight_kg })),
@@ -126,6 +167,10 @@ export default function StatsScreen() {
   const calorieChartData = useMemo(
     () => calories.map((day) => ({ date: day.date, value: day.kcal })),
     [calories],
+  )
+  const macroChartData = useMemo(
+    () => macros.map((day) => ({ date: day.date, value: day[macroMetric] })),
+    [macroMetric, macros],
   )
 
   const rawDelta = latest && previous ? latest.weight_kg - previous.weight_kg : null
@@ -139,6 +184,21 @@ export default function StatsScreen() {
           calorieChartData.reduce((sum, day) => sum + day.value, 0) / calorieChartData.length,
         )
       : null
+
+  const macroGoal = settings[`${macroMetric}_goal`]
+  const macroColor =
+    macroMetric === "protein"
+      ? colors.breakfast
+      : macroMetric === "carbs"
+        ? colors.lunch
+        : colors.dinner
+
+  // Body metrics — BMI needs a height, goal progress needs a target weight.
+  const heightCm = settings.height_cm > 0 ? settings.height_cm : 0
+  const targetKg = settings.target_weight_kg > 0 ? settings.target_weight_kg : 0
+  const bmi =
+    heightCm > 0 && latest ? Math.round((latest.weight_kg / (heightCm / 100) ** 2) * 10) / 10 : null
+  const goalDelta = latest && targetKg > 0 ? latest.weight_kg - targetKg : null
 
   const weightEmptyState = (
     <Box className="items-center px-6 pb-6 pt-8">
@@ -173,7 +233,7 @@ export default function StatsScreen() {
             Stats
           </Text>
           <Text size="xs" className="mt-1 text-typography-500">
-            Bodyweight and calorie trends
+            Bodyweight, calorie and macro trends
           </Text>
         </Box>
 
@@ -235,6 +295,26 @@ export default function StatsScreen() {
                   </Text>
                 </Box>
 
+                {latest && (bmi !== null || goalDelta !== null) ? (
+                  <Box className="mt-2 flex-row flex-wrap gap-x-4 gap-y-1">
+                    {bmi !== null ? (
+                      <Box className="flex-row items-center gap-1">
+                        <Ionicons name="body-outline" size={13} color={colors.textMuted} />
+                        <Text size="xs" bold className="text-typography-600">
+                          BMI {bmi}
+                        </Text>
+                      </Box>
+                    ) : null}
+                    {goalDelta !== null ? (
+                      <Text size="xs" bold className="text-typography-600">
+                        {goalDelta <= 0.05
+                          ? "At goal weight"
+                          : `${formatWeight(Math.abs(goalDelta), settings.units)} to goal`}
+                      </Text>
+                    ) : null}
+                  </Box>
+                ) : null}
+
                 <View className="mt-3">
                   {weightChartData.length > 0 ? (
                     <TrendChart
@@ -245,12 +325,51 @@ export default function StatsScreen() {
                       formatValue={(value) => formatWeight(value, settings.units)}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
                       height={170}
+                      onPointPress={onWeightPointPress}
                       accessibilityLabel={`Body weight trend, ${formatWeight(weightChartData[0].value, settings.units)} to ${formatWeight(weightChartData[weightChartData.length - 1].value, settings.units)}`}
                     />
                   ) : (
                     weightEmptyState
                   )}
                 </View>
+
+                {selectedWeight ? (
+                  <Box className="mt-3 flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
+                    <Ionicons name="location-outline" size={15} color={colors.primary} />
+                    <Box className="min-w-0 flex-1">
+                      <Text size="xs" bold className="text-typography-900">
+                        {formatDisplayDate(selectedWeight.date)}
+                      </Text>
+                      <Text size="xs" className="text-typography-500">
+                        {formatWeight(selectedWeight.weight_kg, settings.units)}
+                        {selectedWeight.note ? ` · ${selectedWeight.note}` : ""}
+                      </Text>
+                    </Box>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="secondary"
+                      className="w-20"
+                      onPress={() => {
+                        setEditWeightDate(selectedWeight.date)
+                        setLogWeightOpen(true)
+                      }}
+                      accessibilityLabel="Edit selected weight"
+                    >
+                      <ButtonText>Edit</ButtonText>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      action="negative"
+                      className="w-20"
+                      onPress={() => onDeleteWeight(selectedWeight)}
+                      accessibilityLabel="Delete selected weight"
+                    >
+                      <ButtonText>Delete</ButtonText>
+                    </Button>
+                  </Box>
+                ) : null}
 
                 {weightChartData.length > 0 ? (
                   <Box className="mt-3 flex-row gap-2">
@@ -308,10 +427,73 @@ export default function StatsScreen() {
                       formatValue={(value) => Math.round(value).toLocaleString()}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
                       height={170}
+                      onPointPress={setSelectedKcal}
                       accessibilityLabel={`Calories per day, ${calorieChartData.length} days`}
                     />
                   ) : (
                     caloriesEmptyState
+                  )}
+                </View>
+
+                {selectedKcal ? (
+                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                    {formatDisplayDate(selectedKcal.date)} —{" "}
+                    {Math.round(selectedKcal.value).toLocaleString()} kcal
+                    {settings.calorie_goal > 0
+                      ? selectedKcal.value > settings.calorie_goal
+                        ? " · over goal"
+                        : " · under goal"
+                      : ""}
+                  </Text>
+                ) : null}
+              </Card>
+
+              {/* Macros */}
+              <Card variant="elevated" className="p-4">
+                <Box className="flex-row items-center gap-2.5">
+                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Ionicons name="nutrition-outline" size={18} color={colors.primary} />
+                  </Box>
+                  <Box className="min-w-0 flex-1">
+                    <Text size="md" bold className="text-typography-900">
+                      Macros
+                    </Text>
+                    <Text size="xs" className="text-typography-500">
+                      Protein, carb and fat trends
+                    </Text>
+                  </Box>
+                </Box>
+
+                <View className="mt-3">
+                  <SegmentedControl<MacroMetric>
+                    value={macroMetric}
+                    options={MACRO_METRICS}
+                    onChange={setMacroMetric}
+                  />
+                </View>
+
+                <View className="mt-3">
+                  {macroChartData.length > 0 ? (
+                    <TrendChart
+                      data={macroChartData}
+                      color={macroColor}
+                      goalValue={macroGoal}
+                      rangeStart={fromKey}
+                      rangeEnd={toDateKey()}
+                      formatValue={(value) => `${Math.round(value)} g`}
+                      formatDate={(dateKey) => formatAxisDate(dateKey, range)}
+                      height={170}
+                      accessibilityLabel={`${macroMetric} per day, ${macroChartData.length} days`}
+                    />
+                  ) : (
+                    <Box className="items-center px-6 py-8">
+                      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+                        <Ionicons name="nutrition-outline" size={22} color={colors.primary} />
+                      </Box>
+                      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
+                        No macro data logged {range === "1w" ? "this week" : "in this range"} yet.
+                      </Text>
+                    </Box>
                   )}
                 </View>
               </Card>
@@ -320,7 +502,12 @@ export default function StatsScreen() {
         </ScrollView>
       </PageContainer>
 
-      <LogWeightModal visible={logWeightOpen} onClose={closeLogWeight} />
+      <LogWeightModal
+        visible={logWeightOpen}
+        initialDateKey={editWeightDate ?? undefined}
+        onClose={closeLogWeight}
+        onSaved={closeLogWeight}
+      />
     </Box>
   )
 }

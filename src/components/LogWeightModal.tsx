@@ -27,6 +27,8 @@ import { Text } from "@ui/text"
 
 type Props = {
   visible: boolean
+  /** Date to log/edit when the modal opens (defaults to today). */
+  initialDateKey?: string
   /** Closing without saving — also called after a successful save. */
   onClose: () => void
   /** Called after a successful save so the caller can reload its data. */
@@ -45,17 +47,26 @@ function weightToDisplay(kg: number, units: string): string {
  * as plain pages on web). Centered dialog on wide screens, full-bleed sheet
  * on phones; the action FABs float on the backdrop, outside the dialog.
  */
-export function LogWeightModal({ visible, onClose, onSaved }: Props) {
+export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Props) {
   const { settings } = useApp()
   const { showError, showWarning, showSuccess } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
-  const [dateKey, setDateKey] = useState(toDateKey())
+  const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [weightText, setWeightText] = useState("")
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // An edit request (initialDateKey) retargets the dialog when it opens —
+  // render-adjustment pattern so no effect round-trip is needed.
+  const [openSync, setOpenSync] = useState({ visible: false, key: initialDateKey ?? toDateKey() })
+  if (visible !== openSync.visible) {
+    setOpenSync({ visible, key: initialDateKey ?? toDateKey() })
+    setDateKey(initialDateKey ?? toDateKey())
+    setWeightText("")
+  }
 
   // Prefill the existing entry when one is already logged for this date.
   useEffect(() => {

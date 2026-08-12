@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react"
-import { View, type LayoutChangeEvent } from "react-native"
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type GestureResponderEvent,
+} from "react-native"
 import Svg, {
   Circle,
   Defs,
@@ -31,6 +37,8 @@ type Props = {
   formatDate: (dateKey: string) => string
   height?: number
   accessibilityLabel: string
+  /** Called with the data point nearest to a tap on the chart. */
+  onPointPress?: (point: TrendPoint) => void
 }
 
 const PAD = { top: 14, right: 12, bottom: 24, left: 46 }
@@ -59,6 +67,7 @@ export function TrendChart({
   formatDate,
   height = 180,
   accessibilityLabel,
+  onPointPress,
 }: Props) {
   const { colors } = useTheme()
   const [width, setWidth] = useState(0)
@@ -158,6 +167,22 @@ export function TrendChart({
 
   const goalY = geometry && goalValue !== undefined ? geometry.yFor(goalValue) : null
 
+  const handlePress = (event: GestureResponderEvent) => {
+    if (!geometry || data.length === 0) return
+    const native = event.nativeEvent as { locationX?: number; offsetX?: number }
+    const x = native.locationX ?? native.offsetX ?? 0
+    let best = 0
+    let bestDistance = Infinity
+    for (let index = 0; index < data.length; index += 1) {
+      const distance = Math.abs(geometry.xFor(data[index].date) - x)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        best = index
+      }
+    }
+    onPointPress?.(data[best])
+  }
+
   return (
     <View
       onLayout={onLayout}
@@ -166,6 +191,14 @@ export function TrendChart({
       accessibilityRole="image"
       style={{ width: "100%", height }}
     >
+      {onPointPress ? (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel="Inspect chart point"
+        />
+      ) : null}
       {width > 0 && data.length > 0 && geometry ? (
         <Svg width={width} height={height}>
           <Defs>
