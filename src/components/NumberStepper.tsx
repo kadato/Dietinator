@@ -72,6 +72,27 @@ export function NumberStepper({
     [decimals, min, onChangeText, step],
   )
 
+  // Sanitize typed input: digits and one decimal separator only, clamped to
+  // the same `min` the stepper buttons enforce (typed "−5" or "abc" can't
+  // slip past the buttons' guard). Mid-typing fragments like "0." survive.
+  const handleTextChange = useCallback(
+    (text: string) => {
+      const normalized = text.replace(",", ".")
+      const sanitized = normalized.replace(/[^\d.]/g, "")
+      if (sanitized === "" || sanitized === ".") {
+        onChangeText("")
+        return
+      }
+      const parsed = Number(sanitized)
+      if (!Number.isFinite(parsed)) {
+        onChangeText("")
+        return
+      }
+      onChangeText(parsed < min ? String(min) : sanitized)
+    },
+    [min, onChangeText],
+  )
+
   const repeatTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const stopRepeat = useCallback(() => {
     if (repeatTimer.current) {
@@ -110,7 +131,7 @@ export function NumberStepper({
         style={[styles.input, sm && styles.inputSm]}
         keyboardType="decimal-pad"
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={handleTextChange}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         accessibilityLabel={accessibilityLabel}

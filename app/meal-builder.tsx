@@ -51,6 +51,10 @@ export default function MealBuilderScreen() {
 
   const { foods: results, loading: searching } = useFoodSearch(debounced)
 
+  // Cap rendered results — the builder renders into a ScrollView, so an
+  // unbounded list would stall the UI; refine the query for the rest.
+  const cappedResults = useMemo(() => results.slice(0, 30), [results])
+
   // Edit mode: load the saved meal.
   useEffect(() => {
     if (!mealId) return
@@ -277,7 +281,7 @@ export default function MealBuilderScreen() {
             />
           </Input>
           {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
-          {results.map((food) => (
+          {cappedResults.map((food) => (
             <Pressable
               key={food.product_id}
               className="mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3 active:opacity-90"
@@ -300,6 +304,11 @@ export default function MealBuilderScreen() {
               </Box>
             </Pressable>
           ))}
+          {!searching && query.trim().length > 0 && results.length > 30 ? (
+            <Text size="xs" className="py-2 text-center text-typography-500">
+              Showing the first 30 results — refine your search for more.
+            </Text>
+          ) : null}
           {!searching && query.trim().length > 0 && results.length === 0 ? (
             <Text size="sm" className="py-3 text-center text-typography-500">
               No foods found. Try a different search.
