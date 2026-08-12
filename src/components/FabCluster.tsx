@@ -1,5 +1,22 @@
 import type { ReactNode } from "react"
-import { View } from "react-native"
+import { StyleSheet, View } from "react-native"
+
+/**
+ * `pointerEvents` must live in a registered style, not an inline one —
+ * react-native-web only compiles it from `StyleSheet.create`, and inline
+ * `{ pointerEvents: "box-none" }` is silently dropped on web.
+ */
+const styles = StyleSheet.create({
+  cluster: {
+    position: "absolute",
+    alignItems: "flex-start",
+    gap: 12,
+    pointerEvents: "box-none",
+  },
+  clusterRight: {
+    alignItems: "flex-end",
+  },
+})
 
 type Props = {
   /** FABs docked to the bottom-left of the screen. */
@@ -26,29 +43,15 @@ export function FabCluster({ left, right, bottomOffset = 20, gap = 12, insetX = 
   return (
     <>
       {left ? (
-        <View
-          style={{
-            position: "absolute",
-            left: insetX,
-            bottom: bottomOffset,
-            alignItems: "flex-start",
-            gap,
-            pointerEvents: "box-none",
-          }}
-        >
-          {left}
-        </View>
+        <View style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}>{left}</View>
       ) : null}
       {right ? (
         <View
-          style={{
-            position: "absolute",
-            right: insetX,
-            bottom: bottomOffset,
-            alignItems: "flex-end",
-            gap,
-            pointerEvents: "box-none",
-          }}
+          style={[
+            styles.cluster,
+            styles.clusterRight,
+            { right: insetX, bottom: bottomOffset, gap },
+          ]}
         >
           {right}
         </View>

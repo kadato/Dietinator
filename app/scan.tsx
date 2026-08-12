@@ -84,6 +84,10 @@ const cameraStyles = StyleSheet.create({
     height: 2,
     borderRadius: 1,
     opacity: 0.8,
+    // Registered (not inline) so react-native-web compiles it — an inline
+    // pointerEvents is dropped on web and the line would block taps in its
+    // 2px band while sweeping.
+    pointerEvents: "none",
   },
   frameHint: {
     flexDirection: "row",
@@ -149,7 +153,6 @@ function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
         {
           backgroundColor: color,
           transform: [{ translateY }],
-          pointerEvents: "none",
         },
       ]}
     />

@@ -152,7 +152,6 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
       style={[
         styles.host,
         { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
-        { pointerEvents: "box-none" },
       ]}
     >
       <Animated.View
@@ -249,7 +248,6 @@ function UndoFab({
         // Bottom-left, just above the tab bar. Sits clear of any left-side
         // FAB (e.g. the water modal's Cancel button at insets.bottom + 20).
         { bottom: insets.bottom + 88 },
-        { pointerEvents: "box-none" },
       ]}
     >
       <Animated.View style={{ opacity, transform: [{ translateY }] }}>
@@ -368,6 +366,9 @@ const undoStyles = StyleSheet.create({
     left: 20,
     alignItems: "flex-start",
     zIndex: 9999,
+    // Registered (not inline) so react-native-web compiles it — an inline
+    // box-none is dropped on web and the layer would block taps beneath it.
+    pointerEvents: "box-none",
   },
 })
 
@@ -381,6 +382,10 @@ const createToastStyles = (colors: ColorPalette) =>
       zIndex: 9999,
       alignItems: "center",
       paddingHorizontal: spacing.md,
+      // Registered (not inline) so react-native-web compiles it — an inline
+      // box-none is dropped on web and this full-width layer would block
+      // taps on the header row while a toast is up.
+      pointerEvents: "box-none",
     },
     toast: {
       width: "100%",
