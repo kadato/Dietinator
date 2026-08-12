@@ -90,6 +90,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   }, [dateKey, settings.units, visible])
 
   const handleSave = async () => {
+    if (saving) return
     const weightKg = parseWeightInput(weightText, settings.units)
     if (weightKg === null) {
       showWarning(
@@ -141,6 +142,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             <NumberStepper
               value={weightText}
               onChangeText={setWeightText}
+              onSubmit={() => void handleSave()}
               step={0.1}
               decimals={1}
               accessibilityLabel="Weight"

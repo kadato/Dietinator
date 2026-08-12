@@ -1,4 +1,12 @@
-import { matchesDateKey, parseDateKey, shiftDateKey, toDateKey, toYazioApiDate } from "../date"
+import {
+  formatDisplayDate,
+  formatHeaderDate,
+  matchesDateKey,
+  parseDateKey,
+  shiftDateKey,
+  toDateKey,
+  toYazioApiDate,
+} from "../date"
 
 describe("toDateKey", () => {
   it("formats a date as YYYY-MM-DD", () => {
@@ -57,6 +65,35 @@ describe("matchesDateKey", () => {
     expect(matchesDateKey("2026-08-09", "2026-08-08")).toBe(false)
     expect(matchesDateKey("08/08/2026", "2026-08-08")).toBe(false)
     expect(matchesDateKey(undefined, "2026-08-08")).toBe(false)
+  })
+})
+
+describe("formatDisplayDate", () => {
+  it("labels today and yesterday", () => {
+    const today = toDateKey()
+    expect(formatDisplayDate(today)).toBe("Today")
+    expect(formatDisplayDate(shiftDateKey(today, -1))).toBe("Yesterday")
+  })
+
+  it("formats other dates with a short weekday", () => {
+    // Locale-aware (may be "Sat, Aug 1" or "aug. 1., Szo") — just prove it is
+    // a real short date and not the Today/Yesterday label.
+    expect(formatDisplayDate("2026-08-01")).not.toBe("Today")
+    expect(formatDisplayDate("2026-08-01")).not.toBe("Yesterday")
+    expect(formatDisplayDate("2026-08-01")).toContain(",")
+  })
+})
+
+describe("formatHeaderDate", () => {
+  it("keeps the full date next to Today and Yesterday", () => {
+    const today = toDateKey()
+    expect(formatHeaderDate(today)).toMatch(/^Today · /)
+    expect(formatHeaderDate(shiftDateKey(today, -1))).toMatch(/^Yesterday · /)
+  })
+
+  it("falls back to the short display date for other days", () => {
+    // A date that is neither today nor yesterday in any test run.
+    expect(formatHeaderDate("2026-08-01")).toBe(formatDisplayDate("2026-08-01"))
   })
 })
 

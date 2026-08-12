@@ -29,18 +29,32 @@ export function toDateKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`
 }
 
-export function formatDisplayDate(dateKey: string): string {
-  const today = toDateKey()
-  if (dateKey === today) return "Today"
-
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (dateKey === toDateKey(yesterday)) return "Yesterday"
-
+function shortDisplayDate(dateKey: string): string {
   const [y, m, d] = dateKey.split("-").map(Number)
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   })
+}
+
+export function formatDisplayDate(dateKey: string): string {
+  const today = toDateKey()
+  if (dateKey === today) return "Today"
+
+  const yesterday = shiftDateKey(today, -1)
+  if (dateKey === yesterday) return "Yesterday"
+
+  return shortDisplayDate(dateKey)
+}
+
+/**
+ * Header variant of {@link formatDisplayDate}: "Today" and "Yesterday" also
+ * carry the weekday and full date so the current view stays oriented.
+ */
+export function formatHeaderDate(dateKey: string): string {
+  const today = toDateKey()
+  if (dateKey === today) return `Today · ${shortDisplayDate(dateKey)}`
+  if (dateKey === shiftDateKey(today, -1)) return `Yesterday · ${shortDisplayDate(dateKey)}`
+  return formatDisplayDate(dateKey)
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Pressable,
   StyleSheet,
@@ -25,6 +25,8 @@ type NumberStepperProps = {
   size?: "md" | "sm"
   accessibilityLabel: string
   placeholder?: string
+  /** Keyboard "done" action — mirrors the screen's primary FAB action. */
+  onSubmit?: () => void
   style?: StyleProp<ViewStyle>
 }
 
@@ -47,6 +49,7 @@ export function NumberStepper({
   size = "md",
   accessibilityLabel,
   placeholder,
+  onSubmit,
   style,
 }: NumberStepperProps) {
   const { colors } = useTheme()
@@ -61,6 +64,27 @@ export function NumberStepper({
   useEffect(() => {
     valueRef.current = value
   }, [value])
+
+  const [focused, setFocused] = useState(false)
+  // Value to restore (and show as ghost placeholder) while the field is
+  // focused and cleared — tapping focuses the field for a fresh entry, but
+  // blurring without typing brings the previous value back.
+  const [ghost, setGhost] = useState("")
+
+  const handleFocus = useCallback(() => {
+    setFocused(true)
+    setGhost(value)
+    if (value !== "") onChangeText("")
+  }, [onChangeText, value])
+
+  const handleBlur = useCallback(() => {
+    setFocused(false)
+    if (value === "") {
+      onChangeText(ghost)
+    } else {
+      setGhost(value)
+    }
+  }, [ghost, onChangeText, value])
 
   const stepBy = useCallback(
     (direction: 1 | -1) => {
@@ -132,8 +156,12 @@ export function NumberStepper({
         keyboardType="decimal-pad"
         value={value}
         onChangeText={handleTextChange}
-        placeholder={placeholder}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={focused && ghost !== "" ? ghost : placeholder}
         placeholderTextColor={colors.textMuted}
+        returnKeyType="done"
+        onSubmitEditing={onSubmit}
         accessibilityLabel={accessibilityLabel}
         maxFontSizeMultiplier={1.4}
       />
@@ -173,7 +201,11 @@ const createStyles = (colors: ColorPalette) =>
     btnSm: { width: 28, height: 28, borderRadius: 14 },
     btnDisabled: { opacity: 0.4 },
     input: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      // "auto" so the explicit width of the sm variant wins — the `flex: 1`
+      // shorthand's 0% basis would override `width` per the CSS spec on web.
+      flexBasis: "auto",
       minWidth: 0,
       backgroundColor: colors.surface,
       borderRadius: 10,
@@ -186,7 +218,8 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
     },
     inputSm: {
-      flex: 0,
+      flexGrow: 0,
+      flexShrink: 0,
       width: 44,
       minWidth: 0,
       paddingVertical: spacing.xs,

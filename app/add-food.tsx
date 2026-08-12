@@ -310,6 +310,7 @@ export default function AddFoodScreen() {
   }
 
   const handleSave = async () => {
+    if (saving) return
     if (!food) return
     const amt = Number(amount)
     if (!amt || amt <= 0) {
@@ -468,6 +469,7 @@ export default function AddFoodScreen() {
                 amountTouched.current = true
                 setAmount(text)
               }}
+              onSubmit={() => void handleSave()}
               step={unit === "g" || unit === "ml" ? 10 : 1}
               decimals={1}
               accessibilityLabel={`Amount in ${displayUnit(unit)}`}

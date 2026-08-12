@@ -23,6 +23,7 @@ function MacroInput({
   label,
   value,
   onChange,
+  onSubmit,
   placeholder = "0",
   styles,
   stacked,
@@ -30,6 +31,7 @@ function MacroInput({
   label: string
   value: string
   onChange: (value: string) => void
+  onSubmit?: () => void
   placeholder?: string
   styles: ReturnType<typeof createStyles>
   /** On very narrow screens the three macro fields stack instead of crowding. */
@@ -41,6 +43,7 @@ function MacroInput({
       <NumberStepper
         value={value}
         onChangeText={onChange}
+        onSubmit={onSubmit}
         step={1}
         size="sm"
         placeholder={placeholder}
@@ -69,6 +72,7 @@ export default function ManualEntryScreen() {
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
+    if (saving) return
     const kcalValue = Number(kcal)
     if (isQuickAdd) {
       if (!kcalValue || kcalValue <= 0) {
@@ -126,6 +130,8 @@ export default function ManualEntryScreen() {
                   onChangeText={setName}
                   placeholder="e.g. Homemade soup"
                   accessibilityLabel="Food name"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSave()}
                   maxFontSizeMultiplier={1.4}
                 />
               </Input>
@@ -136,6 +142,7 @@ export default function ManualEntryScreen() {
           <NumberStepper
             value={kcal}
             onChangeText={setKcal}
+            onSubmit={() => void handleSave()}
             step={10}
             accessibilityLabel="Calories"
             placeholder="0"
@@ -148,6 +155,7 @@ export default function ManualEntryScreen() {
                 label="Protein (g)"
                 value={protein}
                 onChange={setProtein}
+                onSubmit={() => void handleSave()}
                 styles={styles}
                 stacked
               />
@@ -155,10 +163,18 @@ export default function ManualEntryScreen() {
                 label="Carbs (g)"
                 value={carbs}
                 onChange={setCarbs}
+                onSubmit={() => void handleSave()}
                 styles={styles}
                 stacked
               />
-              <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} stacked />
+              <MacroInput
+                label="Fat (g)"
+                value={fat}
+                onChange={setFat}
+                onSubmit={() => void handleSave()}
+                styles={styles}
+                stacked
+              />
             </Box>
           ) : (
             <Box className="flex-row gap-3">
@@ -166,10 +182,23 @@ export default function ManualEntryScreen() {
                 label="Protein (g)"
                 value={protein}
                 onChange={setProtein}
+                onSubmit={() => void handleSave()}
                 styles={styles}
               />
-              <MacroInput label="Carbs (g)" value={carbs} onChange={setCarbs} styles={styles} />
-              <MacroInput label="Fat (g)" value={fat} onChange={setFat} styles={styles} />
+              <MacroInput
+                label="Carbs (g)"
+                value={carbs}
+                onChange={setCarbs}
+                onSubmit={() => void handleSave()}
+                styles={styles}
+              />
+              <MacroInput
+                label="Fat (g)"
+                value={fat}
+                onChange={setFat}
+                onSubmit={() => void handleSave()}
+                styles={styles}
+              />
             </Box>
           )}
         </ScrollView>

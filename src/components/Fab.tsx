@@ -23,6 +23,8 @@ type Props = {
   tone?: "primary" | "surface" | "danger"
   /** Disables presses and dims the button (e.g. while saving). */
   disabled?: boolean
+  /** `md` (default, 56px) or `sm` (44px — secondary buttons in FAB clusters). */
+  size?: "md" | "sm"
 }
 
 function FabGlyph({
@@ -49,9 +51,10 @@ function FabGlyph({
 }
 
 /**
- * Floating action button. Round by default; pass `label` for the extended
- * pill variant. Elevation and press feedback match Material FABs while
- * staying theme-aware. Screens position it (absolute + safe area).
+ * Floating action button. Rounded square by default (Material 3 container
+ * shape); pass `label` for the extended variant. Elevation and press
+ * feedback match Material FABs while staying theme-aware. Screens position
+ * it (absolute + safe area).
  */
 export function Fab({
   icon,
@@ -61,6 +64,7 @@ export function Fab({
   label,
   tone = "primary",
   disabled = false,
+  size = "md",
 }: Props) {
   const { colors } = useTheme()
   const bg =
@@ -68,29 +72,15 @@ export function Fab({
   const fg = tone === "surface" ? colors.text : tone === "danger" ? "#ffffff" : colors.onPrimary
 
   const pressedStyle = disabled ? styles.disabled : styles.pressed
-
-  if (label) {
-    return (
-      <Pressable
-        onPress={onPress}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ disabled }}
-        style={({ pressed }) => [
-          styles.extended,
-          { backgroundColor: bg },
-          tone === "surface" && { borderWidth: 1, borderColor: colors.border },
-          pressed && pressedStyle,
-        ]}
-      >
-        <FabGlyph IconComponent={IconComponent} icon={icon} size={22} color={fg} />
-        <Text size="md" bold style={{ color: fg }}>
-          {label}
-        </Text>
-      </Pressable>
-    )
-  }
+  const shape =
+    size === "sm"
+      ? label
+        ? styles.extendedSm
+        : styles.roundSm
+      : label
+        ? styles.extended
+        : styles.round
+  const iconSize = size === "sm" ? (label ? 18 : 22) : label ? 22 : 26
 
   return (
     <Pressable
@@ -100,13 +90,20 @@ export function Fab({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
-        styles.round,
+        shape,
+        styles.shadow,
         { backgroundColor: bg },
         tone === "surface" && { borderWidth: 1, borderColor: colors.border },
         pressed && pressedStyle,
+        pressed && styles.shadowFlat,
       ]}
     >
-      <FabGlyph IconComponent={IconComponent} icon={icon} size={26} color={fg} />
+      <FabGlyph IconComponent={IconComponent} icon={icon} size={iconSize} color={fg} />
+      {label ? (
+        <Text size={size === "sm" ? "sm" : "md"} bold style={{ color: fg }}>
+          {label}
+        </Text>
+      ) : null}
     </Pressable>
   )
 }
@@ -115,25 +112,44 @@ const styles = StyleSheet.create({
   round: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 8,
-    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.28)",
+  },
+  roundSm: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   extended: {
     minHeight: 56,
     paddingHorizontal: 22,
-    borderRadius: 28,
+    borderRadius: 18,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    elevation: 8,
-    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.28)",
+  },
+  extendedSm: {
+    minHeight: 44,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  shadow: {
+    elevation: 6,
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
+  },
+  shadowFlat: {
+    elevation: 2,
+    boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.22)",
   },
   pressed: {
-    transform: [{ scale: 0.94 }],
-    opacity: 0.92,
+    transform: [{ scale: 0.95 }],
+    opacity: 0.94,
   },
   disabled: {
     opacity: 0.55,

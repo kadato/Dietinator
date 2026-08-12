@@ -80,6 +80,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   }, [dateKey, visible])
 
   const handleAdd = async (amountMl: number) => {
+    if (saving) return
     if (!amountMl || amountMl <= 0) return
     setSaving(true)
     try {
@@ -114,13 +115,13 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
 
   const form = (
     <>
-      <View style={styles.dialogBody}>
+      <View style={[styles.dialogBody, isWide && styles.dialogBodyWide]}>
         <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
           Water
         </Text>
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-4"
+          contentContainerClassName={isWide ? "px-4 pb-4" : "px-4 pb-28"}
           keyboardShouldPersistTaps="handled"
         >
           <Pressable
@@ -180,6 +181,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             <NumberStepper
               value={customMl}
               onChangeText={setCustomMl}
+              onSubmit={() => void handleAdd(Number(customMl) || 0)}
               step={50}
               accessibilityLabel="Water amount in ml"
               placeholder="e.g. 200"
@@ -298,6 +300,15 @@ const createStyles = (colors: ColorPalette) =>
       overflow: "hidden",
       boxShadow: "0px 8px 40px rgba(0, 0, 0, 0.35)",
       elevation: 12,
+    },
+    // On wide screens the dialog hugs its content instead of filling the
+    // viewport (the phone sheet keeps flex: 1 to fill the screen). flexBasis
+    // must return to "auto" — flex: 1 sets 0%, which would collapse the
+    // height once flexGrow is disabled.
+    dialogBodyWide: {
+      flexGrow: 0,
+      flexBasis: "auto",
+      maxHeight: "100%",
     },
     fabLayer: {
       position: "absolute",
