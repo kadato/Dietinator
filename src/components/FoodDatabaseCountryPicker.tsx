@@ -57,7 +57,12 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Food database country</Text>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Close">
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
             <Ionicons name="close" size={28} color={styles.closeIcon.color} />
           </Pressable>
         </View>
@@ -86,6 +91,9 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
                   setFilter("")
                   onClose()
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                accessibilityState={{ selected }}
               >
                 <Text style={[styles.rowLabel, selected && styles.rowLabelSelected]}>
                   {item.label}

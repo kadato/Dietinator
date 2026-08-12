@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import {
   Pressable,
   StyleSheet,
+  Text,
   View,
   type LayoutChangeEvent,
   type GestureResponderEvent,
@@ -17,7 +18,9 @@ import Svg, {
   Text as SvgText,
 } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
+import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, shiftDateKey } from "@/utils/date"
+import { spacing, type ColorPalette } from "@/theme"
 
 export type TrendPoint = { date: string; value: number }
 
@@ -70,6 +73,7 @@ export function TrendChart({
   onPointPress,
 }: Props) {
   const { colors } = useTheme()
+  const styles = useThemedStyles(createStyles)
   const [width, setWidth] = useState(0)
 
   const onLayout = (event: LayoutChangeEvent) => {
@@ -313,7 +317,25 @@ export function TrendChart({
             </>
           )}
         </Svg>
-      ) : null}
+      ) : (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>No data for this range.</Text>
+        </View>
+      )}
     </View>
   )
 }
+
+const createStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    empty: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+    },
+  })

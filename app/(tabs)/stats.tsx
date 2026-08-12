@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { PageContainer } from "@/components/PageContainer"
 import { SegmentedControl } from "@/components/SegmentedControl"
+import { EmptyState } from "@/components/EmptyState"
 import { TrendChart, type TrendPoint } from "@/components/TrendChart"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { useApp } from "@/context/AppContext"
@@ -54,6 +55,9 @@ const MACRO_METRICS: { value: MacroMetric; label: string }[] = [
   { value: "fat", label: "Fat" },
 ]
 
+/** Shared chart height so all four trend cards stay aligned. */
+const CHART_HEIGHT = 170
+
 function formatAxisDate(dateKey: string, range: RangeId): string {
   const [y, m, d] = dateKey.split("-").map(Number)
   const date = new Date(y, m - 1, d)
@@ -78,6 +82,7 @@ export default function StatsScreen() {
   const [macros, setMacros] = useState<DailyMacros[]>([])
   const [water, setWater] = useState<DailyWater[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
   const [editWeightDate, setEditWeightDate] = useState<string | null>(null)
   const [selectedWeight, setSelectedWeight] = useState<WeightEntry | null>(null)
@@ -109,8 +114,10 @@ export default function StatsScreen() {
       setCalories(kcalHistory)
       setMacros(macroHistory)
       setWater(waterHistory)
+      setLoadError(false)
     } catch (error) {
       showError(error, "Could not load stats.")
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -233,28 +240,26 @@ export default function StatsScreen() {
       : null
 
   const weightEmptyState = (
-    <Box className="items-center px-6 pb-6 pt-8">
-      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
-        <Ionicons name="scale-outline" size={22} color={colors.primary} />
-      </Box>
-      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
-        No weight logged {range === "1w" ? "this week" : "in this range"} yet.
-      </Text>
-      <Button size="sm" className="mt-4" onPress={openLogWeight} accessibilityLabel="Log weight">
-        <ButtonText>Log weight</ButtonText>
-      </Button>
-    </Box>
+    <EmptyState
+      icon="scale-outline"
+      iconColor={colors.primary}
+      title={`No weight logged ${range === "1w" ? "this week" : "in this range"} yet.`}
+      variant="compact"
+      action={
+        <Button size="sm" onPress={openLogWeight} accessibilityLabel="Log weight">
+          <ButtonText>Log weight</ButtonText>
+        </Button>
+      }
+    />
   )
 
   const caloriesEmptyState = (
-    <Box className="items-center px-6 py-8">
-      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
-        <Ionicons name="flame-outline" size={22} color={colors.primary} />
-      </Box>
-      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
-        No diary entries {range === "1w" ? "this week" : "in this range"} yet.
-      </Text>
-    </Box>
+    <EmptyState
+      icon="flame-outline"
+      iconColor={colors.primary}
+      title={`No diary entries ${range === "1w" ? "this week" : "in this range"} yet.`}
+      variant="compact"
+    />
   )
 
   return (
@@ -282,6 +287,22 @@ export default function StatsScreen() {
             <Box className="items-center justify-center py-20">
               <ActivityIndicator size="large" color={colors.primary} />
             </Box>
+          ) : loadError ? (
+            <Card variant="elevated" className="mt-4 p-4">
+              <Box className="flex-row items-center gap-2.5">
+                <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                  <Ionicons name="cloud-offline-outline" size={18} color={colors.danger} />
+                </Box>
+                <Box className="min-w-0 flex-1">
+                  <Text size="md" bold className="text-typography-900">
+                    Could not load stats
+                  </Text>
+                  <Text size="xs" className="text-typography-500">
+                    Try switching ranges or pull to refresh.
+                  </Text>
+                </Box>
+              </Box>
+            </Card>
           ) : (
             <Box className="mt-4 gap-4">
               {/* Consistency */}
@@ -349,7 +370,7 @@ export default function StatsScreen() {
                         {weightDelta !== null && weightDelta !== 0 ? (
                           <Box className="flex-row items-center gap-0.5">
                             <Ionicons
-                              name={weightDelta < 0 ? "arrow-down" : "arrow-up"}
+                              name={weightDelta < 0 ? "arrow-down-outline" : "arrow-up-outline"}
                               size={11}
                               color={weightDelta < 0 ? colors.primary : colors.danger}
                             />
@@ -406,7 +427,16 @@ export default function StatsScreen() {
                         </Text>
                       ) : null}
                     </Box>
-                    <View className="h-2 overflow-hidden rounded-full bg-background-100">
+                    <View
+                      className="h-2 overflow-hidden rounded-full bg-background-100"
+                      accessibilityRole="progressbar"
+                      accessibilityLabel="Goal progress"
+                      accessibilityValue={{
+                        min: 0,
+                        max: 100,
+                        now: Math.round(goalProgress * 100),
+                      }}
+                    >
                       <View
                         className="h-full rounded-full"
                         style={{
@@ -427,7 +457,7 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => formatWeight(value, settings.units)}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={170}
+                      height={CHART_HEIGHT}
                       onPointPress={onWeightPointPress}
                       accessibilityLabel={`Body weight trend, ${formatWeight(weightChartData[0].value, settings.units)} to ${formatWeight(weightChartData[weightChartData.length - 1].value, settings.units)}`}
                     />
@@ -489,7 +519,7 @@ export default function StatsScreen() {
                         size="sm"
                         variant="outline"
                         action="secondary"
-                        className="w-24"
+                        className="w-20"
                         onPress={onDeleteLatest}
                         accessibilityLabel="Delete latest weight"
                       >
@@ -529,7 +559,7 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => Math.round(value).toLocaleString()}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={170}
+                      height={CHART_HEIGHT}
                       onPointPress={setSelectedKcal}
                       accessibilityLabel={`Calories per day, ${calorieChartData.length} days`}
                     />
@@ -585,19 +615,17 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => `${Math.round(value)} g`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={170}
+                      height={CHART_HEIGHT}
                       onPointPress={setSelectedMacro}
                       accessibilityLabel={`${macroMetric} per day, ${macroChartData.length} days`}
                     />
                   ) : (
-                    <Box className="items-center px-6 py-8">
-                      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
-                        <Ionicons name="nutrition-outline" size={22} color={colors.primary} />
-                      </Box>
-                      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
-                        No macro data logged {range === "1w" ? "this week" : "in this range"} yet.
-                      </Text>
-                    </Box>
+                    <EmptyState
+                      icon="nutrition-outline"
+                      iconColor={colors.primary}
+                      title={`No macro data logged ${range === "1w" ? "this week" : "in this range"} yet.`}
+                      variant="compact"
+                    />
                   )}
                 </View>
 
@@ -644,19 +672,17 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => formatWaterAmount(value, settings.units)}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={170}
+                      height={CHART_HEIGHT}
                       onPointPress={setSelectedWater}
                       accessibilityLabel={`Water per day, ${waterChartData.length} days`}
                     />
                   ) : (
-                    <Box className="items-center px-6 py-8">
-                      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
-                        <Ionicons name="water-outline" size={22} color={colors.primary} />
-                      </Box>
-                      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
-                        No water logged {range === "1w" ? "this week" : "in this range"} yet.
-                      </Text>
-                    </Box>
+                    <EmptyState
+                      icon="water-outline"
+                      iconColor={colors.primary}
+                      title={`No water logged ${range === "1w" ? "this week" : "in this range"} yet.`}
+                      variant="compact"
+                    />
                   )}
                 </View>
 
