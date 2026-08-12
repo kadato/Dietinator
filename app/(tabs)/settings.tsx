@@ -187,9 +187,12 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal))
   const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal))
   const [fatGoal, setFatGoal] = useState(String(settings.fat_goal))
+  const [waterGoal, setWaterGoal] = useState(String(settings.water_goal_ml))
+  const [heightCm, setHeightCm] = useState(String(settings.height_cm))
+  const [targetWeight, setTargetWeight] = useState(String(settings.target_weight_kg))
   const [goalError, setGoalError] = useState<string | null>(null)
 
-  const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}`
+  const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}|${settings.water_goal_ml}|${settings.height_cm}|${settings.target_weight_kg}`
   const [syncedGoalsKey, setSyncedGoalsKey] = useState(goalsKey)
   if (goalsKey !== syncedGoalsKey) {
     setSyncedGoalsKey(goalsKey)
@@ -197,6 +200,9 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     setProteinGoal(String(settings.protein_goal))
     setCarbsGoal(String(settings.carbs_goal))
     setFatGoal(String(settings.fat_goal))
+    setWaterGoal(String(settings.water_goal_ml))
+    setHeightCm(String(settings.height_cm))
+    setTargetWeight(String(settings.target_weight_kg))
   }
 
   const saveGoals = async () => {
@@ -205,6 +211,9 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
       protein_goal: Number(proteinGoal),
       carbs_goal: Number(carbsGoal),
       fat_goal: Number(fatGoal),
+      water_goal_ml: Number(waterGoal),
+      height_cm: Number(heightCm),
+      target_weight_kg: Number(targetWeight),
     }
     if (
       !values.calorie_goal ||
@@ -216,7 +225,17 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
       !values.fat_goal ||
       values.fat_goal <= 0
     ) {
-      setGoalError("All goals must be positive numbers.")
+      setGoalError("Calories, protein, carbs and fat must be positive numbers.")
+      return
+    }
+    // Water, height and target weight are optional — 0 means "not set".
+    if (
+      values.water_goal_ml < 0 ||
+      values.height_cm < 0 ||
+      values.target_weight_kg < 0 ||
+      (values.height_cm > 0 && values.height_cm < 60)
+    ) {
+      setGoalError("Height must be at least 60 cm; water and weight can be 0 to disable.")
       return
     }
     setGoalError(null)
@@ -257,6 +276,27 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
         value={fatGoal}
         onChange={setFatGoal}
         step={5}
+      />
+      <GoalInput
+        icon="water-outline"
+        label="Water (ml)"
+        value={waterGoal}
+        onChange={setWaterGoal}
+        step={250}
+      />
+      <GoalInput
+        icon="body-outline"
+        label="Height (cm)"
+        value={heightCm}
+        onChange={setHeightCm}
+        step={1}
+      />
+      <GoalInput
+        icon="flag-outline"
+        label="Target weight (kg)"
+        value={targetWeight}
+        onChange={setTargetWeight}
+        step={0.5}
         last
       />
       <View className="gap-2 border-t border-outline-100 p-4">
@@ -265,6 +305,10 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
             {goalError}
           </Text>
         ) : null}
+        <Text size="xs" className="mb-1 leading-4 text-typography-500">
+          Height and target weight are optional (set to 0 to disable). BMI shows on the Stats tab
+          once both height and a weight are logged.
+        </Text>
         <Button size="md" onPress={saveGoals}>
           <ButtonText>Save goals</ButtonText>
         </Button>
