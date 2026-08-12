@@ -7,8 +7,9 @@ import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useLayout } from "@/hooks/useLayout"
-import { deleteMeal, listMeals, logMealToDiary, mealTotals } from "@/services/meals"
-import { toDateKey } from "@/utils/date"
+import { DatePickerModal } from "@/components/DatePickerModal"
+import { deleteMeal, listMeals, logMealToDiary, mealTotals, saveMeal } from "@/services/meals"
+import { formatDisplayDate, shiftDateKey, toDateKey } from "@/utils/date"
 import { confirmAction } from "@/utils/confirm"
 import { MEAL_LABELS } from "@/utils/meals"
 import type { Meal, MealType } from "@/types"
@@ -23,7 +24,7 @@ export default function MealsScreen() {
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
-  const { showError, showSuccess, showWarning } = useToast()
+  const { showError, showSuccess, showWarning, showUndo } = useToast()
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
   const [loggingId, setLoggingId] = useState<string | null>(null)
@@ -62,13 +63,13 @@ export default function MealsScreen() {
   )
 
   const handleLog = useCallback(
-    async (meal: Meal, mealType: MealType) => {
+    async (meal: Meal, mealType: MealType, dateKey: string) => {
       setPendingLog(null)
       if (loggingId) return
       setLoggingId(meal.id)
       try {
         const { logged, skipped } = await logMealToDiary({
-          date: toDateKey(),
+          date: dateKey,
           mealType,
           meal,
         })
@@ -107,14 +108,18 @@ export default function MealsScreen() {
           try {
             await deleteMeal(meal.id)
             await load()
-            showSuccess("Meal deleted.", "Done")
+            showUndo(`"${meal.name}" removed.`, () => {
+              saveMeal({ id: meal.id, name: meal.name, items: meal.items })
+                .then(() => load())
+                .catch(() => undefined)
+            })
           } catch (error) {
             showError(error, "Could not delete meal.")
           }
         },
       })
     },
-    [load, showError, showSuccess],
+    [load, showError, showUndo],
   )
 
   const renderMeal = useCallback(
@@ -229,8 +234,8 @@ export default function MealsScreen() {
 
       <MealSlotModal
         meal={pendingLog}
-        onSelect={(slot) => {
-          if (pendingLog) void handleLog(pendingLog, slot)
+        onSelect={(slot, dateKey) => {
+          if (pendingLog) void handleLog(pendingLog, slot, dateKey)
         }}
         onClose={() => setPendingLog(null)}
       />
@@ -245,23 +250,63 @@ function MealSlotModal({
   onClose,
 }: {
   meal: Meal | null
-  onSelect: (slot: MealType) => void
+  onSelect: (slot: MealType, dateKey: string) => void
   onClose: () => void
 }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const [dateKey, setDateKey] = useState(toDateKey())
+  const [pickerOpen, setPickerOpen] = useState(false)
   const slots: MealType[] = ["breakfast", "lunch", "dinner", "snack"]
+
+  // A new meal pick resets the target day — "log into today" is the default
+  // (render-adjustment pattern so the reset happens in the same commit).
+  const [lastMealId, setLastMealId] = useState<string | null>(null)
+  if (meal?.id !== lastMealId) {
+    setLastMealId(meal?.id ?? null)
+    setDateKey(toDateKey())
+  }
+
   return (
     <Modal visible={meal !== null} transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={styles.sheet}>
           <Text style={styles.sheetTitle}>Log {meal?.name ? `"${meal.name}"` : "meal"} into…</Text>
+          <View style={styles.dateRow}>
+            <Pressable
+              style={styles.dateNavBtn}
+              onPress={() => setDateKey((current) => shiftDateKey(current, -1))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Previous day"
+            >
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
+              style={styles.dateLabelBtn}
+              onPress={() => setPickerOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Choose date"
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+              <Text style={styles.dateLabel}>{formatDisplayDate(dateKey)}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.dateNavBtn}
+              onPress={() => setDateKey((current) => shiftDateKey(current, 1))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Next day"
+            >
+              <Ionicons name="chevron-forward" size={20} color={colors.text} />
+            </Pressable>
+          </View>
           <View style={styles.slotList}>
             {slots.map((slot) => (
               <Pressable
                 key={slot}
                 style={styles.slotRow}
-                onPress={() => onSelect(slot)}
+                onPress={() => onSelect(slot, dateKey)}
                 accessibilityRole="button"
                 accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
               >
@@ -283,6 +328,12 @@ function MealSlotModal({
           </Pressable>
         </View>
       </Pressable>
+      <DatePickerModal
+        visible={pickerOpen}
+        dateKey={dateKey}
+        onSelect={setDateKey}
+        onClose={() => setPickerOpen(false)}
+      />
     </Modal>
   )
 }
@@ -313,6 +364,31 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.xs,
     },
     slotList: { gap: spacing.sm },
+    dateRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+      paddingHorizontal: spacing.xs,
+    },
+    dateNavBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dateLabelBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: 18,
+      backgroundColor: colors.surfaceAlt,
+    },
+    dateLabel: { color: colors.text, fontSize: 14, fontWeight: "700" },
     slotRow: {
       flexDirection: "row",
       alignItems: "center",
