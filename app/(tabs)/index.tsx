@@ -17,8 +17,15 @@ import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
 import type { DiaryEntry, MealType, WeightEntry } from "@/types"
-import { deleteFoodEntry, getDiaryEntriesForDate } from "@/services/diary"
+import {
+  copyEntriesToDate,
+  deleteFoodEntry,
+  getDiaryEntriesForDate,
+  restoreFoodEntry,
+} from "@/services/diary"
 import { getLatestWeightEntry } from "@/db/weight"
+import { getWaterTotalForDate } from "@/db/water"
+import { LogWaterModal } from "@/components/LogWaterModal"
 import { confirmAction } from "@/utils/confirm"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
@@ -35,7 +42,7 @@ export default function TodayScreen() {
   const router = useRouter()
   const { settings, yazioAvailable, authenticated } = useApp()
   const { openAiChat } = useAiChatModal()
-  const { showError, showSuccess, showWarning } = useToast()
+  const { showError, showSuccess, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isMedium } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
@@ -47,6 +54,8 @@ export default function TodayScreen() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
+  const [logWaterOpen, setLogWaterOpen] = useState(false)
+  const [localWaterMl, setLocalWaterMl] = useState(0)
 
   const totals = useMemo(() => sumNutrients(entries), [entries])
 
@@ -76,6 +85,7 @@ export default function TodayScreen() {
         list = await getDiaryEntriesForDate(dateKey, { remote: false })
         setEntries(list)
         setLocalWeight(await getLatestWeightEntry())
+        setLocalWaterMl(await getWaterTotalForDate(dateKey))
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
@@ -168,14 +178,50 @@ export default function TodayScreen() {
           try {
             await deleteFoodEntry(id)
             await load({ quiet: true })
+            if (entry) {
+              showUndo(`"${entry.food_name}" removed.`, () => {
+                restoreFoodEntry(entry)
+                  .then(() => load({ quiet: true }))
+                  .catch(() => undefined)
+              })
+            }
           } catch (error) {
             showError(error, "Could not delete entry.")
           }
         },
       })
     },
-    [entries, load, showError],
+    [entries, load, showError, showUndo],
   )
+
+  const onCopyPrevious = useCallback(() => {
+    const sourceDate = shiftDateKey(dateKey, -1)
+    void (async () => {
+      const sourceEntries = await getDiaryEntriesForDate(sourceDate, { remote: false })
+      const count = sourceEntries.length
+      confirmAction({
+        title: "Copy previous day?",
+        message:
+          count === 0
+            ? `Nothing was logged on ${formatDisplayDate(sourceDate)}, so there is nothing to copy.`
+            : `Add ${count === 1 ? "1 item" : `${count} items`} from ${formatDisplayDate(sourceDate)} to ${formatDisplayDate(dateKey)}?`,
+        confirmLabel: count > 0 ? "Copy" : "OK",
+        onConfirm: async () => {
+          if (count === 0) return
+          try {
+            const copied = await copyEntriesToDate(sourceDate, dateKey)
+            await load({ quiet: true })
+            showSuccess(
+              copied === 1 ? "Copied 1 entry." : `Copied ${copied} entries.`,
+              "Day copied",
+            )
+          } catch (error) {
+            showError(error, "Could not copy entries.")
+          }
+        },
+      })
+    })()
+  }, [dateKey, load, showError, showSuccess])
 
   const renderMealSections = (grid?: boolean) =>
     MEAL_TYPES.map((meal) => {
@@ -204,6 +250,9 @@ export default function TodayScreen() {
   const yazioWeight = summary?.weight
   // Locally logged weigh-ins take precedence over the YAZIO profile weight.
   const displayedWeight = localWeight?.weight_kg ?? yazioWeight
+  // Locally logged water wins; YAZIO's intake fills in until the first pour.
+  const waterIntake = localWaterMl > 0 ? localWaterMl : (summary?.waterIntake ?? 0)
+  const waterGoal = settings.water_goal_ml > 0 ? settings.water_goal_ml : (summary?.waterGoal ?? 0)
   const insets = useSafeAreaInsets()
 
   const fabCluster =
@@ -251,16 +300,28 @@ export default function TodayScreen() {
             </Text>
           </Box>
         ) : null}
-        {summary && summary.waterIntake > 0 ? (
+        {summary && summary.steps > 0 ? (
           <Box className="flex-row items-center gap-1.5">
-            <Ionicons name="water-outline" size={16} color={colors.primary} />
+            <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
             <Text size="sm" className="text-typography-900">
-              {summary.waterGoal > 0
-                ? `${formatWaterAmount(summary.waterIntake, settings.units)} / ${formatWaterAmount(summary.waterGoal, settings.units)}`
-                : formatWaterAmount(summary.waterIntake, settings.units)}
+              {summary.steps.toLocaleString()}
             </Text>
           </Box>
         ) : null}
+        <Pressable
+          onPress={() => setLogWaterOpen(true)}
+          className="flex-row items-center gap-1.5"
+          accessibilityRole="button"
+          accessibilityLabel="Log water"
+        >
+          <Ionicons name="water-outline" size={16} color={colors.primary} />
+          <Text size="sm" className="text-typography-900">
+            {waterGoal > 0
+              ? `${formatWaterAmount(waterIntake, settings.units)} / ${formatWaterAmount(waterGoal, settings.units)}`
+              : formatWaterAmount(waterIntake, settings.units)}
+          </Text>
+          <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+        </Pressable>
         <Pressable
           onPress={() => setLogWeightOpen(true)}
           className="flex-row items-center gap-1.5"
@@ -300,23 +361,29 @@ export default function TodayScreen() {
             >
               <Ionicons name="chevron-back" size={22} color={colors.text} />
             </Pressable>
-            <Pressable
-              className="min-h-11 flex-1 items-center justify-center"
-              onPress={() => setPickerOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Open calendar"
-            >
-              <Text size="md" bold className="text-typography-900">
-                {formatDisplayDate(dateKey)}
-              </Text>
+            <Box className="min-h-11 min-w-0 flex-1 items-center justify-center">
+              <Pressable
+                onPress={() => setPickerOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open calendar"
+              >
+                <Text size="md" bold className="text-typography-900">
+                  {formatDisplayDate(dateKey)}
+                </Text>
+              </Pressable>
               {!isToday ? (
-                <Box className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5">
-                  <Text size="2xs" bold className="text-primary-700">
+                <Pressable
+                  onPress={() => setDateKey(toDateKey())}
+                  className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5 active:opacity-70"
+                  accessibilityRole="button"
+                  accessibilityLabel="Jump to today"
+                >
+                  <Text size="2xs" bold className="text-primary-500">
                     Jump to today
                   </Text>
-                </Box>
+                </Pressable>
               ) : null}
-            </Pressable>
+            </Box>
             <Box className="flex-row items-center">
               <Pressable
                 onPress={() => shiftDate(1)}
@@ -326,6 +393,15 @@ export default function TodayScreen() {
                 accessibilityLabel="Next day"
               >
                 <Ionicons name="chevron-forward" size={22} color={colors.text} />
+              </Pressable>
+              <Pressable
+                onPress={onCopyPrevious}
+                hitSlop={12}
+                className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+                accessibilityRole="button"
+                accessibilityLabel="Copy previous day"
+              >
+                <Ionicons name="copy-outline" size={19} color={colors.primary} />
               </Pressable>
               {authenticated ? (
                 <Pressable
@@ -341,9 +417,7 @@ export default function TodayScreen() {
                     color={importing ? colors.textMuted : colors.primary}
                   />
                 </Pressable>
-              ) : (
-                <Box className="w-10" />
-              )}
+              ) : null}
             </Box>
           </Card>
         </Box>
@@ -386,6 +460,13 @@ export default function TodayScreen() {
       <LogWeightModal
         visible={logWeightOpen}
         onClose={() => setLogWeightOpen(false)}
+        onSaved={() => load({ quiet: true })}
+      />
+
+      <LogWaterModal
+        visible={logWaterOpen}
+        initialDateKey={dateKey}
+        onClose={() => setLogWaterOpen(false)}
         onSaved={() => load({ quiet: true })}
       />
 

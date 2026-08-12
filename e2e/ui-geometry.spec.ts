@@ -27,7 +27,8 @@ test.describe("ui rework geometry checks", () => {
 
     // Seed two days of calories (today + yesterday).
     await quickAdd(page, "320")
-    await page.getByRole("button", { name: "Previous day" }).click()
+    // exact: the header also has a "Copy previous day" action button.
+    await page.getByRole("button", { name: "Previous day", exact: true }).click()
     await quickAdd(page, "180")
     await page.getByRole("button", { name: "Next day" }).click()
 
