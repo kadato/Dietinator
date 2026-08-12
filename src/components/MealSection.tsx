@@ -57,8 +57,10 @@ export const MealSection = memo(function MealSection({
     >
       <Box className="flex-row items-start gap-3">
         <Pressable
-          onPress={() => entries.length > 0 && setExpanded((v) => !v)}
-          disabled={entries.length === 0}
+          onPress={() => {
+            if (entries.length === 0) onAdd(mealType)
+            else setExpanded((v) => !v)
+          }}
           className="min-w-0 flex-1 flex-row items-start gap-3 active:opacity-90"
           accessibilityRole="button"
           accessibilityLabel={`${MEAL_LABELS[mealType]}, ${calorieLabel}`}
@@ -111,9 +113,6 @@ export const MealSection = memo(function MealSection({
               onDelete={handleDelete}
             />
           ))}
-          <Text size="2xs" className="mt-2 text-center text-typography-500">
-            Tap to edit · Long-press to delete
-          </Text>
         </Box>
       ) : null}
     </Card>
