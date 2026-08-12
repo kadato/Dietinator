@@ -152,8 +152,8 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
       style={[
         styles.host,
         { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
+        { pointerEvents: "box-none" },
       ]}
-      pointerEvents="box-none"
     >
       <Animated.View
         {...panResponder.panHandlers}
@@ -249,16 +249,11 @@ function UndoFab({
         // Bottom-left, just above the tab bar. Sits clear of any left-side
         // FAB (e.g. the water modal's Cancel button at insets.bottom + 20).
         { bottom: insets.bottom + 88 },
+        { pointerEvents: "box-none" },
       ]}
-      pointerEvents="box-none"
     >
       <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-        <Fab
-          icon="refresh-outline"
-          tone="danger"
-          onPress={handleUndo}
-          accessibilityLabel="Undo"
-        />
+        <Fab icon="refresh-outline" tone="danger" onPress={handleUndo} accessibilityLabel="Undo" />
       </Animated.View>
     </View>
   )

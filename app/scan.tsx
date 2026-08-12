@@ -151,12 +151,12 @@ function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         cameraStyles.scanLine,
         {
           backgroundColor: color,
           transform: [{ translateY }],
+          pointerEvents: "none",
         },
       ]}
     />
@@ -167,7 +167,7 @@ function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
 function Viewfinder() {
   const { colors } = useTheme()
   return (
-    <View style={cameraStyles.viewfinder} pointerEvents="none">
+    <View style={cameraStyles.viewfinder}>
       <View style={cameraStyles.frame}>
         <View style={[cameraStyles.corner, cameraStyles.cornerTL]} />
         <View style={[cameraStyles.corner, cameraStyles.cornerTR]} />

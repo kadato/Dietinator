@@ -533,7 +533,7 @@ export function AiChatModal() {
         {isWide ? (
           // box-none: taps on the dimmed area around the dialog fall through
           // to the dismiss Pressable; taps on the dialog itself stay in it.
-          <View style={shell.dialogWrap} pointerEvents="box-none">
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" }]}>
             <View
               testID="ai-chat-dialog"
               style={[shell.dialogBox, { width: "100%", maxWidth: 720, height: "100%" }]}

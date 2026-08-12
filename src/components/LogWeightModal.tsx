@@ -198,9 +198,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         {isWide ? (
           // box-none: taps on the dimmed area around the dialog fall through
           // to the dismiss Pressable; taps on the dialog itself stay in it.
-          <View style={shell.dialogWrap} pointerEvents="box-none">
-            {form}
-          </View>
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" }]}>{form}</View>
         ) : (
           <KeyboardAvoidingView
             style={shell.sheet}

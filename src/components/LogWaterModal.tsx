@@ -268,9 +268,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityLabel="Dismiss water dialog"
         />
         {isWide ? (
-          <View style={shell.dialogWrap} pointerEvents="box-none">
-            {form}
-          </View>
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" }]}>{form}</View>
         ) : (
           <KeyboardAvoidingView
             style={shell.sheet}

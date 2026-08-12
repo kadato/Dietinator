@@ -16,9 +16,8 @@ type Props = {
 
 /**
  * Docks FABs to the bottom corners. Renders only the corner clusters
- * (content-sized), never a full-screen wrapper — a full-screen overlay with
- * `pointerEvents: "box-none"` in an inline style is dropped by
- * react-native-web, which would block every tap on web.
+ * (content-sized), never a full-screen wrapper, so taps outside the cluster
+ * reach the screen below on every platform.
  *
  * Replaces the hand-rolled `fabLayer` / `fabLeft` / `fabRight` wrappers that
  * drifted across screens (right: 20 vs 24, bottom: +16 vs +24).
@@ -28,13 +27,13 @@ export function FabCluster({ left, right, bottomOffset = 20, gap = 12, insetX = 
     <>
       {left ? (
         <View
-          pointerEvents="box-none"
           style={{
             position: "absolute",
             left: insetX,
             bottom: bottomOffset,
             alignItems: "flex-start",
             gap,
+            pointerEvents: "box-none",
           }}
         >
           {left}
@@ -42,13 +41,13 @@ export function FabCluster({ left, right, bottomOffset = 20, gap = 12, insetX = 
       ) : null}
       {right ? (
         <View
-          pointerEvents="box-none"
           style={{
             position: "absolute",
             right: insetX,
             bottom: bottomOffset,
             alignItems: "flex-end",
             gap,
+            pointerEvents: "box-none",
           }}
         >
           {right}
