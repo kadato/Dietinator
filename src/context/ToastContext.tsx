@@ -7,12 +7,12 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native"
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { getErrorMessage } from "@/utils/error-message"
-import { spacing, type ColorPalette } from "@/theme"
+import { layout, spacing, type ColorPalette } from "@/theme"
 
 export type ToastType = "success" | "error" | "info" | "warning"
 
@@ -21,11 +21,12 @@ export type ToastOptions = {
   title?: string
   message: string
   duration?: number
-  /** Optional action button (e.g. "Undo"). Extends the toast lifetime. */
-  action?: { label: string; onPress: () => void }
 }
 
 type ToastState = ToastOptions & { id: number }
+
+/** Undo offered as a floating button, not inside the toast. */
+type UndoState = { id: number; message: string; onUndo: () => void }
 
 type ToastContextValue = {
   showToast: (options: ToastOptions) => void
@@ -33,7 +34,7 @@ type ToastContextValue = {
   showError: (error: unknown, fallback?: string, title?: string) => void
   showInfo: (message: string, title?: string) => void
   showWarning: (message: string, title?: string) => void
-  /** Info toast with an "Undo" action that undoes the last destructive action. */
+  /** Confirmation toast + an "Undo" FAB that auto-disappears after a while. */
   showUndo: (message: string, onUndo: () => void) => void
 }
 
@@ -46,10 +47,16 @@ const DEFAULT_DURATION: Record<ToastType, number> = {
   error: 4000,
 }
 
+const UNDO_TTL_MS = 6000
+const SWIPE_DISMISS_DX = 64
+const NATIVE_DRIVER = Platform.OS !== "web"
+
 function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: () => void }) {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
   const [opacity] = useState(() => new Animated.Value(0))
+  const [translateY] = useState(() => new Animated.Value(-24))
+  const [translateX] = useState(() => new Animated.Value(0))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dismiss = useCallback(() => {
@@ -59,31 +66,65 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
     }
     Animated.timing(opacity, {
       toValue: 0,
-      duration: 120,
-      useNativeDriver: Platform.OS !== "web",
+      duration: 140,
+      useNativeDriver: NATIVE_DRIVER,
     }).start(({ finished }) => {
       if (finished) onDismiss()
     })
   }, [opacity, onDismiss])
 
+  // Created once; the callbacks only touch stable state setters.
+  const [panResponder] = useState(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderMove: (_, gesture) => translateX.setValue(gesture.dx),
+      onPanResponderRelease: (_, gesture) => {
+        if (Math.abs(gesture.dx) > SWIPE_DISMISS_DX) {
+          Animated.timing(translateX, {
+            toValue: gesture.dx > 0 ? 480 : -480,
+            duration: 160,
+            useNativeDriver: NATIVE_DRIVER,
+          }).start(({ finished }) => {
+            if (finished) onDismiss()
+          })
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: NATIVE_DRIVER,
+            bounciness: 0,
+          }).start()
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: NATIVE_DRIVER,
+          bounciness: 0,
+        }).start()
+      },
+    }),
+  )
+
   useEffect(() => {
     if (!toast) return
 
-    opacity.setValue(1)
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 120,
-      useNativeDriver: Platform.OS !== "web",
-    }).start()
+    translateX.setValue(0)
+    opacity.setValue(0)
+    translateY.setValue(-24)
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: NATIVE_DRIVER }),
+      Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: NATIVE_DRIVER }),
+    ]).start()
 
     const type = toast.type ?? "info"
-    const duration = toast.duration ?? (toast.action ? 6000 : DEFAULT_DURATION[type])
+    const duration = toast.duration ?? DEFAULT_DURATION[type]
     timerRef.current = setTimeout(dismiss, duration)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [toast, opacity, dismiss])
+  }, [toast, opacity, translateX, translateY, dismiss])
 
   if (!toast) return null
 
@@ -96,33 +137,119 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
       style={[
         styles.host,
         { paddingTop: Platform.OS !== "web" ? insets.top + spacing.sm : spacing.sm },
-        { pointerEvents: "box-none" },
       ]}
+      pointerEvents="box-none"
     >
-      <Animated.View style={[styles.toast, toastAccent(type, colors), { opacity }]}>
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          styles.toast,
+          toastAccent(type, colors),
+          { opacity, transform: [{ translateX }, { translateY }] },
+        ]}
+      >
         <Pressable style={styles.row} onPress={dismiss} accessibilityRole="button">
           <Ionicons name={icon.name} size={22} color={icon.color} style={styles.icon} />
           <View style={styles.textWrap}>
             {toast.title ? <Text style={styles.title}>{toast.title}</Text> : null}
             <Text style={styles.message}>{toast.message}</Text>
           </View>
+        </Pressable>
+        <Pressable
+          style={styles.closeBtn}
+          onPress={dismiss}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss notification"
+        >
           <Ionicons name="close" size={18} color={colors.textMuted} />
         </Pressable>
-        {/* Action as a sibling row — nesting a Pressable inside the row above
-            would render <button> inside <button> on web and break the DOM. */}
-        {toast.action ? (
-          <Pressable
-            style={styles.actionRow}
-            onPress={() => {
-              toast.action?.onPress()
-              dismiss()
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={toast.action.label}
-          >
-            <Text style={[styles.actionText, { color: colors.primary }]}>{toast.action.label}</Text>
-          </Pressable>
-        ) : null}
+      </Animated.View>
+    </View>
+  )
+}
+
+/** Floating "Undo" button with a countdown bar — auto-disappears after UNDO_TTL_MS. */
+function UndoFab({
+  undo,
+  onUndo,
+  onDismiss,
+}: {
+  undo: UndoState
+  onUndo: () => void
+  onDismiss: () => void
+}) {
+  const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
+  const [opacity] = useState(() => new Animated.Value(0))
+  const [translateY] = useState(() => new Animated.Value(12))
+  const [progress] = useState(() => new Animated.Value(1))
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const dismiss = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 140,
+      useNativeDriver: NATIVE_DRIVER,
+    }).start(({ finished }) => {
+      if (finished) onDismiss()
+    })
+  }, [opacity, onDismiss])
+
+  // Runs once per undo instance — the FAB is keyed by undo id and remounts.
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: NATIVE_DRIVER }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: NATIVE_DRIVER,
+        bounciness: 0,
+      }),
+    ]).start()
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: UNDO_TTL_MS,
+      useNativeDriver: false,
+    }).start()
+    timerRef.current = setTimeout(dismiss, UNDO_TTL_MS)
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleUndo = () => {
+    undo.onUndo()
+    dismiss()
+  }
+
+  const width = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  })
+
+  return (
+    <View
+      style={[undoStyles.layer, { bottom: layout.tabBarHeight + insets.bottom + 24 }]}
+      pointerEvents="box-none"
+    >
+      <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+        <Pressable
+          style={[undoStyles.fab, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={handleUndo}
+          accessibilityRole="button"
+          accessibilityLabel="Undo"
+        >
+          <Ionicons name="arrow-undo" size={20} color={colors.primary} />
+          <Text style={[undoStyles.label, { color: colors.text }]}>Undo</Text>
+        </Pressable>
+        <View style={[undoStyles.track, { backgroundColor: colors.surfaceAlt }]}>
+          <Animated.View style={[undoStyles.fill, { backgroundColor: colors.primary, width }]} />
+        </View>
       </Animated.View>
     </View>
   )
@@ -130,11 +257,13 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null)
-  const idRef = useRef(0)
+  const [undo, setUndo] = useState<UndoState | null>(null)
+  const toastIdRef = useRef(0)
+  const undoIdRef = useRef(0)
 
   const showToast = useCallback((options: ToastOptions) => {
-    idRef.current += 1
-    setToast({ ...options, id: idRef.current })
+    toastIdRef.current += 1
+    setToast({ ...options, id: toastIdRef.current })
   }, [])
 
   const showSuccess = useCallback(
@@ -162,16 +291,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [showToast],
   )
 
-  const showUndo = useCallback(
-    (message: string, onUndo: () => void) =>
-      showToast({
-        type: "info",
-        title: "Undo",
-        message,
-        action: { label: "Undo", onPress: onUndo },
-      }),
-    [showToast],
-  )
+  const showUndo = useCallback((message: string, onUndo: () => void) => {
+    undoIdRef.current += 1
+    setToast({ id: undoIdRef.current, type: "success", message })
+    setUndo({ id: undoIdRef.current, message, onUndo })
+  }, [])
 
   const value = useMemo(
     () => ({ showToast, showSuccess, showError, showInfo, showWarning, showUndo }),
@@ -182,6 +306,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <ToastHost toast={toast} onDismiss={() => setToast(null)} />
+      {undo ? (
+        <UndoFab
+          key={undo.id}
+          undo={undo}
+          onUndo={() => setUndo(null)}
+          onDismiss={() => setUndo(null)}
+        />
+      ) : null}
     </ToastContext.Provider>
   )
 }
@@ -218,6 +350,41 @@ function toastAccent(type: ToastType, colors: ColorPalette) {
   }
 }
 
+const undoStyles = StyleSheet.create({
+  layer: {
+    position: "absolute",
+    right: 20,
+    alignItems: "flex-end",
+    zIndex: 9999,
+  },
+  fab: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    elevation: 6,
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  track: {
+    alignSelf: "stretch",
+    marginTop: 6,
+    height: 3,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  fill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+})
+
 const createToastStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     host: {
@@ -244,15 +411,16 @@ const createToastStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       padding: spacing.md,
+      paddingRight: spacing.xl,
       gap: spacing.sm,
     },
-    actionRow: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
-      alignItems: "center",
+    closeBtn: {
+      position: "absolute",
+      top: 0,
+      right: spacing.sm,
+      bottom: 0,
       justifyContent: "center",
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: spacing.xs,
     },
     icon: { flexShrink: 0 },
     textWrap: { flex: 1 },
@@ -267,8 +435,38 @@ const createToastStyles = (colors: ColorPalette) =>
       fontSize: 14,
       lineHeight: 20,
     },
-    actionText: {
-      fontSize: 14,
+    undoLayer: {
+      position: "absolute",
+      right: 20,
+      alignItems: "flex-end",
+      zIndex: 9999,
+    },
+    undoFab: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 18,
+      paddingVertical: 12,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      elevation: 6,
+      boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
+    },
+    undoLabel: {
+      fontSize: 15,
       fontWeight: "700",
+    },
+    undoTrack: {
+      alignSelf: "stretch",
+      marginTop: 6,
+      height: 3,
+      borderRadius: 2,
+      overflow: "hidden",
+      backgroundColor: colors.surfaceAlt,
+    },
+    undoFill: {
+      height: "100%",
+      borderRadius: 2,
     },
   })
