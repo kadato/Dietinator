@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native"
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
 import { AiChatModal } from "@/components/AiChatModal"
@@ -43,6 +43,7 @@ function RootNavigator() {
           color={colors.primary}
           accessibilityLabel="Loading Dietinator"
         />
+        <Text style={styles.loadingText}>Loading your diary…</Text>
       </View>
     )
   }
@@ -141,5 +142,10 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.background,
       alignItems: "center",
       justifyContent: "center",
+      gap: 12,
+    },
+    loadingText: {
+      fontSize: 14,
+      color: colors.textMuted,
     },
   })

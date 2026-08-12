@@ -13,7 +13,17 @@ type Props = {
   onClose: () => void
 }
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+/**
+ * Monday-first short weekday labels from the device locale ("Mo", "Di", ...)
+ * instead of hardcoded English — the month label already follows the locale.
+ * Jan 8 2024 was a Monday.
+ */
+const WEEKDAYS = Array.from({ length: 7 }, (_, index) => {
+  const label = new Date(2024, 0, 8 + index).toLocaleDateString(undefined, {
+    weekday: "short",
+  })
+  return label.slice(0, 2).charAt(0).toUpperCase() + label.slice(1, 2).toLowerCase()
+})
 
 function monthGrid(year: number, month: number): (number | null)[] {
   // Month is 0-indexed here. Monday-first weeks.

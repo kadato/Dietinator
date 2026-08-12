@@ -46,6 +46,7 @@ export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onD
         right: 0,
         bottom: 0,
         zIndex: 9998,
+        backgroundColor: "rgba(0, 0, 0, 0.45)",
       }}
     >
       <ModalContainer maxWidth={560}>
