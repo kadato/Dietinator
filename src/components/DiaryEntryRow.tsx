@@ -117,7 +117,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.3,
     },
     deleteBtn: {
-      padding: 4,
+      padding: 8,
       marginLeft: spacing.xs,
       opacity: 0.7,
     },

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native"
+import { View, Text, StyleSheet } from "react-native"
 import { ProgressRing } from "@/components/ProgressRing"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -14,10 +14,6 @@ type Props = {
 export function CalorieRing({ consumed, goal, size = 140 }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
-  const { width } = useWindowDimensions()
-  // Below 360px the ring row (2×72px stats + 140px ring + gaps) overflows the
-  // card — move the side stats under the ring instead of shrinking the ring.
-  const compact = width < 360
   const remaining = Math.max(goal - consumed, 0)
   const over = consumed > goal ? consumed - goal : 0
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0
@@ -64,17 +60,8 @@ export function CalorieRing({ consumed, goal, size = 140 }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Today</Text>
-      {compact ? (
-        <>
-          {ring}
-          <View style={styles.statsRow}>{eatenStat}</View>
-        </>
-      ) : (
-        <View style={styles.row}>
-          {eatenStat}
-          {ring}
-        </View>
-      )}
+      {ring}
+      <View style={styles.statsRow}>{eatenStat}</View>
       <Text style={styles.goalHint}>Daily goal {Math.round(goal).toLocaleString()} kcal</Text>
     </View>
   )
@@ -92,16 +79,10 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.text,
       marginBottom: spacing.lg,
     },
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.sm,
-    },
     statsRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-around",
+      justifyContent: "center",
       gap: spacing.sm,
       marginTop: spacing.sm,
     },
@@ -114,6 +95,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 20,
       fontWeight: "700",
       color: colors.text,
+      fontVariant: ["tabular-nums"],
     },
     sideLabel: {
       fontSize: 13,
@@ -128,13 +110,13 @@ const createStyles = (colors: ColorPalette) =>
     ringCenter: {
       alignItems: "center",
       justifyContent: "center",
-      width: 100,
     },
     remainingValue: {
       fontSize: 28,
       fontWeight: "800",
       color: colors.text,
       letterSpacing: -0.5,
+      fontVariant: ["tabular-nums"],
     },
     remainingLabel: {
       fontSize: 13,
