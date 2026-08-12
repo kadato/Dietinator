@@ -169,7 +169,6 @@ const createStyles = (colors: ColorPalette) =>
     monthRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
       marginBottom: spacing.sm,
     },
     navBtn: {
@@ -180,6 +179,8 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 20,
     },
     monthLabel: {
+      flex: 1,
+      textAlign: "center",
       fontSize: 17,
       fontWeight: "700",
       color: colors.text,
