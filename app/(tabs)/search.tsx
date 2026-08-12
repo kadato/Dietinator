@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native"
+import { ActivityIndicator, FlatList, Pressable } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { EmptyState } from "@/components/EmptyState"
 import { FoodListItem } from "@/components/FoodListItem"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
@@ -48,6 +50,11 @@ export default function SearchScreen() {
   const [listMode, setListMode] = useState<ListMode>("recents")
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [addingKey, setAddingKey] = useState<string | null>(null)
+  const [searchFailed, setSearchFailed] = useState(false)
+
+  // A local (SQLite) failure must not masquerade as "no foods found" —
+  // show an explicit error state instead.
+  const handleSearchError = useCallback(() => setSearchFailed(true), [])
 
   const loadFavorites = useCallback(async () => {
     const favs = await getFavoriteFoods()
@@ -66,16 +73,22 @@ export default function SearchScreen() {
     return getRecentFoodUsages(10)
   }, [listMode])
 
-  const { foods, loading, refresh } = useFoodSearch<FoodRow>(debounced, { emptyQuery })
+  const { foods, loading, refresh } = useFoodSearch<FoodRow>(debounced, {
+    emptyQuery,
+    onError: handleSearchError,
+  })
 
   // Keep the current recents/favorites list rendered below search results
   // instead of replacing it the moment the user types.
-  const [contextual, setContextual] = useState<FoodRow[]>([])
   // Reset synchronously when the query clears (render-adjustment pattern).
   const [prevDebounced, setPrevDebounced] = useState(debounced)
+  const [contextual, setContextual] = useState<FoodRow[]>([])
   if (prevDebounced !== debounced) {
     setPrevDebounced(debounced)
     if (!debounced.trim()) setContextual([])
+    // A new query (or a cleared one) clears any stale search error so a
+    // retry of the same search re-runs cleanly.
+    setSearchFailed(false)
   }
   useEffect(() => {
     if (!debounced.trim()) return
@@ -174,6 +187,7 @@ export default function SearchScreen() {
     // so the selected list actually shows. The tabs stay visible either way.
     setQuery("")
     setListMode(mode)
+    setSearchFailed(false)
   }, [])
 
   const openScan = useCallback(() => {
@@ -182,63 +196,63 @@ export default function SearchScreen() {
 
   const emptyContent = useMemo(() => {
     if (loading) return null
+    if (searchFailed) {
+      return (
+        <EmptyState
+          icon="cloud-offline-outline"
+          iconColor={colors.danger}
+          title="Could not search foods"
+          message="Something went wrong locally. Pull to refresh or try again."
+          className="mt-12"
+        />
+      )
+    }
     if (debounced) {
       return (
-        <Box className="mt-12 items-center px-6">
-          <Ionicons name="search-outline" size={48} color={colors.textMuted} />
-          <Text size="md" bold className="mt-4 text-center text-typography-900">
-            No foods found
-          </Text>
-          <Text size="sm" className="mt-1 text-center text-typography-500">
-            Try a different spelling.
-          </Text>
-        </Box>
+        <EmptyState
+          icon="search-outline"
+          iconColor={colors.textMuted}
+          title="No foods found"
+          message="Try a different spelling."
+          className="mt-12"
+        />
       )
     }
     if (listMode === "favorites") {
       return (
-        <Box className="items-center px-6 pb-10">
-          <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-            <Ionicons name="star-outline" size={36} color={colors.warning} />
-          </Box>
-          <Text size="lg" bold className="mt-5 text-center text-typography-900">
-            No favorites yet
-          </Text>
-          <Text
-            size="sm"
-            className="mt-2 text-center leading-5 text-typography-500"
-            style={{ maxWidth: 420 }}
-          >
-            Star foods to find them here fast.
-          </Text>
-        </Box>
+        <EmptyState
+          icon="star-outline"
+          iconColor={colors.warning}
+          title="No favorites yet"
+          message="Star foods to find them here fast."
+        />
       )
     }
     return (
-      <Box className="items-center px-6 pb-10">
-        <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-          <Ionicons name="search-outline" size={36} color={colors.primary} />
-        </Box>
-        <Text size="lg" bold className="mt-5 text-center text-typography-900">
-          Find your foods
-        </Text>
-        <Text
-          size="sm"
-          className="mt-2 text-center leading-5 text-typography-500"
-          style={{ maxWidth: 420 }}
-        >
-          Search the YAZIO database. Recents and favorites show up here.
-        </Text>
-      </Box>
+      <EmptyState
+        icon="search-outline"
+        iconColor={colors.primary}
+        title="Find your foods"
+        message="Search the YAZIO database. Recents and favorites show up here."
+      />
     )
-  }, [colors.textMuted, colors.primary, colors.warning, debounced, listMode, loading])
+  }, [
+    colors.textMuted,
+    colors.primary,
+    colors.warning,
+    colors.danger,
+    debounced,
+    listMode,
+    loading,
+    searchFailed,
+  ])
 
   return (
     <Box className="flex-1 bg-background-0">
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
         <Box
-          className={`${isWide ? "px-8" : "px-4"} pb-3`}
+          className={`${isWide ? "px-8" : "px-6"} pb-3`}
           style={{ paddingTop: insets.top + spacing.md }}
         >
           <Input size="lg" variant="rounded" className="bg-background-50">
@@ -251,6 +265,7 @@ export default function SearchScreen() {
               onChangeText={setQuery}
               autoCorrect={false}
               returnKeyType="search"
+              accessibilityLabel="Search foods"
             />
             {query.length > 0 ? (
               <Pressable
@@ -275,11 +290,15 @@ export default function SearchScreen() {
             />
           </Box>
         </Box>
-        {loading ? <ActivityIndicator className="mb-2" color={colors.primary} /> : null}
+        {loading ? (
+          <Box className="items-center py-3">
+            <ActivityIndicator color={colors.primary} />
+          </Box>
+        ) : null}
         <FlatList
           className="flex-1"
           data={foods}
-          contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"}
+          contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-36"}
           keyExtractor={(item) =>
             isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
           }
@@ -325,21 +344,17 @@ export default function SearchScreen() {
         />
       </PageContainer>
 
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: layout.tabBarHeight + insets.bottom + 24,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Fab
-          icon="barcode-outline"
-          label={isMedium ? "Scan" : undefined}
-          onPress={openScan}
-          accessibilityLabel="Scan barcode"
-        />
-      </View>
+      <FabCluster
+        right={
+          <Fab
+            icon="barcode-outline"
+            label={isMedium ? "Scan" : undefined}
+            onPress={openScan}
+            accessibilityLabel="Scan barcode"
+          />
+        }
+        bottomOffset={layout.tabBarHeight + insets.bottom + 24}
+      />
     </Box>
   )
 }

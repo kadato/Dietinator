@@ -28,9 +28,10 @@ export function SegmentedControl<T extends string>({
         return (
           <Pressable
             key={option.value}
-            className="flex-1 items-center rounded-full px-3 py-2"
+            className="flex-1 items-center rounded-full px-3 py-2.5"
             style={active ? { backgroundColor: accent } : undefined}
             onPress={() => onChange(option.value)}
+            hitSlop={2}
             accessibilityRole="button"
             accessibilityLabel={option.label}
             accessibilityState={{ selected: active }}

@@ -13,13 +13,12 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { MealLogFoodRow } from "@/components/MealLogFoodRow"
+import { FoodListItem } from "@/components/FoodListItem"
+import { EmptyState } from "@/components/EmptyState"
 import { SegmentedControl } from "@/components/SegmentedControl"
 import { OfflineBanner } from "@/components/OfflineBanner"
-import { Fab } from "@/components/Fab"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
-import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getSuggestedFoods } from "@/services/yazio/foods"
@@ -98,7 +97,6 @@ export default function LogMealScreen() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
-  const keyboardOpen = useKeyboardVisible()
 
   const safeBack = useCallback(() => {
     if (router.canGoBack()) {
@@ -317,24 +315,28 @@ export default function LogMealScreen() {
     ({ item }: { item: FoodRow }) => {
       if (isUsageRow(item)) {
         return (
-          <MealLogFoodRow
+          <FoodListItem
             food={item.food}
             subtitle={formatUsageAmountLine(item.food, item.amount)}
             accentColor={accent}
+            showKcal
+            quickAddVariant="pill"
             onPress={() => openFood(item.food)}
-            onAdd={() => handleQuickAdd(item.food, item.amount)}
-            adding={addingKey === `${item.food.product_id}:${item.amount}`}
+            onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
+            quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
           />
         )
       }
       return (
-        <MealLogFoodRow
+        <FoodListItem
           food={item}
           subtitle={subtitles.get(item.product_id)}
           accentColor={accent}
+          showKcal
+          quickAddVariant="pill"
           onPress={() => openFood(item)}
-          onAdd={() => handleQuickAdd(item)}
-          adding={addingKey === item.product_id}
+          onQuickAdd={() => handleQuickAdd(item)}
+          quickAdding={addingKey === item.product_id}
         />
       )
     },
@@ -481,6 +483,15 @@ export default function LogMealScreen() {
     >
       <ModalContainer surface>
         <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+          <Pressable
+            style={styles.headerIconBtn}
+            onPress={safeBack}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={24} color={colors.textMuted} />
+          </Pressable>
           <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
           <View style={styles.headerActions}>
             <Pressable
@@ -516,6 +527,7 @@ export default function LogMealScreen() {
             onChangeText={setQuery}
             autoCorrect={false}
             returnKeyType="search"
+            accessibilityLabel="Search foods"
           />
           {query.length > 0 ? (
             <Pressable
@@ -569,12 +581,12 @@ export default function LogMealScreen() {
             renderItem={renderFood}
             ListEmptyComponent={
               !loading ? (
-                <View style={styles.emptyWrap}>
-                  <View style={[styles.emptyIcon, { backgroundColor: `${accent}1a` }]}>
-                    <Ionicons name="fast-food-outline" size={26} color={accent} />
-                  </View>
-                  <Text style={styles.empty}>{emptyMessage}</Text>
-                </View>
+                <EmptyState
+                  icon="fast-food-outline"
+                  iconColor={accent}
+                  title={emptyMessage}
+                  variant="compact"
+                />
               ) : null
             }
             ListFooterComponent={
@@ -589,24 +601,28 @@ export default function LogMealScreen() {
                   </Text>
                   {contextual.map((item) =>
                     isUsageRow(item) ? (
-                      <MealLogFoodRow
+                      <FoodListItem
                         key={`${item.food.product_id}-${item.amount}`}
                         food={item.food}
                         subtitle={formatUsageAmountLine(item.food, item.amount)}
                         accentColor={accent}
+                        showKcal
+                        quickAddVariant="pill"
                         onPress={() => openFood(item.food)}
-                        onAdd={() => handleQuickAdd(item.food, item.amount)}
-                        adding={addingKey === `${item.food.product_id}:${item.amount}`}
+                        onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
+                        quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
                       />
                     ) : (
-                      <MealLogFoodRow
+                      <FoodListItem
                         key={item.product_id}
                         food={item}
                         subtitle={subtitles.get(item.product_id)}
                         accentColor={accent}
+                        showKcal
+                        quickAddVariant="pill"
                         onPress={() => openFood(item)}
-                        onAdd={() => handleQuickAdd(item)}
-                        adding={addingKey === item.product_id}
+                        onQuickAdd={() => handleQuickAdd(item)}
+                        quickAdding={addingKey === item.product_id}
                       />
                     ),
                   )}
@@ -635,18 +651,19 @@ export default function LogMealScreen() {
               </Pressable>
             }
             renderItem={renderMeal}
-            ListEmptyComponent={!loading ? <Text style={styles.empty}>{emptyMessage}</Text> : null}
+            ListEmptyComponent={
+              !loading ? (
+                <EmptyState
+                  icon="restaurant-outline"
+                  iconColor={accent}
+                  title={emptyMessage}
+                  variant="compact"
+                />
+              ) : null
+            }
           />
         )}
       </ModalContainer>
-
-      {!keyboardOpen ? (
-        <View style={styles.fabLayer}>
-          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-            <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
-          </View>
-        </View>
-      ) : null}
     </KeyboardAvoidingView>
   )
 }
@@ -657,7 +674,7 @@ const createStyles = (colors: ColorPalette) =>
     header: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: spacing.sm,
       paddingHorizontal: spacing.md,
       paddingBottom: spacing.sm,
     },
@@ -679,6 +696,7 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 24,
     },
     title: {
+      flex: 1,
       fontSize: 22,
       fontWeight: "700",
       color: colors.text,
@@ -712,25 +730,6 @@ const createStyles = (colors: ColorPalette) =>
     },
     loader: { marginVertical: spacing.sm },
     list: { flex: 1 },
-    emptyWrap: {
-      alignItems: "center",
-      paddingTop: spacing.xl,
-      paddingHorizontal: spacing.lg,
-    },
-    emptyIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: spacing.md,
-    },
-    empty: {
-      textAlign: "center",
-      color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
-    },
     newMealBtn: {
       flexDirection: "row",
       alignItems: "center",
@@ -773,11 +772,11 @@ const createStyles = (colors: ColorPalette) =>
     mealInfo: { flex: 1, minWidth: 0 },
     mealName: { fontSize: 16, color: colors.text, fontWeight: "600" },
     mealMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-    mealEditBtn: { padding: 4 },
+    mealEditBtn: { padding: 8 },
     mealLogBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -810,7 +809,7 @@ const createStyles = (colors: ColorPalette) =>
     loggedInfo: { minWidth: 0 },
     loggedName: { fontSize: 15, color: colors.text, fontWeight: "600" },
     loggedSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-    loggedIconBtn: { padding: 6 },
+    loggedIconBtn: { padding: 8 },
     contextualWrap: {
       paddingTop: spacing.md,
       marginHorizontal: spacing.md,
@@ -822,19 +821,5 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "700",
       color: colors.textMuted,
       marginBottom: spacing.xs,
-    },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
-    },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
     },
   })

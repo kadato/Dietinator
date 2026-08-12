@@ -140,6 +140,7 @@ export function NumberStepper({
         onLongPress={() => startRepeat(-1)}
         onPressOut={stopRepeat}
         disabled={minusDisabled}
+        hitSlop={sm ? 8 : 4}
         style={[styles.btn, sm && styles.btnSm, minusDisabled && styles.btnDisabled]}
         accessibilityRole="button"
         accessibilityLabel="Decrease value"
@@ -169,6 +170,7 @@ export function NumberStepper({
         onPress={() => stepBy(1)}
         onLongPress={() => startRepeat(1)}
         onPressOut={stopRepeat}
+        hitSlop={sm ? 8 : 4}
         style={[styles.btn, sm && styles.btnSm]}
         accessibilityRole="button"
         accessibilityLabel="Increase value"

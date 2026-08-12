@@ -61,7 +61,7 @@ export const MealSection = memo(function MealSection({
             if (entries.length === 0) onAdd(mealType)
             else setExpanded((v) => !v)
           }}
-          className="min-w-0 flex-1 flex-row items-start gap-3 active:opacity-90"
+          className="min-w-0 flex-1 flex-row items-start gap-3 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel={`${MEAL_LABELS[mealType]}, ${calorieLabel}`}
         >
@@ -95,6 +95,7 @@ export const MealSection = memo(function MealSection({
         <Pressable
           className="mt-1 h-10 w-10 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
           onPress={() => onAdd(mealType)}
+          hitSlop={4}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native"
+import { ActivityIndicator, FlatList, Pressable } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -11,6 +11,8 @@ import { confirmAction } from "@/utils/confirm"
 import type { Meal, MealType } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { EmptyState } from "@/components/EmptyState"
 import { MealSlotModal } from "@/components/MealSlotModal"
 import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
@@ -136,7 +138,7 @@ export default function MealsScreen() {
       return (
         <Box className="mb-2 flex-row items-center gap-3 rounded-2xl border border-outline-200 bg-background-50 px-4 py-3.5">
           <Pressable
-            className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-90"
+            className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
             onPress={() => openBuilder(item.id)}
             accessibilityRole="button"
             accessibilityLabel={`Edit ${item.name}`}
@@ -173,7 +175,7 @@ export default function MealsScreen() {
           <Pressable
             onPress={() => handleDelete(item)}
             hitSlop={8}
-            className="p-1"
+            className="p-2"
             accessibilityRole="button"
             accessibilityLabel={`Delete ${item.name}`}
           >
@@ -186,21 +188,13 @@ export default function MealsScreen() {
   )
 
   const emptyState = (
-    <Box className="items-center px-6 pb-10 pt-14">
-      <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-        <Ionicons name="restaurant-outline" size={36} color={colors.primary} />
-      </Box>
-      <Text size="lg" bold className="mt-5 text-center text-typography-900">
-        No meals yet
-      </Text>
-      <Text
-        size="sm"
-        className="mt-2 text-center leading-5 text-typography-500"
-        style={{ maxWidth: 420 }}
-      >
-        Save combos and log them in one tap.
-      </Text>
-    </Box>
+    <EmptyState
+      icon="restaurant-outline"
+      iconColor={colors.primary}
+      title="No meals yet"
+      message="Save combos and log them in one tap."
+      className="pt-14"
+    />
   )
 
   return (
@@ -238,33 +232,27 @@ export default function MealsScreen() {
           </Input>
         </Box>
         {loading ? (
-          <ActivityIndicator className="mt-6" color={colors.primary} />
+          <Box className="items-center py-6">
+            <ActivityIndicator color={colors.primary} />
+          </Box>
         ) : (
           <FlatList
             className="flex-1"
             data={filteredMeals}
             contentContainerClassName={
-              filteredMeals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"
+              filteredMeals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-36"
             }
             keyExtractor={(item) => item.id}
             renderItem={renderMeal}
             ListEmptyComponent={
               query.trim() ? (
-                <Box className="items-center px-6 pb-10 pt-14">
-                  <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-                    <Ionicons name="search-outline" size={36} color={colors.primary} />
-                  </Box>
-                  <Text size="lg" bold className="mt-5 text-center text-typography-900">
-                    No meals found
-                  </Text>
-                  <Text
-                    size="sm"
-                    className="mt-2 text-center leading-5 text-typography-500"
-                    style={{ maxWidth: 420 }}
-                  >
-                    Nothing matches “{query.trim()}”.
-                  </Text>
-                </Box>
+                <EmptyState
+                  icon="search-outline"
+                  iconColor={colors.primary}
+                  title="No meals found"
+                  message={`Nothing matches "${query.trim()}".`}
+                  className="pt-14"
+                />
               ) : (
                 emptyState
               )
@@ -273,21 +261,17 @@ export default function MealsScreen() {
         )}
       </PageContainer>
 
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: layout.tabBarHeight + insets.bottom + 24,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Fab
-          icon="add"
-          label={isMedium ? "New meal" : undefined}
-          onPress={() => openBuilder()}
-          accessibilityLabel="Create a new meal"
-        />
-      </View>
+      <FabCluster
+        right={
+          <Fab
+            icon="add"
+            label={isMedium ? "New meal" : undefined}
+            onPress={() => openBuilder()}
+            accessibilityLabel="Create a new meal"
+          />
+        }
+        bottomOffset={layout.tabBarHeight + insets.bottom + 24}
+      />
 
       <MealSlotModal
         visible={pendingLog !== null}

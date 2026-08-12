@@ -69,7 +69,8 @@ export function Fab({
   const { colors } = useTheme()
   const bg =
     tone === "surface" ? colors.surfaceAlt : tone === "danger" ? colors.danger : colors.primary
-  const fg = tone === "surface" ? colors.text : tone === "danger" ? "#ffffff" : colors.onPrimary
+  // No `onDanger` token exists; white reads on both themes' danger shades.
+  const fg = tone === "surface" ? colors.text : colors.onPrimary
 
   const pressedStyle = disabled ? styles.disabled : styles.pressed
   const shape =
