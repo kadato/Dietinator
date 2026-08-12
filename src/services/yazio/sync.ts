@@ -9,9 +9,8 @@ import { withRetry } from "@/utils/retry"
 import { ensureYazioClient, getYazioEnergyUnit, getYazioProfile } from "./client"
 import { getFoodRemote } from "./foods"
 
-/** YAZIO daily summary data shown on the dashboard (burned kcal, steps, water, weight). */
+/** YAZIO daily summary data shown on the dashboard (steps, water, weight). */
 export type YazioDailySummary = {
-  activityEnergy: number
   steps: number
   waterIntake: number
   waterGoal: number
@@ -178,7 +177,6 @@ async function fetchDailyData(date: string): Promise<{
         snack: toKcal(meals.snack.energy_goal, unitEnergy),
       },
       summary: {
-        activityEnergy: summary.activity_energy ?? 0,
         steps: summary.steps ?? 0,
         waterIntake: summary.water_intake ?? 0,
         waterGoal: summary.goals?.water ?? 0,

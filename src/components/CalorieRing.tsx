@@ -7,12 +7,11 @@ import { spacing, type ColorPalette } from "@/theme"
 type Props = {
   consumed: number
   goal: number
-  burned?: number
   /** Ring diameter; defaults to 140 (mobile scale). */
   size?: number
 }
 
-export function CalorieRing({ consumed, goal, burned = 0, size = 140 }: Props) {
+export function CalorieRing({ consumed, goal, size = 140 }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const { width } = useWindowDimensions()
@@ -62,31 +61,18 @@ export function CalorieRing({ consumed, goal, burned = 0, size = 140 }: Props) {
     </View>
   )
 
-  const burnedStat = (
-    <View style={styles.sideStat}>
-      <Text maxFontSizeMultiplier={1.2} style={styles.sideValue}>
-        {burned > 0 ? Math.round(burned).toLocaleString() : "0"}
-      </Text>
-      <Text style={styles.sideLabel}>Burned</Text>
-    </View>
-  )
-
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Today</Text>
       {compact ? (
         <>
           {ring}
-          <View style={styles.statsRow}>
-            {eatenStat}
-            {burnedStat}
-          </View>
+          <View style={styles.statsRow}>{eatenStat}</View>
         </>
       ) : (
         <View style={styles.row}>
           {eatenStat}
           {ring}
-          {burnedStat}
         </View>
       )}
       <Text style={styles.goalHint}>Daily goal {Math.round(goal).toLocaleString()} kcal</Text>

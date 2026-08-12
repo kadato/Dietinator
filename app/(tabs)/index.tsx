@@ -277,12 +277,7 @@ export default function TodayScreen() {
 
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
-      <CalorieRing
-        consumed={totals.kcal}
-        goal={settings.calorie_goal}
-        burned={summary?.activityEnergy ?? 0}
-        size={isWide ? 170 : 140}
-      />
+      <CalorieRing consumed={totals.kcal} goal={settings.calorie_goal} size={isWide ? 170 : 140} />
       <MacroBar
         protein={totals.protein}
         carbs={totals.carbs}
