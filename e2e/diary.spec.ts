@@ -40,7 +40,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await bootAuthenticated(page)
 
     await openCreateOptions(page, "Lunch")
-    await page.getByRole("button", { name: /New food without barcode/ }).click()
+    await page.getByRole("button", { name: "New food" }).click()
     await expect(page.getByText("Manual entry", { exact: true })).toBeVisible()
 
     await page.getByLabel("Food name").fill("Homemade soup")
@@ -83,10 +83,10 @@ test.describe("diary flows (offline, local-first)", () => {
   test("date navigation: next day works and the calendar jumps back to today", async ({ page }) => {
     await bootAuthenticated(page)
     const dateHeader = page.getByRole("button", { name: "Open calendar" })
-    await expect(dateHeader.getByText("Today", { exact: true })).toBeVisible()
+    await expect(dateHeader.getByText(/^Today/)).toBeVisible()
 
     await page.getByRole("button", { name: "Next day" }).click()
-    await expect(dateHeader.getByText("Today", { exact: true })).toBeHidden()
+    await expect(dateHeader.getByText(/^Today/)).toBeHidden()
 
     // Open the calendar and jump back.
     await page.getByRole("button", { name: "Open calendar" }).click()
@@ -94,7 +94,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await expect(todayButton).toBeVisible()
     await todayButton.click()
     await expect(
-      page.getByRole("button", { name: "Open calendar" }).getByText("Today", { exact: true }),
+      page.getByRole("button", { name: "Open calendar" }).getByText(/^Today/),
     ).toBeVisible()
   })
 

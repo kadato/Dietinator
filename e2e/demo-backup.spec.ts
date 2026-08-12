@@ -18,9 +18,9 @@ async function longPress(page: import("@playwright/test").Page, selector: string
 test.describe("demo mode", () => {
   test("seeds an explorable session from the login screen", async ({ page }) => {
     await page.goto("/")
-    await expect(page.getByRole("button", { name: "Sign in with YAZIO" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible()
 
-    await page.getByRole("button", { name: "Explore the demo (no account)" }).click()
+    await page.getByRole("button", { name: "Try the demo" }).click()
 
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,

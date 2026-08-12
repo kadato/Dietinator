@@ -31,7 +31,7 @@ test.describe("YAZIO (real account)", () => {
     })
     await page.getByPlaceholder("YAZIO email").fill(EMAIL!)
     await page.getByPlaceholder("Password").fill(PASSWORD!)
-    await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
+    await page.getByRole("button", { name: /Sign in/i }).click()
     // Login imports today's diary from YAZIO — wait for the dashboard to settle.
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 60_000,
@@ -55,8 +55,8 @@ test.describe("YAZIO (real account)", () => {
     })
     await page.getByRole("button", { name: "Add to diary" }).click()
 
-    // Back in the log-meal modal → close it to reach the dashboard.
-    await page.getByRole("button", { name: "Cancel" }).click()
+    // Back in the log-meal modal → close it via the header X to reach the dashboard.
+    await page.getByRole("button", { name: "Close" }).click()
   }
 
   /** The diary row for a specific food (labels are `<name>, N calories`). */
@@ -71,7 +71,7 @@ test.describe("YAZIO (real account)", () => {
     await expect(page.getByRole("button", { name: "Scan barcode" })).toBeHidden()
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
-    await page.getByRole("button", { name: "Cancel" }).click()
+    await page.getByRole("button", { name: "Close" }).click()
   })
 
   test("searches the live YAZIO food database", async ({ page }) => {

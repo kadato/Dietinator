@@ -27,7 +27,7 @@ test.describe("serving sizes (real account)", () => {
     await expect(page.getByText("Dietinator", { exact: true })).toBeVisible({ timeout: 30_000 })
     await page.getByPlaceholder("YAZIO email").fill(EMAIL!)
     await page.getByPlaceholder("Password").fill(PASSWORD!)
-    await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
+    await page.getByRole("button", { name: /Sign in/i }).click()
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 60_000,
     })

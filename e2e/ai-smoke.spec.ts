@@ -63,7 +63,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     // Food tracking (log-meal) has the Scan mode.
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
-    await page.getByRole("button", { name: "Cancel" }).click()
+    await page.getByRole("button", { name: "Close" }).click()
 
     // The Search tab has a scan FAB.
     await page.getByRole("tab", { name: "Search" }).click()

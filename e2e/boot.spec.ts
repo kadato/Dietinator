@@ -6,7 +6,7 @@ test.describe("app boot", () => {
     await expect(page.getByText("Dietinator", { exact: true })).toBeVisible({
       timeout: 30_000,
     })
-    await expect(page.getByRole("button", { name: /Sign in with YAZIO/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Sign in/i })).toBeVisible()
   })
 
   test("boots straight into the diary with a seeded session", async ({ page }) => {
