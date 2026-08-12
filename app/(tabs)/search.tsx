@@ -22,7 +22,7 @@ import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { displayUnit, formatUsageAmountLine } from "@/utils/food-display"
 import { MEAL_LABELS } from "@/utils/meals"
-import { layout, spacing } from "@/theme"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField, InputIcon } from "@ui/input"
@@ -353,7 +353,7 @@ export default function SearchScreen() {
             accessibilityLabel="Scan barcode"
           />
         }
-        bottomOffset={layout.tabBarHeight + insets.bottom + 24}
+        bottomOffset={24}
       />
     </Box>
   )

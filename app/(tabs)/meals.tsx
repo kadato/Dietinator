@@ -14,7 +14,7 @@ import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { EmptyState } from "@/components/EmptyState"
 import { MealSlotModal } from "@/components/MealSlotModal"
-import { layout, spacing } from "@/theme"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField, InputIcon } from "@ui/input"
@@ -270,7 +270,7 @@ export default function MealsScreen() {
             accessibilityLabel="Create a new meal"
           />
         }
-        bottomOffset={layout.tabBarHeight + insets.bottom + 24}
+        bottomOffset={24}
       />
 
       <MealSlotModal

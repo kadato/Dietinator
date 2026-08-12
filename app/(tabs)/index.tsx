@@ -35,7 +35,7 @@ import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
-import { layout, spacing } from "@/theme"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -254,7 +254,7 @@ export default function TodayScreen() {
 
   const fabCluster = (
     <FabCluster
-      bottomOffset={isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24}
+      bottomOffset={isWide ? insets.bottom + 24 : 24}
       right={
         <>
           {settings.ai_enabled === 1 ? (
