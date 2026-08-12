@@ -85,10 +85,15 @@ export default function TodayScreen() {
       //    touched. Stale nutrient values are refined in the background below.
       let list: DiaryEntry[]
       try {
-        list = await getDiaryEntriesForDate(dateKey, { remote: false })
+        const [diaryEntries, weight, water] = await Promise.all([
+          getDiaryEntriesForDate(dateKey, { remote: false }),
+          getLatestWeightEntry(),
+          getWaterTotalForDate(dateKey),
+        ])
+        list = diaryEntries
         setEntries(list)
-        setLocalWeight(await getLatestWeightEntry())
-        setLocalWaterMl(await getWaterTotalForDate(dateKey))
+        setLocalWeight(weight)
+        setLocalWaterMl(water)
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
