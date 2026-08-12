@@ -8,6 +8,22 @@ import { pushSnapshot } from "./agent-bridge"
 import { getFoodRemote } from "./yazio/foods"
 import { removeEntryFromYazio, syncEntryToYazio } from "./yazio/sync"
 
+/**
+ * Single-flight per product id: several diary entries for the same food in one
+ * day share one remote fetch instead of firing duplicate API calls in parallel.
+ */
+const inFlightRemoteFoods = new Map<string, Promise<SearchFoodResult | null>>()
+
+function getFoodRemoteDeduped(productId: string): Promise<SearchFoodResult | null> {
+  const inFlight = inFlightRemoteFoods.get(productId)
+  if (inFlight) return inFlight
+  const promise = getFoodRemote(productId).finally(() => {
+    inFlightRemoteFoods.delete(productId)
+  })
+  inFlightRemoteFoods.set(productId, promise)
+  return promise
+}
+
 function nutrientsDiffer(a: FoodNutrients, b: FoodNutrients): boolean {
   return (
     Math.abs(a.kcal - b.kcal) > 1 ||
@@ -42,7 +58,7 @@ export async function getDiaryEntriesForDate(
       const needRemote =
         !food ||
         isPerGramNutrients(food.nutrients, food.base_unit || "g", food.serving.serving_quantity)
-      const resolved = needRemote ? ((await getFoodRemote(entry.food_id)) ?? food) : food
+      const resolved = needRemote ? ((await getFoodRemoteDeduped(entry.food_id)) ?? food) : food
       if (!resolved) return entry
 
       const scaled = nutrientsForAmount(
