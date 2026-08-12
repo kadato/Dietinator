@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.personal.dietinator",
-      "permissions": ["CAMERA"],
+      "permissions": ["CAMERA", "REQUEST_INSTALL_PACKAGES"],
       "adaptiveIcon": {
         "backgroundColor": "#0d9488",
         "foregroundImage": "./assets/android-icon-foreground.png",

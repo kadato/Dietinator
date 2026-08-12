@@ -7,11 +7,15 @@ import { ModalContainer } from "@/components/ModalContainer"
 import { useTheme } from "@/hooks/useTheme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { Button, ButtonText } from "@ui/button"
+import { Button, ButtonSpinner, ButtonText } from "@ui/button"
 
 type Props = {
   release: GitHubRelease
   currentVersion: string
+  /** True while the APK downloads; disables the actions and shows progress. */
+  downloading?: boolean
+  /** Download progress 0..1, null when unknown. */
+  downloadProgress?: number | null
   onClose: () => void
   onNeverAsk: () => void
   onDownload: () => void
@@ -32,10 +36,23 @@ function formatReleaseDate(publishedAt: string | null): string {
  * Full-screen modal announcing a newer release. Renders the release changelog
  * as markdown; on Android the primary action opens the signed APK download.
  */
-export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onDownload }: Props) {
+export function UpdateDialog({
+  release,
+  currentVersion,
+  downloading = false,
+  downloadProgress = null,
+  onClose,
+  onNeverAsk,
+  onDownload,
+}: Props) {
   const { colors } = useTheme()
   const apk = getApkAsset(release)
   const published = formatReleaseDate(release.publishedAt)
+
+  const progressLabel =
+    downloading && downloadProgress !== null
+      ? `Downloading ${Math.round(downloadProgress * 100)}%`
+      : "Downloading"
 
   return (
     <View
@@ -49,7 +66,7 @@ export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onD
         backgroundColor: "rgba(0, 0, 0, 0.45)",
       }}
     >
-      <ModalContainer maxWidth={560}>
+      <ModalContainer maxWidth={560} outerClassName="bg-background-50">
         <Box className="flex-row items-center gap-3 px-5 pb-3 pt-5">
           <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
             <Ionicons name="download-outline" size={24} color={colors.primary} />
@@ -108,20 +125,32 @@ export function UpdateDialog({ release, currentVersion, onClose, onNeverAsk, onD
           <Pressable
             onPress={onNeverAsk}
             hitSlop={8}
+            disabled={downloading}
             accessibilityRole="button"
             accessibilityLabel="Don't ask again"
           >
-            <Text size="sm" bold className="text-typography-500">
+            <Text
+              size="sm"
+              bold
+              className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+            >
               Don&apos;t ask again
             </Text>
           </Pressable>
           <View className="flex-1" />
-          <Button size="md" variant="outline" action="secondary" onPress={onClose}>
+          <Button
+            size="md"
+            variant="outline"
+            action="secondary"
+            onPress={onClose}
+            isDisabled={downloading}
+          >
             <ButtonText>Later</ButtonText>
           </Button>
           {apk ? (
-            <Button size="md" onPress={onDownload}>
-              <ButtonText>Download</ButtonText>
+            <Button size="md" onPress={onDownload} isDisabled={downloading}>
+              {downloading ? <ButtonSpinner /> : null}
+              <ButtonText>{progressLabel}</ButtonText>
             </Button>
           ) : null}
         </Box>
