@@ -35,6 +35,7 @@ export default function LoginScreen() {
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [googleHelpExpanded, setGoogleHelpExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const passwordRef = useRef<TextInput>(null)
 
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function LoginScreen() {
             Dietinator
           </Text>
           <Text
-            size={isWide ? "md" : "md"}
+            size="md"
             className="mt-2 max-w-[340px] text-center leading-[24px] text-typography-500"
           >
             Fast, ad-free food logging.
@@ -156,20 +157,34 @@ export default function LoginScreen() {
             <Text size="md" className="text-typography-900">
               Remember me
             </Text>
-            <Switch value={rememberMe} onValueChange={setRememberMe} isDisabled={loading} />
+            <Switch
+              value={rememberMe}
+              onValueChange={setRememberMe}
+              isDisabled={loading || demoLoading}
+              accessibilityLabel="Remember me"
+            />
           </Box>
 
-          <Button size="lg" onPress={handleLogin} isDisabled={loading} className="mt-1">
-            {loading ? <ButtonSpinner color="white" /> : <ButtonText>Sign in</ButtonText>}
+          <Button
+            size="lg"
+            onPress={handleLogin}
+            isDisabled={loading || demoLoading}
+            className="mt-1"
+          >
+            {loading ? (
+              <ButtonSpinner color={colors.onPrimary} />
+            ) : (
+              <ButtonText>Sign in</ButtonText>
+            )}
           </Button>
 
           <Button
             size="lg"
             variant="outline"
             action="secondary"
-            isDisabled={loading}
+            isDisabled={loading || demoLoading}
             onPress={async () => {
-              setLoading(true)
+              setDemoLoading(true)
               try {
                 await seedDemoSession()
                 await refreshSettings()
@@ -178,11 +193,15 @@ export default function LoginScreen() {
               } catch (error) {
                 showError(error, "Could not start the demo.")
               } finally {
-                setLoading(false)
+                setDemoLoading(false)
               }
             }}
           >
-            <ButtonText>Try the demo</ButtonText>
+            {demoLoading ? (
+              <ButtonSpinner color={colors.primary} />
+            ) : (
+              <ButtonText>Try the demo</ButtonText>
+            )}
           </Button>
         </Card>
 

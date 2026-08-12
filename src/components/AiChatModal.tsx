@@ -15,16 +15,22 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Markdown } from "@/components/Markdown"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { createModalShellStyles } from "@/components/modal-shell"
 import { useAiChat } from "@/hooks/useAiChat"
 import { useApp } from "@/context/AppContext"
 import { useAiChatModal } from "@/context/AiChatContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
+import { withAlpha } from "@/utils/color"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+
+/** Frosted white chips on the teal header — the same overlay in both themes. */
+const HEADER_OVERLAY = "rgba(255, 255, 255, 0.18)"
 
 function formatTime(iso: string): string {
   const date = new Date(iso)
@@ -84,6 +90,7 @@ export function AiChatModal() {
   const { settings } = useApp()
   const { open, closeAiChat } = useAiChatModal()
   const { colors } = useTheme()
+  const shell = createModalShellStyles(colors)
   const insets = useSafeAreaInsets()
   const { width, isWide } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
@@ -158,10 +165,16 @@ export function AiChatModal() {
           </Box>
           <Box
             className={`max-w-full flex-1 rounded-2xl rounded-bl-md border px-3.5 py-2.5 ${
-              item.is_error
-                ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
-                : "border-outline-100 bg-background-50"
+              item.is_error ? "" : "border-outline-100 bg-background-50"
             }`}
+            style={
+              item.is_error
+                ? {
+                    borderColor: withAlpha(colors.danger, 0.35),
+                    backgroundColor: withAlpha(colors.danger, 0.08),
+                  }
+                : undefined
+            }
           >
             {thinking ? (
               <Box className="flex-row items-center gap-2 py-0.5">
@@ -264,7 +277,13 @@ export function AiChatModal() {
   )
 
   const configBanner = (
-    <Box className="mx-4 mt-3 flex-row items-center gap-3 rounded-xl border border-warning-300 bg-warning-50 px-3.5 py-3 dark:border-yellow-800 dark:bg-yellow-950/40">
+    <Box
+      className="mx-4 mt-3 flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
+      style={{
+        borderColor: withAlpha(colors.warning, 0.35),
+        backgroundColor: withAlpha(colors.warning, 0.08),
+      }}
+    >
       <Ionicons name="key-outline" size={18} color={colors.warning} />
       <Box className="flex-1">
         <Text size="sm" bold className="text-typography-900">
@@ -281,7 +300,7 @@ export function AiChatModal() {
         }}
         accessibilityRole="button"
         accessibilityLabel="Open AI settings"
-        className="rounded-full bg-warning-500 px-3 py-1.5 active:opacity-85"
+        className="rounded-full bg-warning-500 px-3 py-1.5 active:opacity-80"
       >
         <Text size="xs" bold style={{ color: colors.onWarning }}>
           Setup
@@ -307,7 +326,7 @@ export function AiChatModal() {
             onPress={() => void confirm(true)}
             accessibilityRole="button"
             accessibilityLabel="Approve assistant changes"
-            className="flex-1 items-center rounded-full bg-primary-500 py-2.5 active:opacity-85"
+            className="flex-1 items-center rounded-full bg-primary-500 py-2.5 active:opacity-80"
           >
             <Text size="sm" bold style={{ color: colors.onPrimary }}>
               Approve
@@ -340,7 +359,7 @@ export function AiChatModal() {
           <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">
             <Box
               className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+              style={{ backgroundColor: HEADER_OVERLAY }}
             >
               <MaterialCommunityIcons name="robot" size={20} color={colors.onPrimary} />
             </Box>
@@ -356,9 +375,12 @@ export function AiChatModal() {
           <Box className="ml-2 flex-row items-center gap-1">
             <Box
               className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+              style={{ backgroundColor: HEADER_OVERLAY }}
             >
-              <Box className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              <Box
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: colors.onPrimary }}
+              />
               <Text size="2xs" bold style={{ color: colors.onPrimary }}>
                 ON DEVICE
               </Text>
@@ -370,7 +392,7 @@ export function AiChatModal() {
               accessibilityLabel="Clear chat history"
               className="ml-1 h-9 w-9 items-center justify-center rounded-full"
               style={({ pressed }) => [
-                { backgroundColor: "rgba(255,255,255,0.18)" },
+                { backgroundColor: HEADER_OVERLAY },
                 pressed && { opacity: 0.7 },
               ]}
             >
@@ -383,7 +405,7 @@ export function AiChatModal() {
               accessibilityLabel="Close AI chat"
               className="h-9 w-9 items-center justify-center rounded-full"
               style={({ pressed }) => [
-                { backgroundColor: "rgba(255,255,255,0.18)" },
+                { backgroundColor: HEADER_OVERLAY },
                 pressed && { opacity: 0.7 },
               ]}
             >
@@ -501,7 +523,7 @@ export function AiChatModal() {
       onRequestClose={closeAiChat}
       statusBarTranslucent
     >
-      <View style={styles.backdrop}>
+      <View style={shell.backdrop}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={closeAiChat}
@@ -511,31 +533,27 @@ export function AiChatModal() {
         {isWide ? (
           // box-none: taps on the dimmed area around the dialog fall through
           // to the dismiss Pressable; taps on the dialog itself stay in it.
-          <View style={styles.dialogWrap} pointerEvents="box-none">
+          <View style={shell.dialogWrap} pointerEvents="box-none">
             <View
               testID="ai-chat-dialog"
-              style={[
-                styles.dialog,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
+              style={[shell.dialogBox, { width: "100%", maxWidth: 720, height: "100%" }]}
             >
               {chat}
             </View>
           </View>
         ) : (
-          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>{chat}</View>
+          <View style={[shell.sheet, { backgroundColor: colors.surface }]}>{chat}</View>
         )}
 
         {/* Cancel FAB — floats on the backdrop outside the dialog on wide
             screens; on phones it sits above the composer so it never covers
             the input. */}
-        <View style={styles.fabLayer}>
-          <View
-            style={[styles.fabLeft, { bottom: isWide ? insets.bottom + 24 : insets.bottom + 84 }]}
-          >
+        <FabCluster
+          bottomOffset={isWide ? insets.bottom + 24 : insets.bottom + 84}
+          left={
             <Fab tone="surface" icon="close" onPress={closeAiChat} accessibilityLabel="Cancel" />
-          </View>
-        </View>
+          }
+        />
       </View>
     </Modal>
   )
@@ -551,44 +569,5 @@ const styles = StyleSheet.create({
     // work on Android but is a no-op for textareas on web and iOS.
     paddingTop: 12,
     paddingBottom: 12,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-  },
-  sheet: {
-    flex: 1,
-  },
-  dialogWrap: {
-    flex: 1,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-  },
-  dialog: {
-    width: "100%",
-    maxWidth: 720,
-    height: "100%",
-    borderRadius: 20,
-    borderWidth: 1,
-    overflow: "hidden",
-    boxShadow: "0px 8px 40px rgba(0, 0, 0, 0.35)",
-    elevation: 12,
-  },
-  fabLayer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: "box-none",
-  },
-  fabLeft: {
-    position: "absolute",
-    left: 20,
-    alignItems: "flex-start",
-    pointerEvents: "box-none",
   },
 })

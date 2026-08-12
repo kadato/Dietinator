@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { createModalShellStyles } from "@/components/modal-shell"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -45,6 +47,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   const { showError, showUndo } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const shell = createModalShellStyles(colors)
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
@@ -115,7 +118,13 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
 
   const form = (
     <>
-      <View style={[styles.dialogBody, isWide && styles.dialogBodyWide]}>
+      <View
+        style={[
+          shell.dialogBox,
+          { width: "100%", maxWidth: 420, flex: 1 },
+          isWide && styles.dialogBodyWide,
+        ]}
+      >
         <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
           Water
         </Text>
@@ -167,7 +176,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 disabled={saving}
                 accessibilityRole="button"
                 accessibilityLabel={`Add ${amount} ml of water`}
-                className="min-w-[76px] flex-1 items-center rounded-full bg-primary-500 px-3 py-2.5 active:opacity-85"
+                className="min-w-[76px] flex-1 items-center rounded-full bg-primary-500 px-3 py-2.5 active:opacity-80"
               >
                 <Text size="sm" bold style={{ color: colors.onPrimary }}>
                   +{amount}
@@ -203,7 +212,11 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             </Pressable>
           </Box>
 
-          {entries.length > 0 ? (
+          {entries.length === 0 ? (
+            <Text size="xs" className="mt-4 text-center text-typography-500">
+              Nothing logged for this day yet.
+            </Text>
+          ) : (
             <Box className="mt-4">
               <Text style={styles.label}>Logged pours</Text>
               {entries.map((entry) => (
@@ -218,6 +231,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   <Pressable
                     onPress={() => handleDelete(entry)}
                     hitSlop={8}
+                    className="p-1.5"
                     accessibilityRole="button"
                     accessibilityLabel={`Delete ${formatWaterAmount(entry.amount_ml, settings.units)} pour`}
                   >
@@ -226,15 +240,14 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 </Box>
               ))}
             </Box>
-          ) : null}
+          )}
         </ScrollView>
       </View>
 
-      <View style={styles.fabLayer}>
-        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-          <Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />
-        </View>
-      </View>
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+      />
 
       <DatePickerModal
         visible={pickerOpen}
@@ -247,7 +260,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={shell.backdrop}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
@@ -255,12 +268,12 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityLabel="Dismiss water dialog"
         />
         {isWide ? (
-          <View style={styles.dialogWrap} pointerEvents="box-none">
+          <View style={shell.dialogWrap} pointerEvents="box-none">
             {form}
           </View>
         ) : (
           <KeyboardAvoidingView
-            style={styles.sheet}
+            style={shell.sheet}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}
@@ -273,34 +286,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.45)",
-    },
-    sheet: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    dialogWrap: {
-      flex: 1,
-      width: "100%",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 32,
-      paddingHorizontal: 24,
-    },
-    dialogBody: {
-      width: "100%",
-      maxWidth: 420,
-      flex: 1,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 20,
-      overflow: "hidden",
-      boxShadow: "0px 8px 40px rgba(0, 0, 0, 0.35)",
-      elevation: 12,
-    },
     // On wide screens the dialog hugs its content instead of filling the
     // viewport (the phone sheet keeps flex: 1 to fill the screen). flexBasis
     // must return to "auto" — flex: 1 sets 0%, which would collapse the
@@ -309,20 +294,6 @@ const createStyles = (colors: ColorPalette) =>
       flexGrow: 0,
       flexBasis: "auto",
       maxHeight: "100%",
-    },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
-    },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
     },
     label: {
       color: colors.textMuted,

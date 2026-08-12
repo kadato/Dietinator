@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { createModalShellStyles } from "@/components/modal-shell"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -52,6 +54,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   const { showError, showWarning } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const shell = createModalShellStyles(colors)
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
@@ -113,7 +116,10 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
 
   const form = (
     <>
-      <ModalContainerBox maxWidth={420}>
+      <View
+        testID="log-weight-dialog"
+        style={isWide ? [shell.dialogBox, { width: "100%", maxWidth: 420 }] : { flex: 1 }}
+      >
         <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
           Log weight
         </Text>
@@ -156,21 +162,20 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             Stored in kg — switching units later keeps your history intact.
           </Text>
         </ScrollView>
-      </ModalContainerBox>
+      </View>
 
-      <View style={styles.fabLayer}>
-        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-          <Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />
-        </View>
-        <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+        right={
           <Fab
             icon="checkmark"
             onPress={handleSave}
             disabled={saving}
             accessibilityLabel="Save weight"
           />
-        </View>
-      </View>
+        }
+      />
 
       <DatePickerModal
         visible={pickerOpen}
@@ -183,7 +188,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={shell.backdrop}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
@@ -193,12 +198,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         {isWide ? (
           // box-none: taps on the dimmed area around the dialog fall through
           // to the dismiss Pressable; taps on the dialog itself stay in it.
-          <View style={styles.dialogWrap} pointerEvents="box-none">
+          <View style={shell.dialogWrap} pointerEvents="box-none">
             {form}
           </View>
         ) : (
           <KeyboardAvoidingView
-            style={styles.sheet}
+            style={shell.sheet}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}
@@ -209,90 +214,14 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   )
 }
 
-/** Centered column with the same look as ModalContainer on wide screens. */
-function ModalContainerBox({
-  maxWidth,
-  children,
-}: {
-  maxWidth: number
-  children: React.ReactNode
-}) {
-  const { colors } = useTheme()
-  const { isWide } = useLayout()
-  if (!isWide) return <View style={{ flex: 1 }}>{children}</View>
-  return (
-    <View
-      testID="log-weight-dialog"
-      style={{
-        width: "100%",
-        maxWidth,
-        borderRadius: 20,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-        boxShadow: "0px 8px 40px rgba(0, 0, 0, 0.35)",
-        elevation: 12,
-        overflow: "hidden",
-      }}
-    >
-      {children}
-    </View>
-  )
-}
-
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.45)",
-    },
-    sheet: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    dialogWrap: {
-      flex: 1,
-      width: "100%",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 32,
-      paddingHorizontal: 24,
-    },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
-    },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
-    },
-    fabRight: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
-      pointerEvents: "box-none",
-    },
     label: {
       color: colors.textMuted,
       fontSize: 13,
       fontWeight: "600",
       marginBottom: spacing.xs,
       marginTop: spacing.md,
-    },
-    input: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: spacing.md,
-      color: colors.text,
-      fontSize: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
     },
     dateRow: {
       flexDirection: "row",

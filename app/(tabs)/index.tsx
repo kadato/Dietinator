@@ -13,6 +13,7 @@ import { LogWeightModal } from "@/components/LogWeightModal"
 import { LogWaterModal } from "@/components/LogWaterModal"
 import { MealSlotModal } from "@/components/MealSlotModal"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
 import { useAiChatModal } from "@/context/AiChatContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
@@ -111,7 +112,6 @@ export default function TodayScreen() {
         }
         if (result.error && !options?.quiet) {
           showWarning(result.error, "YAZIO import")
-        } else if (!options?.quiet && result.imported > 0 && result.failed === 0) {
         } else if (!options?.quiet && result.failed > 0) {
           showWarning(
             `${result.imported} imported, ${result.failed} could not be loaded. Try again.`,
@@ -248,33 +248,28 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets()
 
   const fabCluster = (
-    <View
-      style={{
-        position: "absolute",
-        right: 20,
-        bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24,
-        alignItems: "flex-end",
-        gap: 12,
-        pointerEvents: "box-none",
-      }}
-    >
-      {settings.ai_enabled === 1 ? (
-        <Fab
-          size="sm"
-          tone="surface"
-          icon="robot-outline"
-          IconComponent={MaterialCommunityIcons}
-          onPress={openAiChat}
-          accessibilityLabel="Open AI assistant"
-        />
-      ) : null}
-      <Fab
-        icon="add"
-        label={isMedium ? "Log food" : undefined}
-        onPress={() => setLogSlotOpen(true)}
-        accessibilityLabel="Log food"
-      />
-    </View>
+    <FabCluster
+      bottomOffset={isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24}
+      right={
+        <>
+          {settings.ai_enabled === 1 ? (
+            <Fab
+              tone="surface"
+              icon="robot-outline"
+              IconComponent={MaterialCommunityIcons}
+              onPress={openAiChat}
+              accessibilityLabel="Open AI assistant"
+            />
+          ) : null}
+          <Fab
+            icon="add"
+            label={isMedium ? "Log food" : undefined}
+            onPress={() => setLogSlotOpen(true)}
+            accessibilityLabel="Log food"
+          />
+        </>
+      }
+    />
   )
 
   const summaryCard = (
@@ -299,12 +294,12 @@ export default function TodayScreen() {
         ) : null}
         <Pressable
           onPress={() => setLogWaterOpen(true)}
-          className="flex-row items-center gap-1.5"
+          className="min-w-0 shrink flex-row items-center gap-1.5"
           accessibilityRole="button"
           accessibilityLabel="Log water"
         >
           <Ionicons name="water-outline" size={16} color={colors.primary} />
-          <Text size="sm" className="text-typography-900">
+          <Text size="sm" className="text-typography-900" numberOfLines={1}>
             {waterGoal > 0
               ? `${formatWaterAmount(waterIntake, settings.units)} / ${formatWaterAmount(waterGoal, settings.units)}`
               : formatWaterAmount(waterIntake, settings.units)}
@@ -339,7 +334,7 @@ export default function TodayScreen() {
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
-        <Box className="px-6 pb-2" style={{ paddingTop: insets.top + spacing.sm }}>
+        <Box className="px-6 pb-3" style={{ paddingTop: insets.top + spacing.md }}>
           <Card variant="elevated" className="flex-row items-center px-2 py-2">
             <Pressable
               onPress={() => shiftDate(-1)}
@@ -363,7 +358,7 @@ export default function TodayScreen() {
               {!isToday ? (
                 <Pressable
                   onPress={() => setDateKey(toDateKey())}
-                  className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5 active:opacity-70"
+                  className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5 active:opacity-80"
                   accessibilityRole="button"
                   accessibilityLabel="Jump to today"
                 >
@@ -419,7 +414,7 @@ export default function TodayScreen() {
               tintColor={colors.primary}
             />
           }
-          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-44"}`}
+          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-36"}`}
         >
           {isWide ? (
             <Box className="w-full flex-row items-start gap-6">

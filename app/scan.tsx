@@ -20,6 +20,7 @@ import { FoodListItem } from "@/components/FoodListItem"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -445,12 +446,6 @@ export default function ScanScreen() {
             ) : null}
           </Box>
         </ModalContainer>
-
-        <View style={styles.fabLayer}>
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
-            <Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />
-          </View>
-        </View>
       </View>
     )
   }
@@ -476,24 +471,14 @@ export default function ScanScreen() {
               <Text style={styles.hint}>
                 Permission denied permanently. Allow the camera in system settings.
               </Text>
-              <Pressable
-                style={styles.btn}
-                onPress={() => Linking.openSettings()}
-                accessibilityRole="button"
-                accessibilityLabel="Open system settings"
-              >
-                <Text style={styles.btnText}>Open settings</Text>
-              </Pressable>
+              <Button size="lg" onPress={() => Linking.openSettings()}>
+                <ButtonText>Open settings</ButtonText>
+              </Button>
             </>
           ) : (
-            <Pressable
-              style={styles.btn}
-              onPress={requestPermission}
-              accessibilityRole="button"
-              accessibilityLabel="Grant camera permission"
-            >
-              <Text style={styles.btnText}>Grant permission</Text>
-            </Pressable>
+            <Button size="lg" onPress={requestPermission}>
+              <ButtonText>Grant permission</ButtonText>
+            </Button>
           )}
           <Pressable style={styles.close} onPress={close} accessibilityRole="button">
             <Text style={styles.closeText}>Cancel</Text>
@@ -578,21 +563,19 @@ export default function ScanScreen() {
         </View>
       )}
 
-      <View style={styles.fabLayer}>
-        <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-          <Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />
-        </View>
-        {cameraActive ? (
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+      {cameraActive ? (
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          right={
             <Fab
               tone={torchOn ? "primary" : "surface"}
               icon={torchOn ? "flashlight" : "flashlight-outline"}
               onPress={() => setTorchOn((v) => !v)}
               accessibilityLabel={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
             />
-          </View>
-        ) : null}
-      </View>
+          }
+        />
+      ) : null}
     </View>
   )
 }
@@ -623,7 +606,7 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
       marginTop: spacing.sm,
     },
-    linkBtn: { marginTop: spacing.md, padding: spacing.xs },
+    linkBtn: { marginTop: spacing.md, padding: spacing.sm },
     linkBtnText: { color: colors.primary, fontWeight: "600", fontSize: 15 },
     matchesHeader: {
       padding: spacing.md,
@@ -646,7 +629,7 @@ const createStyles = (colors: ColorPalette) =>
       gap: 6,
       alignSelf: "flex-start",
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
+      paddingVertical: 12,
       borderRadius: 20,
       backgroundColor: colors.primary,
     },
@@ -695,13 +678,6 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: spacing.sm,
       maxWidth: 280,
     },
-    btn: {
-      backgroundColor: colors.primary,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-      borderRadius: 28,
-    },
-    btnText: { color: colors.onPrimary, fontWeight: "700" },
     overlay: {
       ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(0,0,0,0.55)",
@@ -717,27 +693,14 @@ const createStyles = (colors: ColorPalette) =>
       boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.25)",
       elevation: 8,
     },
-    overlayText: { marginTop: spacing.md, fontSize: 14, fontWeight: "600" },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
+    // Default text color so the web branch's "Looking up…" label stays
+    // readable in dark mode (the native overlay passes colors.text inline).
+    overlayText: {
+      marginTop: spacing.md,
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.textMuted,
     },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
-    },
-    fabRight: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
-      pointerEvents: "box-none",
-    },
-    close: { marginTop: spacing.md, padding: spacing.xs },
+    close: { marginTop: spacing.lg, padding: spacing.sm },
     closeText: { color: colors.text, fontWeight: "600" },
   })

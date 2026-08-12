@@ -35,6 +35,7 @@ import { NumberStepper } from "@/components/NumberStepper"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
@@ -158,6 +159,7 @@ export default function AddFoodScreen() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [amount, setAmount] = useState("")
   const [saving, setSaving] = useState(false)
+  const [favoriteToggling, setFavoriteToggling] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<MealType>(mealType)
   // True once the user edits the amount — background detail patches must not
   // clobber a typed or history-prefilled portion.
@@ -300,12 +302,15 @@ export default function AddFoodScreen() {
   )
 
   const handleToggleFavorite = async () => {
-    if (!food || !productId) return
+    if (!food || !productId || favoriteToggling) return
+    setFavoriteToggling(true)
     try {
       const next = await toggleFavorite(productId, food)
       setIsFavorite(next)
     } catch (error) {
       showError(error, "Could not update favorite.")
+    } finally {
+      setFavoriteToggling(false)
     }
   }
 
@@ -352,10 +357,15 @@ export default function AddFoodScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
-          <ActivityIndicator color={colors.primary} size="large" />
+          <Ionicons name="cloud-offline-outline" size={44} color={colors.danger} />
           <Text style={styles.loadingText}>Could not load this food.</Text>
           {productId || entryId ? (
-            <Pressable onPress={() => safeBack()} accessibilityRole="button">
+            <Pressable
+              onPress={() => safeBack()}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
               <Text style={styles.link}>Go back</Text>
             </Pressable>
           ) : null}
@@ -394,9 +404,12 @@ export default function AddFoodScreen() {
               {!isEditing ? (
                 <Pressable
                   onPress={handleToggleFavorite}
+                  disabled={favoriteToggling}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  accessibilityState={{ disabled: favoriteToggling }}
+                  style={{ opacity: favoriteToggling ? 0.5 : 1 }}
                 >
                   <Ionicons
                     name={isFavorite ? "star" : "star-outline"}
@@ -487,19 +500,18 @@ export default function AddFoodScreen() {
       </ModalContainer>
 
       {!keyboardOpen ? (
-        <View style={styles.fabLayer}>
-          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-            <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
-          </View>
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+          right={
             <Fab
               icon="checkmark"
               onPress={handleSave}
               disabled={saving}
               accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
             />
-          </View>
-        </View>
+          }
+        />
       ) : null}
     </KeyboardAvoidingView>
   )
@@ -555,7 +567,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     chip: {
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      paddingVertical: 12,
       borderRadius: 20,
       backgroundColor: colors.surface,
       borderWidth: 1,
@@ -579,34 +591,4 @@ const createStyles = (colors: ColorPalette) =>
       paddingBottom: spacing.md,
     },
     label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
-    input: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: spacing.md,
-      color: colors.text,
-      fontSize: 20,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginBottom: spacing.lg,
-    },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
-    },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
-    },
-    fabRight: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
-      pointerEvents: "box-none",
-    },
   })

@@ -4,6 +4,10 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { ModalContainer } from "@/components/ModalContainer"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { useTheme } from "@/hooks/useTheme"
+import { withAlpha } from "@/utils/color"
+import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -16,7 +20,6 @@ type CreateOption = {
   title: string
   description: string
   icon: keyof typeof Ionicons.glyphMap
-  iconColor: string
 }
 
 const OPTIONS: CreateOption[] = [
@@ -25,23 +28,33 @@ const OPTIONS: CreateOption[] = [
     title: "Quick Add",
     description: "Log calories, no item saved",
     icon: "flash",
-    iconColor: "#eab308",
   },
   {
     id: "manual-food",
     title: "New food",
     description: "Single item without barcode",
     icon: "nutrition",
-    iconColor: "#f97316",
   },
   {
     id: "meal",
     title: "New meal",
     description: "Foods you eat together",
     icon: "restaurant",
-    iconColor: "#14b8a6",
   },
 ]
+
+/** Each create option carries its own accent color from the app's palette. */
+function optionColor(id: CreateOption["id"], colors: ColorPalette): string {
+  switch (id) {
+    case "quick-add":
+      return colors.warning
+    case "manual-food":
+      return colors.lunch
+    case "meal":
+      return colors.primary
+  }
+  return colors.primary
+}
 
 export default function CreateOptionsScreen() {
   const router = useRouter()
@@ -49,6 +62,17 @@ export default function CreateOptionsScreen() {
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
   const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
+
+  // A deep link straight to this modal has no screen to go back to.
+  const safeBack = () => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }
+
   const onSelect = (option: CreateOption) => {
     switch (option.id) {
       case "meal":
@@ -72,51 +96,46 @@ export default function CreateOptionsScreen() {
         <Text size="xl" bold className="mb-5 mt-5 px-6 text-typography-900">
           Create
         </Text>
+        <Text size="sm" className="-mt-3 mb-4 px-6 text-typography-500">
+          What would you like to create?
+        </Text>
 
         <ScrollView className="flex-1" contentContainerClassName="px-4 pb-24 gap-2">
-          {OPTIONS.map((option) => (
-            <Pressable
-              key={option.id}
-              onPress={() => onSelect(option)}
-              accessibilityRole="button"
-              accessibilityLabel={option.title}
-            >
-              <Card variant="outline" className="flex-row items-start gap-4 rounded-2xl p-4">
-                <Box
-                  className="h-11 w-11 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${option.iconColor}22` }}
-                >
-                  <Ionicons name={option.icon} size={24} color={option.iconColor} />
-                </Box>
-                <Box className="flex-1">
-                  <Text size="lg" bold className="mb-1 text-typography-900">
-                    {option.title}
-                  </Text>
-                  <Text size="sm" className="leading-5 text-typography-500">
-                    {option.description}
-                  </Text>
-                </Box>
-              </Card>
-            </Pressable>
-          ))}
+          {OPTIONS.map((option) => {
+            const tint = optionColor(option.id, colors)
+            return (
+              <Pressable
+                key={option.id}
+                onPress={() => onSelect(option)}
+                accessibilityRole="button"
+                accessibilityLabel={option.title}
+              >
+                <Card variant="outline" className="flex-row items-start gap-4 rounded-2xl p-4">
+                  <Box
+                    className="h-11 w-11 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: withAlpha(tint, 0.13) }}
+                  >
+                    <Ionicons name={option.icon} size={24} color={tint} />
+                  </Box>
+                  <Box className="flex-1">
+                    <Text size="lg" bold className="mb-1 text-typography-900">
+                      {option.title}
+                    </Text>
+                    <Text size="sm" className="leading-5 text-typography-500">
+                      {option.description}
+                    </Text>
+                  </Box>
+                </Card>
+              </Pressable>
+            )
+          })}
         </ScrollView>
       </ModalContainer>
 
-      <View
-        style={{
-          position: "absolute",
-          left: 20,
-          bottom: insets.bottom + 16,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Fab
-          tone="surface"
-          icon="close"
-          onPress={() => router.back()}
-          accessibilityLabel="Cancel"
-        />
-      </View>
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+      />
     </View>
   )
 }

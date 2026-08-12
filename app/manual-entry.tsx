@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native"
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
@@ -13,6 +13,7 @@ import { MEAL_LABELS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import type { MealType } from "@/types"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
@@ -70,6 +71,15 @@ export default function ManualEntryScreen() {
   const [carbs, setCarbs] = useState("")
   const [fat, setFat] = useState("")
   const [saving, setSaving] = useState(false)
+
+  // A deep link straight to this modal has no screen to go back to.
+  const safeBack = () => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }
 
   const handleSave = async () => {
     if (saving) return
@@ -205,24 +215,18 @@ export default function ManualEntryScreen() {
       </ModalContainer>
 
       {!keyboardOpen ? (
-        <View style={styles.fabLayer}>
-          <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
-            <Fab
-              tone="surface"
-              icon="close"
-              onPress={() => router.back()}
-              accessibilityLabel="Cancel"
-            />
-          </View>
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+          right={
             <Fab
               icon="checkmark"
               onPress={handleSave}
               disabled={saving}
               accessibilityLabel="Add to diary"
             />
-          </View>
-        </View>
+          }
+        />
       ) : null}
     </KeyboardAvoidingView>
   )
@@ -231,26 +235,6 @@ export default function ManualEntryScreen() {
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    fabLayer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "box-none",
-    },
-    fabLeft: {
-      position: "absolute",
-      left: 20,
-      alignItems: "flex-start",
-      pointerEvents: "box-none",
-    },
-    fabRight: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
-      pointerEvents: "box-none",
-    },
     label: {
       color: colors.textMuted,
       fontSize: 13,

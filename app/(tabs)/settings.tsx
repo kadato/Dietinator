@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
-import { Platform, Pressable, ScrollView, Share, View } from "react-native"
+import { ActivityIndicator, Platform, Pressable, ScrollView, Share, View } from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -37,6 +37,8 @@ import {
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { confirmAction } from "@/utils/confirm"
+import { withAlpha } from "@/utils/color"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -96,7 +98,7 @@ function SettingsRow({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
-        className={`${rowClassName} active:opacity-70`}
+        className={`${rowClassName} active:opacity-80`}
       >
         {content}
       </Pressable>
@@ -433,7 +435,13 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
     }
   }
 
-  if (!aiFormLoaded) return null
+  if (!aiFormLoaded) {
+    return (
+      <View className="items-center border-t border-outline-100 py-10">
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    )
+  }
 
   return (
     <View className="border-t border-outline-100">
@@ -734,7 +742,7 @@ export default function SettingsScreen() {
       <PageContainer
         grow={false}
         contentStyle={[
-          { padding: 16, paddingTop: insets.top + 24 },
+          { padding: spacing.md, paddingTop: insets.top + spacing.md },
           isWide ? { maxWidth: 860 } : undefined,
         ]}
       >
@@ -756,14 +764,14 @@ export default function SettingsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`${tab.label} settings`}
                 accessibilityState={{ selected: active }}
-                className={`min-w-[104px] flex-1 flex-row items-center justify-center gap-2 rounded-2xl border px-3.5 py-2.5 active:opacity-85 ${
+                className={`min-w-[104px] flex-1 flex-row items-center justify-center gap-2 rounded-2xl border px-3.5 py-2.5 active:opacity-80 ${
                   active
                     ? "border-primary-500 bg-primary-500/10"
                     : "border-outline-100 bg-background-50"
                 }`}
                 style={
                   active
-                    ? { boxShadow: "0px 2px 8px rgba(13, 148, 136, 0.18)", elevation: 3 }
+                    ? { boxShadow: `0px 2px 8px ${withAlpha(colors.primary, 0.18)}`, elevation: 3 }
                     : undefined
                 }
               >

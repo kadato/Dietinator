@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  View,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -26,6 +25,8 @@ import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -45,6 +46,15 @@ export default function MealBuilderScreen() {
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
   const keyboardOpen = useKeyboardVisible()
+
+  // A deep link straight to this modal has no screen to go back to.
+  const safeBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace("/(tabs)")
+    }
+  }, [router])
 
   const [name, setName] = useState("")
   const [items, setItems] = useState<MealItem[]>([])
@@ -79,7 +89,7 @@ export default function MealBuilderScreen() {
         if (cancelled) return
         if (!meal) {
           showError(new Error("Meal not found."), "It may have been deleted.")
-          router.back()
+          safeBack()
           return
         }
         setName(meal.name)
@@ -93,7 +103,7 @@ export default function MealBuilderScreen() {
     return () => {
       cancelled = true
     }
-  }, [mealId, router, showError])
+  }, [mealId, safeBack, showError])
 
   const addFood = useCallback((food: SearchFoodResult) => {
     const addAmount = servingAmountFor(food)
@@ -158,7 +168,7 @@ export default function MealBuilderScreen() {
     try {
       await saveMeal({ id: mealId ?? undefined, name: name.trim(), items })
       showSuccess(isEditing ? "Meal updated." : "Meal saved.", isEditing ? "Updated" : "Saved")
-      router.back()
+      safeBack()
     } catch (error) {
       showError(error, "Could not save meal.")
     } finally {
@@ -176,7 +186,7 @@ export default function MealBuilderScreen() {
         try {
           await deleteMeal(mealId)
           showSuccess("Meal deleted.", "Done")
-          router.back()
+          safeBack()
         } catch (error) {
           showError(error, "Could not delete meal.")
         }
@@ -198,10 +208,14 @@ export default function MealBuilderScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer maxWidth={640}>
-        <Box className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 16 }}>
+        <Box
+          className="flex-row items-center px-4 pb-2"
+          style={{ paddingTop: insets.top + spacing.md }}
+        >
           <Pressable
-            onPress={() => router.back()}
+            onPress={safeBack}
             hitSlop={12}
+            className="h-11 w-11 items-center justify-center rounded-full active:bg-background-100"
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
@@ -210,7 +224,7 @@ export default function MealBuilderScreen() {
           <Text size="2xl" bold className="flex-1 text-center text-typography-900">
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
-          <Box className="w-7" />
+          <Box className="w-11" />
         </Box>
 
         <ScrollView
@@ -307,7 +321,7 @@ export default function MealBuilderScreen() {
           {cappedResults.map((food) => (
             <Pressable
               key={food.product_id}
-              className="mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3 active:opacity-90"
+              className="mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3 active:opacity-80"
               onPress={() => addFood(food)}
               accessibilityRole="button"
               accessibilityLabel={`Add ${food.name}`}
@@ -340,8 +354,9 @@ export default function MealBuilderScreen() {
 
           {isEditing ? (
             <Pressable
-              className="mt-8 items-center"
+              className="mt-8 items-center rounded-full active:opacity-80"
               onPress={handleDelete}
+              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
             >
@@ -354,39 +369,18 @@ export default function MealBuilderScreen() {
       </ModalContainer>
 
       {!keyboardOpen ? (
-        <View
-          style={{
-            position: "absolute",
-            left: 20,
-            bottom: insets.bottom + 20,
-            pointerEvents: "box-none",
-          }}
-        >
-          <Fab
-            tone="surface"
-            icon="close"
-            onPress={() => router.back()}
-            accessibilityLabel="Cancel"
-          />
-        </View>
-      ) : null}
-      {!keyboardOpen ? (
-        <View
-          style={{
-            position: "absolute",
-            right: 20,
-            bottom: insets.bottom + 20,
-            pointerEvents: "box-none",
-          }}
-        >
-          <Fab
-            icon="checkmark"
-            label={isMedium ? (isEditing ? "Save" : "Create") : undefined}
-            onPress={() => void handleSave()}
-            disabled={saving}
-            accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
-          />
-        </View>
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          right={
+            <Fab
+              icon="checkmark"
+              label={isMedium ? (isEditing ? "Save" : "Create") : undefined}
+              onPress={() => void handleSave()}
+              disabled={saving}
+              accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+            />
+          }
+        />
       ) : null}
     </KeyboardAvoidingView>
   )
