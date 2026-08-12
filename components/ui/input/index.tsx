@@ -172,9 +172,13 @@ type IInputFieldProps = React.ComponentProps<typeof UIInput.Input> &
   VariantProps<typeof inputFieldStyle> & { className?: string }
 
 const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, IInputFieldProps>(
-  function InputField({ className, ...props }, ref) {
+  function InputField({ className, accessibilityLabel, ...props }, ref) {
     const { variant: parentVariant, size: parentSize } = useStyleContext(SCOPE)
     const hostRef = useRef<TextInput | React.ComponentProps<typeof UIInput.Input> | null>(null)
+    // The gluestack creator reads `aria-label` only (defaulting to "Input
+    // Field") and drops `accessibilityLabel` — forward whichever the caller
+    // provided so e2e selectors and screen readers see the real label.
+    const ariaLabel = accessibilityLabel ?? props["aria-label"]
 
     // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
     // value of a controlled input when it was set programmatically (not typed)
@@ -200,6 +204,7 @@ const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, II
           else if (ref) ref.current = node
         }}
         {...props}
+        aria-label={ariaLabel}
         className={inputFieldStyle({
           parentVariants: {
             variant: parentVariant,

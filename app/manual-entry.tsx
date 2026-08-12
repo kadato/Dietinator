@@ -1,12 +1,5 @@
 import { useState } from "react"
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native"
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
@@ -24,6 +17,7 @@ import type { MealType } from "@/types"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+import { Input, InputField } from "@ui/input"
 
 function MacroInput({
   label,
@@ -126,15 +120,15 @@ export default function ManualEntryScreen() {
           {!isQuickAdd ? (
             <>
               <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g. Homemade soup"
-                placeholderTextColor="#9ca3af"
-                accessibilityLabel="Food name"
-                maxFontSizeMultiplier={1.4}
-              />
+              <Input size="md" variant="outline" className="mb-3 bg-background-50">
+                <InputField
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Homemade soup"
+                  accessibilityLabel="Food name"
+                  maxFontSizeMultiplier={1.4}
+                />
+              </Input>
             </>
           ) : null}
 
@@ -234,15 +228,5 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "600",
       marginBottom: spacing.xs,
       marginTop: spacing.md,
-    },
-    input: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: spacing.md,
-      color: colors.text,
-      fontSize: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginBottom: spacing.md,
     },
   })

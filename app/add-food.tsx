@@ -10,6 +10,7 @@ import {
   Platform,
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 import { logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
 import {
@@ -396,7 +397,11 @@ export default function AddFoodScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
                 >
-                  <Text style={styles.star}>{isFavorite ? "★" : "☆"}</Text>
+                  <Ionicons
+                    name={isFavorite ? "star" : "star-outline"}
+                    size={28}
+                    color={colors.warning}
+                  />
                 </Pressable>
               ) : null}
             </View>
@@ -524,7 +529,6 @@ const createStyles = (colors: ColorPalette) =>
     },
     titleBlock: { flex: 1 },
     title: { fontSize: 24, fontWeight: "700", color: colors.text },
-    star: { fontSize: 28, color: colors.warning, paddingTop: 2 },
     producer: {
       fontSize: 15,
       color: colors.textMuted,

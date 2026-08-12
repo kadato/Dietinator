@@ -258,7 +258,12 @@ export default function SearchScreen() {
           pointerEvents: "box-none",
         }}
       >
-        <Fab icon="barcode-outline" onPress={openScan} accessibilityLabel="Scan barcode" />
+        <Fab
+          icon="barcode-outline"
+          label="Scan"
+          onPress={openScan}
+          accessibilityLabel="Scan barcode"
+        />
       </View>
     </Box>
   )
