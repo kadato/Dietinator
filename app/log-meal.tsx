@@ -562,9 +562,6 @@ export default function LogMealScreen() {
           <View style={[styles.fabLeft, { bottom: insets.bottom + 20 }]}>
             <Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />
           </View>
-          <View style={[styles.fabRight, { bottom: insets.bottom + 20 }]}>
-            <Fab icon="checkmark" onPress={safeBack} accessibilityLabel="Done" />
-          </View>
         </View>
       ) : null}
     </KeyboardAvoidingView>
@@ -755,12 +752,6 @@ const createStyles = (colors: ColorPalette) =>
       position: "absolute",
       left: 20,
       alignItems: "flex-start",
-      pointerEvents: "box-none",
-    },
-    fabRight: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
       pointerEvents: "box-none",
     },
   })

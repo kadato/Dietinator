@@ -30,7 +30,7 @@ test.describe("food search (offline)", () => {
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
 
-    await page.getByRole("button", { name: "Done" }).click()
+    await page.getByRole("button", { name: "Cancel" }).click()
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
   })
 

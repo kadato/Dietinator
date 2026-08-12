@@ -56,7 +56,7 @@ test.describe("YAZIO (real account)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // Back in the log-meal modal → close it to reach the dashboard.
-    await page.getByRole("button", { name: "Done" }).click()
+    await page.getByRole("button", { name: "Cancel" }).click()
   }
 
   /** The diary row for a specific food (labels are `<name>, N calories`). */
