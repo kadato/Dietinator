@@ -18,9 +18,17 @@ import {
   deleteWeightEntry,
   saveWeightEntry,
 } from "@/db/weight"
-import { getCalorieHistory, getMacroHistory, type DailyKcal, type DailyMacros } from "@/db/stats"
+import {
+  getCalorieHistory,
+  getMacroHistory,
+  getWaterHistory,
+  type DailyKcal,
+  type DailyMacros,
+  type DailyWater,
+} from "@/db/stats"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
-import { formatWeight } from "@/utils/units"
+import { formatWeight, formatWaterAmount } from "@/utils/units"
+import { computeAdherence, computeLogStreak } from "@/utils/adherence"
 import { confirmAction } from "@/utils/confirm"
 import type { WeightEntry } from "@/types"
 import { spacing } from "@/theme"
@@ -68,11 +76,14 @@ export default function StatsScreen() {
   const [previous, setPrevious] = useState<WeightEntry | null>(null)
   const [calories, setCalories] = useState<DailyKcal[]>([])
   const [macros, setMacros] = useState<DailyMacros[]>([])
+  const [water, setWater] = useState<DailyWater[]>([])
   const [loading, setLoading] = useState(true)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
   const [editWeightDate, setEditWeightDate] = useState<string | null>(null)
   const [selectedWeight, setSelectedWeight] = useState<WeightEntry | null>(null)
   const [selectedKcal, setSelectedKcal] = useState<TrendPoint | null>(null)
+  const [selectedMacro, setSelectedMacro] = useState<TrendPoint | null>(null)
+  const [selectedWater, setSelectedWater] = useState<TrendPoint | null>(null)
   const [macroMetric, setMacroMetric] = useState<MacroMetric>("protein")
 
   const fromKey = useMemo(
@@ -83,18 +94,21 @@ export default function StatsScreen() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [chartWeights, latestWeight, recentTwo, kcalHistory, macroHistory] = await Promise.all([
-        getWeightEntries(fromKey),
-        getLatestWeightEntry(),
-        getRecentWeightEntries(2),
-        getCalorieHistory(fromKey),
-        getMacroHistory(fromKey),
-      ])
+      const [chartWeights, latestWeight, recentTwo, kcalHistory, macroHistory, waterHistory] =
+        await Promise.all([
+          getWeightEntries(fromKey),
+          getLatestWeightEntry(),
+          getRecentWeightEntries(2),
+          getCalorieHistory(fromKey),
+          getMacroHistory(fromKey),
+          getWaterHistory(fromKey),
+        ])
       setWeightEntries(chartWeights)
       setLatest(latestWeight)
       setPrevious(recentTwo[1] ?? null)
       setCalories(kcalHistory)
       setMacros(macroHistory)
+      setWater(waterHistory)
     } catch (error) {
       showError(error, "Could not load stats.")
     } finally {
@@ -172,6 +186,10 @@ export default function StatsScreen() {
     () => macros.map((day) => ({ date: day.date, value: day[macroMetric] })),
     [macroMetric, macros],
   )
+  const waterChartData = useMemo(
+    () => water.map((day) => ({ date: day.date, value: day.ml })),
+    [water],
+  )
 
   const rawDelta = latest && previous ? latest.weight_kg - previous.weight_kg : null
   // Float subtraction (75.5 − 74.8) can produce 0.7000000000000028 — round to
@@ -193,12 +211,26 @@ export default function StatsScreen() {
         ? colors.lunch
         : colors.dinner
 
+  const adherence = useMemo(
+    () => computeAdherence(calories, settings.calorie_goal),
+    [calories, settings.calorie_goal],
+  )
+  const logStreak = useMemo(() => computeLogStreak(calories), [calories])
+
   // Body metrics — BMI needs a height, goal progress needs a target weight.
   const heightCm = settings.height_cm > 0 ? settings.height_cm : 0
   const targetKg = settings.target_weight_kg > 0 ? settings.target_weight_kg : 0
   const bmi =
     heightCm > 0 && latest ? Math.round((latest.weight_kg / (heightCm / 100) ** 2) * 10) / 10 : null
   const goalDelta = latest && targetKg > 0 ? latest.weight_kg - targetKg : null
+
+  // Progress toward the target weight uses the earliest logged weigh-in in the
+  // range as the starting point (there is no stored "start weight").
+  const firstWeight = weightEntries.length > 0 ? weightEntries[0].weight_kg : null
+  const goalProgress =
+    latest && firstWeight !== null && targetKg > 0 && firstWeight !== targetKg
+      ? Math.min(Math.max((firstWeight - latest.weight_kg) / (firstWeight - targetKg), 0), 1)
+      : null
 
   const weightEmptyState = (
     <Box className="items-center px-6 pb-6 pt-8">
@@ -252,6 +284,53 @@ export default function StatsScreen() {
             </Box>
           ) : (
             <Box className="mt-4 gap-4">
+              {/* Consistency */}
+              <Card variant="elevated" className="p-4">
+                <Box className="flex-row items-center gap-2.5">
+                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Ionicons name="pulse-outline" size={18} color={colors.primary} />
+                  </Box>
+                  <Box className="min-w-0 flex-1">
+                    <Text size="md" bold className="text-typography-900">
+                      Consistency
+                    </Text>
+                    <Text size="xs" className="text-typography-500">
+                      Logging streak and calorie adherence
+                    </Text>
+                  </Box>
+                </Box>
+
+                <Box className="mt-3 flex-row gap-3">
+                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                    <Box className="flex-row items-center gap-1">
+                      <Ionicons name="flame" size={14} color={colors.warning} />
+                      <Text size="lg" bold className="text-typography-900">
+                        {logStreak}
+                      </Text>
+                    </Box>
+                    <Text size="xs" className="mt-0.5 text-typography-500">
+                      Day streak
+                    </Text>
+                  </Box>
+                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                    <Text size="lg" bold className="text-typography-900">
+                      {adherence.loggedDays}
+                    </Text>
+                    <Text size="xs" className="mt-0.5 text-typography-500">
+                      Logged days
+                    </Text>
+                  </Box>
+                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                    <Text size="lg" bold className="text-typography-900">
+                      {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "—"}
+                    </Text>
+                    <Text size="xs" className="mt-0.5 text-typography-500">
+                      On target
+                    </Text>
+                  </Box>
+                </Box>
+              </Card>
+
               {/* Body weight */}
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
@@ -312,6 +391,30 @@ export default function StatsScreen() {
                           : `${formatWeight(Math.abs(goalDelta), settings.units)} to goal`}
                       </Text>
                     ) : null}
+                  </Box>
+                ) : null}
+
+                {goalProgress !== null ? (
+                  <Box className="mt-3">
+                    <Box className="mb-1 flex-row items-center justify-between">
+                      <Text size="xs" bold className="text-typography-600">
+                        {goalProgress >= 1 ? "Goal reached" : "Goal progress"}
+                      </Text>
+                      {goalProgress < 1 ? (
+                        <Text size="xs" bold className="text-typography-600">
+                          {Math.round(goalProgress * 100)}%
+                        </Text>
+                      ) : null}
+                    </Box>
+                    <View className="h-2 overflow-hidden rounded-full bg-background-100">
+                      <View
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.round(goalProgress * 100)}%`,
+                          backgroundColor: colors.primary,
+                        }}
+                      />
+                    </View>
                   </Box>
                 ) : null}
 
@@ -483,6 +586,7 @@ export default function StatsScreen() {
                       formatValue={(value) => `${Math.round(value)} g`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
                       height={170}
+                      onPointPress={setSelectedMacro}
                       accessibilityLabel={`${macroMetric} per day, ${macroChartData.length} days`}
                     />
                   ) : (
@@ -496,6 +600,77 @@ export default function StatsScreen() {
                     </Box>
                   )}
                 </View>
+
+                {selectedMacro ? (
+                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                    {formatDisplayDate(selectedMacro.date)} —{" "}
+                    {Math.round(selectedMacro.value).toLocaleString()} g{" "}
+                    {macroGoal > 0
+                      ? selectedMacro.value > macroGoal
+                        ? "· over goal"
+                        : "· under goal"
+                      : ""}
+                  </Text>
+                ) : null}
+              </Card>
+
+              {/* Water */}
+              <Card variant="elevated" className="p-4">
+                <Box className="flex-row items-center gap-2.5">
+                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Ionicons name="water-outline" size={18} color={colors.primary} />
+                  </Box>
+                  <Box className="min-w-0 flex-1">
+                    <Text size="md" bold className="text-typography-900">
+                      Water
+                    </Text>
+                    <Text size="xs" className="text-typography-500">
+                      Daily intake
+                      {settings.water_goal_ml > 0
+                        ? ` · goal ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
+                        : ""}
+                    </Text>
+                  </Box>
+                </Box>
+
+                <View className="mt-3">
+                  {waterChartData.length > 0 ? (
+                    <TrendChart
+                      data={waterChartData}
+                      color={colors.primary}
+                      goalValue={settings.water_goal_ml > 0 ? settings.water_goal_ml : undefined}
+                      variant="bars"
+                      rangeStart={fromKey}
+                      rangeEnd={toDateKey()}
+                      formatValue={(value) => formatWaterAmount(value, settings.units)}
+                      formatDate={(dateKey) => formatAxisDate(dateKey, range)}
+                      height={170}
+                      onPointPress={setSelectedWater}
+                      accessibilityLabel={`Water per day, ${waterChartData.length} days`}
+                    />
+                  ) : (
+                    <Box className="items-center px-6 py-8">
+                      <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+                        <Ionicons name="water-outline" size={22} color={colors.primary} />
+                      </Box>
+                      <Text size="sm" className="mt-3 text-center leading-5 text-typography-500">
+                        No water logged {range === "1w" ? "this week" : "in this range"} yet.
+                      </Text>
+                    </Box>
+                  )}
+                </View>
+
+                {selectedWater ? (
+                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                    {formatDisplayDate(selectedWater.date)} —{" "}
+                    {formatWaterAmount(selectedWater.value, settings.units)}
+                    {settings.water_goal_ml > 0
+                      ? selectedWater.value > settings.water_goal_ml
+                        ? " · over goal"
+                        : " · under goal"
+                      : ""}
+                  </Text>
+                ) : null}
               </Card>
             </Box>
           )}

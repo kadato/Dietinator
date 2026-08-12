@@ -32,3 +32,18 @@ export async function getMacroHistory(fromDateKey: string): Promise<DailyMacros[
     [fromDateKey],
   )
 }
+
+export type DailyWater = { date: string; ml: number }
+
+/** Per-day water totals from the water log, oldest first, from `fromDateKey` on. */
+export async function getWaterHistory(fromDateKey: string): Promise<DailyWater[]> {
+  const db = await getDatabase()
+  return db.getAllAsync<DailyWater>(
+    `SELECT date, SUM(amount_ml) AS ml
+     FROM water_log
+     WHERE date >= ?
+     GROUP BY date
+     ORDER BY date ASC`,
+    [fromDateKey],
+  )
+}
