@@ -21,6 +21,8 @@ export type ToastOptions = {
   title?: string
   message: string
   duration?: number
+  /** Optional action button (e.g. "Undo"). Extends the toast lifetime. */
+  action?: { label: string; onPress: () => void }
 }
 
 type ToastState = ToastOptions & { id: number }
@@ -31,6 +33,8 @@ type ToastContextValue = {
   showError: (error: unknown, fallback?: string, title?: string) => void
   showInfo: (message: string, title?: string) => void
   showWarning: (message: string, title?: string) => void
+  /** Info toast with an "Undo" action that undoes the last destructive action. */
+  showUndo: (message: string, onUndo: () => void) => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
@@ -73,7 +77,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
     }).start()
 
     const type = toast.type ?? "info"
-    const duration = toast.duration ?? DEFAULT_DURATION[type]
+    const duration = toast.duration ?? (toast.action ? 6000 : DEFAULT_DURATION[type])
     timerRef.current = setTimeout(dismiss, duration)
 
     return () => {
@@ -104,6 +108,21 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
           </View>
           <Ionicons name="close" size={18} color={colors.textMuted} />
         </Pressable>
+        {/* Action as a sibling row — nesting a Pressable inside the row above
+            would render <button> inside <button> on web and break the DOM. */}
+        {toast.action ? (
+          <Pressable
+            style={styles.actionRow}
+            onPress={() => {
+              toast.action?.onPress()
+              dismiss()
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={toast.action.label}
+          >
+            <Text style={[styles.actionText, { color: colors.primary }]}>{toast.action.label}</Text>
+          </Pressable>
+        ) : null}
       </Animated.View>
     </View>
   )
@@ -143,9 +162,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [showToast],
   )
 
+  const showUndo = useCallback(
+    (message: string, onUndo: () => void) =>
+      showToast({
+        type: "info",
+        title: "Undo",
+        message,
+        action: { label: "Undo", onPress: onUndo },
+      }),
+    [showToast],
+  )
+
   const value = useMemo(
-    () => ({ showToast, showSuccess, showError, showInfo, showWarning }),
-    [showToast, showSuccess, showError, showInfo, showWarning],
+    () => ({ showToast, showSuccess, showError, showInfo, showWarning, showUndo }),
+    [showToast, showSuccess, showError, showInfo, showWarning, showUndo],
   )
 
   return (
@@ -216,6 +246,14 @@ const createToastStyles = (colors: ColorPalette) =>
       padding: spacing.md,
       gap: spacing.sm,
     },
+    actionRow: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
     icon: { flexShrink: 0 },
     textWrap: { flex: 1 },
     title: {
@@ -228,5 +266,9 @@ const createToastStyles = (colors: ColorPalette) =>
       color: colors.text,
       fontSize: 14,
       lineHeight: 20,
+    },
+    actionText: {
+      fontSize: 14,
+      fontWeight: "700",
     },
   })
