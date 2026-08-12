@@ -109,13 +109,6 @@ const cameraStyles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.15)",
   },
   headerTitle: { color: "#ffffff", fontSize: 17, fontWeight: "700" },
-  headerClose: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 })
 
 /**
@@ -227,7 +220,7 @@ function BarcodeMatchesList({
 }
 
 /** Floating header pill — dark glass over the camera feed, theme surface in the browser. */
-function ScanHeader({ onClose, overlay = false }: { onClose: () => void; overlay?: boolean }) {
+function ScanHeader({ overlay = false }: { overlay?: boolean }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
@@ -253,15 +246,6 @@ function ScanHeader({ onClose, overlay = false }: { onClose: () => void; overlay
             Scan barcode
           </Text>
         </View>
-        <Pressable
-          style={cameraStyles.headerClose}
-          onPress={onClose}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Close scanner"
-        >
-          <Ionicons name="close" size={22} color={tint} />
-        </Pressable>
       </View>
     </View>
   )
@@ -373,7 +357,7 @@ export default function ScanScreen() {
     return (
       <View style={styles.container}>
         <ModalContainer maxWidth={640}>
-          <ScanHeader onClose={close} />
+          <ScanHeader />
           <Box className="flex-1 justify-center px-6" style={styles.webScanContent}>
             <Box
               className="mb-5 h-20 w-20 items-center justify-center rounded-full"
@@ -446,6 +430,11 @@ export default function ScanScreen() {
             ) : null}
           </Box>
         </ModalContainer>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+        />
       </View>
     )
   }
@@ -480,10 +469,12 @@ export default function ScanScreen() {
               <ButtonText>Grant permission</ButtonText>
             </Button>
           )}
-          <Pressable style={styles.close} onPress={close} accessibilityRole="button">
-            <Text style={styles.closeText}>Cancel</Text>
-          </Pressable>
         </PageContainer>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+        />
       </View>
     )
   }
@@ -550,7 +541,7 @@ export default function ScanScreen() {
 
       {cameraActive ? <Viewfinder /> : null}
 
-      <ScanHeader onClose={close} />
+      <ScanHeader />
 
       {loading && (
         <View style={styles.overlay}>
@@ -563,19 +554,20 @@ export default function ScanScreen() {
         </View>
       )}
 
-      {cameraActive ? (
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          right={
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+        right={
+          cameraActive ? (
             <Fab
               tone={torchOn ? "primary" : "surface"}
               icon={torchOn ? "flashlight" : "flashlight-outline"}
               onPress={() => setTorchOn((v) => !v)}
               accessibilityLabel={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
             />
-          }
-        />
-      ) : null}
+          ) : undefined
+        }
+      />
     </View>
   )
 }
@@ -701,6 +693,4 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "600",
       color: colors.textMuted,
     },
-    close: { marginTop: spacing.lg, padding: spacing.sm },
-    closeText: { color: colors.text, fontWeight: "600" },
   })

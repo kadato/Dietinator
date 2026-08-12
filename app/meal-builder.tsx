@@ -212,15 +212,7 @@ export default function MealBuilderScreen() {
           className="flex-row items-center px-4 pb-2"
           style={{ paddingTop: insets.top + spacing.md }}
         >
-          <Pressable
-            onPress={safeBack}
-            hitSlop={12}
-            className="h-11 w-11 items-center justify-center rounded-full active:bg-background-100"
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={28} color={colors.text} />
-          </Pressable>
+          <Box className="h-11 w-11" />
           <Text size="2xl" bold className="flex-1 text-center text-typography-900">
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
@@ -371,6 +363,7 @@ export default function MealBuilderScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
           right={
             <Fab
               icon="checkmark"

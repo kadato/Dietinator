@@ -43,6 +43,8 @@ import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { spacing, type ColorPalette } from "@/theme"
 
 type FoodCategory = "foods" | "meals"
@@ -483,15 +485,7 @@ export default function LogMealScreen() {
     >
       <ModalContainer surface>
         <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-          <Pressable
-            style={styles.headerIconBtn}
-            onPress={safeBack}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={24} color={colors.textMuted} />
-          </Pressable>
+          <View style={styles.headerIconBtn} />
           <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
           <View style={styles.headerActions}>
             <Pressable
@@ -664,6 +658,11 @@ export default function LogMealScreen() {
           />
         )}
       </ModalContainer>
+
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+      />
     </KeyboardAvoidingView>
   )
 }
