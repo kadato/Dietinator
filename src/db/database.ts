@@ -83,6 +83,15 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       yazio_sync_enabled INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS water_log (
+      id TEXT PRIMARY KEY NOT NULL,
+      date TEXT NOT NULL,
+      amount_ml REAL NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_water_date ON water_log(date);
+
     INSERT OR IGNORE INTO settings (id) VALUES (1);
 
     CREATE TABLE IF NOT EXISTS ai_chat_messages (
@@ -181,6 +190,19 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   if (!settingsColumns.some((column) => column.name === "theme_preference")) {
     await database.execAsync(
       `ALTER TABLE settings ADD COLUMN theme_preference TEXT NOT NULL DEFAULT 'system'`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "water_goal_ml")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN water_goal_ml REAL NOT NULL DEFAULT 2500`,
+    )
+  }
+  if (!settingsColumns.some((column) => column.name === "height_cm")) {
+    await database.execAsync(`ALTER TABLE settings ADD COLUMN height_cm REAL NOT NULL DEFAULT 0`)
+  }
+  if (!settingsColumns.some((column) => column.name === "target_weight_kg")) {
+    await database.execAsync(
+      `ALTER TABLE settings ADD COLUMN target_weight_kg REAL NOT NULL DEFAULT 0`,
     )
   }
 

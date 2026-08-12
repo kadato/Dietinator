@@ -41,6 +41,9 @@ function createMockDb(options: {
             "ai_system_prompt",
             "agent_bridge_rev",
             "theme_preference",
+            "water_goal_ml",
+            "height_cm",
+            "target_weight_kg",
           ]
         ).map((name) => ({ name }))
       }
@@ -68,6 +71,7 @@ describe("migrate", () => {
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS food_cache")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS deleted_yazio_items")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS settings")
+    expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS water_log")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meals")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meal_items")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_date")
@@ -98,6 +102,9 @@ describe("migrate", () => {
         "settings.ai_system_prompt",
         "settings.agent_bridge_rev",
         "settings.theme_preference",
+        "settings.water_goal_ml",
+        "settings.height_cm",
+        "settings.target_weight_kg",
         "food_cache.base_unit",
         "food_cache.source",
         "food_cache.servings_json",

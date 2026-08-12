@@ -38,6 +38,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ai_system_prompt: "",
     agent_bridge_rev: 0,
     theme_preference: "system",
+    water_goal_ml: 2500,
+    height_cm: 0,
+    target_weight_kg: 0,
   })
   const [yazioAvailable, setYazioAvailable] = useState(true)
 

@@ -71,6 +71,12 @@ export interface AppSettings {
   agent_bridge_rev: number
   /** Explicit app theme: follow the system, or force light/dark. */
   theme_preference: "system" | "light" | "dark"
+  /** Daily hydration target in milliliters (0 = unset, falls back to YAZIO). */
+  water_goal_ml: number
+  /** Body height in centimeters (0 = unset — no BMI shown). */
+  height_cm: number
+  /** Goal bodyweight in kilograms (0 = unset). */
+  target_weight_kg: number
 }
 
 export interface FoodNutrients {
@@ -129,6 +135,15 @@ export interface WeightEntry {
   /** Always stored in kilograms regardless of the display unit system. */
   weight_kg: number
   note: string | null
+  created_at: string
+}
+
+/** One logged water pour. */
+export interface WaterEntry {
+  id: string
+  date: string
+  /** Always stored in milliliters regardless of the display unit system. */
+  amount_ml: number
   created_at: string
 }
 

@@ -150,6 +150,9 @@ describe("get_diary_summary", () => {
       agent_bridge_rev: 0,
       theme_preference: "system" as const,
       ai_provider: "openai" as const,
+      water_goal_ml: 2500,
+      height_cm: 0,
+      target_weight_kg: 0,
     })
 
     const result = (await byName("get_diary_summary").execute({})) as Record<string, unknown>
@@ -180,6 +183,9 @@ describe("set_goals", () => {
       agent_bridge_rev: 0,
       theme_preference: "system" as const,
       ai_provider: "openai" as const,
+      water_goal_ml: 2500,
+      height_cm: 0,
+      target_weight_kg: 0,
     })
 
     const result = (await byName("set_goals").execute({ calorie_goal: 1800 })) as Record<
@@ -310,6 +316,9 @@ describe("get_settings / set_units", () => {
       ai_system_prompt: "",
       agent_bridge_rev: 0,
       theme_preference: "system" as const,
+      water_goal_ml: 2500,
+      height_cm: 0,
+      target_weight_kg: 0,
     })
     const result = (await byName("get_settings").execute({})) as Record<string, unknown>
     expect(result).toMatchObject({

@@ -54,6 +54,9 @@ function settingsRow() {
     ai_system_prompt: "",
     agent_bridge_rev: 0,
     theme_preference: "system" as const,
+    water_goal_ml: 2500,
+    height_cm: 0,
+    target_weight_kg: 0,
   }
 }
 
