@@ -14,8 +14,11 @@ import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { useToast } from "@/context/ToastContext"
 import { deleteMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
+import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
+import { mergeFoodResults } from "@/utils/food-search"
 import type { MealItem, SearchFoodResult } from "@/types"
 import { nutrientsForAmount } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
@@ -38,6 +41,7 @@ export default function MealBuilderScreen() {
   const isEditing = Boolean(mealId)
 
   const { colors } = useTheme()
+  const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
   const keyboardOpen = useKeyboardVisible()
@@ -49,11 +53,21 @@ export default function MealBuilderScreen() {
   const [loadingMeal, setLoadingMeal] = useState(isEditing)
   const [saving, setSaving] = useState(false)
 
-  const { foods: results, loading: searching } = useFoodSearch(debounced)
+  // With a blank query the builder shows favorites and recently used foods —
+  // local reads, so adding to a meal never has to wait on the network.
+  const emptyQuery = useCallback(async () => {
+    const [favorites, recent] = await Promise.all([getFavoriteFoods(), getRecentFoods(20)])
+    return mergeFoodResults(favorites, recent)
+  }, [])
+
+  const { foods: results, loading: searching } = useFoodSearch(debounced, { emptyQuery })
 
   // Cap rendered results — the builder renders into a ScrollView, so an
-  // unbounded list would stall the UI; refine the query for the rest.
-  const cappedResults = useMemo(() => results.slice(0, 30), [results])
+  // unbounded list would stall the UI; refine the query for the rest. The
+  // empty-query list (favorites + recents) is capped tighter so it stays
+  // scannable.
+  const isBlank = !debounced.trim()
+  const cappedResults = useMemo(() => results.slice(0, isBlank ? 12 : 30), [isBlank, results])
 
   // Edit mode: load the saved meal.
   useEffect(() => {
@@ -131,6 +145,7 @@ export default function MealBuilderScreen() {
   )
 
   const handleSave = async () => {
+    if (saving) return
     if (!name.trim()) {
       showWarning("Give your meal a name.", "Missing name")
       return
@@ -204,7 +219,7 @@ export default function MealBuilderScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text size="sm" className="mb-4 text-typography-500">
-            Saved meals are ready to log into any meal slot.
+            Ready to log into any meal slot.
           </Text>
 
           <Text size="xs" bold className="mb-1.5 text-typography-600">
@@ -217,6 +232,8 @@ export default function MealBuilderScreen() {
               onChangeText={setName}
               autoCorrect={false}
               accessibilityLabel="Meal name"
+              returnKeyType="done"
+              onSubmitEditing={() => void handleSave()}
             />
           </Input>
 
@@ -241,6 +258,7 @@ export default function MealBuilderScreen() {
                   <NumberStepper
                     value={item.amount === 0 ? "" : String(item.amount)}
                     onChangeText={(value) => setItemAmount(item.product_id, value)}
+                    onSubmit={() => void handleSave()}
                     step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
                     decimals={1}
                     size="sm"
@@ -280,6 +298,11 @@ export default function MealBuilderScreen() {
               accessibilityLabel="Search foods to add"
             />
           </Input>
+          {isBlank && results.length > 0 ? (
+            <Text size="xs" bold className="mb-2 mt-1 text-typography-600">
+              FAVORITE & RECENT PICKS
+            </Text>
+          ) : null}
           {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
           {cappedResults.map((food) => (
             <Pressable
@@ -304,12 +327,12 @@ export default function MealBuilderScreen() {
               </Box>
             </Pressable>
           ))}
-          {!searching && query.trim().length > 0 && results.length > 30 ? (
+          {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
             <Text size="xs" className="py-2 text-center text-typography-500">
               Showing the first 30 results — refine your search for more.
             </Text>
           ) : null}
-          {!searching && query.trim().length > 0 && results.length === 0 ? (
+          {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (
             <Text size="sm" className="py-3 text-center text-typography-500">
               No foods found. Try a different search.
             </Text>
@@ -335,7 +358,7 @@ export default function MealBuilderScreen() {
           style={{
             position: "absolute",
             left: 20,
-            bottom: insets.bottom + 16,
+            bottom: insets.bottom + 20,
             pointerEvents: "box-none",
           }}
         >
@@ -352,13 +375,13 @@ export default function MealBuilderScreen() {
           style={{
             position: "absolute",
             right: 20,
-            bottom: insets.bottom + 16,
+            bottom: insets.bottom + 20,
             pointerEvents: "box-none",
           }}
         >
           <Fab
             icon="checkmark"
-            label={isEditing ? "Save changes" : "Create meal"}
+            label={isMedium ? (isEditing ? "Save" : "Create") : undefined}
             onPress={() => void handleSave()}
             disabled={saving}
             accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}

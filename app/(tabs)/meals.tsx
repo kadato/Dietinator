@@ -1,31 +1,30 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, View } from "react-native"
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
-import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useLayout } from "@/hooks/useLayout"
-import { DatePickerModal } from "@/components/DatePickerModal"
 import { deleteMeal, listMeals, logMealToDiary, mealTotals, saveMeal } from "@/services/meals"
-import { formatDisplayDate, shiftDateKey, toDateKey } from "@/utils/date"
 import { confirmAction } from "@/utils/confirm"
-import { MEAL_LABELS } from "@/utils/meals"
 import type { Meal, MealType } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
 import { Fab } from "@/components/Fab"
-import { layout, spacing, type ColorPalette } from "@/theme"
+import { MealSlotModal } from "@/components/MealSlotModal"
+import { layout, spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+import { Input, InputField, InputIcon } from "@ui/input"
 
 export default function MealsScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning, showUndo } = useToast()
   const [meals, setMeals] = useState<Meal[]>([])
+  const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [loggingId, setLoggingId] = useState<string | null>(null)
   const [pendingLog, setPendingLog] = useState<Meal | null>(null)
@@ -45,6 +44,14 @@ export default function MealsScreen() {
       void load()
     }, [load]),
   )
+
+  // Meals are stored locally — the query filters by name so the list stays
+  // searchable without a network round trip.
+  const filteredMeals = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return meals
+    return meals.filter((meal) => meal.name.toLowerCase().includes(q))
+  }, [meals, query])
 
   const totalsById = useMemo(() => {
     const map = new Map<string, ReturnType<typeof mealTotals>>()
@@ -191,7 +198,7 @@ export default function MealsScreen() {
         className="mt-2 text-center leading-5 text-typography-500"
         style={{ maxWidth: 420 }}
       >
-        Combine foods you often eat together, then log them all in one tap.
+        Save combos and log them in one tap.
       </Text>
     </Box>
   )
@@ -199,19 +206,69 @@ export default function MealsScreen() {
   return (
     <Box className="flex-1 bg-background-0">
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
+        <Box className="px-6 pb-3" style={{ paddingTop: insets.top + spacing.md }}>
+          <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+            Meals
+          </Text>
+          <Text size="xs" className="mt-1 text-typography-500">
+            Reusable combinations, logged in one tap
+          </Text>
+          <Input size="md" variant="rounded" className="mt-3 bg-background-50">
+            <InputIcon>
+              <Ionicons name="search" size={18} color={colors.textMuted} />
+            </InputIcon>
+            <InputField
+              placeholder="Search meals…"
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              accessibilityLabel="Search meals"
+            />
+            {query.length > 0 ? (
+              <Pressable
+                onPress={() => setQuery("")}
+                className="pr-3"
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear meal search"
+              >
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
+          </Input>
+        </Box>
         {loading ? (
           <ActivityIndicator className="mt-6" color={colors.primary} />
         ) : (
           <FlatList
             className="flex-1"
-            data={meals}
+            data={filteredMeals}
             contentContainerClassName={
-              meals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"
+              filteredMeals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-32"
             }
-            contentContainerStyle={{ paddingTop: insets.top + spacing.md }}
             keyExtractor={(item) => item.id}
             renderItem={renderMeal}
-            ListEmptyComponent={emptyState}
+            ListEmptyComponent={
+              query.trim() ? (
+                <Box className="items-center px-6 pb-10 pt-14">
+                  <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
+                    <Ionicons name="search-outline" size={36} color={colors.primary} />
+                  </Box>
+                  <Text size="lg" bold className="mt-5 text-center text-typography-900">
+                    No meals found
+                  </Text>
+                  <Text
+                    size="sm"
+                    className="mt-2 text-center leading-5 text-typography-500"
+                    style={{ maxWidth: 420 }}
+                  >
+                    Nothing matches “{query.trim()}”.
+                  </Text>
+                </Box>
+              ) : (
+                emptyState
+              )
+            }
           />
         )}
       </PageContainer>
@@ -226,14 +283,15 @@ export default function MealsScreen() {
       >
         <Fab
           icon="add"
-          label="New meal"
+          label={isMedium ? "New meal" : undefined}
           onPress={() => openBuilder()}
           accessibilityLabel="Create a new meal"
         />
       </View>
 
       <MealSlotModal
-        meal={pendingLog}
+        visible={pendingLog !== null}
+        title={pendingLog ? `Log "${pendingLog.name}" into…` : "Log meal into…"}
         onSelect={(slot, dateKey) => {
           if (pendingLog) void handleLog(pendingLog, slot, dateKey)
         }}
@@ -242,174 +300,3 @@ export default function MealsScreen() {
     </Box>
   )
 }
-
-/** Asks which diary slot a meal should land in when logging from the Meals tab. */
-function MealSlotModal({
-  meal,
-  onSelect,
-  onClose,
-}: {
-  meal: Meal | null
-  onSelect: (slot: MealType, dateKey: string) => void
-  onClose: () => void
-}) {
-  const { colors } = useTheme()
-  const styles = useThemedStyles(createStyles)
-  const [dateKey, setDateKey] = useState(toDateKey())
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const slots: MealType[] = ["breakfast", "lunch", "dinner", "snack"]
-
-  // A new meal pick resets the target day — "log into today" is the default
-  // (render-adjustment pattern so the reset happens in the same commit).
-  const [lastMealId, setLastMealId] = useState<string | null>(null)
-  if (meal?.id !== lastMealId) {
-    setLastMealId(meal?.id ?? null)
-    setDateKey(toDateKey())
-  }
-
-  return (
-    <Modal visible={meal !== null} transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>Log {meal?.name ? `"${meal.name}"` : "meal"} into…</Text>
-          <View style={styles.dateRow}>
-            <Pressable
-              style={styles.dateNavBtn}
-              onPress={() => setDateKey((current) => shiftDateKey(current, -1))}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Previous day"
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Pressable
-              style={styles.dateLabelBtn}
-              onPress={() => setPickerOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Choose date"
-            >
-              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-              <Text style={styles.dateLabel}>{formatDisplayDate(dateKey)}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.dateNavBtn}
-              onPress={() => setDateKey((current) => shiftDateKey(current, 1))}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Next day"
-            >
-              <Ionicons name="chevron-forward" size={20} color={colors.text} />
-            </Pressable>
-          </View>
-          <View style={styles.slotList}>
-            {slots.map((slot) => (
-              <Pressable
-                key={slot}
-                style={styles.slotRow}
-                onPress={() => onSelect(slot, dateKey)}
-                accessibilityRole="button"
-                accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
-              >
-                <View style={[styles.slotIcon, { backgroundColor: `${colors[slot]}22` }]}>
-                  <Ionicons name="restaurant-outline" size={18} color={colors[slot]} />
-                </View>
-                <Text style={styles.slotLabel}>{MEAL_LABELS[slot]}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
-            ))}
-          </View>
-          <Pressable
-            style={styles.cancelBtn}
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel logging meal"
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-        </View>
-      </Pressable>
-      <DatePickerModal
-        visible={pickerOpen}
-        dateKey={dateKey}
-        onSelect={setDateKey}
-        onClose={() => setPickerOpen(false)}
-      />
-    </Modal>
-  )
-}
-
-const createStyles = (colors: ColorPalette) =>
-  StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.4)",
-      justifyContent: "center",
-      padding: spacing.lg,
-    },
-    sheet: {
-      backgroundColor: colors.surface,
-      borderRadius: 24,
-      padding: spacing.md,
-      width: "100%",
-      maxWidth: 380,
-      alignSelf: "center",
-      boxShadow: "0px 6px 12px rgba(0, 0, 0, 0.25)",
-      elevation: 8,
-    },
-    sheetTitle: {
-      color: colors.text,
-      fontSize: 17,
-      fontWeight: "700",
-      marginBottom: spacing.md,
-      paddingHorizontal: spacing.xs,
-    },
-    slotList: { gap: spacing.sm },
-    dateRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.sm,
-      marginBottom: spacing.sm,
-      paddingHorizontal: spacing.xs,
-    },
-    dateNavBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    dateLabelBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.xs,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      borderRadius: 18,
-      backgroundColor: colors.surfaceAlt,
-    },
-    dateLabel: { color: colors.text, fontSize: 14, fontWeight: "700" },
-    slotRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-      paddingVertical: spacing.sm + 2,
-      paddingHorizontal: spacing.xs,
-      borderRadius: 14,
-    },
-    slotIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    slotLabel: { flex: 1, color: colors.text, fontSize: 16, fontWeight: "600" },
-    cancelBtn: {
-      alignSelf: "center",
-      marginTop: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    cancelText: { color: colors.textMuted, fontSize: 15, fontWeight: "600" },
-  })

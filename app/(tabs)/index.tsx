@@ -10,6 +10,8 @@ import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { LogWeightModal } from "@/components/LogWeightModal"
+import { LogWaterModal } from "@/components/LogWaterModal"
+import { MealSlotModal } from "@/components/MealSlotModal"
 import { Fab } from "@/components/Fab"
 import { useApp } from "@/context/AppContext"
 import { useAiChatModal } from "@/context/AiChatContext"
@@ -25,9 +27,8 @@ import {
 } from "@/services/diary"
 import { getLatestWeightEntry } from "@/db/weight"
 import { getWaterTotalForDate } from "@/db/water"
-import { LogWaterModal } from "@/components/LogWaterModal"
 import { confirmAction } from "@/utils/confirm"
-import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
+import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
@@ -44,7 +45,7 @@ export default function TodayScreen() {
   const { openAiChat } = useAiChatModal()
   const { showError, showSuccess, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide, isMedium } = useLayout()
+  const { isWide, isMedium, width } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -55,6 +56,7 @@ export default function TodayScreen() {
   const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
   const [logWaterOpen, setLogWaterOpen] = useState(false)
+  const [logSlotOpen, setLogSlotOpen] = useState(false)
   const [localWaterMl, setLocalWaterMl] = useState(0)
 
   const totals = useMemo(() => sumNutrients(entries), [entries])
@@ -255,25 +257,35 @@ export default function TodayScreen() {
   const waterGoal = settings.water_goal_ml > 0 ? settings.water_goal_ml : (summary?.waterGoal ?? 0)
   const insets = useSafeAreaInsets()
 
-  const fabCluster =
-    settings.ai_enabled === 1 ? (
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24,
-          pointerEvents: "box-none",
-        }}
-      >
+  const fabCluster = (
+    <View
+      style={{
+        position: "absolute",
+        right: 20,
+        bottom: isWide ? insets.bottom + 24 : layout.tabBarHeight + insets.bottom + 24,
+        alignItems: "flex-end",
+        gap: 12,
+        pointerEvents: "box-none",
+      }}
+    >
+      {settings.ai_enabled === 1 ? (
         <Fab
+          size="sm"
+          tone="surface"
           icon="robot-outline"
           IconComponent={MaterialCommunityIcons}
-          label={isMedium ? "Ask AI" : undefined}
           onPress={openAiChat}
           accessibilityLabel="Open AI assistant"
         />
-      </View>
-    ) : null
+      ) : null}
+      <Fab
+        icon="add"
+        label={isMedium ? "Log food" : undefined}
+        onPress={() => setLogSlotOpen(true)}
+        accessibilityLabel="Log food"
+      />
+    </View>
+  )
 
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
@@ -287,14 +299,6 @@ export default function TodayScreen() {
         fatGoal={settings.fat_goal}
       />
       <Box className="flex-row items-center justify-around border-t border-outline-200 px-2 py-3">
-        {summary && summary.steps > 0 ? (
-          <Box className="flex-row items-center gap-1.5">
-            <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
-            <Text size="sm" className="text-typography-900">
-              {summary.steps.toLocaleString()}
-            </Text>
-          </Box>
-        ) : null}
         {summary && summary.steps > 0 ? (
           <Box className="flex-row items-center gap-1.5">
             <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
@@ -362,8 +366,8 @@ export default function TodayScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Open calendar"
               >
-                <Text size="md" bold className="text-typography-900">
-                  {formatDisplayDate(dateKey)}
+                <Text size="md" bold numberOfLines={1} className="text-typography-900">
+                  {width < 375 ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
                 </Text>
               </Pressable>
               {!isToday ? (
@@ -463,6 +467,19 @@ export default function TodayScreen() {
         initialDateKey={dateKey}
         onClose={() => setLogWaterOpen(false)}
         onSaved={() => load({ quiet: true })}
+      />
+
+      <MealSlotModal
+        visible={logSlotOpen}
+        title="Log food into…"
+        onSelect={(slot, targetDate) => {
+          setLogSlotOpen(false)
+          router.push({
+            pathname: "/log-meal",
+            params: { meal: slot, date: targetDate },
+          })
+        }}
+        onClose={() => setLogSlotOpen(false)}
       />
 
       {fabCluster}
