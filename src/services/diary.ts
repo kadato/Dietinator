@@ -216,4 +216,46 @@ export async function deleteFoodEntry(id: string): Promise<void> {
   pushSnapshot().catch(() => undefined)
 }
 
+/** Re-insert a deleted entry with its original id (undo). Local-only restore. */
+export async function restoreFoodEntry(entry: DiaryEntry): Promise<void> {
+  await diaryDb.addDiaryEntry(entry)
+  pushSnapshot().catch(() => undefined)
+}
+
+/**
+ * Copy every entry logged on `sourceDate` to `targetDate` (repeat-yesterday).
+ * Each copy gets a fresh id and YAZIO item id so imports can never duplicate
+ * it; entries are pushed to YAZIO best-effort like a normal log.
+ */
+export async function copyEntriesToDate(sourceDate: string, targetDate: string): Promise<number> {
+  if (sourceDate === targetDate) return 0
+  const entries = await diaryDb.getDiaryEntriesForDate(sourceDate)
+  let count = 0
+  for (const entry of entries) {
+    const created = await diaryDb.addDiaryEntry({
+      id: generateId(),
+      yazio_item_id: generateId(),
+      date: targetDate,
+      meal_type: entry.meal_type,
+      food_id: entry.food_id,
+      food_name: entry.food_name,
+      amount: entry.amount,
+      unit: entry.unit,
+      kcal: entry.kcal,
+      protein: entry.protein,
+      carbs: entry.carbs,
+      fat: entry.fat,
+      created_at: new Date().toISOString(),
+    })
+    count += 1
+    if (created.food_id) {
+      syncEntryToYazio(created).catch(() => undefined)
+    }
+  }
+  if (count > 0) {
+    pushSnapshot().catch(() => undefined)
+  }
+  return count
+}
+
 export { exportDiaryJson, exportDiaryCsv } from "@/db/diary"
