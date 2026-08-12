@@ -181,7 +181,7 @@ type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"]
  */
 function GoalsSettings({ settings }: { settings: AppSettings }) {
   const { updateSettings } = useApp()
-  const { showError, showSuccess } = useToast()
+  const { showError } = useToast()
   const { colors } = useTheme()
   const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal))
   const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal))
@@ -241,7 +241,6 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     setGoalError(null)
     try {
       await updateSettings(values)
-      showSuccess("Goals updated.", "Saved")
     } catch (error) {
       showError(error, "Could not save goals.")
     }
@@ -427,7 +426,6 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         saveAiApiKey(aiApiKey),
       ])
       setTestResult(null)
-      showSuccess("AI assistant settings saved.", "Saved")
     } catch (error) {
       showError(error, "Could not save AI settings.")
     } finally {
@@ -904,7 +902,6 @@ export default function SettingsScreen() {
             try {
               await updateSettings({ food_database_country: code })
               setProfileCountry(null)
-              showSuccess(`Search now uses ${getFoodDatabaseCountryLabel(code)}.`, "Food database")
             } catch (error) {
               showError(error, "Could not save food database country.")
             }

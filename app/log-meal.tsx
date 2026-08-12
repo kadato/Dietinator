@@ -227,16 +227,12 @@ export default function LogMealScreen() {
       if (addingKey === key) return
       setAddingKey(key)
       try {
-        const { amount: logged } = await quickLogFood({
+        await quickLogFood({
           date,
           mealType,
           food,
           amount,
         })
-        showSuccess(
-          `Added ${food.name} · ${logged} ${displayUnit(food.base_unit || "g")} to ${MEAL_LABELS[mealType]}.`,
-          "Added",
-        )
         await loadLoggedEntries()
         refresh()
       } catch (error) {
@@ -245,7 +241,7 @@ export default function LogMealScreen() {
         setAddingKey(null)
       }
     },
-    [addingKey, date, loadLoggedEntries, mealType, refresh, showError, showSuccess],
+    [addingKey, date, loadLoggedEntries, mealType, refresh, showError],
   )
 
   const openEdit = useCallback(

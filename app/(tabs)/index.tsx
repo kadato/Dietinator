@@ -43,7 +43,7 @@ export default function TodayScreen() {
   const router = useRouter()
   const { settings, yazioAvailable, authenticated } = useApp()
   const { openAiChat } = useAiChatModal()
-  const { showError, showSuccess, showWarning, showUndo } = useToast()
+  const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isMedium, width } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
@@ -112,12 +112,6 @@ export default function TodayScreen() {
         if (result.error && !options?.quiet) {
           showWarning(result.error, "YAZIO import")
         } else if (!options?.quiet && result.imported > 0 && result.failed === 0) {
-          showSuccess(
-            result.imported === 1
-              ? "Imported 1 item from YAZIO."
-              : `Imported ${result.imported} items from YAZIO.`,
-            "Synced",
-          )
         } else if (!options?.quiet && result.failed > 0) {
           showWarning(
             `${result.imported} imported, ${result.failed} could not be loaded. Try again.`,
@@ -130,7 +124,7 @@ export default function TodayScreen() {
         setImporting(false)
       }
     },
-    [authenticated, dateKey, showError, showSuccess, showWarning],
+    [authenticated, dateKey, showError, showWarning],
   )
 
   useFocusEffect(
@@ -211,19 +205,15 @@ export default function TodayScreen() {
         onConfirm: async () => {
           if (count === 0) return
           try {
-            const copied = await copyEntriesToDate(sourceDate, dateKey)
+            await copyEntriesToDate(sourceDate, dateKey)
             await load({ quiet: true })
-            showSuccess(
-              copied === 1 ? "Copied 1 entry." : `Copied ${copied} entries.`,
-              "Day copied",
-            )
           } catch (error) {
             showError(error, "Could not copy entries.")
           }
         },
       })
     })()
-  }, [dateKey, load, showError, showSuccess])
+  }, [dateKey, load, showError])
 
   const renderMealSections = (grid?: boolean) =>
     MEAL_TYPES.map((meal) => {

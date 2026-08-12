@@ -49,7 +49,7 @@ function weightToDisplay(kg: number, units: string): string {
  */
 export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Props) {
   const { settings } = useApp()
-  const { showError, showWarning, showSuccess } = useToast()
+  const { showError, showWarning } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { isWide } = useLayout()
@@ -102,7 +102,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     setSaving(true)
     try {
       await saveWeightEntry({ date: dateKey, weightKg })
-      showSuccess(`Logged ${formatDisplayDate(dateKey)}.`, "Weight saved")
       onClose()
       onSaved?.()
     } catch (error) {

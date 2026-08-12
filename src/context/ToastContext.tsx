@@ -10,9 +10,11 @@ import React, {
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
+import { Fab } from "@/components/Fab"
 import { useTheme } from "@/hooks/useTheme"
 import { getErrorMessage } from "@/utils/error-message"
-import { layout, spacing, type ColorPalette } from "@/theme"
+import { mixColors } from "@/utils/color"
+import { spacing, type ColorPalette } from "@/theme"
 
 export type ToastType = "success" | "error" | "info" | "warning"
 
@@ -57,6 +59,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
   const [opacity] = useState(() => new Animated.Value(0))
   const [translateY] = useState(() => new Animated.Value(-24))
   const [translateX] = useState(() => new Animated.Value(0))
+  const [progress] = useState(() => new Animated.Value(1))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dismiss = useCallback(() => {
@@ -112,6 +115,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
     translateX.setValue(0)
     opacity.setValue(0)
     translateY.setValue(-24)
+    progress.setValue(1)
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: NATIVE_DRIVER }),
       Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: NATIVE_DRIVER }),
@@ -119,24 +123,35 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
 
     const type = toast.type ?? "info"
     const duration = toast.duration ?? DEFAULT_DURATION[type]
+    // Countdown bar under the card mirrors the auto-dismiss timer.
+    Animated.timing(progress, {
+      toValue: 0,
+      duration,
+      useNativeDriver: false,
+    }).start()
     timerRef.current = setTimeout(dismiss, duration)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [toast, opacity, translateX, translateY, dismiss])
+  }, [toast, opacity, translateX, translateY, progress, dismiss])
 
   if (!toast) return null
 
   const type = toast.type ?? "info"
-  const styles = createToastStyles(colors)
+  const palette = toastPalette(type, colors)
   const icon = toastIcon(type)
+  const styles = createToastStyles(colors)
+  const barWidth = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  })
 
   return (
     <View
       style={[
         styles.host,
-        { paddingTop: Platform.OS !== "web" ? insets.top + spacing.sm : spacing.sm },
+        { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
       ]}
       pointerEvents="box-none"
     >
@@ -144,32 +159,39 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
         {...panResponder.panHandlers}
         style={[
           styles.toast,
-          toastAccent(type, colors),
+          { backgroundColor: palette.bg, borderColor: palette.border },
           { opacity, transform: [{ translateX }, { translateY }] },
         ]}
       >
-        <Pressable style={styles.row} onPress={dismiss} accessibilityRole="button">
-          <Ionicons name={icon.name} size={22} color={icon.color} style={styles.icon} />
+        <Pressable
+          style={styles.row}
+          onPress={dismiss}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss notification"
+        >
+          <View style={[styles.iconChip, { backgroundColor: palette.chip }]}>
+            <Ionicons name={icon} size={20} color={palette.tint} />
+          </View>
           <View style={styles.textWrap}>
             {toast.title ? <Text style={styles.title}>{toast.title}</Text> : null}
             <Text style={styles.message}>{toast.message}</Text>
           </View>
+          <Ionicons name="close" size={16} color={colors.textMuted} style={styles.closeIcon} />
         </Pressable>
-        <Pressable
-          style={styles.closeBtn}
-          onPress={dismiss}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Dismiss notification"
-        >
-          <Ionicons name="close" size={18} color={colors.textMuted} />
-        </Pressable>
+        <View style={styles.progressTrack}>
+          <Animated.View
+            style={[styles.progressFill, { backgroundColor: palette.tint, width: barWidth }]}
+          />
+        </View>
       </Animated.View>
     </View>
   )
 }
 
-/** Floating "Undo" button with a countdown bar — auto-disappears after UNDO_TTL_MS. */
+/**
+ * Floating "Undo" button — auto-disappears after UNDO_TTL_MS. Icon-only
+ * danger FAB that hovers above the screen's FAB cluster.
+ */
 function UndoFab({
   undo,
   onUndo,
@@ -180,10 +202,8 @@ function UndoFab({
   onDismiss: () => void
 }) {
   const insets = useSafeAreaInsets()
-  const { colors } = useTheme()
   const [opacity] = useState(() => new Animated.Value(0))
   const [translateY] = useState(() => new Animated.Value(12))
-  const [progress] = useState(() => new Animated.Value(1))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const dismiss = useCallback(() => {
@@ -210,11 +230,6 @@ function UndoFab({
         bounciness: 0,
       }),
     ]).start()
-    Animated.timing(progress, {
-      toValue: 0,
-      duration: UNDO_TTL_MS,
-      useNativeDriver: false,
-    }).start()
     timerRef.current = setTimeout(dismiss, UNDO_TTL_MS)
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
@@ -227,34 +242,27 @@ function UndoFab({
     dismiss()
   }
 
-  const width = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"],
-  })
-
   return (
     <View
-      style={[undoStyles.layer, { bottom: layout.tabBarHeight + insets.bottom + 24 }]}
+      style={[
+        undoStyles.layer,
+        // Bottom-left, just above the tab bar. Sits clear of any left-side
+        // FAB (e.g. the water modal's Cancel button at insets.bottom + 20).
+        { bottom: insets.bottom + 88 },
+      ]}
       pointerEvents="box-none"
     >
       <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-        <Pressable
-          style={[undoStyles.fab, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        <Fab
+          icon="refresh-outline"
+          tone="danger"
           onPress={handleUndo}
-          accessibilityRole="button"
           accessibilityLabel="Undo"
-        >
-          <Ionicons name="arrow-undo" size={20} color={colors.primary} />
-          <Text style={[undoStyles.label, { color: colors.text }]}>Undo</Text>
-        </Pressable>
-        <View style={[undoStyles.track, { backgroundColor: colors.surfaceAlt }]}>
-          <Animated.View style={[undoStyles.fill, { backgroundColor: colors.primary, width }]} />
-        </View>
+        />
       </Animated.View>
     </View>
   )
 }
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [undo, setUndo] = useState<UndoState | null>(null)
@@ -324,64 +332,47 @@ export function useToast(): ToastContextValue {
   return ctx
 }
 
-function toastIcon(type: ToastType): { name: keyof typeof Ionicons.glyphMap; color: string } {
+function toastIcon(type: ToastType): keyof typeof Ionicons.glyphMap {
   switch (type) {
     case "success":
-      return { name: "checkmark-circle", color: "#22c55e" }
+      return "checkmark-circle"
     case "error":
-      return { name: "alert-circle", color: "#ef4444" }
+      return "alert-circle"
     case "warning":
-      return { name: "warning", color: "#f59e0b" }
+      return "warning"
     default:
-      return { name: "information-circle", color: "#3b82f6" }
+      return "information-circle"
   }
 }
 
-function toastAccent(type: ToastType, colors: ColorPalette) {
-  switch (type) {
-    case "success":
-      return { borderLeftColor: colors.primary }
-    case "error":
-      return { borderLeftColor: colors.danger }
-    case "warning":
-      return { borderLeftColor: colors.warning }
-    default:
-      return { borderLeftColor: colors.primaryMuted }
+/**
+ * Theme-aware per-type palette. The card background is a solid blend of the
+ * surface color and the type tint — an alpha-tinted background would let
+ * content behind the toast bleed through on web.
+ */
+function toastPalette(type: ToastType, colors: ColorPalette) {
+  const tint =
+    type === "success"
+      ? colors.primary
+      : type === "error"
+        ? colors.danger
+        : type === "warning"
+          ? colors.warning
+          : colors.primaryMuted
+  return {
+    tint,
+    chip: `${tint}26`,
+    border: `${tint}3D`,
+    bg: mixColors(colors.surface, tint, 0.1),
   }
 }
 
 const undoStyles = StyleSheet.create({
   layer: {
     position: "absolute",
-    right: 20,
-    alignItems: "flex-end",
+    left: 20,
+    alignItems: "flex-start",
     zIndex: 9999,
-  },
-  fab: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    elevation: 6,
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  track: {
-    alignSelf: "stretch",
-    marginTop: 6,
-    height: 3,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    borderRadius: 2,
   },
 })
 
@@ -398,75 +389,44 @@ const createToastStyles = (colors: ColorPalette) =>
     },
     toast: {
       width: "100%",
-      maxWidth: 480,
-      backgroundColor: colors.surface,
-      borderRadius: 12,
+      maxWidth: 420,
+      borderRadius: 16,
       borderWidth: 1,
-      borderColor: colors.border,
-      borderLeftWidth: 4,
-      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.15)",
-      elevation: 6,
+      overflow: "hidden",
+      boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.18)",
+      elevation: 8,
     },
     row: {
       flexDirection: "row",
       alignItems: "center",
       padding: spacing.md,
-      paddingRight: spacing.xl,
-      gap: spacing.sm,
+      paddingRight: spacing.md + spacing.xs,
+      gap: spacing.sm + 2,
     },
-    closeBtn: {
-      position: "absolute",
-      top: 0,
-      right: spacing.sm,
-      bottom: 0,
+    iconChip: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: spacing.xs,
+      flexShrink: 0,
     },
-    icon: { flexShrink: 0 },
-    textWrap: { flex: 1 },
+    closeIcon: { flexShrink: 0 },
+    textWrap: { flex: 1, gap: 2 },
     title: {
       color: colors.text,
-      fontSize: 14,
-      fontWeight: "700",
-      marginBottom: 2,
-    },
-    message: {
-      color: colors.text,
-      fontSize: 14,
-      lineHeight: 20,
-    },
-    undoLayer: {
-      position: "absolute",
-      right: 20,
-      alignItems: "flex-end",
-      zIndex: 9999,
-    },
-    undoFab: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      paddingHorizontal: 18,
-      paddingVertical: 12,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      elevation: 6,
-      boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
-    },
-    undoLabel: {
       fontSize: 15,
       fontWeight: "700",
     },
-    undoTrack: {
-      alignSelf: "stretch",
-      marginTop: 6,
-      height: 3,
-      borderRadius: 2,
-      overflow: "hidden",
-      backgroundColor: colors.surfaceAlt,
+    message: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
     },
-    undoFill: {
+    progressTrack: {
+      height: 3,
+    },
+    progressFill: {
       height: "100%",
-      borderRadius: 2,
     },
   })
