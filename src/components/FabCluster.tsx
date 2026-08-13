@@ -16,6 +16,13 @@ const styles = StyleSheet.create({
   clusterRight: {
     alignItems: "flex-end",
   },
+  clusterCenter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    pointerEvents: "box-none",
+  },
 })
 
 type Props = {
@@ -23,6 +30,8 @@ type Props = {
   left?: ReactNode
   /** FABs docked to the bottom-right of the screen. */
   right?: ReactNode
+  /** FABs docked bottom-center (thumb-friendly on phones). */
+  center?: ReactNode
   /** Distance from the bottom edge (safe area already included by callers). */
   bottomOffset?: number
   /** Vertical gap between stacked FABs. */
@@ -32,18 +41,25 @@ type Props = {
 }
 
 /**
- * Docks FABs to the bottom corners. Renders only the corner clusters
- * (content-sized), never a full-screen wrapper, so taps outside the cluster
- * reach the screen below on every platform.
- *
- * Replaces the hand-rolled `fabLayer` / `fabLeft` / `fabRight` wrappers that
- * drifted across screens (right: 20 vs 24, bottom: +16 vs +24).
+ * Docks FABs to the bottom corners or bottom-center. Renders only the
+ * clusters (content-sized), never a full-screen wrapper, so taps outside the
+ * cluster reach the screen below on every platform.
  */
-export function FabCluster({ left, right, bottomOffset = 20, gap = 12, insetX = 20 }: Props) {
+export function FabCluster({
+  left,
+  right,
+  center,
+  bottomOffset = 20,
+  gap = 12,
+  insetX = 20,
+}: Props) {
   return (
     <>
       {left ? (
         <View style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}>{left}</View>
+      ) : null}
+      {center ? (
+        <View style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}>{center}</View>
       ) : null}
       {right ? (
         <View

@@ -43,7 +43,7 @@ export default function SearchScreen() {
   const { yazioAvailable } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
-  const { isWide, isMedium } = useLayout()
+  const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
@@ -202,7 +202,7 @@ export default function SearchScreen() {
           icon="cloud-offline-outline"
           iconColor={colors.danger}
           title="Could not search foods"
-          message="Something went wrong locally. Pull to refresh or try again."
+          message="Something went wrong. Pull to refresh."
           className="mt-12"
         />
       )
@@ -232,8 +232,8 @@ export default function SearchScreen() {
       <EmptyState
         icon="search-outline"
         iconColor={colors.primary}
-        title="Find your foods"
-        message="Search the YAZIO database. Recents and favorites show up here."
+        title="Find foods"
+        message="Recents and favorites appear here."
       />
     )
   }, [
@@ -255,7 +255,7 @@ export default function SearchScreen() {
           className={`${isWide ? "px-8" : "px-6"} pb-3`}
           style={{ paddingTop: insets.top + spacing.md }}
         >
-          <Input size="lg" variant="rounded" className="bg-background-50">
+          <Input size="lg" variant="rounded" className="border-outline-100 bg-background-50">
             <InputIcon>
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
@@ -345,10 +345,10 @@ export default function SearchScreen() {
       </PageContainer>
 
       <FabCluster
-        right={
+        center={
           <Fab
             icon="barcode-outline"
-            label={isMedium ? "Scan" : undefined}
+            label="Scan"
             onPress={openScan}
             accessibilityLabel="Scan barcode"
           />

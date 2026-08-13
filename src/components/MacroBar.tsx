@@ -13,13 +13,13 @@ type MacroProps = {
 
 function MacroRow({ label, value, goal, color, styles }: MacroProps) {
   const progress = goal > 0 ? Math.min(value / goal, 1) : 0
+  const labelText =
+    goal > 0 ? `${Math.round(value)} / ${Math.round(goal)} g` : `${Math.round(value)} g`
   return (
     <View style={styles.row}>
       <View style={styles.rowHeader}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>
-          {Math.round(value)} / {Math.round(goal)} g
-        </Text>
+        <Text style={styles.value}>{labelText}</Text>
       </View>
       <View style={styles.barBg}>
         <View style={[styles.barFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
@@ -37,6 +37,7 @@ type Props = {
   fatGoal: number
 }
 
+/** Daily macro progress: one compact bar per macro. */
 export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
@@ -61,21 +62,21 @@ const createStyles = (colors: ColorPalette) =>
     container: {
       gap: spacing.md,
       paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.lg,
-      paddingTop: spacing.sm,
+      paddingBottom: spacing.md,
+      paddingTop: spacing.md,
       borderTopWidth: 1,
       borderTopColor: colors.border,
       marginTop: spacing.sm,
     },
-    row: { gap: spacing.xs },
+    row: { gap: 6 },
     rowHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
     },
-    label: { fontSize: 14, color: colors.text, fontWeight: "600", flexShrink: 0 },
+    label: { fontSize: 13, color: colors.text, fontWeight: "600", flexShrink: 0 },
     barBg: {
-      height: 10,
+      height: 7,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 999,
       overflow: "hidden",

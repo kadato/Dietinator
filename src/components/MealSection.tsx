@@ -3,7 +3,6 @@ import { Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
-import { ProgressRing } from "@/components/ProgressRing"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -44,48 +43,40 @@ export const MealSection = memo(function MealSection({
   const accent = colors[mealType]
   const totalKcal = entries.reduce((s, e) => s + e.kcal, 0)
   const goal = mealGoal && mealGoal > 0 ? mealGoal : undefined
-  const progress = goal ? Math.min(totalKcal / goal, 1) : 0
   const calorieLabel = goal
     ? `${Math.round(totalKcal)} / ${Math.round(goal)} Cal`
     : `${Math.round(totalKcal)} Cal`
 
   return (
-    <Card
-      variant="elevated"
-      className="mb-3 overflow-hidden p-4"
-      style={{ borderLeftWidth: 4, borderLeftColor: accent }}
-    >
-      <Box className="flex-row items-start gap-3">
+    <Card variant="elevated" className="mb-3 overflow-hidden p-4">
+      <Box className="flex-row items-center gap-3">
         <Pressable
           onPress={() => {
             if (entries.length === 0) onAdd(mealType)
             else setExpanded((v) => !v)
           }}
-          className="min-w-0 flex-1 flex-row items-start gap-3 active:opacity-80"
+          className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel={`${MEAL_LABELS[mealType]}, ${calorieLabel}`}
         >
-          <ProgressRing
-            progress={progress}
-            size={48}
-            stroke={3}
-            color={accent}
-            trackColor={colors.surfaceAlt}
+          <Box
+            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: `${accent}1f` }}
           >
-            <Ionicons name={MEAL_ICONS[mealType]} size={20} color={accent} />
-          </ProgressRing>
+            <Ionicons name={MEAL_ICONS[mealType]} size={21} color={accent} />
+          </Box>
 
-          <Box className="min-w-0 flex-1 pt-0.5">
-            <Text size="lg" bold className="text-typography-900">
+          <Box className="min-w-0 flex-1">
+            <Text size="md" bold className="text-typography-900">
               {MEAL_LABELS[mealType]}
             </Text>
-            <Text size="sm" bold className="mt-0.5 text-typography-500">
+            <Text size="xs" bold style={{ color: accent }}>
               {calorieLabel}
             </Text>
             <Text
-              size="sm"
-              className="mt-1.5 leading-[18px] text-typography-500"
-              numberOfLines={expanded ? undefined : 2}
+              size="xs"
+              className="mt-0.5 leading-[16px] text-typography-500"
+              numberOfLines={expanded ? undefined : 1}
             >
               {formatFoodPreview(entries)}
             </Text>
@@ -93,7 +84,7 @@ export const MealSection = memo(function MealSection({
         </Pressable>
 
         <Pressable
-          className="mt-1 h-10 w-10 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
+          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
           onPress={() => onAdd(mealType)}
           hitSlop={4}
           accessibilityRole="button"
@@ -104,7 +95,7 @@ export const MealSection = memo(function MealSection({
       </Box>
 
       {expanded && entries.length > 0 ? (
-        <Box className="mt-4 gap-0.5 border-t border-outline-200 pt-4">
+        <Box className="mt-3 gap-0.5 border-t border-outline-100 pt-3">
           {entries.map((entry) => (
             <DiaryEntryRow
               key={`${dateKey}-${entry.id}`}

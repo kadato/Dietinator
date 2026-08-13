@@ -22,13 +22,13 @@ export function SegmentedControl<T extends string>({
   const accent = accentColor ?? colors.primary
 
   return (
-    <View className="flex-row rounded-full border border-outline-200 bg-background-50 p-1">
+    <View className="flex-row rounded-full border border-outline-100 bg-background-50 p-1">
       {options.map((option) => {
         const active = option.value === value
         return (
           <Pressable
             key={option.value}
-            className="flex-1 items-center rounded-full px-3 py-2.5"
+            className="flex-1 items-center rounded-full px-3 py-2"
             style={active ? { backgroundColor: accent } : undefined}
             onPress={() => onChange(option.value)}
             hitSlop={2}

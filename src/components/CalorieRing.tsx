@@ -7,62 +7,63 @@ import { spacing, type ColorPalette } from "@/theme"
 type Props = {
   consumed: number
   goal: number
-  /** Ring diameter; defaults to 140 (mobile scale). */
+  /** Ring diameter; defaults to 132 (mobile scale). */
   size?: number
 }
 
-export function CalorieRing({ consumed, goal, size = 140 }: Props) {
+/**
+ * Daily calorie summary: a ring showing how much of the goal is left.
+ * Over-goal days flip the ring and the center value to the danger color.
+ */
+export function CalorieRing({ consumed, goal, size = 132 }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const remaining = Math.max(goal - consumed, 0)
   const over = consumed > goal ? consumed - goal : 0
   const progress = goal > 0 ? Math.min(consumed / goal, 1) : 0
   const ringColor = over > 0 ? colors.danger : colors.primary
-  const scale = size / 140
-
-  const ring = (
-    <View style={styles.ringWrap}>
-      <ProgressRing
-        progress={progress}
-        size={size}
-        stroke={Math.round(10 * scale)}
-        color={ringColor}
-        trackColor={colors.surfaceAlt}
-      >
-        <View style={[styles.ringCenter, { width: size * 0.7 }]}>
-          <Text
-            maxFontSizeMultiplier={1.2}
-            style={[
-              styles.remainingValue,
-              over > 0 && { color: colors.danger },
-              { fontSize: 28 * scale },
-            ]}
-          >
-            {over > 0 ? Math.round(over).toLocaleString() : Math.round(remaining).toLocaleString()}
-          </Text>
-          <Text style={[styles.remainingLabel, { fontSize: 13 * scale }]}>
-            {over > 0 ? "Over goal" : "Remaining"}
-          </Text>
-        </View>
-      </ProgressRing>
-    </View>
-  )
-
-  const eatenStat = (
-    <View style={styles.sideStat}>
-      <Text maxFontSizeMultiplier={1.2} style={[styles.sideValue, { fontSize: 20 * scale }]}>
-        {Math.round(consumed).toLocaleString()}
-      </Text>
-      <Text style={styles.sideLabel}>Eaten</Text>
-    </View>
-  )
+  const scale = size / 132
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Today</Text>
-      {ring}
-      <View style={styles.statsRow}>{eatenStat}</View>
-      <Text style={styles.goalHint}>Daily goal {Math.round(goal).toLocaleString()} kcal</Text>
+      <View style={styles.ringWrap}>
+        <ProgressRing
+          progress={progress}
+          size={size}
+          stroke={Math.round(9 * scale)}
+          color={ringColor}
+          trackColor={colors.surfaceAlt}
+        >
+          <View style={[styles.ringCenter, { width: size * 0.66 }]}>
+            <Text
+              maxFontSizeMultiplier={1.2}
+              style={[
+                styles.remainingValue,
+                over > 0 && { color: colors.danger },
+                { fontSize: 30 * scale },
+              ]}
+            >
+              {over > 0
+                ? Math.round(over).toLocaleString()
+                : Math.round(remaining).toLocaleString()}
+            </Text>
+            <Text style={[styles.remainingLabel, { fontSize: 13 * scale }]}>
+              {over > 0 ? "over" : "left"}
+            </Text>
+          </View>
+        </ProgressRing>
+      </View>
+      <View style={styles.statsRow}>
+        <Text style={styles.stat}>
+          <Text style={styles.statValue}>{Math.round(consumed).toLocaleString()}</Text>{" "}
+          <Text style={styles.statLabel}>eaten</Text>
+        </Text>
+        <View style={styles.dot} />
+        <Text style={styles.stat}>
+          <Text style={styles.statValue}>{Math.round(goal).toLocaleString()}</Text>{" "}
+          <Text style={styles.statLabel}>goal</Text>
+        </Text>
+      </View>
     </View>
   )
 }
@@ -71,37 +72,8 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: {
       padding: spacing.lg,
-      paddingBottom: 0,
-    },
-    sectionTitle: {
-      fontSize: 22,
-      fontWeight: "700",
-      color: colors.text,
-      marginBottom: spacing.lg,
-    },
-    statsRow: {
-      flexDirection: "row",
+      paddingBottom: spacing.sm,
       alignItems: "center",
-      justifyContent: "center",
-      gap: spacing.sm,
-      marginTop: spacing.sm,
-    },
-    sideStat: {
-      flex: 1,
-      alignItems: "center",
-      minWidth: 72,
-    },
-    sideValue: {
-      fontSize: 20,
-      fontWeight: "700",
-      color: colors.text,
-      fontVariant: ["tabular-nums"],
-    },
-    sideLabel: {
-      fontSize: 13,
-      color: colors.textMuted,
-      marginTop: 4,
-      fontWeight: "500",
     },
     ringWrap: {
       alignItems: "center",
@@ -112,7 +84,7 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     remainingValue: {
-      fontSize: 28,
+      fontSize: 30,
       fontWeight: "800",
       color: colors.text,
       letterSpacing: -0.5,
@@ -122,12 +94,30 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 13,
       color: colors.textMuted,
       marginTop: 2,
+      fontWeight: "600",
+    },
+    statsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    stat: {
+      fontSize: 14,
+    },
+    statValue: {
+      fontWeight: "700",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+    },
+    statLabel: {
+      color: colors.textMuted,
       fontWeight: "500",
     },
-    goalHint: {
-      fontSize: 12,
-      color: colors.textMuted,
-      textAlign: "center",
-      marginTop: spacing.md,
+    dot: {
+      width: 3,
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: colors.border,
     },
   })

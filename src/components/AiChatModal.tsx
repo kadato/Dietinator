@@ -22,6 +22,7 @@ import { useApp } from "@/context/AppContext"
 import { useAiChatModal } from "@/context/AiChatContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
+import { usePressedState } from "@/hooks/usePressedState"
 import { withAlpha } from "@/utils/color"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
@@ -95,6 +96,8 @@ export function AiChatModal() {
   const { width, isWide } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
+  const headerPress = usePressedState()
+  const sendPress = usePressedState()
   // On very narrow phones the fixed 48px bubble side margins eat ~25% of the
   // line width — tighten them below 360px.
   const compact = width < 360
@@ -388,12 +391,14 @@ export function AiChatModal() {
             <Pressable
               onPress={() => void clear()}
               hitSlop={8}
+              onPressIn={headerPress.onPressIn}
+              onPressOut={headerPress.onPressOut}
               accessibilityRole="button"
               accessibilityLabel="Clear chat history"
               className="ml-1 h-9 w-9 items-center justify-center rounded-full"
-              style={({ pressed }) => [
+              style={[
                 { backgroundColor: HEADER_OVERLAY },
-                pressed && { opacity: 0.7 },
+                ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
               ]}
             >
               <Ionicons name="trash-outline" size={19} color={colors.onPrimary} />
@@ -401,12 +406,14 @@ export function AiChatModal() {
             <Pressable
               onPress={closeAiChat}
               hitSlop={8}
+              onPressIn={headerPress.onPressIn}
+              onPressOut={headerPress.onPressOut}
               accessibilityRole="button"
               accessibilityLabel="Close AI chat"
               className="h-9 w-9 items-center justify-center rounded-full"
-              style={({ pressed }) => [
+              style={[
                 { backgroundColor: HEADER_OVERLAY },
-                pressed && { opacity: 0.7 },
+                ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
               ]}
             >
               <Ionicons name="close" size={22} color={colors.onPrimary} />
@@ -488,10 +495,12 @@ export function AiChatModal() {
               <Pressable
                 onPress={submit}
                 disabled={!canSend}
+                onPressIn={sendPress.onPressIn}
+                onPressOut={sendPress.onPressOut}
                 accessibilityRole="button"
                 accessibilityLabel="Send message"
                 className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                style={({ pressed }) => [
+                style={[
                   {
                     backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
                     borderWidth: 1,
@@ -499,7 +508,7 @@ export function AiChatModal() {
                     boxShadow: canSend ? "0px 3px 12px rgba(0, 0, 0, 0.25)" : undefined,
                     elevation: canSend ? 4 : 0,
                   },
-                  pressed && canSend && { transform: [{ scale: 0.92 }] },
+                  ...(sendPress.pressed && canSend ? [{ transform: [{ scale: 0.92 }] }] : []),
                 ]}
               >
                 <Ionicons

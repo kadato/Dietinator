@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { ComponentProps } from "react"
+import { useState } from "react"
 import { Pressable, StyleSheet } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { Text } from "@ui/text"
@@ -67,6 +68,10 @@ export function Fab({
   size = "md",
 }: Props) {
   const { colors } = useTheme()
+  // Press feedback must live in a state-driven static style, not a
+  // Pressable style function: RN 0.85 Fabric drops function styles on
+  // Android, collapsing the button to its icon size.
+  const [pressed, setPressed] = useState(false)
   const bg =
     tone === "surface" ? colors.surfaceAlt : tone === "danger" ? colors.danger : colors.primary
   // No `onDanger` token exists; white reads on both themes' danger shades.
@@ -87,16 +92,17 @@ export function Fab({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
-      style={({ pressed }) => [
+      style={[
         shape,
         styles.shadow,
         { backgroundColor: bg },
-        tone === "surface" && { borderWidth: 1, borderColor: colors.border },
-        pressed && pressedStyle,
-        pressed && styles.shadowFlat,
+        tone === "surface" ? { borderWidth: 1, borderColor: colors.border } : styles.idle,
+        pressed ? pressedStyle : styles.idle,
       ]}
     >
       <FabGlyph IconComponent={IconComponent} icon={icon} size={iconSize} color={fg} />
@@ -142,11 +148,7 @@ const styles = StyleSheet.create({
   },
   shadow: {
     elevation: 6,
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.32)",
-  },
-  shadowFlat: {
-    elevation: 2,
-    boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.22)",
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
   },
   pressed: {
     transform: [{ scale: 0.95 }],
@@ -155,4 +157,5 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.55,
   },
+  idle: {},
 })

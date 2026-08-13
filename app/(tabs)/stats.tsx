@@ -270,7 +270,7 @@ export default function StatsScreen() {
             Stats
           </Text>
           <Text size="xs" className="mt-1 text-typography-500">
-            Bodyweight, calorie and macro trends
+            Weight, calories and macro trends
           </Text>
         </Box>
 

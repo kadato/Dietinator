@@ -15,8 +15,8 @@ type Props = {
   /** Extra content below the message (e.g. a primary action button). */
   action?: ReactNode
   /**
-   * `large` (default): 80px rounded-square icon tile, `lg` bold title —
-   * used for whole-list empty states. `compact`: 48px circle icon with an
+   * `large` (default): 64px soft icon circle with a bold title —
+   * used for whole-list empty states. `compact`: 44px circle icon with an
    * `sm` muted line — used inside cards.
    */
   variant?: "large" | "compact"
@@ -25,9 +25,7 @@ type Props = {
 }
 
 /**
- * The app's single empty-state visual language. Before this existed the tabs
- * had two competing designs (48px circle vs 80px rounded square), each
- * copy-pasted in several places.
+ * The app's single empty-state visual language.
  */
 export function EmptyState({
   icon,
@@ -44,8 +42,8 @@ export function EmptyState({
   if (variant === "compact") {
     return (
       <Box className={`items-center px-6 py-8 ${className}`}>
-        <Box className="h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
-          <Ionicons name={icon} size={22} color={tint} />
+        <Box className="h-11 w-11 items-center justify-center rounded-full bg-background-100">
+          <Ionicons name={icon} size={20} color={tint} />
         </Box>
         <Text size="sm" className="mt-3 max-w-[420px] text-center leading-5 text-typography-500">
           {title}
@@ -62,14 +60,14 @@ export function EmptyState({
 
   return (
     <Box className={`items-center px-6 pb-10 ${className}`}>
-      <Box className="h-20 w-20 items-center justify-center rounded-2xl bg-background-50 shadow-soft-1">
-        <Ionicons name={icon} size={36} color={tint} />
+      <Box className="h-16 w-16 items-center justify-center rounded-full bg-background-100">
+        <Ionicons name={icon} size={28} color={tint} />
       </Box>
-      <Text size="lg" bold className="mt-5 text-center text-typography-900">
+      <Text size="lg" bold className="mt-4 text-center text-typography-900">
         {title}
       </Text>
       {message ? (
-        <Text size="sm" className="mt-2 max-w-[420px] text-center leading-5 text-typography-500">
+        <Text size="sm" className="mt-1.5 max-w-[420px] text-center leading-5 text-typography-500">
           {message}
         </Text>
       ) : null}

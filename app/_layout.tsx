@@ -43,7 +43,7 @@ function RootNavigator() {
           color={colors.primary}
           accessibilityLabel="Loading Dietinator"
         />
-        <Text style={styles.loadingText}>Loading your diary…</Text>
+        <Text style={styles.loadingText}>Loading…</Text>
       </View>
     )
   }
