@@ -11,6 +11,11 @@ const { createSnapshotStore, createAgentMiddleware } = require("./scripts/mcp-se
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname)
 
+// The Node native watcher is slow on Windows with this repo's ~460k files —
+// watch startup can outrun Metro's 4-minute timeout and the server crashes.
+// Watchman is installed and fast; use it for the file-map crawl and watch.
+config.resolver.useWatchman = true
+
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push("wasm")
 
