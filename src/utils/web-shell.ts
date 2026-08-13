@@ -13,12 +13,26 @@ export function hideWebShell(): void {
  * in every session; the browser performs the work asynchronously.
  */
 export function registerWebServiceWorker(): void {
-  if (Platform.OS !== "web" || __DEV__) return
-  if (
-    typeof navigator === "undefined" ||
-    !("serviceWorker" in navigator) ||
-    typeof window === "undefined"
-  ) {
+  if (Platform.OS !== "web" || typeof navigator === "undefined" || typeof window === "undefined") {
+    return
+  }
+  if (__DEV__) {
+    // The dev server never registers a service worker, but a previous static
+    // build on this origin may have left one behind — it serves the old
+    // cached bundle and masks every code change. Unregister it and clear its
+    // caches so dev always shows the current code.
+    navigator.serviceWorker
+      ?.getRegistrations?.()
+      .then((registrations) =>
+        Promise.all(registrations.map((registration) => registration.unregister())),
+      )
+      .catch(() => undefined)
+    if (typeof caches !== "undefined") {
+      caches
+        .keys()
+        .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+        .catch(() => undefined)
+    }
     return
   }
   navigator.serviceWorker.register("/sw.js").catch(() => undefined)

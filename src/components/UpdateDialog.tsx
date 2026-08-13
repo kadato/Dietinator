@@ -1,10 +1,12 @@
 import { Pressable, ScrollView, View } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import type { GitHubRelease } from "@/services/updates"
 import { getApkAsset } from "@/services/updates"
 import { Markdown } from "@/components/Markdown"
 import { ModalContainer } from "@/components/ModalContainer"
 import { useTheme } from "@/hooks/useTheme"
+import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonSpinner, ButtonText } from "@ui/button"
@@ -46,6 +48,7 @@ export function UpdateDialog({
   onDownload,
 }: Props) {
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
   const apk = getApkAsset(release)
   const published = formatReleaseDate(release.publishedAt)
 
@@ -67,7 +70,10 @@ export function UpdateDialog({
       }}
     >
       <ModalContainer maxWidth={560} outerClassName="bg-background-50">
-        <Box className="flex-row items-center gap-3 px-5 pb-3 pt-5">
+        <Box
+          className="flex-row items-center gap-3 px-5 pb-3"
+          style={{ paddingTop: insets.top + spacing.md }}
+        >
           <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
             <Ionicons name="download-outline" size={24} color={colors.primary} />
           </Box>

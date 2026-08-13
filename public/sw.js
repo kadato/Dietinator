@@ -8,7 +8,7 @@
  *
  * Bump VERSION to invalidate old caches after an app update.
  */
-const VERSION = 'dietinator-v1';
+const VERSION = 'dietinator-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

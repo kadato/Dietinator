@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { KeyboardAvoidingView, Platform, Pressable, TextInput } from "react-native"
 import { useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { loginWithCredentials } from "@/services/yazio/client"
 import {
@@ -29,6 +30,7 @@ export default function LoginScreen() {
   const { showError, showWarning } = useToast()
   const { colors } = useTheme()
   const { isWide } = useLayout()
+  const insets = useSafeAreaInsets()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(true)
@@ -93,11 +95,16 @@ export default function LoginScreen() {
       <PageContainer
         variant="narrow"
         contentClassName="px-6 justify-center"
-        contentStyle={[{ paddingVertical: 24 }, isWide ? { maxWidth: 480 } : undefined]}
+        contentStyle={[
+          // Top inset keeps the header clear of the status bar / camera hole
+          // (edge-to-edge Android), including when the keyboard shifts content.
+          { paddingTop: insets.top + 24, paddingBottom: 24 },
+          isWide ? { maxWidth: 480 } : undefined,
+        ]}
       >
         <Box className="mb-8 items-center">
-          <Box className="mb-5 h-20 w-20 items-center justify-center rounded-3xl bg-primary-500 shadow-soft-2">
-            <Ionicons name="leaf" size={40} color={colors.onPrimary} />
+          <Box className="bg-primary-500/12 mb-5 h-20 w-20 items-center justify-center rounded-3xl">
+            <Ionicons name="leaf" size={40} color={colors.primary} />
           </Box>
           <Text size={isWide ? "4xl" : "3xl"} bold className="text-center text-typography-900">
             Dietinator
@@ -106,7 +113,7 @@ export default function LoginScreen() {
             size="md"
             className="mt-2 max-w-[340px] text-center leading-[24px] text-typography-500"
           >
-            Fast, ad-free food logging.
+            Track calories. No ads.
           </Text>
         </Box>
 
@@ -227,15 +234,14 @@ export default function LoginScreen() {
           </Pressable>
           {googleHelpExpanded ? (
             <Text size="sm" className="mt-1 px-4 pb-4 leading-5 text-typography-500">
-              In the YAZIO app: sign out, log in with email, tap Forgot password, and set a new
-              password. Then sign in here with that email and password.
+              In the YAZIO app: sign out, log in with email, tap Forgot password, set a new one.
+              Sign in here with it.
             </Text>
           ) : null}
         </Card>
 
         <Text size="xs" className="mt-8 px-2 text-center leading-4 text-typography-500">
-          Unofficial YAZIO API — personal use only. Remember me stores your login securely on this
-          device.
+          Unofficial YAZIO API, personal use only. Login is stored securely on this device.
         </Text>
       </PageContainer>
     </KeyboardAvoidingView>

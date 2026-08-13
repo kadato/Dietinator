@@ -93,7 +93,12 @@ export default function CreateOptionsScreen() {
   return (
     <View style={{ flex: 1 }}>
       <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
-        <Text size="xl" bold className="mb-5 mt-5 px-6 text-typography-900">
+        <Text
+          size="xl"
+          bold
+          className="mb-5 mt-5 px-6 text-typography-900"
+          style={{ paddingTop: insets.top + 16 }}
+        >
           Create
         </Text>
         <Text size="sm" className="-mt-3 mb-4 px-6 text-typography-500">

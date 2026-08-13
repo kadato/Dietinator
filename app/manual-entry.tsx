@@ -119,7 +119,12 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer hug maxWidth={520}>
-        <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
+        <Text
+          size="2xl"
+          bold
+          className="px-6 text-center text-typography-900"
+          style={{ paddingTop: insets.top + spacing.sm }}
+        >
           {isQuickAdd ? "Quick Add" : "Manual entry"}
         </Text>
         <ScrollView
