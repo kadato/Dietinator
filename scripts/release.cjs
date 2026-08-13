@@ -19,11 +19,12 @@ if (!["major", "minor", "patch"].includes(bump)) {
 }
 
 const appJson = JSON.parse(fs.readFileSync("app.json", "utf8"))
-const latestTag = execSync("git tag --sort=-version:refname | head -1", {
+const latestTag = execSync("git tag --sort=-version:refname", {
   encoding: "utf8",
 })
   .trim()
-  .match(/^v(\d+)\.(\d+)\.(\d+)$/)
+  .split("\n")[0]
+  ?.match(/^v(\d+)\.(\d+)\.(\d+)$/)
 
 const base = latestTag
   ? latestTag.slice(1).map(Number)
