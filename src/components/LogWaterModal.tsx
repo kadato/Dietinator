@@ -20,6 +20,7 @@ import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
+import { usePressedState } from "@/hooks/usePressedState"
 import { addWaterEntry, deleteWaterEntry, getWaterEntriesForDate } from "@/db/water"
 import type { WaterEntry } from "@/types"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
@@ -27,6 +28,7 @@ import { formatWaterAmount } from "@/utils/units"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
@@ -50,6 +52,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   const shell = createModalShellStyles(colors)
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
+  const datePress = usePressedState()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [customMl, setCustomMl] = useState("")
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -121,21 +124,51 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
       <View
         style={[
           shell.dialogBox,
-          { width: "100%", maxWidth: 420, flex: 1 },
-          isWide && styles.dialogBodyWide,
+          { width: "100%", maxWidth: 420 },
+          isWide ? styles.dialogBodyWide : { maxHeight: "90%" },
         ]}
       >
-        <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
-          Water
-        </Text>
+        {isWide ? (
+          <Text
+            size="2xl"
+            bold
+            className="px-6 text-center text-typography-900"
+            style={{ paddingTop: insets.top + spacing.sm }}
+          >
+            Water
+          </Text>
+        ) : (
+          <Box
+            className="flex-row items-center gap-3 px-5 pb-1"
+            style={{ paddingTop: insets.top + spacing.md }}
+          >
+            <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
+              <Ionicons name="water-outline" size={20} color={colors.primary} />
+            </Box>
+            <Text size="xl" bold className="flex-1 text-typography-900">
+              Water
+            </Text>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={22} color={colors.textMuted} />
+            </Pressable>
+          </Box>
+        )}
         <ScrollView
           className="flex-1"
-          contentContainerClassName={isWide ? "px-4 pb-4" : "px-4 pb-28"}
+          contentContainerClassName={`${isWide ? "" : "grow"} px-4 pb-4`}
           keyboardShouldPersistTaps="handled"
         >
           <Pressable
-            style={({ pressed }) => [styles.dateRow, pressed && { opacity: 0.8 }]}
+            style={[styles.dateRow, ...(datePress.pressed ? [{ opacity: 0.8 }] : [])]}
             onPress={() => setPickerOpen(true)}
+            onPressIn={datePress.onPressIn}
+            onPressOut={datePress.onPressOut}
             accessibilityRole="button"
             accessibilityLabel="Choose water date"
           >
@@ -186,7 +219,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           </Box>
 
           <Text style={styles.label}>Custom amount</Text>
-          <Box className="flex-row items-center gap-2">
+          <Box className="flex-row items-center justify-center gap-2">
             <NumberStepper
               value={customMl}
               onChangeText={setCustomMl}
@@ -194,7 +227,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               step={50}
               accessibilityLabel="Water amount in ml"
               placeholder="e.g. 200"
-              style={{ flex: 1 }}
+              style={{ flexGrow: 0 }}
             />
             <Pressable
               onPress={() => handleAdd(Number(customMl) || 0)}
@@ -213,9 +246,12 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           </Box>
 
           {entries.length === 0 ? (
-            <Text size="xs" className="mt-4 text-center text-typography-500">
-              Nothing logged for this day yet.
-            </Text>
+            <Box className="flex-1 items-center justify-center gap-2 py-10">
+              <Ionicons name="water-outline" size={30} color={colors.textMuted} />
+              <Text size="xs" className="text-center text-typography-500">
+                Nothing logged for this day yet.
+              </Text>
+            </Box>
           ) : (
             <Box className="mt-4">
               <Text style={styles.label}>Logged pours</Text>
@@ -231,23 +267,33 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   <Pressable
                     onPress={() => handleDelete(entry)}
                     hitSlop={8}
-                    className="p-1.5"
+                    className="h-8 w-8 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${colors.danger}14` }}
                     accessibilityRole="button"
                     accessibilityLabel={`Delete ${formatWaterAmount(entry.amount_ml, settings.units)} pour`}
                   >
-                    <Ionicons name="trash-outline" size={17} color={colors.danger} />
+                    <Ionicons name="trash" size={16} color={colors.danger} />
                   </Pressable>
                 </Box>
               ))}
             </Box>
           )}
         </ScrollView>
+        {isWide ? null : (
+          <Box className="border-t border-outline-100 px-5 py-4">
+            <Button size="lg" onPress={onClose}>
+              <ButtonText>Done</ButtonText>
+            </Button>
+          </Box>
+        )}
       </View>
 
-      <FabCluster
-        bottomOffset={insets.bottom + 20}
-        left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
-      />
+      {isWide ? (
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+        />
+      ) : null}
 
       <DatePickerModal
         visible={pickerOpen}
@@ -259,7 +305,15 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   )
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    // Web has no native sheet animation — slide would leave the dialog
+    // mid-transition when tests measure it, so native gets the slide and
+    // web renders instantly.
+    <Modal
+      visible={visible}
+      transparent
+      animationType={Platform.OS === "web" ? "none" : "slide"}
+      onRequestClose={onClose}
+    >
       <View style={shell.backdrop}>
         <Pressable
           style={StyleSheet.absoluteFill}
@@ -271,7 +325,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           <View style={shell.dialogWrap}>{form}</View>
         ) : (
           <KeyboardAvoidingView
-            style={shell.sheet}
+            style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}

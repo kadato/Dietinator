@@ -20,12 +20,14 @@ import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
+import { usePressedState } from "@/hooks/usePressedState"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { getWeightEntryForDate, saveWeightEntry } from "@/db/weight"
 import { isImperial, parseWeightInput } from "@/utils/units"
 import { spacing, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
@@ -57,6 +59,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   const shell = createModalShellStyles(colors)
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
+  const datePress = usePressedState()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [weightText, setWeightText] = useState("")
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -118,11 +121,39 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     <>
       <View
         testID="log-weight-dialog"
-        style={isWide ? [shell.dialogBox, { width: "100%", maxWidth: 420 }] : { flex: 1 }}
+        style={[shell.dialogBox, { width: "100%", maxWidth: 420, maxHeight: "90%" }]}
       >
-        <Text size="2xl" bold className="px-6 pt-2 text-center text-typography-900">
-          Log weight
-        </Text>
+        {isWide ? (
+          <Text
+            size="2xl"
+            bold
+            className="px-6 text-center text-typography-900"
+            style={{ paddingTop: insets.top + spacing.sm }}
+          >
+            Log weight
+          </Text>
+        ) : (
+          <Box
+            className="flex-row items-center gap-3 px-5 pb-1"
+            style={{ paddingTop: insets.top + spacing.md }}
+          >
+            <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
+              <Ionicons name="scale-outline" size={20} color={colors.primary} />
+            </Box>
+            <Text size="xl" bold className="flex-1 text-typography-900">
+              Log weight
+            </Text>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={22} color={colors.textMuted} />
+            </Pressable>
+          </Box>
+        )}
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-4"
@@ -130,8 +161,10 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         >
           <Text style={styles.label}>Date</Text>
           <Pressable
-            style={({ pressed }) => [styles.dateRow, pressed && { opacity: 0.8 }]}
+            style={[styles.dateRow, ...(datePress.pressed ? [{ opacity: 0.8 }] : [])]}
             onPress={() => setPickerOpen(true)}
+            onPressIn={datePress.onPressIn}
+            onPressOut={datePress.onPressOut}
             accessibilityRole="button"
             accessibilityLabel="Choose date"
           >
@@ -143,7 +176,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           </Pressable>
 
           <Text style={styles.label}>Weight ({isImperial(settings.units) ? "lb" : "kg"})</Text>
-          <Box className="flex-row items-center gap-2">
+          <Box className="flex-row items-center justify-center gap-2">
             <NumberStepper
               value={weightText}
               onChangeText={setWeightText}
@@ -152,7 +185,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               decimals={1}
               accessibilityLabel="Weight"
               placeholder={isImperial(settings.units) ? "e.g. 165.4" : "e.g. 75.2"}
-              style={{ flex: 1 }}
+              style={{ flexGrow: 0 }}
             />
             <Text size="sm" bold className="text-typography-500">
               {isImperial(settings.units) ? "lb" : "kg"}
@@ -162,20 +195,38 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             Stored in kg — switching units later keeps your history intact.
           </Text>
         </ScrollView>
+        {isWide ? null : (
+          <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
+            <Button
+              size="lg"
+              variant="outline"
+              action="secondary"
+              className="flex-1"
+              onPress={onClose}
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button size="lg" className="flex-1" onPress={handleSave} isDisabled={saving}>
+              <ButtonText>{saving ? "Saving…" : "Save weight"}</ButtonText>
+            </Button>
+          </Box>
+        )}
       </View>
 
-      <FabCluster
-        bottomOffset={insets.bottom + 20}
-        left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
-        right={
-          <Fab
-            icon="checkmark"
-            onPress={handleSave}
-            disabled={saving}
-            accessibilityLabel="Save weight"
-          />
-        }
-      />
+      {isWide ? (
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+          right={
+            <Fab
+              icon="checkmark"
+              onPress={handleSave}
+              disabled={saving}
+              accessibilityLabel="Save weight"
+            />
+          }
+        />
+      ) : null}
 
       <DatePickerModal
         visible={pickerOpen}
@@ -187,7 +238,15 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   )
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    // Web has no native sheet animation — slide would leave the dialog
+    // mid-transition when tests measure it, so native gets the slide and
+    // web renders instantly.
+    <Modal
+      visible={visible}
+      transparent
+      animationType={Platform.OS === "web" ? "none" : "slide"}
+      onRequestClose={onClose}
+    >
       <View style={shell.backdrop}>
         <Pressable
           style={StyleSheet.absoluteFill}
@@ -202,7 +261,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           <View style={shell.dialogWrap}>{form}</View>
         ) : (
           <KeyboardAvoidingView
-            style={shell.sheet}
+            style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}
