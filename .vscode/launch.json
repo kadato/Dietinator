@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "expo",
+      "request": "attach",
+      "name": "Debug app in Expo Go",
+      "program": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "pwa-chrome",
+      "request": "launch",
+      "name": "Debug web in Chrome",
+      "url": "http://localhost:8081",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Run web"
+    }
+  ]
+}

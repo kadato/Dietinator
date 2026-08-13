@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start dev server (Expo)",
+      "type": "npm",
+      "script": "start",
+      "group": { "kind": "build", "isDefault": true },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "group": "dev" }
+    },
+    {
+      "label": "Run web",
+      "type": "npm",
+      "script": "web",
+      "isBackground": true,
+      "problemMatcher": [],
+      "dependsOn": ["Start dev server (Expo)"],
+      "dependsOrder": "parallel",
+      "presentation": { "group": "dev" }
+    },
+    {
+      "label": "Run Android (Expo Go)",
+      "type": "npm",
+      "script": "android",
+      "isBackground": true,
+      "problemMatcher": [],
+      "dependsOn": ["Start dev server (Expo)"],
+      "dependsOrder": "parallel",
+      "presentation": { "group": "dev" }
+    },
+    {
+      "label": "Typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "group": "build",
+      "problemMatcher": "$tsc",
+      "presentation": { "group": "checks" }
+    },
+    {
+      "label": "Lint",
+      "type": "npm",
+      "script": "lint",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": { "group": "checks" }
+    },
+    {
+      "label": "E2E tests (dev loop)",
+      "type": "npm",
+      "script": "test:e2e:dev",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": { "group": "checks" }
+    }
+  ]
+}
