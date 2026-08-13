@@ -4,6 +4,7 @@ import {
   nutrientsForAmount,
   resolveNutrientsRefAmount,
 } from "@/utils/nutrients"
+import { formatNumber } from "@/utils/format"
 
 /** YAZIO serving keys are dotted ids ("whole.regular", "small.piece"); show readable labels. */
 export function formatServingLabel(label: string): string {
@@ -40,9 +41,9 @@ export function formatServingOption(serving: FoodServing, baseUnit: string): str
     label.endsWith(` ${baseUnit}`) ||
     pretty.toLowerCase() === unit
   ) {
-    return `${serving.amount} ${unit}`
+    return `${formatNumber(serving.amount)} ${unit}`
   }
-  return `${pretty} (${serving.amount} ${unit})`
+  return `${pretty} (${formatNumber(serving.amount)} ${unit})`
 }
 
 export function formatNutrientsServingLabel(
@@ -52,13 +53,13 @@ export function formatNutrientsServingLabel(
   const unit = food.base_unit || "g"
   const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit)
   const amt = Number(amount) || 0
-  if (amt <= 0) return `per ${ref} ${unit}`
+  if (amt <= 0) return `per ${formatNumber(ref)} ${unit}`
 
   const name = food.serving.serving
   if (name && name !== "g" && name !== "ml" && name !== unit) {
-    return `for ${amt} ${unit} · ${formatServingLabel(name)}`
+    return `for ${formatNumber(amt)} ${unit} · ${formatServingLabel(name)}`
   }
-  return `for ${amt} ${unit}`
+  return `for ${formatNumber(amt)} ${unit}`
 }
 
 export function formatListNutrientLine(food: SearchFoodResult): string {
@@ -73,9 +74,9 @@ export function formatListNutrientLine(food: SearchFoodResult): string {
   const prefix = food.producer ? `${food.producer} · ` : ""
   const servingLabel =
     ref === food.serving.amount
-      ? `${ref}${unit}`
-      : `${ref}${unit} (default ${food.serving.amount}${unit})`
-  return `${prefix}${food.nutrients.kcal} kcal / ${servingLabel}`
+      ? `${formatNumber(ref)}${unit}`
+      : `${formatNumber(ref)}${unit} (default ${formatNumber(food.serving.amount)}${unit})`
+  return `${prefix}${Math.round(food.nutrients.kcal)} kcal / ${servingLabel}`
 }
 
 /** Subtitle for a recents usage row: the logged amount with its calories, e.g. "120 g · 92 Cal". */
@@ -84,5 +85,5 @@ export function formatUsageAmountLine(food: SearchFoodResult, amount: number): s
   const kcal = Math.round(
     nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit || "g").kcal,
   )
-  return `${amount} ${unit} · ${kcal} Cal`
+  return `${formatNumber(amount)} ${unit} · ${kcal} Cal`
 }

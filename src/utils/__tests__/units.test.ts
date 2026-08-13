@@ -14,18 +14,24 @@ describe("formatWeight", () => {
   })
 
   it("converts to pounds in imperial", () => {
-    expect(formatWeight(72, "imperial")).toBe("158.7 lb")
+    expect(formatWeight(72, "imperial")).toBe("158.73 lb")
+  })
+
+  it("caps metric values at two decimals and strips trailing zeros", () => {
+    expect(formatWeight(72.123456, "metric")).toBe("72.12 kg")
+    expect(formatWeight(72.5, "metric")).toBe("72.5 kg")
   })
 })
 
 describe("formatWaterAmount", () => {
   it("formats milliliters as liters in metric", () => {
-    expect(formatWaterAmount(750, "metric")).toBe("0.8 L")
+    expect(formatWaterAmount(750, "metric")).toBe("0.75 L")
     expect(formatWaterAmount(1000, "metric")).toBe("1 L")
+    expect(formatWaterAmount(2500, "metric")).toBe("2.5 L")
   })
 
   it("converts to fluid ounces in imperial", () => {
-    expect(formatWaterAmount(750, "imperial")).toBe("25 fl oz")
+    expect(formatWaterAmount(750, "imperial")).toBe("25.36 fl oz")
   })
 })
 

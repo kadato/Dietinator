@@ -37,7 +37,7 @@ import {
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { confirmAction } from "@/utils/confirm"
-import { withAlpha } from "@/utils/color"
+import { formatNumber } from "@/utils/format"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -55,6 +55,7 @@ function SettingsRow({
   onPress,
   danger = false,
   last = false,
+  stackOnNarrow = false,
   accessibilityLabel,
 }: {
   icon: IconName
@@ -64,33 +65,54 @@ function SettingsRow({
   onPress?: () => void
   danger?: boolean
   last?: boolean
+  /** Renders `right` under the text instead of beside it on narrow screens. */
+  stackOnNarrow?: boolean
   accessibilityLabel?: string
 }) {
   const { colors } = useTheme()
+  const { width } = useLayout()
   const tint = danger ? colors.danger : colors.primary
+  // Segmented controls don't shrink: beside the text they squeeze the title
+  // column to a few words per line on narrow phones. Stack them below instead.
+  const stacked = stackOnNarrow && width < 480
 
-  const content = (
-    <>
-      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-muted">
-        <Ionicons name={icon} size={20} color={tint} />
-      </Box>
-      <Box className="min-w-0 flex-1">
-        <Text size="sm" className="text-typography-900">
-          {title}
+  const iconBox = (
+    <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
+      <Ionicons name={icon} size={20} color={tint} />
+    </Box>
+  )
+  const titleBox = (
+    <Box className="min-w-0 flex-1">
+      <Text size="sm" className="text-typography-900">
+        {title}
+      </Text>
+      {subtitle ? (
+        <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
+          {subtitle}
         </Text>
-        {subtitle ? (
-          <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
-            {subtitle}
-          </Text>
-        ) : null}
+      ) : null}
+    </Box>
+  )
+
+  const content = stacked ? (
+    <>
+      <Box className="w-full flex-row items-center gap-3">
+        {iconBox}
+        {titleBox}
       </Box>
+      {right}
+    </>
+  ) : (
+    <>
+      {iconBox}
+      {titleBox}
       {right}
     </>
   )
 
-  const rowClassName = `flex-row items-center gap-3 px-4 py-3.5 ${
-    !last ? "border-b border-outline-100" : ""
-  }`
+  const rowClassName = `${
+    stacked ? "flex-col items-stretch gap-3" : "flex-row items-center gap-3"
+  } px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`
 
   if (onPress) {
     return (
@@ -128,7 +150,7 @@ function GoalInput({
     <View
       className={`flex-row items-center gap-3 px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}
     >
-      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-muted">
+      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
         <Ionicons name={icon} size={20} color={themeColors.primary} />
       </Box>
       <Text size="sm" className="min-w-0 flex-1 text-typography-900">
@@ -139,6 +161,9 @@ function GoalInput({
         onChangeText={onChange}
         step={step}
         size="sm"
+        // 44px clips 4-digit values like "2500" once system font scaling
+        // kicks in; goal rows have the room for a wider box.
+        inputWidth={64}
         accessibilityLabel={`${label} goal`}
       />
     </View>
@@ -185,26 +210,28 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const { updateSettings } = useApp()
   const { showError } = useToast()
   const { colors } = useTheme()
-  const [calorieGoal, setCalorieGoal] = useState(String(settings.calorie_goal))
-  const [proteinGoal, setProteinGoal] = useState(String(settings.protein_goal))
-  const [carbsGoal, setCarbsGoal] = useState(String(settings.carbs_goal))
-  const [fatGoal, setFatGoal] = useState(String(settings.fat_goal))
-  const [waterGoal, setWaterGoal] = useState(String(settings.water_goal_ml))
-  const [heightCm, setHeightCm] = useState(String(settings.height_cm))
-  const [targetWeight, setTargetWeight] = useState(String(settings.target_weight_kg))
+  // Format on load so stored floats (YAZIO imports, stepper math) never show
+  // more than two decimals in the goal fields.
+  const [calorieGoal, setCalorieGoal] = useState(formatNumber(settings.calorie_goal))
+  const [proteinGoal, setProteinGoal] = useState(formatNumber(settings.protein_goal))
+  const [carbsGoal, setCarbsGoal] = useState(formatNumber(settings.carbs_goal))
+  const [fatGoal, setFatGoal] = useState(formatNumber(settings.fat_goal))
+  const [waterGoal, setWaterGoal] = useState(formatNumber(settings.water_goal_ml))
+  const [heightCm, setHeightCm] = useState(formatNumber(settings.height_cm))
+  const [targetWeight, setTargetWeight] = useState(formatNumber(settings.target_weight_kg))
   const [goalError, setGoalError] = useState<string | null>(null)
 
   const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}|${settings.water_goal_ml}|${settings.height_cm}|${settings.target_weight_kg}`
   const [syncedGoalsKey, setSyncedGoalsKey] = useState(goalsKey)
   if (goalsKey !== syncedGoalsKey) {
     setSyncedGoalsKey(goalsKey)
-    setCalorieGoal(String(settings.calorie_goal))
-    setProteinGoal(String(settings.protein_goal))
-    setCarbsGoal(String(settings.carbs_goal))
-    setFatGoal(String(settings.fat_goal))
-    setWaterGoal(String(settings.water_goal_ml))
-    setHeightCm(String(settings.height_cm))
-    setTargetWeight(String(settings.target_weight_kg))
+    setCalorieGoal(formatNumber(settings.calorie_goal))
+    setProteinGoal(formatNumber(settings.protein_goal))
+    setCarbsGoal(formatNumber(settings.carbs_goal))
+    setFatGoal(formatNumber(settings.fat_goal))
+    setWaterGoal(formatNumber(settings.water_goal_ml))
+    setHeightCm(formatNumber(settings.height_cm))
+    setTargetWeight(formatNumber(settings.target_weight_kg))
   }
 
   const saveGoals = async () => {
@@ -751,7 +778,7 @@ export default function SettingsScreen() {
             Settings
           </Text>
           <Text size="xs" className="mt-1 text-typography-500">
-            Goals, preferences and data
+            Goals, preferences, data
           </Text>
         </Box>
         <Box className="mb-6 flex-row flex-wrap gap-2">
@@ -764,28 +791,17 @@ export default function SettingsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`${tab.label} settings`}
                 accessibilityState={{ selected: active }}
-                className={`min-w-[104px] flex-1 flex-row items-center justify-center gap-2 rounded-2xl border px-3.5 py-2.5 active:opacity-80 ${
+                className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
                   active
                     ? "border-primary-500 bg-primary-500/10"
                     : "border-outline-100 bg-background-50"
                 }`}
-                style={
-                  active
-                    ? { boxShadow: `0px 2px 8px ${withAlpha(colors.primary, 0.18)}`, elevation: 3 }
-                    : undefined
-                }
               >
-                <Box
-                  className={`h-7 w-7 items-center justify-center rounded-full ${
-                    active ? "bg-primary-500" : "bg-background-100"
-                  }`}
-                >
-                  <Ionicons
-                    name={tab.icon}
-                    size={15}
-                    color={active ? colors.onPrimary : colors.textMuted}
-                  />
-                </Box>
+                <Ionicons
+                  name={tab.icon}
+                  size={14}
+                  color={active ? colors.primary : colors.textMuted}
+                />
                 <Text
                   size="sm"
                   bold={active}
@@ -822,6 +838,7 @@ export default function SettingsScreen() {
                   ? "Weight and water in pounds and fluid ounces"
                   : "Weight and water in kilograms and liters"
               }
+              stackOnNarrow
               right={
                 <SegmentedControl
                   value={settings.units === "imperial" ? "imperial" : "metric"}
@@ -850,6 +867,7 @@ export default function SettingsScreen() {
                     : "Follow your device setting"
               }
               last
+              stackOnNarrow
               right={
                 <SegmentedControl
                   value={settings.theme_preference ?? "system"}
