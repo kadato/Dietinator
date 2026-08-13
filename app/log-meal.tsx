@@ -37,6 +37,7 @@ import { mergeFoodResults } from "@/utils/food-search"
 import { sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS } from "@/utils/meals"
 import { displayUnit, formatServingOption, formatUsageAmountLine } from "@/utils/food-display"
+import { formatNumber } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -378,7 +379,7 @@ export default function LogMealScreen() {
               <Text style={styles.mealName} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text style={styles.mealMeta} numberOfLines={1}>
+              <Text style={styles.mealMeta}>
                 {item.items.length === 1
                   ? `1 food · ${Math.round(totals.kcal)} Cal`
                   : `${item.items.length} foods · ${Math.round(totals.kcal)} Cal`}
@@ -386,18 +387,18 @@ export default function LogMealScreen() {
             </View>
           </Pressable>
           <Pressable
-            style={styles.mealEditBtn}
+            style={[styles.mealEditBtn, { backgroundColor: `${accent}1a` }]}
             onPress={() =>
               router.push({
                 pathname: "/meal-builder",
                 params: { mealId: item.id },
               })
             }
-            hitSlop={8}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={`Edit ${item.name}`}
           >
-            <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+            <Ionicons name="pencil-outline" size={16} color={accent} />
           </Pressable>
           <Pressable
             style={[styles.mealLogBtn, { backgroundColor: accent }]}
@@ -447,31 +448,32 @@ export default function LogMealScreen() {
               accessibilityLabel={`Edit ${entry.food_name}`}
             >
               <View style={styles.loggedInfo}>
-                <Text style={styles.loggedName} numberOfLines={1}>
+                <Text style={styles.loggedName} numberOfLines={2}>
                   {entry.food_name}
                 </Text>
-                <Text style={styles.loggedSub} numberOfLines={1}>
-                  {entry.amount} {displayUnit(entry.unit)} · {Math.round(entry.kcal)} Cal
+                <Text style={styles.loggedSub}>
+                  {formatNumber(entry.amount)} {displayUnit(entry.unit)} · {Math.round(entry.kcal)}{" "}
+                  Cal
                 </Text>
               </View>
             </Pressable>
             <Pressable
-              style={styles.loggedIconBtn}
+              style={[styles.loggedIconBtn, { backgroundColor: `${accent}1a` }]}
               onPress={() => openEdit(entry)}
-              hitSlop={8}
+              hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel={`Edit ${entry.food_name}`}
             >
-              <Ionicons name="create-outline" size={18} color={colors.textMuted} />
+              <Ionicons name="pencil-outline" size={15} color={accent} />
             </Pressable>
             <Pressable
-              style={styles.loggedIconBtn}
+              style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
               onPress={() => onDeleteEntry(entry)}
-              hitSlop={8}
+              hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel={`Delete ${entry.food_name}`}
             >
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              <Ionicons name="trash" size={15} color={colors.danger} />
             </Pressable>
           </View>
         ))}
@@ -710,8 +712,8 @@ const createStyles = (colors: ColorPalette) =>
     searchInput: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderRadius: 12,
-      borderWidth: 2,
+      borderRadius: 14,
+      borderWidth: 1,
       paddingVertical: spacing.md,
       paddingLeft: spacing.xl + spacing.md,
       paddingRight: spacing.xl,
@@ -771,7 +773,13 @@ const createStyles = (colors: ColorPalette) =>
     mealInfo: { flex: 1, minWidth: 0 },
     mealName: { fontSize: 16, color: colors.text, fontWeight: "600" },
     mealMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-    mealEditBtn: { padding: 8 },
+    mealEditBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     mealLogBtn: {
       width: 44,
       height: 44,
@@ -808,7 +816,13 @@ const createStyles = (colors: ColorPalette) =>
     loggedInfo: { minWidth: 0 },
     loggedName: { fontSize: 15, color: colors.text, fontWeight: "600" },
     loggedSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-    loggedIconBtn: { padding: 8 },
+    loggedIconBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     contextualWrap: {
       paddingTop: spacing.md,
       marginHorizontal: spacing.md,

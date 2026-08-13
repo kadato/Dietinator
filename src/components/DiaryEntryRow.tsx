@@ -4,6 +4,8 @@ import { Ionicons } from "@expo/vector-icons"
 import type { DiaryEntry } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { usePressedState } from "@/hooks/usePressedState"
+import { formatNumber } from "@/utils/format"
 import { spacing, type ColorPalette } from "@/theme"
 
 type Props = {
@@ -21,43 +23,73 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
-  const amountLabel = entry.unit === "serving" ? "1 serving" : `${entry.amount}${entry.unit}`
+  const amountLabel =
+    entry.unit === "serving" ? "1 serving" : `${formatNumber(entry.amount)}${entry.unit}`
+  const mainPress = usePressedState()
+  const editPress = usePressedState()
+  const deletePress = usePressedState()
 
   return (
     <View style={styles.row}>
       <Pressable
         onPress={() => onEdit(entry.id)}
         onLongPress={() => onDelete(entry.id)}
-        style={({ pressed }) => [styles.main, pressed && styles.rowPressed]}
+        onPressIn={mainPress.onPressIn}
+        onPressOut={mainPress.onPressOut}
+        style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
         accessibilityRole="button"
         accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
         accessibilityHint="Tap to edit, long press to delete"
       >
-        <View style={[styles.iconWrap, { backgroundColor: accentColor + "22" }]}>
-          <Ionicons name="nutrition-outline" size={18} color={accentColor} />
+        <View style={[styles.iconWrap, { backgroundColor: accentColor + "1f" }]}>
+          <Ionicons name="nutrition-outline" size={17} color={accentColor} />
         </View>
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={2}>
+          <Text style={styles.name} numberOfLines={1}>
             {entry.food_name}
           </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {amountLabel} · P {entry.protein}g · C {entry.carbs}g · F {entry.fat}g
+          <Text style={styles.meta}>
+            {amountLabel} · P {formatNumber(entry.protein)}g · C {formatNumber(entry.carbs)}g · F{" "}
+            {formatNumber(entry.fat)}g
           </Text>
         </View>
-        <View style={styles.kcalPill}>
+        <View style={styles.kcalBlock}>
           <Text style={styles.kcalValue}>{Math.round(entry.kcal)}</Text>
-          <Text style={styles.kcalUnit}>kcal</Text>
+          <Text style={styles.kcalUnit}>Cal</Text>
         </View>
       </Pressable>
-      <Pressable
-        onPress={() => onDelete(entry.id)}
-        hitSlop={8}
-        style={({ pressed }) => [styles.deleteBtn, pressed && styles.deletePressed]}
-        accessibilityRole="button"
-        accessibilityLabel={`Delete ${entry.food_name}`}
-      >
-        <Ionicons name="trash-outline" size={16} color={colors.danger} />
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          onPress={() => onEdit(entry.id)}
+          hitSlop={4}
+          onPressIn={editPress.onPressIn}
+          onPressOut={editPress.onPressOut}
+          style={[
+            styles.actionBtn,
+            { backgroundColor: `${accentColor}1a` },
+            ...(editPress.pressed ? [styles.actionPressed] : []),
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${entry.food_name}`}
+        >
+          <Ionicons name="pencil-outline" size={14} color={accentColor} />
+        </Pressable>
+        <Pressable
+          onPress={() => onDelete(entry.id)}
+          hitSlop={4}
+          onPressIn={deletePress.onPressIn}
+          onPressOut={deletePress.onPressOut}
+          style={[
+            styles.actionBtn,
+            { backgroundColor: `${colors.danger}1a` },
+            ...(deletePress.pressed ? [styles.actionPressed] : []),
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${entry.food_name}`}
+        >
+          <Ionicons name="trash" size={14} color={colors.danger} />
+        </Pressable>
+      </View>
     </View>
   )
 })
@@ -82,9 +114,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     rowPressed: { backgroundColor: colors.surfaceAlt },
     iconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -98,31 +130,38 @@ const createStyles = (colors: ColorPalette) =>
     meta: {
       fontSize: 12,
       color: colors.textMuted,
-      marginTop: 3,
+      marginTop: 2,
     },
-    kcalPill: {
-      alignItems: "flex-end",
-      minWidth: 52,
+    kcalBlock: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 3,
     },
     kcalValue: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: "700",
       color: colors.text,
+      fontVariant: ["tabular-nums"],
     },
     kcalUnit: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
-      textTransform: "uppercase",
-      letterSpacing: 0.3,
     },
-    deleteBtn: {
-      padding: 8,
+    actions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.xs,
       marginLeft: spacing.xs,
-      opacity: 0.7,
     },
-    deletePressed: {
-      opacity: 1,
-      transform: [{ scale: 0.92 }],
+    actionBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    actionPressed: {
+      transform: [{ scale: 0.9 }],
     },
   })

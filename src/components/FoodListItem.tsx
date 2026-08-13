@@ -51,21 +51,21 @@ export const FoodListItem = memo(function FoodListItem({
   const kcal = perGram ? Math.round(food.nutrients.kcal * 100) : Math.round(food.nutrients.kcal)
 
   return (
-    <Box className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3.5 shadow-soft-1">
+    <Box className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
       <Pressable
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${food.name}, ${kcal} calories`}
       >
-        <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-muted">
-          <Ionicons name="nutrition-outline" size={20} color={accent} />
+        <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-100">
+          <Ionicons name="nutrition-outline" size={19} color={accent} />
         </Box>
         <Box className="min-w-0 flex-1">
-          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+          <Text size="md" bold className="text-typography-900">
             {food.name}
           </Text>
-          <Text size="xs" className="mt-0.5 text-typography-500" numberOfLines={1}>
+          <Text size="xs" className="mt-0.5 text-typography-500">
             {subtitle ?? formatListNutrientLine(food)}
           </Text>
         </Box>

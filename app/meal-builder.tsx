@@ -275,12 +275,13 @@ export default function MealBuilderScreen() {
                   </Text>
                   <Pressable
                     onPress={() => removeItem(item.product_id)}
-                    hitSlop={8}
-                    className="p-1"
+                    hitSlop={6}
+                    className="h-8 w-8 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${colors.danger}14` }}
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${item.name}`}
                   >
-                    <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                    <Ionicons name="trash" size={17} color={colors.danger} />
                   </Pressable>
                 </Box>
               ))}

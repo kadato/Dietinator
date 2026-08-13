@@ -23,6 +23,8 @@ type NumberStepperProps = {
   min?: number
   /** `sm` is the compact inline variant for rows and goal fields. */
   size?: "md" | "sm"
+  /** Fixed width for the sm value box — widen it in rows with spare room. */
+  inputWidth?: number
   accessibilityLabel: string
   placeholder?: string
   /** Keyboard "done" action — mirrors the screen's primary FAB action. */
@@ -47,6 +49,7 @@ export function NumberStepper({
   decimals = 0,
   min = 0,
   size = "md",
+  inputWidth,
   accessibilityLabel,
   placeholder,
   onSubmit,
@@ -153,7 +156,11 @@ export function NumberStepper({
         />
       </Pressable>
       <TextInput
-        style={[styles.input, sm && styles.inputSm]}
+        style={[
+          styles.input,
+          sm && styles.inputSm,
+          inputWidth != null ? { width: inputWidth } : null,
+        ]}
         keyboardType="decimal-pad"
         value={value}
         onChangeText={handleTextChange}
@@ -188,6 +195,10 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
+      // Centering keeps the − / value / + group compact when the input hits
+      // its maxWidth — without it a capped input leaves a dead space at the
+      // row edge (the "white block" look in modal rows).
+      justifyContent: "center",
     },
     rowSm: { gap: 4 },
     btn: {
@@ -203,11 +214,11 @@ const createStyles = (colors: ColorPalette) =>
     btnSm: { width: 28, height: 28, borderRadius: 14 },
     btnDisabled: { opacity: 0.4 },
     input: {
-      flexGrow: 1,
-      flexShrink: 1,
-      // "auto" so the explicit width of the sm variant wins — the `flex: 1`
-      // shorthand's 0% basis would override `width` per the CSS spec on web.
-      flexBasis: "auto",
+      // Fixed width so native and web render the compact stepper identically
+      // — a flex-sized input balloons into a large empty box in short rows.
+      flexGrow: 0,
+      flexShrink: 0,
+      width: 120,
       minWidth: 0,
       backgroundColor: colors.surface,
       borderRadius: 10,

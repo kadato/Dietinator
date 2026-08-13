@@ -22,7 +22,7 @@ import { Input, InputField, InputIcon } from "@ui/input"
 export default function MealsScreen() {
   const router = useRouter()
   const { colors } = useTheme()
-  const { isWide, isMedium } = useLayout()
+  const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning, showUndo } = useToast()
   const [meals, setMeals] = useState<Meal[]>([])
@@ -136,21 +136,21 @@ export default function MealsScreen() {
       const totals = totalsById.get(item.id)
       const kcal = Math.round(totals?.kcal ?? 0)
       return (
-        <Box className="mb-2 flex-row items-center gap-3 rounded-2xl border border-outline-200 bg-background-50 px-4 py-3.5">
+        <Box className="mb-2 flex-row items-center gap-3 rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
           <Pressable
             className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
             onPress={() => openBuilder(item.id)}
             accessibilityRole="button"
             accessibilityLabel={`Edit ${item.name}`}
           >
-            <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/15">
-              <Ionicons name="restaurant-outline" size={20} color={colors.primary} />
+            <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
+              <Ionicons name="restaurant-outline" size={19} color={colors.primary} />
             </Box>
             <Box className="min-w-0 flex-1">
-              <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+              <Text size="md" bold className="text-typography-900" numberOfLines={2}>
                 {item.name}
               </Text>
-              <Text size="xs" className="mt-0.5 text-typography-500" numberOfLines={1}>
+              <Text size="xs" className="mt-0.5 text-typography-500">
                 {item.items.length === 1
                   ? `1 food · ${kcal} Cal`
                   : `${item.items.length} foods · ${kcal} Cal`}
@@ -174,12 +174,13 @@ export default function MealsScreen() {
           </Pressable>
           <Pressable
             onPress={() => handleDelete(item)}
-            hitSlop={8}
-            className="p-2"
+            hitSlop={6}
+            className="h-8 w-8 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${colors.danger}14` }}
             accessibilityRole="button"
             accessibilityLabel={`Delete ${item.name}`}
           >
-            <Ionicons name="trash-outline" size={19} color={colors.textMuted} />
+            <Ionicons name="trash" size={16} color={colors.danger} />
           </Pressable>
         </Box>
       )
@@ -192,7 +193,7 @@ export default function MealsScreen() {
       icon="restaurant-outline"
       iconColor={colors.primary}
       title="No meals yet"
-      message="Save combos and log them in one tap."
+      message="Save combos, log them in one tap."
       className="pt-14"
     />
   )
@@ -205,9 +206,9 @@ export default function MealsScreen() {
             Meals
           </Text>
           <Text size="xs" className="mt-1 text-typography-500">
-            Reusable combinations, logged in one tap
+            Reusable combos, one tap to log
           </Text>
-          <Input size="md" variant="rounded" className="mt-3 bg-background-50">
+          <Input size="md" variant="rounded" className="mt-3 border-outline-100 bg-background-50">
             <InputIcon>
               <Ionicons name="search" size={18} color={colors.textMuted} />
             </InputIcon>
@@ -262,10 +263,10 @@ export default function MealsScreen() {
       </PageContainer>
 
       <FabCluster
-        right={
+        center={
           <Fab
             icon="add"
-            label={isMedium ? "New meal" : undefined}
+            label="New meal"
             onPress={() => openBuilder()}
             accessibilityLabel="Create a new meal"
           />
