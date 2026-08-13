@@ -1,16 +1,20 @@
 import { Tabs } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import type { TextStyle } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { layout, spacing } from "@/theme"
 
 export default function TabLayout() {
   const { colors } = useTheme()
-  const { isWide, isMedium, width } = useLayout()
+  const { isWide, width } = useLayout()
   const insets = useSafeAreaInsets()
-  // Below 360px a "beside-icon" label row truncates even short labels.
-  const narrowPhone = width < 360
+  // Bottom tab bars never show titles — labels squeeze the icons and clip
+  // out of the fixed-height bar. Only the wide sidebar rail keeps labels,
+  // where there is room. Titles stay available to screen readers via
+  // tabBarAccessibilityLabel.
+  const showTabLabels = isWide
 
   return (
     <Tabs
@@ -20,9 +24,9 @@ export default function TabLayout() {
         headerShown: !isWide,
         tabBarPosition: isWide ? "left" : "bottom",
         tabBarVariant: isWide ? "material" : "uikit",
-        // Small screens get icons only; labels return on medium+ (tablet/desktop).
-        tabBarShowLabel: isMedium,
-        tabBarLabelPosition: isWide ? "below-icon" : "beside-icon",
+        // Icons only on the bottom bar; the wide rail keeps labels.
+        tabBarShowLabel: showTabLabels,
+        tabBarLabelPosition: isWide ? "below-icon" : "below-icon",
         tabBarStyle: isWide
           ? {
               width: layout.sideTabWidth,
@@ -35,23 +39,26 @@ export default function TabLayout() {
             }
           : {
               backgroundColor: colors.surface,
-              borderTopWidth: 0,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
               // Fixed height would drop react-navigation's automatic bottom
               // inset — add the home-indicator inset explicitly so icons never
               // sit under it on large-inset devices.
               height: layout.tabBarHeight + insets.bottom,
               paddingTop: 6,
               paddingBottom: insets.bottom + 8,
-              elevation: 12,
-              boxShadow: "0px -2px 8px rgba(0, 0, 0, 0.08)",
             },
         tabBarItemStyle: isWide
           ? { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, alignItems: "center" }
-          : { paddingHorizontal: narrowPhone ? 4 : 8 },
+          : { paddingHorizontal: width < 360 ? 4 : 8 },
         tabBarActiveTintColor: isWide ? colors.primaryStrong : colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        // At phone widths an 11px "Settings" label truncates inside its tab.
-        tabBarLabelStyle: { fontSize: isMedium ? 11 : 10, fontWeight: "600", marginTop: 2 },
+        tabBarLabelStyle: [
+          { fontSize: 10, fontWeight: "600", marginTop: 2 },
+          // Cap system font scaling so a tall label never clips out of the
+          // fixed-height bar on Android (runtime prop, not in the TextStyle type).
+          { maxFontSizeMultiplier: 1.25 } as TextStyle,
+        ],
       }}
     >
       <Tabs.Screen

@@ -46,7 +46,7 @@ export default function TodayScreen() {
   const { openAiChat } = useAiChatModal()
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide, isMedium, width } = useLayout()
+  const { isWide, width } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -252,34 +252,9 @@ export default function TodayScreen() {
   const waterGoal = settings.water_goal_ml > 0 ? settings.water_goal_ml : (summary?.waterGoal ?? 0)
   const insets = useSafeAreaInsets()
 
-  const fabCluster = (
-    <FabCluster
-      bottomOffset={isWide ? insets.bottom + 24 : 24}
-      right={
-        <>
-          {settings.ai_enabled === 1 ? (
-            <Fab
-              tone="surface"
-              icon="robot-outline"
-              IconComponent={MaterialCommunityIcons}
-              onPress={openAiChat}
-              accessibilityLabel="Open AI assistant"
-            />
-          ) : null}
-          <Fab
-            icon="add"
-            label={isMedium ? "Log food" : undefined}
-            onPress={() => setLogSlotOpen(true)}
-            accessibilityLabel="Log food"
-          />
-        </>
-      }
-    />
-  )
-
   const summaryCard = (
     <Card variant="elevated" className="mb-6 overflow-hidden">
-      <CalorieRing consumed={totals.kcal} goal={settings.calorie_goal} size={isWide ? 170 : 140} />
+      <CalorieRing consumed={totals.kcal} goal={settings.calorie_goal} size={isWide ? 150 : 128} />
       <MacroBar
         protein={totals.protein}
         carbs={totals.carbs}
@@ -288,50 +263,77 @@ export default function TodayScreen() {
         carbsGoal={settings.carbs_goal}
         fatGoal={settings.fat_goal}
       />
-      <Box className="flex-row items-center justify-around border-t border-outline-200 px-2 py-3">
-        {summary && summary.steps > 0 ? (
-          <Box className="flex-row items-center gap-1.5">
-            <Ionicons name="footsteps-outline" size={16} color={colors.primary} />
-            <Text size="sm" className="text-typography-900">
-              {summary.steps.toLocaleString()}
-            </Text>
-          </Box>
-        ) : null}
+      <Box className="flex-row items-center gap-2 border-t border-outline-100 p-3">
         <Pressable
           onPress={() => setLogWaterOpen(true)}
-          className="min-w-0 shrink flex-row items-center gap-1.5"
+          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 px-3 py-2.5 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel="Log water"
         >
-          <Ionicons name="water-outline" size={16} color={colors.primary} />
-          <Text size="sm" className="text-typography-900" numberOfLines={1}>
-            {waterGoal > 0
-              ? `${formatWaterAmount(waterIntake, settings.units)} / ${formatWaterAmount(waterGoal, settings.units)}`
-              : formatWaterAmount(waterIntake, settings.units)}
-          </Text>
-          <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+          <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
+            <Ionicons name="water-outline" size={18} color={colors.primary} />
+          </Box>
+          <Box className="min-w-0 flex-1">
+            <Text size="md" bold numberOfLines={1} className="text-typography-900">
+              {formatWaterAmount(waterIntake, settings.units)}
+              {waterGoal > 0 ? (
+                <Text size="xs" className="text-typography-500">
+                  {" "}
+                  / {formatWaterAmount(waterGoal, settings.units)}
+                </Text>
+              ) : null}
+            </Text>
+            <Text size="2xs" className="text-typography-500">
+              Water
+            </Text>
+          </Box>
         </Pressable>
         <Pressable
           onPress={() => setLogWeightOpen(true)}
-          className="flex-row items-center gap-1.5"
+          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 px-3 py-2.5 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel="Log weight"
         >
-          <Ionicons name="scale-outline" size={16} color={colors.primary} />
-          <Text size="sm" className="text-typography-900">
-            {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "Log weight"}
-          </Text>
-          <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+          <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
+            <Ionicons name="scale-outline" size={18} color={colors.primary} />
+          </Box>
+          <Box className="min-w-0 flex-1">
+            <Text size="md" bold numberOfLines={1} className="text-typography-900">
+              {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "—"}
+            </Text>
+            <Text size="2xs" className="text-typography-500">
+              {displayedWeight != null ? "Weight" : "Log weight"}
+            </Text>
+          </Box>
         </Pressable>
       </Box>
+      {summary && summary.steps > 0 ? (
+        <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-100 pb-3 pt-2">
+          <Ionicons name="footsteps-outline" size={15} color={colors.primary} />
+          <Text size="xs" className="text-typography-900">
+            {summary.steps.toLocaleString()} steps
+          </Text>
+        </Box>
+      ) : null}
     </Card>
   )
 
   const nutritionHeader = (
-    <Box className="mb-4 flex-row items-center justify-between px-1">
-      <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+    <Box className="mb-3 flex-row items-center justify-between px-1">
+      <Text size="xl" bold style={{ color: colors.textOnBackground }}>
         Meals
       </Text>
+      <Pressable
+        onPress={() => setLogSlotOpen(true)}
+        className="flex-row items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1.5 active:opacity-80"
+        accessibilityRole="button"
+        accessibilityLabel="Log food"
+      >
+        <Ionicons name="add" size={16} color={colors.primary} />
+        <Text size="sm" bold className="text-primary-500">
+          Log
+        </Text>
+      </Pressable>
     </Box>
   )
 
@@ -339,18 +341,18 @@ export default function TodayScreen() {
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
-        <Box className="px-6 pb-3" style={{ paddingTop: insets.top + spacing.md }}>
-          <Card variant="elevated" className="flex-row items-center px-2 py-2">
+        <Box className="px-4 pb-1" style={{ paddingTop: insets.top + spacing.sm }}>
+          <Box className="flex-row items-center gap-0.5">
             <Pressable
               onPress={() => shiftDate(-1)}
               hitSlop={12}
-              className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
               accessibilityRole="button"
               accessibilityLabel="Previous day"
             >
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
+              <Ionicons name="chevron-back" size={21} color={colors.text} />
             </Pressable>
-            <Box className="min-h-11 min-w-0 flex-1 items-center justify-center">
+            <Box className="min-h-10 min-w-0 flex-1 items-center justify-center">
               <Pressable
                 onPress={() => setPickerOpen(true)}
                 accessibilityRole="button"
@@ -363,52 +365,52 @@ export default function TodayScreen() {
               {!isToday ? (
                 <Pressable
                   onPress={() => setDateKey(toDateKey())}
-                  className="mt-1 rounded-full bg-primary-500/15 px-3 py-0.5 active:opacity-80"
+                  className="mt-0.5 rounded-full bg-primary-500/10 px-2.5 py-0.5 active:opacity-80"
                   accessibilityRole="button"
                   accessibilityLabel="Jump to today"
                 >
                   <Text size="2xs" bold className="text-primary-500">
-                    Jump to today
+                    Today
                   </Text>
                 </Pressable>
               ) : null}
             </Box>
-            <Box className="flex-row items-center">
-              <Pressable
-                onPress={() => shiftDate(1)}
-                hitSlop={12}
-                className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
-                accessibilityRole="button"
-                accessibilityLabel="Next day"
-              >
-                <Ionicons name="chevron-forward" size={22} color={colors.text} />
-              </Pressable>
+            <Pressable
+              onPress={() => shiftDate(1)}
+              hitSlop={12}
+              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+              accessibilityRole="button"
+              accessibilityLabel="Next day"
+            >
+              <Ionicons name="chevron-forward" size={21} color={colors.text} />
+            </Pressable>
+            <Box className="ml-1 flex-row items-center gap-1">
               <Pressable
                 onPress={onCopyPrevious}
                 hitSlop={12}
-                className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+                className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
                 accessibilityRole="button"
                 accessibilityLabel="Copy previous day"
               >
-                <Ionicons name="copy-outline" size={19} color={colors.primary} />
+                <Ionicons name="copy-outline" size={18} color={colors.primary} />
               </Pressable>
               {authenticated ? (
                 <Pressable
                   onPress={() => load({ force: true })}
                   disabled={importing || refreshing}
-                  className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
+                  className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
                   accessibilityRole="button"
                   accessibilityLabel="Refresh from YAZIO"
                 >
                   <Ionicons
                     name="cloud-download-outline"
-                    size={20}
+                    size={19}
                     color={importing ? colors.textMuted : colors.primary}
                   />
                 </Pressable>
               ) : null}
             </Box>
-          </Card>
+          </Box>
         </Box>
 
         <ScrollView
@@ -472,7 +474,19 @@ export default function TodayScreen() {
         onClose={() => setLogSlotOpen(false)}
       />
 
-      {fabCluster}
+      {settings.ai_enabled === 1 ? (
+        <FabCluster
+          right={
+            <Fab
+              IconComponent={MaterialCommunityIcons}
+              icon="robot-outline"
+              onPress={openAiChat}
+              accessibilityLabel="Open AI assistant"
+            />
+          }
+          bottomOffset={24}
+        />
+      ) : null}
     </Box>
   )
 }
