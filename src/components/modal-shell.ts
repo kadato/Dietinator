@@ -1,10 +1,22 @@
-import { StyleSheet } from "react-native"
+import { Platform, StatusBar, StyleSheet } from "react-native"
 import type { ColorPalette } from "@/theme"
 
 /** Dim level every overlay dialog (water, weight, AI chat) uses. */
 export const MODAL_BACKDROP = "rgba(0, 0, 0, 0.45)"
 /** Elevation shadow for centered dialogs on wide screens. */
 export const MODAL_DIALOG_SHADOW = "0px 8px 40px rgba(0, 0, 0, 0.35)"
+
+/**
+ * Top safe-area value for full-bleed dialogs. The provider's insets can be 0
+ * before its first native measurement (or inside modal windows on some
+ * Android builds), which makes headers slide up into the camera hole. Android
+ * reports the status bar + cutout height synchronously as a fallback.
+ */
+export function topInset(insets: { top: number }): number {
+  if (insets.top > 0) return insets.top
+  if (Platform.OS === "android") return StatusBar.currentHeight ?? 0
+  return 0
+}
 
 /**
  * Shared shell styles for RN `Modal`-based dialogs. Before this existed the

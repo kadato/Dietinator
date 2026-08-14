@@ -1,10 +1,11 @@
-import { Pressable, ScrollView, View } from "react-native"
+import { Modal, Platform, Pressable, ScrollView, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import type { GitHubRelease } from "@/services/updates"
 import { getApkAsset } from "@/services/updates"
 import { Markdown } from "@/components/Markdown"
 import { ModalContainer } from "@/components/ModalContainer"
+import { topInset } from "@/components/modal-shell"
 import { useTheme } from "@/hooks/useTheme"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
@@ -58,109 +59,112 @@ export function UpdateDialog({
       : "Downloading"
 
   return (
-    <View
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9998,
-        backgroundColor: "rgba(0, 0, 0, 0.45)",
-      }}
+    // A real native Modal window (not an absolute overlay): on Android this
+    // covers the full screen including the status bar / camera hole area, and
+    // the hardware back button closes it.
+    <Modal
+      visible
+      transparent
+      animationType={Platform.OS === "web" ? "none" : "fade"}
+      onRequestClose={onClose}
+      {...(Platform.OS === "android"
+        ? { statusBarTranslucent: true, hardwareAccelerated: true }
+        : {})}
     >
-      <ModalContainer maxWidth={560} outerClassName="bg-background-50">
-        <Box
-          className="flex-row items-center gap-3 px-5 pb-3"
-          style={{ paddingTop: insets.top + spacing.md }}
-        >
-          <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
-            <Ionicons name="download-outline" size={24} color={colors.primary} />
-          </Box>
-          <Box className="min-w-0 flex-1">
-            <Text size="xl" bold className="text-typography-900">
-              Update available
-            </Text>
-            <Text size="xs" className="mt-0.5 text-typography-500">
-              {currentVersion} → {release.tag}
-              {published ? ` · ${published}` : ""}
-            </Text>
-          </Box>
-          <Pressable
-            onPress={onClose}
-            hitSlop={12}
-            className="p-1"
-            accessibilityRole="button"
-            accessibilityLabel="Close"
+      <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.45)" }}>
+        <ModalContainer maxWidth={560} outerClassName="bg-background-50">
+          <Box
+            className="flex-row items-center gap-3 px-5 pb-3"
+            style={{ paddingTop: topInset(insets) + spacing.md }}
           >
-            <Ionicons name="close" size={24} color={colors.textMuted} />
-          </Pressable>
-        </Box>
-
-        <ScrollView
-          className="max-h-[45vh]"
-          contentContainerClassName="px-5 pb-3"
-          showsVerticalScrollIndicator
-        >
-          <Text size="sm" className="mb-3 leading-[20px] text-typography-500">
-            A new version of Dietinator is ready. Your diary, meals and settings stay on this device
-            — updating never touches your data.
-          </Text>
-
-          {release.notes?.trim() ? (
-            <>
-              <Text size="xs" bold className="mb-2 uppercase tracking-wide text-typography-500">
-                What&apos;s new
+            <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
+              <Ionicons name="download-outline" size={24} color={colors.primary} />
+            </Box>
+            <Box className="min-w-0 flex-1">
+              <Text size="xl" bold className="text-typography-900">
+                Update available
               </Text>
-              <Markdown source={release.notes} />
-            </>
-          ) : (
-            <Text size="sm" className="text-typography-500">
-              No release notes published for this version.
-            </Text>
-          )}
-
-          {!apk ? (
-            <Text size="sm" className="mt-3 text-typography-500">
-              This release has no Android APK attached yet.
-            </Text>
-          ) : null}
-        </ScrollView>
-
-        <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
-          <Pressable
-            onPress={onNeverAsk}
-            hitSlop={8}
-            disabled={downloading}
-            accessibilityRole="button"
-            accessibilityLabel="Don't ask again"
-          >
-            <Text
-              size="sm"
-              bold
-              className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+              <Text size="xs" className="mt-0.5 text-typography-500">
+                {currentVersion} → {release.tag}
+                {published ? ` · ${published}` : ""}
+              </Text>
+            </Box>
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              className="p-1"
+              accessibilityRole="button"
+              accessibilityLabel="Close"
             >
-              Don&apos;t ask again
-            </Text>
-          </Pressable>
-          <View className="flex-1" />
-          <Button
-            size="md"
-            variant="outline"
-            action="secondary"
-            onPress={onClose}
-            isDisabled={downloading}
+              <Ionicons name="close" size={24} color={colors.textMuted} />
+            </Pressable>
+          </Box>
+
+          <ScrollView
+            className="max-h-[45vh]"
+            contentContainerClassName="px-5 pb-3"
+            showsVerticalScrollIndicator
           >
-            <ButtonText>Later</ButtonText>
-          </Button>
-          {apk ? (
-            <Button size="md" onPress={onDownload} isDisabled={downloading}>
-              {downloading ? <ButtonSpinner /> : null}
-              <ButtonText>{progressLabel}</ButtonText>
+            <Text size="sm" className="mb-3 leading-[20px] text-typography-500">
+              A new version of Dietinator is ready. Your diary, meals and settings stay on this
+              device — updating never touches your data.
+            </Text>
+
+            {release.notes?.trim() ? (
+              <>
+                <Text size="xs" bold className="mb-2 uppercase tracking-wide text-typography-500">
+                  What&apos;s new
+                </Text>
+                <Markdown source={release.notes} />
+              </>
+            ) : (
+              <Text size="sm" className="text-typography-500">
+                No release notes published for this version.
+              </Text>
+            )}
+
+            {!apk ? (
+              <Text size="sm" className="mt-3 text-typography-500">
+                This release has no Android APK attached yet.
+              </Text>
+            ) : null}
+          </ScrollView>
+
+          <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
+            <Pressable
+              onPress={onNeverAsk}
+              hitSlop={8}
+              disabled={downloading}
+              accessibilityRole="button"
+              accessibilityLabel="Don't ask again"
+            >
+              <Text
+                size="sm"
+                bold
+                className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+              >
+                Don&apos;t ask again
+              </Text>
+            </Pressable>
+            <View className="flex-1" />
+            <Button
+              size="md"
+              variant="outline"
+              action="secondary"
+              onPress={onClose}
+              isDisabled={downloading}
+            >
+              <ButtonText>Later</ButtonText>
             </Button>
-          ) : null}
-        </Box>
-      </ModalContainer>
-    </View>
+            {apk ? (
+              <Button size="md" onPress={onDownload} isDisabled={downloading}>
+                {downloading ? <ButtonSpinner /> : null}
+                <ButtonText>{progressLabel}</ButtonText>
+              </Button>
+            ) : null}
+          </Box>
+        </ModalContainer>
+      </View>
+    </Modal>
   )
 }

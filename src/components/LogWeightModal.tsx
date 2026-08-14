@@ -14,7 +14,7 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { createModalShellStyles } from "@/components/modal-shell"
+import { createModalShellStyles, topInset } from "@/components/modal-shell"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -135,7 +135,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         ) : (
           <Box
             className="flex-row items-center gap-3 px-5 pb-1"
-            style={{ paddingTop: insets.top + spacing.md }}
+            style={{ paddingTop: topInset(insets) + spacing.md }}
           >
             <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
               <Ionicons name="scale-outline" size={20} color={colors.primary} />
@@ -246,6 +246,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
       transparent
       animationType={Platform.OS === "web" ? "none" : "slide"}
       onRequestClose={onClose}
+      {...(Platform.OS === "android"
+        ? { statusBarTranslucent: true, hardwareAccelerated: true }
+        : {})}
     >
       <View style={shell.backdrop}>
         <Pressable

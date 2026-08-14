@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native"
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -63,7 +63,14 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   }
 
   return (
-    <Modal visible={visible} transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      onRequestClose={onClose}
+      {...(Platform.OS === "android"
+        ? { statusBarTranslucent: true, hardwareAccelerated: true }
+        : {})}
+    >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={styles.sheet}>
           <View style={styles.monthRow}>
