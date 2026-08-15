@@ -153,16 +153,16 @@ export default function LogMealScreen() {
   const mealTotalsValues = useMemo(() => sumNutrients(loggedEntries), [loggedEntries])
 
   const mealKcal = Math.round(mealTotalsValues.kcal)
-  const mealProtein = Math.round(mealTotalsValues.protein)
-  const mealCarbs = Math.round(mealTotalsValues.carbs)
-  const mealFat = Math.round(mealTotalsValues.fat)
 
-  const dayKcal = Math.round(dayTotals.kcal)
   const dayRemainingKcal = Math.max(settings.calorie_goal - dayTotals.kcal, 0)
   const dayOverKcal =
     settings.calorie_goal > 0 && dayTotals.kcal > settings.calorie_goal
       ? dayTotals.kcal - settings.calorie_goal
       : 0
+
+  const dayProteinRemaining = Math.max((settings.protein_goal || 0) - dayTotals.protein, 0)
+  const dayCarbsRemaining = Math.max((settings.carbs_goal || 0) - dayTotals.carbs, 0)
+  const dayFatRemaining = Math.max((settings.fat_goal || 0) - dayTotals.fat, 0)
 
   useEffect(() => {
     if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
@@ -440,7 +440,7 @@ export default function LogMealScreen() {
               <View style={[styles.loggedIconWrap, { backgroundColor: `${accent}18` }]}>
                 <MaterialCommunityIcons
                   name={getFoodIcon(entry.food_name, entry)}
-                  size={18}
+                  size={20}
                   color={accent}
                 />
               </View>
@@ -469,7 +469,7 @@ export default function LogMealScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Edit ${entry.food_name}`}
             >
-              <Ionicons name="create-outline" size={15} color={accent} />
+              <Ionicons name="create-outline" size={16} color={accent} />
             </Pressable>
             <Pressable
               style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
@@ -478,7 +478,7 @@ export default function LogMealScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Delete ${entry.food_name}`}
             >
-              <Ionicons name="trash" size={15} color={colors.danger} />
+              <Ionicons name="trash" size={16} color={colors.danger} />
             </Pressable>
           </View>
         ))}
@@ -500,7 +500,7 @@ export default function LogMealScreen() {
         >
           <View style={styles.headerLeft}>
             <View style={[styles.mealIconBox, { backgroundColor: `${accent}20` }]}>
-              <Ionicons name={MEAL_ICONS[mealType]} size={16} color={accent} />
+              <Ionicons name={MEAL_ICONS[mealType]} size={18} color={accent} />
             </View>
             <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
             <Text style={styles.headerKcal}>
@@ -521,43 +521,44 @@ export default function LogMealScreen() {
           </Pressable>
         </View>
 
-        {/* Compact Meal & Day Budget Bar */}
+        {/* Macros Left to Fill & Day Budget Bar */}
         <View style={styles.budgetBar}>
-          <View style={styles.budgetRow}>
-            <View style={styles.budgetLeft}>
-              <MacroPills protein={mealProtein} carbs={mealCarbs} fat={mealFat} size="xs" />
-            </View>
+          <View style={styles.budgetTopRow}>
+            <Text style={styles.budgetSectionLabel}>Left to fill today</Text>
 
             {settings.calorie_goal > 0 ? (
-              <View style={styles.budgetRight}>
-                <View style={styles.dayBudgetHeader}>
-                  <Text style={styles.dayBudgetLabel}>Day Budget</Text>
-                  <View
+              <View style={styles.dayBudgetBadgeWrap}>
+                <View
+                  style={[
+                    styles.dayBudgetBadge,
+                    {
+                      backgroundColor:
+                        dayOverKcal > 0 ? `${colors.danger}18` : `${colors.primary}18`,
+                    },
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.dayBudgetBadge,
-                      {
-                        backgroundColor:
-                          dayOverKcal > 0 ? `${colors.danger}18` : `${colors.primary}18`,
-                      },
+                      styles.dayBudgetBadgeText,
+                      { color: dayOverKcal > 0 ? colors.danger : colors.primary },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.dayBudgetBadgeText,
-                        { color: dayOverKcal > 0 ? colors.danger : colors.primary },
-                      ]}
-                    >
-                      {dayOverKcal > 0
-                        ? `+${Math.round(dayOverKcal)} over`
-                        : `${Math.round(dayRemainingKcal)} left`}
-                    </Text>
-                  </View>
+                    {dayOverKcal > 0
+                      ? `+${Math.round(dayOverKcal)} kcal over`
+                      : `${Math.round(dayRemainingKcal)} kcal left`}
+                  </Text>
                 </View>
-                <Text style={styles.dayBudgetSub}>
-                  {dayKcal} / {Math.round(settings.calorie_goal)} kcal
-                </Text>
               </View>
             ) : null}
+          </View>
+
+          <View style={styles.budgetPillsRow}>
+            <MacroPills
+              protein={dayProteinRemaining}
+              carbs={dayCarbsRemaining}
+              fat={dayFatRemaining}
+              size="xs"
+            />
           </View>
         </View>
 
@@ -863,7 +864,7 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.xs,
-      paddingVertical: spacing.sm,
+      paddingVertical: spacing.sm + 2,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
@@ -872,25 +873,25 @@ const createStyles = (colors: ColorPalette) =>
       minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.sm,
+      gap: spacing.sm + 2,
     },
     loggedIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 12,
       alignItems: "center",
       justifyContent: "center",
     },
     loggedInfo: { flex: 1, minWidth: 0 },
-    loggedName: { fontSize: 15, color: colors.text, fontWeight: "600" },
+    loggedName: { fontSize: 15.5, color: colors.text, fontWeight: "600", lineHeight: 20 },
     loggedSubRow: {
       flexDirection: "row",
       alignItems: "center",
       flexWrap: "wrap",
       gap: 4,
-      marginTop: 2,
+      marginTop: 2.5,
     },
-    loggedSub: { fontSize: 12, color: colors.textMuted },
+    loggedSub: { fontSize: 12.5, color: colors.textMuted },
     miniChip: {
       paddingHorizontal: 5,
       paddingVertical: 1,
@@ -905,39 +906,32 @@ const createStyles = (colors: ColorPalette) =>
       marginHorizontal: spacing.md,
       marginBottom: spacing.xs,
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs + 2,
+      paddingVertical: spacing.sm,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.border,
+      gap: 6,
     },
-    budgetRow: {
+    budgetTopRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       gap: spacing.sm,
     },
-    budgetLeft: {
-      flex: 1,
-      minWidth: 0,
+    budgetSectionLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
     },
-    budgetRight: {
-      alignItems: "flex-end",
-      justifyContent: "center",
-      gap: 2,
-    },
-    dayBudgetHeader: {
+    dayBudgetBadgeWrap: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-    },
-    dayBudgetLabel: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: colors.textMuted,
     },
     dayBudgetBadge: {
-      paddingHorizontal: 6,
+      paddingHorizontal: 7,
       paddingVertical: 2,
       borderRadius: 7,
     },
@@ -946,11 +940,10 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
     },
-    dayBudgetSub: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: colors.textMuted,
-      fontVariant: ["tabular-nums"],
+    budgetPillsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
     },
     loggedIconBtn: {
       width: 32,
