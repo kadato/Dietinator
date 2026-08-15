@@ -1,35 +1,147 @@
+# Dependabot configuration for Dietinator
+# Reference: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
+
 updates:
-  - package-ecosystem: npm
+  # ---------------------------------------------------------------------------
+  # npm — Application dependencies and build tools
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      # Monthly, minor/patch only. Major bumps (Expo SDK, tailwind, jest,
-      # gluestack) are deliberate project decisions — they need manual review.
-      interval: monthly
-    open-pull-requests-limit: 4
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 6
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    cooldown:
+      default-days: 3
+      semver-minor-days: 5
+      semver-patch-days: 2
     groups:
-      expo:
+      # Group security patches into a single PR when vulnerabilities arise
+      security-patches:
+        applies-to: security-updates
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+
+      # Expo and React Native core ecosystem
+      expo-framework:
         patterns:
           - "expo"
           - "expo-*"
+          - "@expo/*"
           - "react"
-          - "react-native*"
+          - "react-dom"
+          - "react-native"
+          - "react-native-*"
+          - "@react-native*"
+          - "@gluestack-ui/*"
+          - "nativewind"
+          - "tailwind*"
           - "babel-*"
-          - "typescript"
-      tools:
+        update-types: ["minor", "patch"]
+
+      # Testing and E2E frameworks
+      testing:
+        patterns:
+          - "jest*"
+          - "@types/jest"
+          - "@testing-library/*"
+          - "playwright*"
+          - "@playwright/*"
+          - "puppeteer*"
+          - "lighthouse"
+        update-types: ["minor", "patch"]
+
+      # Linting, formatting, type definitions, and tooling
+      linting-and-tooling:
         patterns:
           - "eslint*"
           - "prettier*"
           - "husky"
           - "lint-staged"
-          - "playwright*"
+          - "typescript"
           - "@types/*"
+          - "globals"
+          - "cross-env"
+        update-types: ["minor", "patch"]
+
     ignore:
+      # YAZIO is an unofficial reverse-engineered API client that must be tested and pinned manually
       - dependency-name: "yazio"
+      # Major version bumps (e.g. Expo SDK, React Native, Tailwind v4) require deliberate coordinated migration
       - update-types: ["version-update:semver-major"]
 
-  - package-ecosystem: github-actions
+  # ---------------------------------------------------------------------------
+  # GitHub Actions — CI/CD workflows and automation
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: monthly
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+          - "gradle/*"
+          - "android-actions/*"
+          - "softprops/*"
+          - "gitleaks/*"
+
+  # ---------------------------------------------------------------------------
+  # Docker — Web / Metro container image
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
     open-pull-requests-limit: 2
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # ---------------------------------------------------------------------------
+  # Dev Containers — VS Code / GitHub Codespaces environment
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "devcontainer"
