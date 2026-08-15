@@ -1,9 +1,10 @@
 import { memo } from "react"
 import { ActivityIndicator, Pressable } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { formatListNutrientLine } from "@/utils/food-display"
 import { isPerGramNutrients } from "@/utils/nutrients"
+import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -59,7 +60,11 @@ export const FoodListItem = memo(function FoodListItem({
         accessibilityLabel={`${food.name}, ${kcal} calories`}
       >
         <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-100">
-          <Ionicons name="nutrition-outline" size={19} color={accent} />
+          <MaterialCommunityIcons
+            name={getFoodIcon(food.name, food.nutrients)}
+            size={22}
+            color={accent}
+          />
         </Box>
         <Box className="min-w-0 flex-1">
           <Text size="md" bold className="text-typography-900">
