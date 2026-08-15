@@ -11,7 +11,7 @@ import {
 } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { logFood, updateDiaryEntry } from "@/services/diary"
+import { getDiaryEntriesForDate, logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
 import {
   cachedToSearchResult,
@@ -21,15 +21,17 @@ import {
   toggleFavorite,
 } from "@/db/food-cache"
 import { getDiaryEntryById } from "@/db/diary"
-import type { FoodServing, MealType, SearchFoodResult } from "@/types"
+import type { DiaryEntry, FoodServing, MealType, SearchFoodResult } from "@/types"
 import {
   normalizePerGramFood,
   nutrientsForAmount,
   resolveNutrientsRefAmount,
+  sumNutrients,
 } from "@/utils/nutrients"
 import { formatNutrientsServingLabel, formatServingOption, displayUnit } from "@/utils/food-display"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
+import { DailyImpactCard } from "@/components/DailyImpactCard"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { NumberStepper } from "@/components/NumberStepper"
 import { PageContainer } from "@/components/PageContainer"
@@ -39,6 +41,7 @@ import { FabCluster } from "@/components/FabCluster"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { useApp } from "@/context/AppContext"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useToast } from "@/context/ToastContext"
@@ -153,7 +156,7 @@ export default function AddFoodScreen() {
   const productId = routeParam(params.productId)
   const entryId = routeParam(params.entryId)
   const isEditing = Boolean(entryId)
-
+  const { settings } = useApp()
   const [food, setFood] = useState<SearchFoodResult | null>(null)
   const [loadingFood, setLoadingFood] = useState(Boolean(productId) || Boolean(entryId))
   const [isFavorite, setIsFavorite] = useState(false)
@@ -161,9 +164,26 @@ export default function AddFoodScreen() {
   const [saving, setSaving] = useState(false)
   const [favoriteToggling, setFavoriteToggling] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<MealType>(mealType)
+  const [dayEntries, setDayEntries] = useState<DiaryEntry[]>([])
   // True once the user edits the amount — background detail patches must not
   // clobber a typed or history-prefilled portion.
   const amountTouched = useRef(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getDiaryEntriesForDate(date, { remote: false })
+      .then((entries) => {
+        if (!cancelled) {
+          setDayEntries(entryId ? entries.filter((e) => e.id !== entryId) : entries)
+        }
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [date, entryId])
+
+  const currentDayNutrients = useMemo(() => sumNutrients(dayEntries), [dayEntries])
 
   useEffect(() => {
     if (!productId && !entryId) {
@@ -486,14 +506,41 @@ export default function AddFoodScreen() {
               step={unit === "g" || unit === "ml" ? 10 : 1}
               decimals={1}
               accessibilityLabel={`Amount in ${displayUnit(unit)}`}
-              style={{ marginBottom: spacing.lg }}
+              style={{ marginBottom: spacing.xs }}
             />
 
+            {/* Quick Multiplier Chips */}
+            <View style={styles.multiplierRow}>
+              {[0.5, 1, 1.5, 2, 3].map((mult) => (
+                <Pressable
+                  key={mult}
+                  onPress={() => {
+                    const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
+                    const val = Math.round(base * mult * 10) / 10
+                    amountTouched.current = true
+                    setAmount(String(val))
+                  }}
+                  style={styles.multiplierChip}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Scale to ${mult}x serving`}
+                >
+                  <Text style={styles.multiplierText}>{mult}×</Text>
+                </Pressable>
+              ))}
+            </View>
+
             {preview && (
-              <NutritionFactsCard
-                nutrients={preview}
-                servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
-              />
+              <>
+                <DailyImpactCard
+                  currentDayNutrients={currentDayNutrients}
+                  itemNutrients={preview}
+                  settings={settings}
+                />
+                <NutritionFactsCard
+                  nutrients={preview}
+                  servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+                />
+              </>
             )}
           </PageContainer>
         </ScrollView>
@@ -591,4 +638,25 @@ const createStyles = (colors: ColorPalette) =>
       paddingBottom: spacing.md,
     },
     label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+    multiplierRow: {
+      flexDirection: "row",
+      gap: spacing.xs,
+      marginBottom: spacing.lg,
+      marginTop: spacing.xs,
+    },
+    multiplierChip: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    multiplierText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.primary,
+    },
   })
