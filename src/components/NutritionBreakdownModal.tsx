@@ -6,7 +6,7 @@ import { createModalShellStyles } from "@/components/modal-shell"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
+import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
 import { spacing, type ColorPalette } from "@/theme"
 
@@ -84,10 +84,11 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
   const insets = useSafeAreaInsets()
   const { isWide } = useLayout()
 
-  const macroKcal = nutrients.protein * 4 + nutrients.carbs * 4 + nutrients.fat * 9
-  const proteinPct = macroKcal > 0 ? Math.round(((nutrients.protein * 4) / macroKcal) * 100) : 0
-  const carbsPct = macroKcal > 0 ? Math.round(((nutrients.carbs * 4) / macroKcal) * 100) : 0
-  const fatPct = macroKcal > 0 ? Math.round(((nutrients.fat * 9) / macroKcal) * 100) : 0
+  const { proteinPct, carbsPct, fatPct } = computeMacroRatios(
+    nutrients.protein,
+    nutrients.carbs,
+    nutrients.fat,
+  )
   const netCarbs =
     nutrients.fiber !== undefined
       ? Math.max(0, Math.round((nutrients.carbs - nutrients.fiber) * 10) / 10)
@@ -351,7 +352,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           accessibilityLabel="Dismiss nutrition details"
         />
         {isWide ? (
-          <View pointerEvents="box-none" style={shell.dialogWrap}>
+          <View style={shell.dialogWrap}>
             <View
               style={[
                 shell.dialogBox,
@@ -362,7 +363,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
             </View>
           </View>
         ) : (
-          <View pointerEvents="box-none" style={styles.phoneSheetWrap}>
+          <View style={styles.phoneSheetWrap}>
             <View style={styles.phoneSheetBox}>{modalBody}</View>
           </View>
         )}
@@ -377,6 +378,7 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
       justifyContent: "flex-end",
       width: "100%",
+      pointerEvents: "box-none",
     },
     phoneSheetBox: {
       backgroundColor: colors.surface,

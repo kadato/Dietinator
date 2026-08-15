@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -68,35 +69,26 @@ export function NumberStepper({
     valueRef.current = value
   }, [value])
 
-  const [focused, setFocused] = useState(false)
-  // Value to restore (and show as ghost placeholder) while the field is
-  // focused and cleared — tapping focuses the field for a fresh entry, but
-  // blurring without typing brings the previous value back.
   const [ghost, setGhost] = useState("")
 
   const handleFocus = useCallback(() => {
-    setFocused(true)
     setGhost(value)
-    if (value !== "") onChangeText("")
-  }, [onChangeText, value])
+  }, [value])
 
   const handleBlur = useCallback(() => {
-    setFocused(false)
-    if (value === "") {
+    if (value === "" && ghost !== "") {
       onChangeText(ghost)
-    } else {
-      setGhost(value)
     }
   }, [ghost, onChangeText, value])
 
   const stepBy = useCallback(
     (direction: 1 | -1) => {
-      const parsedCurrent = Number(valueRef.current)
+      const parsedCurrent = Number(valueRef.current !== "" ? valueRef.current : ghost)
       const base = Number.isFinite(parsedCurrent) ? parsedCurrent : 0
       const next = Math.max(min, base + direction * step)
       onChangeText(formatStepValue(next, decimals))
     },
-    [decimals, min, onChangeText, step],
+    [decimals, ghost, min, onChangeText, step],
   )
 
   // Sanitize typed input: digits and one decimal separator only, clamped to
@@ -161,14 +153,16 @@ export function NumberStepper({
           sm && styles.inputSm,
           inputWidth != null ? { width: inputWidth } : null,
         ]}
-        keyboardType="decimal-pad"
+        keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "decimal-pad"}
         value={value}
         onChangeText={handleTextChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder={focused && ghost !== "" ? ghost : placeholder}
+        selectTextOnFocus
+        placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         returnKeyType="done"
+        blurOnSubmit={true}
         onSubmitEditing={onSubmit}
         accessibilityLabel={accessibilityLabel}
         maxFontSizeMultiplier={1.4}
@@ -211,7 +205,7 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    btnSm: { width: 28, height: 28, borderRadius: 14 },
+    btnSm: { width: 32, height: 32, borderRadius: 16 },
     btnDisabled: { opacity: 0.4 },
     input: {
       // Fixed width so native and web render the compact stepper identically
@@ -233,10 +227,11 @@ const createStyles = (colors: ColorPalette) =>
     inputSm: {
       flexGrow: 0,
       flexShrink: 0,
-      width: 44,
-      minWidth: 0,
+      width: 64,
+      minWidth: 54,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.xs,
       fontSize: 15,
+      fontWeight: "600",
     },
   })

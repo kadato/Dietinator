@@ -87,6 +87,12 @@ function ToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_calls"] }) {
  * full-bleed sheet on phones, centered dialog on wide screens.
  */
 export function AiChatModal() {
+  const { open } = useAiChatModal()
+  if (!open) return null
+  return <AiChatModalContent />
+}
+
+function AiChatModalContent() {
   const router = useRouter()
   const { settings } = useApp()
   const { open, closeAiChat } = useAiChatModal()
@@ -112,6 +118,7 @@ export function AiChatModal() {
   }, [busy, draft, send])
 
   const suggestionPrompts = useMemo(() => AI_PRESETS, [])
+  const reversedMessages = useMemo(() => [...messages].reverse(), [messages])
 
   const runPreset = useCallback(
     (preset: AiPreset) => {
@@ -435,15 +442,17 @@ export function AiChatModal() {
             renderItem={null}
             ListEmptyComponent={emptyState}
             contentContainerClassName="flex-grow justify-center pb-24"
+            keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
           />
         ) : (
           <FlatList
-            data={[...messages].reverse()}
+            data={reversedMessages}
             renderItem={renderMessage}
             keyExtractor={(item) => String(item.id ?? item.created_at)}
             inverted
             contentContainerClassName="px-4 pb-20 pt-3"
+            keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
           />
         )}
@@ -492,6 +501,8 @@ export function AiChatModal() {
                 style={[styles.input, { color: colors.text }]}
                 selectionColor={colors.primary}
                 accessibilityLabel="Message the AI assistant"
+                returnKeyType="send"
+                blurOnSubmit={false}
                 onSubmitEditing={canSend ? submit : undefined}
               />
             </Box>
@@ -553,7 +564,7 @@ export function AiChatModal() {
           accessibilityLabel="Dismiss AI chat"
         />
         {isWide ? (
-          <View pointerEvents="box-none" style={shell.dialogWrap}>
+          <View style={shell.dialogWrap}>
             <View
               testID="ai-chat-dialog"
               style={[shell.dialogBox, { width: "100%", maxWidth: 720, height: "100%" }]}

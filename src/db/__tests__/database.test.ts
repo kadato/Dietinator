@@ -75,6 +75,7 @@ describe("migrate", () => {
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meals")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meal_items")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_date")
+    expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_food_id")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_food_barcode")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_meals_last_used")
   })

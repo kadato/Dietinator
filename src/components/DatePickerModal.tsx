@@ -79,7 +79,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
           accessibilityRole="button"
           accessibilityLabel="Dismiss date picker"
         />
-        <View pointerEvents="box-none" style={styles.centerWrap}>
+        <View style={styles.centerWrap}>
           <View style={styles.sheet}>
             <View style={styles.monthRow}>
               <Pressable
@@ -175,6 +175,7 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
       alignItems: "center",
       padding: 24,
+      pointerEvents: "box-none",
     },
     sheet: {
       backgroundColor: colors.surface,

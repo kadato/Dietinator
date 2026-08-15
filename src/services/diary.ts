@@ -258,6 +258,9 @@ export async function deleteFoodEntry(id: string): Promise<void> {
 
 /** Re-insert a deleted entry with its original id (undo). Local-only restore. */
 export async function restoreFoodEntry(entry: DiaryEntry): Promise<void> {
+  if (entry.yazio_item_id) {
+    await diaryDb.removeDeletedYazioItemId(entry.yazio_item_id)
+  }
   await diaryDb.addDiaryEntry(entry)
   pushSnapshot().catch(() => undefined)
 }

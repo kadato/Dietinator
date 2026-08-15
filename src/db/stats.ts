@@ -1,6 +1,30 @@
 import { getDatabase } from "./database"
 
 export type DailyKcal = { date: string; kcal: number }
+export type DailyNutrition = {
+  date: string
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
+/** Per-day nutrition totals (calories + macros) from the diary in a single query. */
+export async function getDailyNutritionHistory(fromDateKey: string): Promise<DailyNutrition[]> {
+  const db = await getDatabase()
+  return db.getAllAsync<DailyNutrition>(
+    `SELECT date,
+       SUM(kcal) AS kcal,
+       SUM(protein) AS protein,
+       SUM(carbs) AS carbs,
+       SUM(fat) AS fat
+     FROM diary_entries
+     WHERE date >= ?
+     GROUP BY date
+     ORDER BY date ASC`,
+    [fromDateKey],
+  )
+}
 
 /** Per-day calorie totals from the diary, oldest first, from `fromDateKey` on. */
 export async function getCalorieHistory(fromDateKey: string): Promise<DailyKcal[]> {

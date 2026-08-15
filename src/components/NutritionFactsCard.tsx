@@ -4,59 +4,41 @@ import { Ionicons } from "@expo/vector-icons"
 import type { FoodNutrients } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
-import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
+import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
+import { MacroPills } from "@/components/MacroPills"
 import { spacing, type ColorPalette } from "@/theme"
-
-type MacroRow = {
-  label: string
-  value: number
-  unit: string
-  color: string
-  /** kcal per gram — keeps percentage math independent of display labels. */
-  factor: number
-}
 
 type Props = {
   nutrients: FoodNutrients
   /** e.g. "for 150 g" or "per 100 g" */
   servingLabel: string
+  /**
+   * Reference weight/volume in base units (e.g. grams or ml) that `nutrients` represents.
+   * If provided and > 0, micronutrients will be normalized and displayed per 100g/ml.
+   */
+  baseAmount?: number
+  /** Base unit: "g" (default) or "ml" */
+  baseUnit?: string
 }
 
 function formatMacro(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
-export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
+export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUnit = "g" }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const [expanded, setExpanded] = useState(false)
 
-  const macroTotal = nutrients.protein * 4 + nutrients.carbs * 4 + nutrients.fat * 9
-  const pct = (kcal: number) => (macroTotal > 0 ? Math.round((kcal / macroTotal) * 100) : 0)
+  const {
+    proteinPct: pPct,
+    carbsPct: cPct,
+    fatPct: fPct,
+  } = computeMacroRatios(nutrients.protein, nutrients.carbs, nutrients.fat)
 
-  const rows: MacroRow[] = [
-    {
-      label: "Protein",
-      value: nutrients.protein,
-      unit: "g",
-      color: styles.proteinColor.color,
-      factor: 4,
-    },
-    {
-      label: "Carbohydrates",
-      value: nutrients.carbs,
-      unit: "g",
-      color: styles.carbsColor.color,
-      factor: 4,
-    },
-    {
-      label: "Fat",
-      value: nutrients.fat,
-      unit: "g",
-      color: styles.fatColor.color,
-      factor: 9,
-    },
-  ]
+  // Normalize micronutrients per 100g/ml standard basis if a portion size is known
+  const per100Scale = baseAmount && baseAmount > 0 ? 100 / baseAmount : 1
+  const unitLabel = baseUnit === "ml" ? "100ml" : "100g"
 
   const micros = [
     {
@@ -131,48 +113,59 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.heading}>Nutrition facts</Text>
-      <Text style={styles.servingNote}>{servingLabel}</Text>
-
-      <View style={styles.calorieBlock}>
-        <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={1.4}>
-          {nutrients.kcal}
+      {/* Top row: Calories on left, serving context on right */}
+      <View style={styles.topRow}>
+        <View style={styles.calorieBlock}>
+          <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={1.4}>
+            {nutrients.kcal}
+          </Text>
+          <Text style={styles.calorieUnit}>kcal</Text>
+        </View>
+        <Text style={styles.servingNote} numberOfLines={1}>
+          {servingLabel}
         </Text>
-        <Text style={styles.calorieUnit}>kcal</Text>
       </View>
 
-      <View style={styles.divider} />
+      {/* Proportional Macro Bar */}
+      <View style={styles.bar}>
+        {pPct > 0 ? (
+          <View style={[styles.barSegment, { flex: pPct, backgroundColor: colors.breakfast }]} />
+        ) : null}
+        {cPct > 0 ? (
+          <View style={[styles.barSegment, { flex: cPct, backgroundColor: colors.lunch }]} />
+        ) : null}
+        {fPct > 0 ? (
+          <View style={[styles.barSegment, { flex: fPct, backgroundColor: colors.dinner }]} />
+        ) : null}
+      </View>
 
-      {rows.map((row) => (
-        <View key={row.label} style={styles.macroRow}>
-          <View style={styles.macroLabelWrap}>
-            <View style={[styles.macroDot, { backgroundColor: row.color }]} />
-            <Text style={styles.macroLabel}>{row.label}</Text>
-          </View>
-          <View style={styles.macroValues}>
-            <Text style={styles.macroAmount}>
-              {formatMacro(row.value)}
-              {row.unit}
-            </Text>
-            <Text style={styles.macroPct}>{pct(row.value * row.factor)}%</Text>
-          </View>
-        </View>
-      ))}
+      {/* 3-Column Macro Cards with Icons & Pills */}
+      <MacroPills
+        protein={nutrients.protein}
+        carbs={nutrients.carbs}
+        fat={nutrients.fat}
+        variant="card"
+      />
 
+      {/* Collapsible Micronutrients per 100g */}
       {micros.length > 0 ? (
         <View style={styles.microSection}>
           <Pressable
             style={styles.expandToggle}
             onPress={() => setExpanded(!expanded)}
             accessibilityRole="button"
-            accessibilityLabel={expanded ? "Hide micronutrients" : "Show detailed micronutrients"}
+            accessibilityLabel={
+              expanded ? "Hide micronutrients" : `Show micronutrients per ${unitLabel}`
+            }
           >
             <Text style={styles.expandToggleText}>
-              {expanded ? "Hide Micronutrients" : `View Micronutrients (${micros.length})`}
+              {expanded
+                ? "Hide Micronutrients"
+                : `Micronutrients per ${unitLabel} (${micros.length})`}
             </Text>
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={18}
+              size={15}
               color={colors.primary}
             />
           </Pressable>
@@ -180,13 +173,15 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
           {expanded ? (
             <View style={styles.microGrid}>
               {micros.map((item) => {
-                const rdiPct = Math.round(((item.value ?? 0) / item.rdi) * 100)
+                const valPer100 = (item.value ?? 0) * per100Scale
+                const rdiPct = Math.round((valPer100 / item.rdi) * 100)
                 return (
                   <View key={item.label} style={styles.microRow}>
                     <Text style={styles.microLabel}>{item.label}</Text>
                     <View style={styles.microValWrap}>
                       <Text style={styles.microVal}>
-                        {formatMacro(item.value ?? 0)} {item.unit}
+                        {formatMacro(valPer100)} {item.unit}
+                        <Text style={styles.microBasis}> / {unitLabel}</Text>
                       </Text>
                       <Text style={styles.microRdi}>{rdiPct}% RDI</Text>
                     </View>
@@ -197,10 +192,6 @@ export function NutritionFactsCard({ nutrients, servingLabel }: Props) {
           ) : null}
         </View>
       ) : null}
-
-      <Text style={styles.footnote}>
-        Macro percentages are share of calories from protein, carbs, and fat.
-      </Text>
     </View>
   )
 }
@@ -209,107 +200,118 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 18,
-      padding: spacing.md,
+      borderRadius: 16,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      marginBottom: spacing.lg,
+      marginBottom: spacing.sm,
     },
-    heading: {
-      fontSize: 13,
-      fontWeight: "700",
-      color: colors.textMuted,
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-    },
-    servingNote: {
-      fontSize: 14,
-      color: colors.text,
-      marginTop: spacing.xs,
-      marginBottom: spacing.md,
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 8,
     },
     calorieBlock: {
       flexDirection: "row",
       alignItems: "baseline",
-      gap: spacing.xs,
+      gap: 4,
     },
     calorieValue: {
-      fontSize: 38,
+      fontSize: 22,
       fontWeight: "800",
       color: colors.primary,
       fontVariant: ["tabular-nums"],
     },
     calorieUnit: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.textMuted,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginVertical: spacing.md,
-    },
-    macroRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: spacing.sm,
-    },
-    macroLabelWrap: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      flex: 1,
-    },
-    macroDot: { width: 8, height: 8, borderRadius: 4 },
-    macroLabel: { fontSize: 15, color: colors.text, fontWeight: "500" },
-    macroValues: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-    macroAmount: {
-      fontSize: 15,
-      fontWeight: "700",
-      color: colors.text,
-      minWidth: 56,
-      textAlign: "right",
-      fontVariant: ["tabular-nums"],
-    },
-    macroPct: {
       fontSize: 13,
       fontWeight: "600",
       color: colors.textMuted,
-      minWidth: 36,
+    },
+    servingNote: {
+      fontSize: 12,
+      color: colors.textMuted,
+      maxWidth: "50%",
       textAlign: "right",
+    },
+    bar: {
+      height: 4,
+      flexDirection: "row",
+      overflow: "hidden",
+      borderRadius: 2,
+      backgroundColor: colors.surfaceAlt,
+      marginBottom: 8,
+    },
+    barSegment: {
+      height: "100%",
+    },
+    macroGrid: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    macroCol: {
+      flex: 1,
+      alignItems: "flex-start",
+    },
+    macroLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      marginBottom: 2,
+    },
+    macroDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    macroLabel: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontWeight: "500",
+    },
+    macroVal: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.text,
       fontVariant: ["tabular-nums"],
     },
+    macroPct: {
+      fontSize: 11,
+      fontWeight: "500",
+      color: colors.textMuted,
+    },
     microSection: {
-      marginTop: spacing.sm,
+      marginTop: 8,
       borderTopWidth: 1,
-      borderTopColor: colors.border,
-      paddingTop: spacing.xs,
+      borderTopColor: `${colors.border}60`,
+      paddingTop: 4,
     },
     expandToggle: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: spacing.sm,
+      paddingVertical: 4,
     },
     expandToggleText: {
-      fontSize: 13,
-      fontWeight: "700",
+      fontSize: 12,
+      fontWeight: "600",
       color: colors.primary,
     },
     microGrid: {
-      paddingTop: spacing.xs,
+      paddingTop: 4,
     },
     microRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 6,
+      paddingVertical: 4,
       borderBottomWidth: 1,
-      borderBottomColor: `${colors.border}40`,
+      borderBottomColor: `${colors.border}30`,
     },
     microLabel: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.text,
       fontWeight: "500",
     },
@@ -319,26 +321,22 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     microVal: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: "700",
       color: colors.text,
       fontVariant: ["tabular-nums"],
     },
+    microBasis: {
+      fontSize: 10,
+      fontWeight: "normal",
+      color: colors.textMuted,
+    },
     microRdi: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: "600",
       color: colors.textMuted,
-      minWidth: 48,
+      minWidth: 42,
       textAlign: "right",
       fontVariant: ["tabular-nums"],
     },
-    footnote: {
-      fontSize: 11,
-      color: colors.textMuted,
-      marginTop: spacing.md,
-      lineHeight: 16,
-    },
-    proteinColor: { color: colors.breakfast },
-    carbsColor: { color: colors.lunch },
-    fatColor: { color: colors.dinner },
   })

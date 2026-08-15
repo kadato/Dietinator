@@ -15,6 +15,8 @@ export type BackupPayload = {
   deleted_yazio_items: Record<string, unknown>[]
   meals: Record<string, unknown>[]
   meal_items: Record<string, unknown>[]
+  water_log?: Record<string, unknown>[]
+  weight_entries?: Record<string, unknown>[]
 }
 
 export function isValidBackup(payload: unknown): payload is BackupPayload {
@@ -31,13 +33,24 @@ export function isValidBackup(payload: unknown): payload is BackupPayload {
   for (const table of tables) {
     if (!Array.isArray(p[table])) return false
   }
+  if (p.water_log !== undefined && !Array.isArray(p.water_log)) return false
+  if (p.weight_entries !== undefined && !Array.isArray(p.weight_entries)) return false
   if (p.settings !== null && typeof p.settings !== "object") return false
   return true
 }
 
 export async function createBackup(): Promise<BackupPayload> {
   const db = await getDatabase()
-  const [settings, diaryEntries, foodCache, deletedItems, meals, mealItems] = await Promise.all([
+  const [
+    settings,
+    diaryEntries,
+    foodCache,
+    deletedItems,
+    meals,
+    mealItems,
+    waterLogs,
+    weightEntries,
+  ] = await Promise.all([
     db.getFirstAsync<Record<string, unknown>>("SELECT * FROM settings WHERE id = 1"),
     db.getAllAsync<Record<string, unknown>>(
       "SELECT * FROM diary_entries ORDER BY date, created_at",
@@ -48,6 +61,8 @@ export async function createBackup(): Promise<BackupPayload> {
     ),
     db.getAllAsync<Record<string, unknown>>("SELECT * FROM meals ORDER BY name"),
     db.getAllAsync<Record<string, unknown>>("SELECT * FROM meal_items ORDER BY meal_id, position"),
+    db.getAllAsync<Record<string, unknown>>("SELECT * FROM water_log ORDER BY date, created_at"),
+    db.getAllAsync<Record<string, unknown>>("SELECT * FROM weight_entries ORDER BY date"),
   ])
   return {
     app: "dietinator",
@@ -59,6 +74,8 @@ export async function createBackup(): Promise<BackupPayload> {
     deleted_yazio_items: deletedItems,
     meals,
     meal_items: mealItems,
+    water_log: waterLogs,
+    weight_entries: weightEntries,
   }
 }
 
@@ -66,6 +83,8 @@ export type RestoreResult = {
   diaryEntries: number
   foodCache: number
   meals: number
+  waterLogs?: number
+  weightEntries?: number
 }
 
 /**
@@ -79,7 +98,13 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
   }
 
   const db = await getDatabase()
-  let result: RestoreResult = { diaryEntries: 0, foodCache: 0, meals: 0 }
+  let result: RestoreResult = {
+    diaryEntries: 0,
+    foodCache: 0,
+    meals: 0,
+    waterLogs: 0,
+    weightEntries: 0,
+  }
 
   await db.withTransactionAsync(async () => {
     await db.execAsync(`
@@ -88,6 +113,8 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
       DELETE FROM diary_entries;
       DELETE FROM food_cache;
       DELETE FROM deleted_yazio_items;
+      DELETE FROM water_log;
+      DELETE FROM weight_entries;
       DELETE FROM settings;
     `)
 
@@ -95,9 +122,11 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
       await db.runAsync(
         `INSERT INTO settings (
           id, calorie_goal, protein_goal, carbs_goal, fat_goal, units,
-          yazio_sync_enabled, food_database_country, update_check_enabled, theme_preference
+          yazio_sync_enabled, food_database_country, update_check_enabled,
+          ai_enabled, ai_provider, ai_base_url, ai_model, ai_system_prompt,
+          agent_bridge_rev, theme_preference, water_goal_ml, height_cm, target_weight_kg
         ) VALUES (
-          1, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )`,
         Number(payload.settings.calorie_goal ?? 2000),
         Number(payload.settings.protein_goal ?? 150),
@@ -107,7 +136,16 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
         payload.settings.yazio_sync_enabled ? 1 : 0,
         String(payload.settings.food_database_country ?? ""),
         payload.settings.update_check_enabled === 0 ? 0 : 1,
+        payload.settings.ai_enabled ? 1 : 0,
+        String(payload.settings.ai_provider ?? "openai"),
+        String(payload.settings.ai_base_url ?? ""),
+        String(payload.settings.ai_model ?? ""),
+        String(payload.settings.ai_system_prompt ?? ""),
+        Number(payload.settings.agent_bridge_rev ?? 0),
         String(payload.settings.theme_preference ?? "system"),
+        Number(payload.settings.water_goal_ml ?? 2500),
+        Number(payload.settings.height_cm ?? 0),
+        Number(payload.settings.target_weight_kg ?? 0),
       )
     } else {
       await db.runAsync(`INSERT INTO settings (id) VALUES (1)`)
@@ -141,8 +179,8 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
       await db.runAsync(
         `INSERT OR REPLACE INTO food_cache (
           yazio_product_id, barcode, name, producer, nutrients_json, serving_json, servings_json,
-          base_unit, cached_at, is_favorite, last_used_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          base_unit, cached_at, is_favorite, last_used_at, last_amount, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         String(row.yazio_product_id),
         row.barcode ? String(row.barcode) : null,
         String(row.name),
@@ -154,6 +192,8 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
         String(row.cached_at ?? new Date().toISOString()),
         row.is_favorite ? 1 : 0,
         row.last_used_at ? String(row.last_used_at) : null,
+        row.last_amount != null ? Number(row.last_amount) : null,
+        row.source ? String(row.source) : null,
       )
     }
     result.foodCache = payload.food_cache.length
@@ -194,6 +234,33 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
         String(row.nutrients_json ?? "{}"),
         String(row.serving_json ?? "{}"),
       )
+    }
+
+    if (payload.water_log && Array.isArray(payload.water_log)) {
+      for (const row of payload.water_log) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)`,
+          String(row.id),
+          String(row.date),
+          Number(row.amount_ml ?? 0),
+          String(row.created_at ?? new Date().toISOString()),
+        )
+      }
+      result.waterLogs = payload.water_log.length
+    }
+
+    if (payload.weight_entries && Array.isArray(payload.weight_entries)) {
+      for (const row of payload.weight_entries) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO weight_entries (id, date, weight_kg, note, created_at) VALUES (?, ?, ?, ?, ?)`,
+          String(row.id),
+          String(row.date),
+          Number(row.weight_kg ?? 0),
+          row.note ? String(row.note) : null,
+          String(row.created_at ?? new Date().toISOString()),
+        )
+      }
+      result.weightEntries = payload.weight_entries.length
     }
   })
 

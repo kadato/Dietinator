@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { getDiaryEntriesForDate, logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
@@ -41,6 +41,7 @@ import { FabCluster } from "@/components/FabCluster"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { useApp } from "@/context/AppContext"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
@@ -129,15 +130,7 @@ async function resolveFoodFresh(
 }
 
 export default function AddFoodScreen() {
-  const router = useRouter()
-
-  const safeBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }, [router])
+  const safeBack = useSafeBack()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { isWide } = useLayout()
@@ -409,6 +402,7 @@ export default function AddFoodScreen() {
             styles.content,
             { paddingTop: insets.top + spacing.md, paddingBottom: 120 },
           ]}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           <PageContainer
@@ -539,6 +533,8 @@ export default function AddFoodScreen() {
                 <NutritionFactsCard
                   nutrients={preview}
                   servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+                  baseAmount={Number(amount) || 100}
+                  baseUnit={food.base_unit || "g"}
                 />
               </>
             )}

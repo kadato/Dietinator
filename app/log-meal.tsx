@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
 import { EmptyState } from "@/components/EmptyState"
-import { SegmentedControl } from "@/components/SegmentedControl"
+import { FilterDropdown, type DropdownOption } from "@/components/FilterDropdown"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
@@ -36,15 +36,18 @@ import type {
 } from "@/types"
 import { mergeFoodResults } from "@/utils/food-search"
 import { sumNutrients } from "@/utils/nutrients"
-import { MEAL_LABELS } from "@/utils/meals"
-import { displayUnit, formatServingOption, formatUsageAmountLine } from "@/utils/food-display"
+import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
+import { displayUnit } from "@/utils/food-display"
 import { formatNumber } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { ModalContainer } from "@/components/ModalContainer"
+import { MealListItem } from "@/components/MealListItem"
+import { MacroPills } from "@/components/MacroPills"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { spacing, type ColorPalette } from "@/theme"
@@ -52,25 +55,21 @@ import { spacing, type ColorPalette } from "@/theme"
 type FoodCategory = "foods" | "meals"
 type ListMode = "frequent" | "recent" | "favorites"
 
-const CATEGORY_OPTIONS: { value: FoodCategory; label: string }[] = [
-  { value: "foods", label: "Foods" },
-  { value: "meals", label: "Meals" },
+const CATEGORY_OPTIONS: DropdownOption<FoodCategory>[] = [
+  { value: "foods", label: "Foods", icon: "nutrition-outline" },
+  { value: "meals", label: "Meals", icon: "restaurant-outline" },
 ]
 
 const ZERO_TOTALS: FoodNutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
 
-const LIST_MODE_OPTIONS: { value: ListMode; label: string }[] = [
-  { value: "frequent", label: "Frequent" },
-  { value: "recent", label: "Recent" },
-  { value: "favorites", label: "Favorites" },
+const LIST_MODE_OPTIONS: DropdownOption<ListMode>[] = [
+  { value: "frequent", label: "Frequent", icon: "sparkles-outline" },
+  { value: "recent", label: "Recent", icon: "time-outline" },
+  { value: "favorites", label: "Favorites", icon: "star-outline" },
 ]
 
-function foodSubtitle(food: SearchFoodResult): string {
-  const unit = food.base_unit || "g"
-  const producer = food.producer?.trim()
-  const serving = formatServingOption(food.serving, unit)
-  return producer ? `${producer}, ${serving}` : serving
-}
+let rememberedCategory: FoodCategory = "foods"
+let rememberedListMode: ListMode = "frequent"
 
 type FoodRow = SearchFoodResult | RecentFoodUsage
 
@@ -93,6 +92,7 @@ function usageFoods(usages: RecentFoodUsage[]): SearchFoodResult[] {
 
 export default function LogMealScreen() {
   const router = useRouter()
+  const safeBack = useSafeBack()
   const params = useLocalSearchParams<{ meal?: string; date?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
@@ -102,22 +102,26 @@ export default function LogMealScreen() {
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
 
-  const safeBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }, [router])
-
   const accent = colors[mealType]
 
-  const [category, setCategory] = useState<FoodCategory>("foods")
+  const [category, setCategoryState] = useState<FoodCategory>(rememberedCategory)
   const [query, setQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(true)
+  const searchInputRef = useRef<TextInput>(null)
   const debounced = useDebounce(query, 200)
-  const [listMode, setListMode] = useState<ListMode>("frequent")
+  const [listMode, setListModeState] = useState<ListMode>(rememberedListMode)
   const [meals, setMeals] = useState<Meal[]>([])
   const [loggingMealId, setLoggingMealId] = useState<string | null>(null)
+
+  const setCategory = useCallback((cat: FoodCategory) => {
+    rememberedCategory = cat
+    setCategoryState(cat)
+  }, [])
+
+  const setListMode = useCallback((mode: ListMode) => {
+    rememberedListMode = mode
+    setListModeState(mode)
+  }, [])
   // YAZIO's suggestions for this meal slot arrive async and patch into the
   // "Frequent" list — the local favorites/recents render instantly instead of
   // waiting on the network.
@@ -126,6 +130,13 @@ export default function LogMealScreen() {
   const [loggedEntries, setLoggedEntries] = useState<DiaryEntry[]>([])
   // Quick-add in-flight row key (product id, or product id + amount).
   const [addingKey, setAddingKey] = useState<string | null>(null)
+
+  const handleToggleSearch = useCallback(() => {
+    setSearchOpen(true)
+    setTimeout(() => {
+      searchInputRef.current?.focus()
+    }, 50)
+  }, [])
 
   const loadLoggedEntries = useCallback(async () => {
     try {
@@ -152,10 +163,6 @@ export default function LogMealScreen() {
     settings.calorie_goal > 0 && dayTotals.kcal > settings.calorie_goal
       ? dayTotals.kcal - settings.calorie_goal
       : 0
-
-  const dayRemainingProtein = Math.max(settings.protein_goal - dayTotals.protein, 0)
-  const dayRemainingCarbs = Math.max(settings.carbs_goal - dayTotals.carbs, 0)
-  const dayRemainingFat = Math.max(settings.fat_goal - dayTotals.fat, 0)
 
   useEffect(() => {
     if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
@@ -329,23 +336,14 @@ export default function LogMealScreen() {
     [date, loggingMealId, mealType, router, showError, showSuccess, showWarning],
   )
 
-  const subtitles = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const item of foods) {
-      if (!isUsageRow(item)) map.set(item.product_id, foodSubtitle(item))
-    }
-    return map
-  }, [foods])
-
   const renderFood = useCallback(
     ({ item }: { item: FoodRow }) => {
       if (isUsageRow(item)) {
         return (
           <FoodListItem
             food={item.food}
-            subtitle={formatUsageAmountLine(item.food, item.amount)}
+            amount={item.amount}
             accentColor={accent}
-            showKcal
             quickAddVariant="pill"
             onPress={() => openFood(item.food)}
             onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
@@ -356,9 +354,7 @@ export default function LogMealScreen() {
       return (
         <FoodListItem
           food={item}
-          subtitle={subtitles.get(item.product_id)}
           accentColor={accent}
-          showKcal
           quickAddVariant="pill"
           onPress={() => openFood(item)}
           onQuickAdd={() => handleQuickAdd(item)}
@@ -366,7 +362,7 @@ export default function LogMealScreen() {
         />
       )
     },
-    [accent, addingKey, handleQuickAdd, openFood, subtitles],
+    [accent, addingKey, handleQuickAdd, openFood],
   )
 
   const mealTotalsById = useMemo(() => {
@@ -387,59 +383,22 @@ export default function LogMealScreen() {
     ({ item }: { item: Meal }) => {
       const totals = mealTotalsById.get(item.id) ?? ZERO_TOTALS
       return (
-        <View style={styles.mealRow}>
-          <Pressable
-            style={styles.mealMainTap}
-            onPress={() => handleLogMeal(item)}
-            disabled={loggingMealId === item.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Log ${item.name}`}
-          >
-            <View style={[styles.mealIcon, { backgroundColor: `${accent}22` }]}>
-              <Ionicons name="restaurant-outline" size={22} color={accent} />
-            </View>
-            <View style={styles.mealInfo}>
-              <Text style={styles.mealName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={styles.mealMeta}>
-                {item.items.length === 1
-                  ? `1 food · ${Math.round(totals.kcal)} Cal`
-                  : `${item.items.length} foods · ${Math.round(totals.kcal)} Cal`}
-              </Text>
-            </View>
-          </Pressable>
-          <Pressable
-            style={[styles.mealEditBtn, { backgroundColor: `${accent}1a` }]}
-            onPress={() =>
-              router.push({
-                pathname: "/meal-builder",
-                params: { mealId: item.id },
-              })
-            }
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${item.name}`}
-          >
-            <Ionicons name="pencil-outline" size={16} color={accent} />
-          </Pressable>
-          <Pressable
-            style={[styles.mealLogBtn, { backgroundColor: accent }]}
-            onPress={() => handleLogMeal(item)}
-            disabled={loggingMealId === item.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Add ${item.name} to diary`}
-          >
-            {loggingMealId === item.id ? (
-              <ActivityIndicator size="small" color={colors.onPrimary} />
-            ) : (
-              <Ionicons name="add" size={22} color={colors.onPrimary} />
-            )}
-          </Pressable>
-        </View>
+        <MealListItem
+          meal={item}
+          totals={totals}
+          onPress={() => handleLogMeal(item)}
+          onEdit={() =>
+            router.push({
+              pathname: "/meal-builder",
+              params: { mealId: item.id },
+            })
+          }
+          logging={loggingMealId === item.id}
+          accentColor={accent}
+        />
       )
     },
-    [accent, colors, handleLogMeal, loggingMealId, mealTotalsById, router, styles],
+    [accent, handleLogMeal, loggingMealId, mealTotalsById, router],
   )
 
   const emptyMessage = useMemo(() => {
@@ -462,6 +421,12 @@ export default function LogMealScreen() {
             <Text style={styles.loggedMeta}>
               {loggedEntries.length} items · {mealKcal} kcal
             </Text>
+            <MacroPills
+              protein={mealTotalsValues.protein}
+              carbs={mealTotalsValues.carbs}
+              fat={mealTotalsValues.fat}
+              size="xs"
+            />
           </View>
         </View>
         {loggedEntries.map((entry) => (
@@ -488,21 +453,12 @@ export default function LogMealScreen() {
                     {formatNumber(entry.amount)} {displayUnit(entry.unit)} ·{" "}
                     {Math.round(entry.kcal)} kcal
                   </Text>
-                  <View style={[styles.miniChip, { backgroundColor: `${colors.breakfast}15` }]}>
-                    <Text style={[styles.miniChipText, { color: colors.breakfast }]}>
-                      P {formatNumber(entry.protein)}g
-                    </Text>
-                  </View>
-                  <View style={[styles.miniChip, { backgroundColor: `${colors.lunch}15` }]}>
-                    <Text style={[styles.miniChipText, { color: colors.lunch }]}>
-                      C {formatNumber(entry.carbs)}g
-                    </Text>
-                  </View>
-                  <View style={[styles.miniChip, { backgroundColor: `${colors.dinner}15` }]}>
-                    <Text style={[styles.miniChipText, { color: colors.dinner }]}>
-                      F {formatNumber(entry.fat)}g
-                    </Text>
-                  </View>
+                  <MacroPills
+                    protein={entry.protein}
+                    carbs={entry.carbs}
+                    fat={entry.fat}
+                    size="xs"
+                  />
                 </View>
               </View>
             </Pressable>
@@ -513,7 +469,7 @@ export default function LogMealScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Edit ${entry.food_name}`}
             >
-              <Ionicons name="pencil-outline" size={15} color={accent} />
+              <Ionicons name="create-outline" size={15} color={accent} />
             </Pressable>
             <Pressable
               style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
@@ -535,138 +491,133 @@ export default function LogMealScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer surface>
+        {/* Compact Merged Header: Meal Icon + Title + Kcal + 3-Dot More Menu */}
         <View
           style={[
             styles.header,
-            { paddingTop: insets.top > 0 ? insets.top + spacing.xs : spacing.md },
+            { paddingTop: insets.top > 0 ? insets.top + spacing.xs : spacing.sm },
           ]}
         >
-          <Pressable
-            style={styles.headerIconBtn}
-            onPress={safeBack}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-          <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
-          <View style={styles.headerActions}>
-            <Pressable
-              style={[styles.headerIconBtn, styles.scanBtn, { backgroundColor: `${accent}1a` }]}
-              onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Scan"
-            >
-              <Ionicons name="barcode-outline" size={26} color={accent} />
-            </Pressable>
-            <Pressable
-              style={styles.headerIconBtn}
-              onPress={() =>
-                router.push({ pathname: "/create-options", params: { meal: mealType, date } })
-              }
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="More"
-            >
-              <Ionicons name="ellipsis-horizontal" size={24} color={colors.textMuted} />
-            </Pressable>
+          <View style={styles.headerLeft}>
+            <View style={[styles.mealIconBox, { backgroundColor: `${accent}20` }]}>
+              <Ionicons name={MEAL_ICONS[mealType]} size={16} color={accent} />
+            </View>
+            <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
+            <Text style={styles.headerKcal}>
+              {mealKcal} <Text style={styles.headerUnit}>kcal</Text>
+            </Text>
           </View>
+
+          <Pressable
+            onPress={() =>
+              router.push({ pathname: "/create-options", params: { meal: mealType, date } })
+            }
+            hitSlop={8}
+            style={styles.moreBtn}
+            accessibilityRole="button"
+            accessibilityLabel="More"
+          >
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+          </Pressable>
         </View>
 
-        {/* Meal & Day Budget Overview Bar */}
+        {/* Compact Meal & Day Budget Bar */}
         <View style={styles.budgetBar}>
           <View style={styles.budgetRow}>
             <View style={styles.budgetLeft}>
-              <View style={styles.budgetTitleWrap}>
-                <View style={[styles.mealDot, { backgroundColor: accent }]} />
-                <Text style={styles.budgetTitle}>{MEAL_LABELS[mealType]}</Text>
-                <Text style={styles.budgetKcal}>
-                  {mealKcal} <Text style={styles.budgetUnit}>kcal</Text>
-                </Text>
-              </View>
-              <View style={styles.macroChipsRow}>
-                <View style={[styles.macroChip, { backgroundColor: `${colors.breakfast}18` }]}>
-                  <Text style={[styles.macroChipText, { color: colors.breakfast }]}>
-                    P {mealProtein}g
-                  </Text>
-                </View>
-                <View style={[styles.macroChip, { backgroundColor: `${colors.lunch}18` }]}>
-                  <Text style={[styles.macroChipText, { color: colors.lunch }]}>
-                    C {mealCarbs}g
-                  </Text>
-                </View>
-                <View style={[styles.macroChip, { backgroundColor: `${colors.dinner}18` }]}>
-                  <Text style={[styles.macroChipText, { color: colors.dinner }]}>F {mealFat}g</Text>
-                </View>
-              </View>
+              <MacroPills protein={mealProtein} carbs={mealCarbs} fat={mealFat} size="xs" />
             </View>
 
             {settings.calorie_goal > 0 ? (
               <View style={styles.budgetRight}>
-                <Text style={styles.dayBudgetLabel}>Daily Budget</Text>
-                <Text style={styles.dayBudgetValue}>
-                  {dayOverKcal > 0 ? (
-                    <Text style={{ color: colors.danger }}>+{Math.round(dayOverKcal)} over</Text>
-                  ) : (
-                    <Text style={{ color: colors.primary }}>
-                      {Math.round(dayRemainingKcal)} left
+                <View style={styles.dayBudgetHeader}>
+                  <Text style={styles.dayBudgetLabel}>Day Budget</Text>
+                  <View
+                    style={[
+                      styles.dayBudgetBadge,
+                      {
+                        backgroundColor:
+                          dayOverKcal > 0 ? `${colors.danger}18` : `${colors.primary}18`,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.dayBudgetBadgeText,
+                        { color: dayOverKcal > 0 ? colors.danger : colors.primary },
+                      ]}
+                    >
+                      {dayOverKcal > 0
+                        ? `+${Math.round(dayOverKcal)} over`
+                        : `${Math.round(dayRemainingKcal)} left`}
                     </Text>
-                  )}
-                </Text>
+                  </View>
+                </View>
                 <Text style={styles.dayBudgetSub}>
-                  {dayKcal} / {Math.round(settings.calorie_goal)} kcal (P{" "}
-                  {Math.round(dayRemainingProtein)} · C {Math.round(dayRemainingCarbs)} · F{" "}
-                  {Math.round(dayRemainingFat)}g left)
+                  {dayKcal} / {Math.round(settings.calorie_goal)} kcal
                 </Text>
               </View>
             ) : null}
           </View>
         </View>
 
-        <View style={styles.searchWrap}>
-          <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
-          <TextInput
-            style={[styles.searchInput, { borderColor: accent }]}
-            placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
-            placeholderTextColor={colors.textMuted}
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-            returnKeyType="search"
-            accessibilityLabel="Search foods"
-          />
-          {query.length > 0 ? (
-            <Pressable
-              style={styles.searchClear}
-              onPress={() => setQuery("")}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-            >
-              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-            </Pressable>
-          ) : null}
-        </View>
-
-        <View style={styles.filters}>
-          <SegmentedControl<FoodCategory>
+        {/* Compact Filter Row: Dropdowns for Type & Mode */}
+        <View style={styles.filterRow}>
+          <FilterDropdown<FoodCategory>
             value={category}
             options={CATEGORY_OPTIONS}
             onChange={setCategory}
+            title="Select Type"
             accentColor={accent}
           />
-        </View>
-
-        {category === "foods" && !debounced.trim() ? (
-          <View style={styles.listModeRow}>
-            <SegmentedControl<ListMode>
+          {category === "foods" && !debounced.trim() ? (
+            <FilterDropdown<ListMode>
               value={listMode}
               options={LIST_MODE_OPTIONS}
               onChange={setListMode}
+              title="Filter Foods"
               accentColor={accent}
             />
+          ) : null}
+        </View>
+
+        {/* Search Bar (Expandable / Focusable via Search FAB) */}
+        {searchOpen || query.length > 0 ? (
+          <View style={styles.searchWrap}>
+            <Ionicons name="search" size={17} color={colors.textMuted} style={styles.searchIcon} />
+            <TextInput
+              ref={searchInputRef}
+              style={[styles.searchInput, { borderColor: accent }]}
+              placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
+              placeholderTextColor={colors.textMuted}
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              returnKeyType="search"
+              onSubmitEditing={() => searchInputRef.current?.blur()}
+              accessibilityLabel="Search foods"
+            />
+            {query.length > 0 ? (
+              <Pressable
+                style={styles.searchClear}
+                onPress={() => setQuery("")}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </Pressable>
+            ) : (
+              <Pressable
+                style={styles.searchClear}
+                onPress={() => setSearchOpen(false)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Collapse search"
+              >
+                <Ionicons name="chevron-up-circle-outline" size={18} color={colors.textMuted} />
+              </Pressable>
+            )}
           </View>
         ) : null}
 
@@ -681,9 +632,10 @@ export default function LogMealScreen() {
             keyExtractor={(item) =>
               isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
             }
+            keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-24"
+              foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-36"
             }
             ListHeaderComponent={loggedSection}
             renderItem={renderFood}
@@ -712,9 +664,8 @@ export default function LogMealScreen() {
                       <FoodListItem
                         key={`${item.food.product_id}-${item.amount}`}
                         food={item.food}
-                        subtitle={formatUsageAmountLine(item.food, item.amount)}
+                        amount={item.amount}
                         accentColor={accent}
-                        showKcal
                         quickAddVariant="pill"
                         onPress={() => openFood(item.food)}
                         onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
@@ -724,9 +675,7 @@ export default function LogMealScreen() {
                       <FoodListItem
                         key={item.product_id}
                         food={item}
-                        subtitle={subtitles.get(item.product_id)}
                         accentColor={accent}
-                        showKcal
                         quickAddVariant="pill"
                         onPress={() => openFood(item)}
                         onQuickAdd={() => handleQuickAdd(item)}
@@ -743,9 +692,10 @@ export default function LogMealScreen() {
             style={styles.list}
             data={filteredMeals}
             keyExtractor={(item) => item.id}
+            keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-24"
+              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-36"
             }
             ListHeaderComponent={
               <Pressable
@@ -776,6 +726,21 @@ export default function LogMealScreen() {
       <FabCluster
         bottomOffset={insets.bottom + 20}
         left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+        right={
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Fab
+              tone={searchOpen ? "primary" : "surface"}
+              icon="search"
+              onPress={handleToggleSearch}
+              accessibilityLabel="Search"
+            />
+            <Fab
+              icon="barcode-outline"
+              onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
+              accessibilityLabel="Scan barcode"
+            />
+          </View>
+        }
       />
     </KeyboardAvoidingView>
   )
@@ -787,60 +752,77 @@ const createStyles = (colors: ColorPalette) =>
     header: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.sm,
+      justifyContent: "space-between",
       paddingHorizontal: spacing.md,
-      paddingBottom: spacing.sm,
+      paddingBottom: spacing.xs,
     },
-    headerActions: {
+    headerLeft: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.sm,
+      gap: 8,
+      flex: 1,
+      minWidth: 0,
     },
-    headerIconBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+    mealIconBox: {
+      width: 28,
+      height: 28,
+      borderRadius: 9,
       alignItems: "center",
       justifyContent: "center",
     },
-    scanBtn: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-    },
     title: {
-      flex: 1,
-      fontSize: 22,
-      fontWeight: "700",
+      fontSize: 19,
+      fontWeight: "800",
       color: colors.text,
+    },
+    headerKcal: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: colors.text,
+      fontVariant: ["tabular-nums"],
+      marginLeft: 2,
+    },
+    headerUnit: {
+      fontSize: 11,
+      fontWeight: "500",
+      color: colors.textMuted,
+    },
+    moreBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    filterRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: 8,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.xs,
+      paddingBottom: spacing.xs,
     },
     searchWrap: {
       flexDirection: "row",
       alignItems: "center",
       marginHorizontal: spacing.md,
-      marginBottom: spacing.md,
+      marginBottom: spacing.xs,
     },
-    searchIcon: { position: "absolute", left: spacing.md + 10, zIndex: 1 },
+    searchIcon: { position: "absolute", left: spacing.md, zIndex: 1 },
     searchInput: {
       flex: 1,
       backgroundColor: colors.surface,
       borderRadius: 14,
       borderWidth: 1,
-      paddingVertical: spacing.md,
-      paddingLeft: spacing.xl + spacing.md,
+      paddingVertical: spacing.sm,
+      paddingLeft: spacing.xl + 6,
       paddingRight: spacing.xl,
-      fontSize: 16,
+      fontSize: 15,
       color: colors.text,
     },
     searchClear: { position: "absolute", right: spacing.md, zIndex: 1 },
-    filters: {
-      paddingHorizontal: spacing.md,
-      marginBottom: spacing.sm,
-    },
-    listModeRow: {
-      paddingHorizontal: spacing.md,
-      marginBottom: spacing.sm,
-    },
     loader: { marginVertical: spacing.sm },
     list: { flex: 1 },
     newMealBtn: {
@@ -855,50 +837,6 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.primary,
     },
     newMealText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
-    mealRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginHorizontal: spacing.md,
-      marginBottom: spacing.sm,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      gap: spacing.sm,
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    mealMainTap: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      minWidth: 0,
-    },
-    mealIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    mealInfo: { flex: 1, minWidth: 0 },
-    mealName: { fontSize: 16, color: colors.text, fontWeight: "600" },
-    mealMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-    mealEditBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    mealLogBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      alignItems: "center",
-      justifyContent: "center",
-    },
     loggedWrap: {
       marginHorizontal: spacing.md,
       marginBottom: spacing.md,
@@ -965,9 +903,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     budgetBar: {
       marginHorizontal: spacing.md,
-      marginBottom: spacing.sm,
+      marginBottom: spacing.xs,
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      paddingVertical: spacing.xs + 2,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 16,
       borderWidth: 1,
@@ -983,69 +921,35 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
       minWidth: 0,
     },
-    budgetTitleWrap: {
+    budgetRight: {
+      alignItems: "flex-end",
+      justifyContent: "center",
+      gap: 2,
+    },
+    dayBudgetHeader: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
     },
-    mealDot: {
-      width: 7,
-      height: 7,
-      borderRadius: 4,
-    },
-    budgetTitle: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: colors.text,
-    },
-    budgetKcal: {
-      fontSize: 14,
-      fontWeight: "800",
-      color: colors.text,
-      fontVariant: ["tabular-nums"],
-    },
-    budgetUnit: {
-      fontSize: 11,
-      fontWeight: "500",
-      color: colors.textMuted,
-    },
-    macroChipsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      marginTop: 3,
-    },
-    macroChip: {
-      paddingHorizontal: 6,
-      paddingVertical: 1.5,
-      borderRadius: 6,
-    },
-    macroChipText: {
-      fontSize: 10,
-      fontWeight: "700",
-      fontVariant: ["tabular-nums"],
-    },
-    budgetRight: {
-      alignItems: "flex-end",
-      justifyContent: "center",
-    },
     dayBudgetLabel: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
     },
-    dayBudgetValue: {
-      fontSize: 13,
+    dayBudgetBadge: {
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 7,
+    },
+    dayBudgetBadgeText: {
+      fontSize: 11,
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
     },
     dayBudgetSub: {
-      fontSize: 10,
-      fontWeight: "500",
+      fontSize: 11,
+      fontWeight: "600",
       color: colors.textMuted,
-      marginTop: 1,
       fontVariant: ["tabular-nums"],
     },
     loggedIconBtn: {

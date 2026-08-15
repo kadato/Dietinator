@@ -1,5 +1,20 @@
-import { useEffect, useState, type ComponentProps, type ReactNode } from "react"
-import { ActivityIndicator, Platform, Pressable, ScrollView, Share, View } from "react-native"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react"
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  View,
+} from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -38,9 +53,11 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { confirmAction } from "@/utils/confirm"
 import { formatNumber } from "@/utils/format"
+import { computeMacroRatios } from "@/utils/nutrients"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
+import { Card } from "@ui/card"
 import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
 import { Switch } from "@ui/switch"
@@ -72,8 +89,6 @@ function SettingsRow({
   const { colors } = useTheme()
   const { width } = useLayout()
   const tint = danger ? colors.danger : colors.primary
-  // Segmented controls don't shrink: beside the text they squeeze the title
-  // column to a few words per line on narrow phones. Stack them below instead.
   const stacked = stackOnNarrow && width < 480
 
   const iconBox = (
@@ -135,83 +150,123 @@ function GoalInput({
   label,
   value,
   onChange,
+  onSubmit,
   step,
+  min = 0,
+  unit,
   last = false,
+  error,
+  inputWidth = 76,
 }: {
   icon: IconName
   label: string
   value: string
-  onChange: (v: string) => void
+  onChange: (value: string) => void
+  onSubmit?: () => void
   step: number
+  min?: number
+  unit: string
   last?: boolean
+  error?: string
+  inputWidth?: number
 }) {
-  const { colors: themeColors } = useTheme()
-  return (
-    <View
-      className={`flex-row items-center gap-3 px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}
-    >
-      <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
-        <Ionicons name={icon} size={20} color={themeColors.primary} />
-      </Box>
-      <Text size="sm" className="min-w-0 flex-1 text-typography-900">
-        {label}
-      </Text>
-      <NumberStepper
-        value={value}
-        onChangeText={onChange}
-        step={step}
-        size="sm"
-        // 44px clips 4-digit values like "2500" once system font scaling
-        // kicks in; goal rows have the room for a wider box.
-        inputWidth={64}
-        accessibilityLabel={`${label} goal`}
-      />
-    </View>
-  )
-}
+  const { colors } = useTheme()
 
-function SettingsField({
-  label,
-  children,
-  last = false,
-}: {
-  label: string
-  children: ReactNode
-  last?: boolean
-}) {
   return (
     <View className={`px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}>
-      <Text size="xs" className="mb-1.5 text-typography-500">
-        {label}
-      </Text>
-      {children}
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="min-w-0 flex-1 flex-row items-center gap-3">
+          <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
+            <Ionicons name={icon} size={20} color={colors.primary} />
+          </Box>
+          <View className="min-w-0 flex-1">
+            <Text size="sm" bold className="text-typography-900">
+              {label}
+            </Text>
+            {unit ? (
+              <Text size="xs" className="text-typography-500">
+                {unit}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View className="flex-row items-center gap-2">
+          <NumberStepper
+            value={value}
+            onChangeText={onChange}
+            onSubmit={onSubmit}
+            step={step}
+            min={min}
+            size="sm"
+            inputWidth={inputWidth}
+            accessibilityLabel={`${label} in ${unit}`}
+          />
+        </View>
+      </View>
+      {error ? (
+        <Text size="xs" bold className="mt-1" style={{ color: colors.danger }}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   )
 }
 
-const SETTINGS_TABS = [
-  { id: "goals", label: "Goals", icon: "flag-outline" },
-  { id: "general", label: "General", icon: "options-outline" },
-  { id: "ai", label: "AI", icon: "sparkles-outline" },
-  { id: "sync", label: "Sync", icon: "sync-outline" },
-  { id: "data", label: "Data", icon: "folder-open-outline" },
-  { id: "about", label: "About", icon: "information-circle-outline" },
+const SETTINGS_SECTIONS = [
+  {
+    id: "goals",
+    label: "Goals & Nutrition",
+    icon: "flag-outline" as const,
+    getSubtitle: (s: AppSettings) =>
+      `${formatNumber(s.calorie_goal)} kcal · ${s.protein_goal}g P · ${s.carbs_goal}g C · ${s.fat_goal}g F`,
+  },
+  {
+    id: "general",
+    label: "General & Preferences",
+    icon: "options-outline" as const,
+    getSubtitle: (s: AppSettings, country: string) =>
+      `Database: ${getFoodDatabaseCountryLabel(country)} · ${s.units === "imperial" ? "Imperial" : "Metric"} · Theme: ${s.theme_preference ?? "system"}`,
+  },
+  {
+    id: "ai",
+    label: "AI Assistant",
+    icon: "sparkles-outline" as const,
+    getSubtitle: (s: AppSettings) =>
+      s.ai_enabled === 1 ? `Active (${s.ai_provider})` : "Disabled · Chat with diary",
+  },
+  {
+    id: "sync",
+    label: "YAZIO Sync",
+    icon: "sync-outline" as const,
+    getSubtitle: (s: AppSettings) =>
+      s.yazio_sync_enabled === 1 ? "Syncing enabled (best-effort)" : "Sync disabled (local only)",
+  },
+  {
+    id: "data",
+    label: "Data & Backup",
+    icon: "folder-open-outline" as const,
+    getSubtitle: () => "Export diary (JSON/CSV) · Full backup & restore",
+  },
+  {
+    id: "about",
+    label: "About & Account",
+    icon: "information-circle-outline" as const,
+    getSubtitle: () => `Version ${getCurrentVersion()} · Agent API & Sign out`,
+  },
 ] as const
 
-type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"]
+type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"]
 
 /**
  * Goals tab owns its own form state so typing in one field never re-renders
- * the rest of the settings screen. Values re-sync when settings change
- * elsewhere (e.g. a YAZIO import) via the React-recommended
- * "adjust state during render" pattern.
+ * the rest of the settings screen.
  */
 function GoalsSettings({ settings }: { settings: AppSettings }) {
   const { updateSettings } = useApp()
-  const { showError } = useToast()
+  const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
-  // Format on load so stored floats (YAZIO imports, stepper math) never show
-  // more than two decimals in the goal fields.
+  const [saving, setSaving] = useState(false)
   const [calorieGoal, setCalorieGoal] = useState(formatNumber(settings.calorie_goal))
   const [proteinGoal, setProteinGoal] = useState(formatNumber(settings.protein_goal))
   const [carbsGoal, setCarbsGoal] = useState(formatNumber(settings.carbs_goal))
@@ -234,7 +289,8 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     setTargetWeight(formatNumber(settings.target_weight_kg))
   }
 
-  const saveGoals = async () => {
+  const saveGoals = useCallback(async () => {
+    if (saving) return
     const values = {
       calorie_goal: Number(calorieGoal),
       protein_goal: Number(proteinGoal),
@@ -257,7 +313,6 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
       setGoalError("Calories, protein, carbs and fat must be positive numbers.")
       return
     }
-    // Water, height and target weight are optional — 0 means "not set".
     if (
       values.water_goal_ml < 0 ||
       values.height_cm < 0 ||
@@ -268,84 +323,186 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
       return
     }
     setGoalError(null)
+    setSaving(true)
     try {
       await updateSettings(values)
+      showSuccess("Goals saved.", "Settings")
     } catch (error) {
       showError(error, "Could not save goals.")
+    } finally {
+      setSaving(false)
     }
-  }
+  }, [
+    calorieGoal,
+    carbsGoal,
+    fatGoal,
+    heightCm,
+    proteinGoal,
+    saving,
+    showError,
+    showSuccess,
+    targetWeight,
+    updateSettings,
+    waterGoal,
+  ])
+
+  const p = Number(proteinGoal) || 0
+  const c = Number(carbsGoal) || 0
+  const f = Number(fatGoal) || 0
+  const ratios = computeMacroRatios(p, c, f)
+  const macroKcal = ratios.macroKcal
+  const pPct = ratios.proteinPct
+  const cPct = ratios.carbsPct
+  const fPct = ratios.fatPct
 
   return (
-    <SettingsSection title="Daily goals">
-      <GoalInput
-        icon="flame-outline"
-        label="Calories (kcal)"
-        value={calorieGoal}
-        onChange={setCalorieGoal}
-        step={50}
-      />
-      <GoalInput
-        icon="fish-outline"
-        label="Protein (g)"
-        value={proteinGoal}
-        onChange={setProteinGoal}
-        step={5}
-      />
-      <GoalInput
-        icon="nutrition-outline"
-        label="Carbs (g)"
-        value={carbsGoal}
-        onChange={setCarbsGoal}
-        step={5}
-      />
-      <GoalInput
-        icon="water-outline"
-        label="Fat (g)"
-        value={fatGoal}
-        onChange={setFatGoal}
-        step={5}
-      />
-      <GoalInput
-        icon="water-outline"
-        label="Water (ml)"
-        value={waterGoal}
-        onChange={setWaterGoal}
-        step={250}
-      />
-      <GoalInput
-        icon="body-outline"
-        label="Height (cm)"
-        value={heightCm}
-        onChange={setHeightCm}
-        step={1}
-      />
-      <GoalInput
-        icon="flag-outline"
-        label="Target weight (kg)"
-        value={targetWeight}
-        onChange={setTargetWeight}
-        step={0.5}
-        last
-      />
-      <View className="gap-2 border-t border-outline-100 p-4">
-        {goalError ? (
-          <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-            {goalError}
+    <>
+      <SettingsSection title="Daily nutrition goals">
+        <GoalInput
+          icon="flame-outline"
+          label="Calories"
+          value={calorieGoal}
+          onChange={setCalorieGoal}
+          onSubmit={saveGoals}
+          step={50}
+          min={500}
+          unit="kcal"
+        />
+        <GoalInput
+          icon="barbell-outline"
+          label="Protein"
+          value={proteinGoal}
+          onChange={setProteinGoal}
+          onSubmit={saveGoals}
+          step={5}
+          min={10}
+          unit="g"
+        />
+        <GoalInput
+          icon="leaf-outline"
+          label="Carbohydrates"
+          value={carbsGoal}
+          onChange={setCarbsGoal}
+          onSubmit={saveGoals}
+          step={5}
+          min={10}
+          unit="g"
+        />
+        <GoalInput
+          icon="water-outline"
+          label="Fat"
+          value={fatGoal}
+          onChange={setFatGoal}
+          onSubmit={saveGoals}
+          step={5}
+          min={5}
+          unit="g"
+          last
+        />
+
+        <View className="border-t border-outline-100 p-4">
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text size="xs" className="text-typography-500">
+              Macro ratio ({macroKcal} kcal from macros)
+            </Text>
+          </View>
+          <View className="h-3 flex-row overflow-hidden rounded-full bg-background-100">
+            {pPct > 0 ? <View style={{ flex: pPct, backgroundColor: "#3b82f6" }} /> : null}
+            {cPct > 0 ? <View style={{ flex: cPct, backgroundColor: "#f59e0b" }} /> : null}
+            {fPct > 0 ? <View style={{ flex: fPct, backgroundColor: "#ef4444" }} /> : null}
+          </View>
+          <View className="mt-2 flex-row items-center justify-between">
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#3b82f6" }} />
+              <Text size="xs" className="text-typography-600">
+                P: {pPct}% ({p * 4} kcal)
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
+              <Text size="xs" className="text-typography-600">
+                C: {cPct}% ({c * 4} kcal)
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#ef4444" }} />
+              <Text size="xs" className="text-typography-600">
+                F: {fPct}% ({f * 9} kcal)
+              </Text>
+            </View>
+          </View>
+        </View>
+      </SettingsSection>
+
+      <SettingsSection title="Water & body goals">
+        <GoalInput
+          icon="water-outline"
+          label="Daily water goal"
+          value={waterGoal}
+          onChange={setWaterGoal}
+          onSubmit={saveGoals}
+          step={250}
+          min={0}
+          unit="ml"
+        />
+        <GoalInput
+          icon="body-outline"
+          label="Height"
+          value={heightCm}
+          onChange={setHeightCm}
+          onSubmit={saveGoals}
+          step={1}
+          min={0}
+          unit="cm"
+        />
+        <GoalInput
+          icon="scale-outline"
+          label="Target weight"
+          value={targetWeight}
+          onChange={setTargetWeight}
+          onSubmit={saveGoals}
+          step={0.5}
+          min={0}
+          unit="kg"
+          last
+        />
+        <View className="gap-3 border-t border-outline-100 p-4">
+          {goalError ? (
+            <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+              {goalError}
+            </Text>
+          ) : null}
+          <Text size="xs" className="leading-4 text-typography-500">
+            Height and target weight are optional (set to 0 to disable). BMI shows on Stats once
+            height and weight are logged.
           </Text>
-        ) : null}
-        <Text size="xs" className="mb-1 leading-4 text-typography-500">
-          Height and target weight are optional (set to 0 to disable). BMI shows on Stats once
-          height and weight are logged.
-        </Text>
-        <Button size="md" onPress={saveGoals}>
-          <ButtonText>Save goals</ButtonText>
-        </Button>
-      </View>
-    </SettingsSection>
+
+          <Button
+            size="lg"
+            className="mt-2 rounded-2xl bg-primary-500 py-3.5 active:bg-primary-600"
+            onPress={saveGoals}
+            disabled={saving}
+          >
+            <ButtonText>{saving ? "Saving goals…" : "Save goals"}</ButtonText>
+          </Button>
+        </View>
+      </SettingsSection>
+    </>
   )
 }
 
-/** AI tab form — isolated state so typing an API key or model never re-renders the screen. */
+function SettingsField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View className="border-b border-outline-100 px-4 py-3.5">
+      <Text size="xs" bold className="mb-2 uppercase text-typography-500">
+        {label}
+      </Text>
+      {children}
+    </View>
+  )
+}
+
+/** AI form — isolated state so typing an API key or model never re-renders other parts. */
 function AiSettingsForm({ settings }: { settings: AppSettings }) {
   const { openAiChat } = useAiChatModal()
   const { updateSettings } = useApp()
@@ -433,7 +590,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
     }
   }
 
-  const saveAiSettings = async () => {
+  const saveAiSettings = useCallback(async () => {
     if (!aiBaseUrl.trim()) {
       setAiError("Base URL is required (e.g. https://api.openai.com/v1).")
       return
@@ -455,12 +612,22 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         saveAiApiKey(aiApiKey),
       ])
       setTestResult(null)
+      showSuccess("AI settings saved.", "Settings")
     } catch (error) {
       showError(error, "Could not save AI settings.")
     } finally {
       setAiSaving(false)
     }
-  }
+  }, [
+    aiApiKey,
+    aiBaseUrl,
+    aiModel,
+    aiProvider,
+    aiSystemPrompt,
+    showError,
+    showSuccess,
+    updateSettings,
+  ])
 
   if (!aiFormLoaded) {
     return (
@@ -500,53 +667,87 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             )
           })}
         </Box>
-        <Text size="xs" className="mt-2 text-typography-500">
-          Presets fill the URL and model. Then add your API key.
-        </Text>
       </SettingsField>
-      <SettingsField label="Base URL (OpenAI, OpenRouter, Ollama…)">
-        <Input size="md" variant="outline">
+
+      <SettingsField label="Base URL">
+        <Input size="md">
           <InputField
             value={aiBaseUrl}
             onChangeText={setAiBaseUrl}
-            placeholder="https://api.openai.com/v1"
+            placeholder={AI_PROVIDER_PRESETS[aiProvider].base_url}
             autoCapitalize="none"
             autoCorrect={false}
-            accessibilityLabel="AI provider base URL"
-            maxFontSizeMultiplier={1.4}
+            returnKeyType="next"
+            accessibilityLabel="AI base URL"
           />
         </Input>
       </SettingsField>
+
+      <SettingsField label="API Key">
+        <View className="flex-row items-center gap-2">
+          <Input size="md" className="flex-1">
+            <InputField
+              value={aiApiKey}
+              onChangeText={setAiApiKey}
+              placeholder={aiProvider === "ollama" ? "Not required for local Ollama" : "sk-…"}
+              secureTextEntry={!showApiKey}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="next"
+              accessibilityLabel="AI API key"
+            />
+          </Input>
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            onPress={() => setShowApiKey((s) => !s)}
+          >
+            <ButtonText>{showApiKey ? "Hide" : "Show"}</ButtonText>
+          </Button>
+        </View>
+      </SettingsField>
+
       <SettingsField label="Model">
-        <Input size="md" variant="outline">
-          <InputField
-            value={aiModel}
-            onChangeText={setAiModel}
-            placeholder="gpt-4o-mini"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel="AI model name"
-            maxFontSizeMultiplier={1.4}
-          />
-        </Input>
+        <View className="flex-row items-center gap-2">
+          <Input size="md" className="flex-1">
+            <InputField
+              value={aiModel}
+              onChangeText={setAiModel}
+              placeholder={AI_PROVIDER_PRESETS[aiProvider].model}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={() => void saveAiSettings()}
+              accessibilityLabel="AI model name"
+            />
+          </Input>
+          <Button
+            size="sm"
+            variant="outline"
+            action="secondary"
+            onPress={() => void fetchAiModels()}
+            disabled={fetchingModels}
+          >
+            <ButtonText>{fetchingModels ? "Fetching…" : "Fetch list"}</ButtonText>
+          </Button>
+        </View>
+
         {fetchedModels.length > 0 ? (
           <Box className="mt-2 flex-row flex-wrap gap-1.5">
-            {fetchedModels.map((model) => (
+            {fetchedModels.slice(0, 10).map((model) => (
               <Pressable
                 key={model}
                 onPress={() => setAiModel(model)}
-                accessibilityRole="button"
-                accessibilityLabel={`Use model ${model}`}
-                className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
-                  model === aiModel
-                    ? "border-primary-500 bg-primary-500/10"
+                className={`rounded-full border px-2.5 py-1 ${
+                  aiModel === model
+                    ? "border-primary-500 bg-primary-500/15"
                     : "border-outline-200 bg-background-50"
                 }`}
+                accessibilityRole="button"
+                accessibilityLabel={`Select model ${model}`}
               >
-                <Text
-                  size="xs"
-                  style={{ color: model === aiModel ? colors.primary : colors.textMuted }}
-                >
+                <Text size="xs" style={{ color: aiModel === model ? colors.primary : colors.text }}>
                   {model}
                 </Text>
               </Pressable>
@@ -554,87 +755,44 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           </Box>
         ) : null}
       </SettingsField>
-      <SettingsField label="API key (stored in the device keystore)">
-        <Box className="flex-row items-center gap-2">
-          <Box className="flex-1">
-            <Input size="md" variant="outline">
-              <InputField
-                value={aiApiKey}
-                onChangeText={(value) => {
-                  setAiApiKey(value)
-                  setTestResult(null)
-                }}
-                placeholder="sk-…"
-                secureTextEntry={!showApiKey}
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="AI API key"
-                maxFontSizeMultiplier={1.4}
-              />
-            </Input>
-          </Box>
-          <Pressable
-            onPress={() => setShowApiKey((v) => !v)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={showApiKey ? "Hide API key" : "Show API key"}
-            className="h-10 w-10 items-center justify-center rounded-full active:bg-background-100"
-          >
-            <Ionicons
-              name={showApiKey ? "eye-off-outline" : "eye-outline"}
-              size={20}
-              color={colors.textMuted}
-            />
-          </Pressable>
-        </Box>
-      </SettingsField>
-      <SettingsField label="Extra instructions (optional)" last>
-        <Input size="md" variant="outline">
+
+      <SettingsField label="System prompt (optional)">
+        <Input size="md" className="h-24">
           <InputField
             value={aiSystemPrompt}
             onChangeText={setAiSystemPrompt}
-            placeholder="e.g. Keep answers short and use metric units"
+            placeholder="Custom assistant instructions, e.g. dietary preferences or tone"
             multiline
-            accessibilityLabel="AI extra instructions"
+            numberOfLines={4}
+            textAlignVertical="top"
+            accessibilityLabel="Custom AI system prompt"
           />
         </Input>
       </SettingsField>
-      <View className="gap-2 border-t border-outline-100 p-4">
-        {aiError ? (
-          <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+
+      {aiError ? (
+        <View className="border-b border-outline-100 px-4 py-3">
+          <Text size="xs" bold style={{ color: colors.danger }}>
             {aiError}
           </Text>
-        ) : null}
-        {testResult ? (
-          <Box className="flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
-            <Ionicons
-              name={testResult.ok ? "checkmark-circle" : "close-circle"}
-              size={18}
-              color={testResult.ok ? colors.primary : colors.danger}
-            />
-            <Text size="xs" className="flex-1 text-typography-600">
-              {testResult.message}
-            </Text>
-          </Box>
-        ) : null}
-        <Button size="md" onPress={saveAiSettings} disabled={aiSaving}>
-          <ButtonText>{aiSaving ? "Saving…" : "Save AI settings"}</ButtonText>
-        </Button>
+        </View>
+      ) : null}
+
+      {testResult ? (
+        <View className="border-b border-outline-100 px-4 py-3">
+          <Text size="xs" bold style={{ color: testResult.ok ? colors.primary : colors.danger }}>
+            {testResult.ok ? "✓ " : "✗ "}
+            {testResult.message}
+          </Text>
+        </View>
+      ) : null}
+
+      <View className="gap-3 p-4">
         <Box className="flex-row flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
-            action="secondary"
-            className="min-w-[140px] flex-1"
-            onPress={() => void fetchAiModels()}
-            disabled={fetchingModels}
-          >
-            <ButtonText>{fetchingModels ? "Fetching…" : "Fetch models"}</ButtonText>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            action="secondary"
+            action="primary"
             className="min-w-[140px] flex-1"
             onPress={() => void testAiConnection()}
             disabled={testingConnection}
@@ -674,6 +832,15 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             <ButtonText>Clear chat history</ButtonText>
           </Button>
         </Box>
+
+        <Button
+          size="lg"
+          className="mt-2 rounded-2xl bg-primary-500 py-3.5 active:bg-primary-600"
+          onPress={saveAiSettings}
+          disabled={aiSaving}
+        >
+          <ButtonText>{aiSaving ? "Saving AI settings…" : "Save AI settings"}</ButtonText>
+        </Button>
       </View>
     </View>
   )
@@ -687,10 +854,11 @@ export default function SettingsScreen() {
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
+  const scrollRef = useRef<ScrollView>(null)
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
   const [mcpExpanded, setMcpExpanded] = useState(false)
-  const [activeTab, setActiveTab] = useState<SettingsTabId>("goals")
+  const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -764,396 +932,502 @@ export default function SettingsScreen() {
     }
   }
 
+  const currentSection = SETTINGS_SECTIONS.find((s) => s.id === activeSection)
+
   return (
-    <ScrollView className="flex-1 bg-background-0" contentContainerClassName="pb-16">
-      <PageContainer
-        grow={false}
-        contentStyle={[
-          { padding: spacing.md, paddingTop: insets.top + spacing.md },
-          isWide ? { maxWidth: 860 } : undefined,
-        ]}
+    <KeyboardAvoidingView
+      className="flex-1 bg-background-0"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView
+        ref={scrollRef}
+        className="flex-1"
+        contentContainerClassName="pb-36"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
       >
-        <Box className="mb-4">
-          <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
-            Settings
-          </Text>
-          <Text size="xs" className="mt-1 text-typography-500">
-            Goals, preferences, data
-          </Text>
-        </Box>
-        <Box className="mb-6 flex-row flex-wrap gap-2">
-          {SETTINGS_TABS.map((tab) => {
-            const active = tab.id === activeTab
-            return (
-              <Pressable
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`${tab.label} settings`}
-                accessibilityState={{ selected: active }}
-                className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
-                  active
-                    ? "border-primary-500 bg-primary-500/10"
-                    : "border-outline-100 bg-background-50"
-                }`}
-              >
-                <Ionicons
-                  name={tab.icon}
-                  size={14}
-                  color={active ? colors.primary : colors.textMuted}
-                />
-                <Text
-                  size="sm"
-                  bold={active}
-                  style={{ color: active ? colors.primary : colors.text }}
-                >
-                  {tab.label}
+        <PageContainer
+          grow={false}
+          contentStyle={[
+            { padding: spacing.md, paddingTop: insets.top + spacing.md },
+            isWide ? { maxWidth: 860 } : undefined,
+          ]}
+        >
+          {activeSection === null ? (
+            /* ========================================================== */
+            /* 1. MASTER SETTINGS HUB OVERVIEW                            */
+            /* ========================================================== */
+            <>
+              <Box className="mb-5">
+                <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+                  Settings
                 </Text>
-              </Pressable>
-            )
-          })}
-        </Box>
+                <Text size="xs" className="mt-1 text-typography-500">
+                  Goals, preferences, data & account
+                </Text>
+              </Box>
 
-        {activeTab === "goals" ? <GoalsSettings settings={settings} /> : null}
+              <Card variant="elevated" className="overflow-hidden rounded-3xl p-0 shadow-soft-1">
+                {SETTINGS_SECTIONS.map((section, index) => {
+                  const isLast = index === SETTINGS_SECTIONS.length - 1
+                  return (
+                    <Pressable
+                      key={section.id}
+                      onPress={() => {
+                        setActiveSection(section.id)
+                        scrollRef.current?.scrollTo({ y: 0, animated: false })
+                      }}
+                      className={`flex-row items-center gap-3.5 px-4 py-4 active:bg-background-100 ${
+                        !isLast ? "border-b border-outline-100" : ""
+                      }`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${section.label} settings`}
+                    >
+                      <Box className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10">
+                        <Ionicons name={section.icon} size={22} color={colors.primary} />
+                      </Box>
+                      <Box className="min-w-0 flex-1">
+                        <Text size="md" bold className="text-typography-900">
+                          {section.label}
+                        </Text>
+                        <Text size="xs" numberOfLines={1} className="mt-0.5 text-typography-500">
+                          {section.getSubtitle(settings, effectiveCountry)}
+                        </Text>
+                      </Box>
+                      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    </Pressable>
+                  )
+                })}
+              </Card>
 
-        {activeTab === "general" ? (
-          <SettingsSection title="Preferences">
-            <SettingsRow
-              icon="globe-outline"
-              title="Food database country"
-              subtitle={
-                countryUsesProfileDefault && profileCountry
-                  ? `Using your YAZIO profile (${getFoodDatabaseCountryLabel(profileCountry)}) until you pick one`
-                  : getFoodDatabaseCountryLabel(effectiveCountry)
-              }
-              onPress={() => setCountryPickerOpen(true)}
-              accessibilityLabel="Change food database country"
-              right={<Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
-            />
-            <SettingsRow
-              icon="speedometer-outline"
-              title="Units"
-              subtitle={
-                settings.units === "imperial"
-                  ? "Weight and water in pounds and fluid ounces"
-                  : "Weight and water in kilograms and liters"
-              }
-              stackOnNarrow
-              right={
-                <SegmentedControl
-                  value={settings.units === "imperial" ? "imperial" : "metric"}
-                  options={[
-                    { value: "metric", label: "Metric" },
-                    { value: "imperial", label: "Imperial" },
-                  ]}
-                  onChange={async (units) => {
-                    try {
-                      await updateSettings({ units })
-                    } catch (error) {
-                      showError(error, "Could not update units.")
-                    }
+              <Box className="mt-6">
+                <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
+                  <ButtonText>Sign out of YAZIO</ButtonText>
+                </Button>
+              </Box>
+            </>
+          ) : (
+            /* ========================================================== */
+            /* 2. SECTION DRILLDOWN VIEW                                  */
+            /* ========================================================== */
+            <>
+              {/* Back Button & Section Title */}
+              <Box className="mb-4">
+                <Pressable
+                  onPress={() => {
+                    setActiveSection(null)
+                    scrollRef.current?.scrollTo({ y: 0, animated: false })
                   }}
-                />
-              }
-            />
-            <SettingsRow
-              icon="contrast-outline"
-              title="Theme"
-              subtitle={
-                settings.theme_preference === "light"
-                  ? "Always light"
-                  : settings.theme_preference === "dark"
-                    ? "Always dark"
-                    : "Follow your device setting"
-              }
-              last
-              stackOnNarrow
-              right={
-                <SegmentedControl
-                  value={settings.theme_preference ?? "system"}
-                  options={[
-                    { value: "system", label: "System" },
-                    { value: "light", label: "Light" },
-                    { value: "dark", label: "Dark" },
-                  ]}
-                  onChange={async (theme) => {
-                    try {
-                      await updateSettings({ theme_preference: theme })
-                    } catch (error) {
-                      showError(error, "Could not update theme.")
-                    }
-                  }}
-                />
-              }
-            />
-          </SettingsSection>
-        ) : null}
+                  hitSlop={8}
+                  className="flex-row items-center gap-1 py-1"
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to all settings"
+                >
+                  <Ionicons name="chevron-back" size={20} color={colors.primary} />
+                  <Text size="sm" bold style={{ color: colors.primary }}>
+                    All Settings
+                  </Text>
+                </Pressable>
+                <Box className="mt-1 flex-row items-center justify-between">
+                  <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+                    {currentSection?.label}
+                  </Text>
+                </Box>
+              </Box>
 
-        {activeTab === "general" ? (
-          <SettingsSection title="Updates">
-            <SettingsRow
-              icon="arrow-down-circle-outline"
-              title="Check for updates"
-              subtitle="Look for new versions on GitHub when the app starts"
-              right={
-                <Switch
-                  value={settings.update_check_enabled === 1}
-                  accessibilityLabel="Check for updates on startup"
-                  onValueChange={async (v) => {
-                    try {
-                      await updateSettings({ update_check_enabled: v ? 1 : 0 })
-                    } catch (error) {
-                      showError(error, "Could not update update-check setting.")
-                    }
-                  }}
-                />
-              }
-            />
-            <SettingsRow
-              icon="refresh-outline"
-              title={checking ? "Checking…" : "Check now"}
-              subtitle={`Version ${getCurrentVersion()} · releases on GitHub`}
-              last
-              onPress={() => void checkForUpdates({ manual: true })}
-              accessibilityLabel="Check for updates now"
-            />
-          </SettingsSection>
-        ) : null}
+              {/* Goals & Nutrition */}
+              {activeSection === "goals" ? <GoalsSettings settings={settings} /> : null}
 
-        <FoodDatabaseCountryPicker
-          visible={countryPickerOpen}
-          selectedCode={effectiveCountry}
-          onClose={() => setCountryPickerOpen(false)}
-          onSelect={async (code) => {
-            try {
-              await updateSettings({ food_database_country: code })
-              setProfileCountry(null)
-            } catch (error) {
-              showError(error, "Could not save food database country.")
-            }
-          }}
-        />
-
-        {activeTab === "ai" ? (
-          <SettingsSection title="AI assistant">
-            <SettingsRow
-              icon="sparkles-outline"
-              title="AI assistant"
-              subtitle="Chat with your diary on device. Your API key never leaves the app"
-              right={
-                <Switch
-                  value={settings.ai_enabled === 1}
-                  accessibilityLabel="Enable AI assistant"
-                  onValueChange={async (v) => {
-                    try {
-                      await updateSettings({ ai_enabled: v ? 1 : 0 })
-                    } catch (error) {
-                      showError(error, "Could not update AI setting.")
-                    }
-                  }}
-                />
-              }
-              last={!settings.ai_enabled}
-            />
-
-            {settings.ai_enabled === 1 ? <AiSettingsForm settings={settings} /> : null}
-          </SettingsSection>
-        ) : null}
-
-        {activeTab === "sync" ? (
-          <SettingsSection title="YAZIO sync">
-            <SettingsRow
-              icon="sync-outline"
-              title="Sync diary to YAZIO"
-              subtitle="Upload new entries as you log them (best-effort)"
-              right={
-                <Switch
-                  value={settings.yazio_sync_enabled === 1}
-                  accessibilityLabel="Sync diary to YAZIO"
-                  onValueChange={async (v) => {
-                    try {
-                      await updateSettings({ yazio_sync_enabled: v ? 1 : 0 })
-                    } catch (error) {
-                      showError(error, "Could not update sync setting.")
-                    }
-                  }}
-                />
-              }
-            />
-            <SettingsRow
-              icon="cloud-upload-outline"
-              title="Sync pending entries now"
-              subtitle="Send unsynced diary entries to YAZIO"
-              onPress={async () => {
-                try {
-                  const count = await syncPendingEntries()
-                  showSuccess(count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`, "Sync")
-                } catch (error) {
-                  showError(error, "Could not sync entries to YAZIO.")
-                }
-              }}
-            />
-            <SettingsRow
-              icon="cloud-download-outline"
-              title="Import today from YAZIO"
-              subtitle="Pull today's foods and refresh your goals"
-              last
-              onPress={async () => {
-                try {
-                  const { imported, skipped, failed } = await importFromYazio(toDateKey())
-                  await refreshSettings()
-                  const parts = ["Goals updated."]
-                  if (imported > 0) {
-                    parts.push(
-                      imported === 1
-                        ? "Imported 1 food for today."
-                        : `Imported ${imported} foods for today.`,
-                    )
-                  } else if (skipped > 0 && failed === 0) {
-                    parts.push("Today's foods are already up to date.")
-                  }
-                  if (failed > 0) {
-                    parts.push(`${failed} item(s) could not be loaded.`)
-                  }
-                  showSuccess(parts.join(" "), "Imported from YAZIO")
-                } catch (error) {
-                  showError(error, "Could not import from YAZIO.")
-                }
-              }}
-            />
-          </SettingsSection>
-        ) : null}
-
-        {activeTab === "data" ? (
-          <SettingsSection title="Data">
-            <SettingsRow
-              icon="download-outline"
-              title="Export diary (JSON)"
-              subtitle="All entries as a JSON file"
-              onPress={() => void handleExport("json")}
-            />
-            <SettingsRow
-              icon="document-text-outline"
-              title="Export diary (CSV)"
-              subtitle="All entries as a spreadsheet file"
-              onPress={() => void handleExport("csv")}
-            />
-            <SettingsRow
-              icon="archive-outline"
-              title="Back up all data"
-              subtitle="Diary, cached foods and meals in one file"
-              onPress={handleBackup}
-            />
-            <SettingsRow
-              icon="file-tray-full-outline"
-              title="Restore from backup"
-              subtitle="Replace local data with a backup file"
-              onPress={() =>
-                confirmAction({
-                  title: "Restore backup?",
-                  message:
-                    "This replaces all current diary entries, cached foods and meals on this device.",
-                  confirmLabel: "Restore",
-                  onConfirm: handleRestore,
-                })
-              }
-            />
-            <SettingsRow
-              icon="trash-outline"
-              title="Clear food cache"
-              subtitle="Remove cached YAZIO foods"
-              danger
-              last
-              onPress={() => {
-                confirmAction({
-                  title: "Clear cache?",
-                  message: "Removes cached YAZIO foods.",
-                  confirmLabel: "Clear",
-                  onConfirm: async () => {
-                    try {
-                      await clearFoodCache()
-                      showSuccess("Food cache cleared.", "Done")
-                    } catch (error) {
-                      showError(error, "Could not clear food cache.")
-                    }
-                  },
-                })
-              }}
-            />
-          </SettingsSection>
-        ) : null}
-
-        {activeTab === "about" ? (
-          <>
-            {Platform.OS === "web" ? (
-              <SettingsSection title="Agent API (MCP)">
-                <SettingsRow
-                  icon="terminal-outline"
-                  title="Agent API (MCP)"
-                  subtitle="Let AI agents read and log to your diary"
-                  last={!mcpExpanded}
-                  onPress={() => setMcpExpanded((v) => !v)}
-                  accessibilityLabel={
-                    mcpExpanded ? "Hide Agent API details" : "Show Agent API details"
-                  }
-                  right={
-                    <Ionicons
-                      name={mcpExpanded ? "chevron-down" : "chevron-forward"}
-                      size={20}
-                      color={colors.textMuted}
+              {/* General & Preferences */}
+              {activeSection === "general" ? (
+                <>
+                  <SettingsSection title="Preferences">
+                    <SettingsRow
+                      icon="globe-outline"
+                      title="Food database country"
+                      subtitle={
+                        countryUsesProfileDefault && profileCountry
+                          ? `Using your YAZIO profile (${getFoodDatabaseCountryLabel(profileCountry)}) until you pick one`
+                          : getFoodDatabaseCountryLabel(effectiveCountry)
+                      }
+                      onPress={() => setCountryPickerOpen(true)}
+                      accessibilityLabel="Change food database country"
+                      right={<Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
                     />
-                  }
-                />
-                {mcpExpanded ? (
-                  <View className="gap-1 border-t border-outline-100 p-4">
-                    <Text size="sm" className="leading-5 text-typography-500">
-                      Point Claude Desktop, Cursor or any MCP client at{" "}
-                      <Text size="sm" className="text-typography-900">
-                        {getMcpOrigin()}/mcp
-                      </Text>{" "}
-                      to work with your diary.
-                    </Text>
-                    <Text size="xs" className="mt-2 leading-4 text-typography-500">
-                      Set MCP_API_KEY on the server to protect the endpoint (required in
-                      production). The snapshot bridge is same-origin only and never stores data on
-                      disk.
-                    </Text>
-                    <Box className="mt-2 flex-row flex-wrap gap-1.5">
-                      {[
-                        "get_diary",
-                        "get_diary_stats",
-                        "get_goals",
-                        "get_settings",
-                        "get_meals",
-                        "log_food",
-                        "log_meal",
-                        "update_food_entry",
-                        "delete_food_entry",
-                        "set_goals",
-                        "set_units",
-                      ].map((tool) => (
-                        <Box
-                          key={tool}
-                          className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
-                        >
-                          <Text size="xs" className="font-mono text-typography-600">
-                            {tool}
-                          </Text>
-                        </Box>
-                      ))}
-                    </Box>
-                  </View>
-                ) : null}
-              </SettingsSection>
-            ) : null}
+                    <SettingsRow
+                      icon="speedometer-outline"
+                      title="Units"
+                      subtitle={
+                        settings.units === "imperial"
+                          ? "Weight and water in pounds and fluid ounces"
+                          : "Weight and water in kilograms and liters"
+                      }
+                      stackOnNarrow
+                      right={
+                        <SegmentedControl
+                          value={settings.units === "imperial" ? "imperial" : "metric"}
+                          options={[
+                            { value: "metric", label: "Metric" },
+                            { value: "imperial", label: "Imperial" },
+                          ]}
+                          onChange={async (units) => {
+                            try {
+                              await updateSettings({ units })
+                            } catch (error) {
+                              showError(error, "Could not update units.")
+                            }
+                          }}
+                        />
+                      }
+                    />
+                    <SettingsRow
+                      icon="contrast-outline"
+                      title="Theme"
+                      subtitle={
+                        settings.theme_preference === "light"
+                          ? "Always light"
+                          : settings.theme_preference === "dark"
+                            ? "Always dark"
+                            : "Follow your device setting"
+                      }
+                      last
+                      stackOnNarrow
+                      right={
+                        <SegmentedControl
+                          value={settings.theme_preference ?? "system"}
+                          options={[
+                            { value: "system", label: "System" },
+                            { value: "light", label: "Light" },
+                            { value: "dark", label: "Dark" },
+                          ]}
+                          onChange={async (theme) => {
+                            try {
+                              await updateSettings({ theme_preference: theme })
+                            } catch (error) {
+                              showError(error, "Could not update theme.")
+                            }
+                          }}
+                        />
+                      }
+                    />
+                  </SettingsSection>
 
-            <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
-              <ButtonText>Sign out</ButtonText>
-            </Button>
-          </>
-        ) : null}
-      </PageContainer>
-    </ScrollView>
+                  <SettingsSection title="Updates">
+                    <SettingsRow
+                      icon="arrow-down-circle-outline"
+                      title="Check for updates"
+                      subtitle="Look for new versions on GitHub when the app starts"
+                      right={
+                        <Switch
+                          value={settings.update_check_enabled === 1}
+                          accessibilityLabel="Check for updates on startup"
+                          onValueChange={async (v) => {
+                            try {
+                              await updateSettings({ update_check_enabled: v ? 1 : 0 })
+                            } catch (error) {
+                              showError(error, "Could not update update-check setting.")
+                            }
+                          }}
+                        />
+                      }
+                    />
+                    <SettingsRow
+                      icon="refresh-outline"
+                      title={checking ? "Checking…" : "Check now"}
+                      subtitle={`Version ${getCurrentVersion()} · releases on GitHub`}
+                      last
+                      onPress={() => void checkForUpdates({ manual: true })}
+                      accessibilityLabel="Check for updates now"
+                    />
+                  </SettingsSection>
+                </>
+              ) : null}
+
+              {/* AI Assistant */}
+              {activeSection === "ai" ? (
+                <SettingsSection title="AI Assistant">
+                  <SettingsRow
+                    icon="sparkles-outline"
+                    title="Enable AI Assistant"
+                    subtitle="Chat with your diary on device. Your API key never leaves the app"
+                    right={
+                      <Switch
+                        value={settings.ai_enabled === 1}
+                        accessibilityLabel="Enable AI assistant"
+                        onValueChange={async (v) => {
+                          try {
+                            await updateSettings({ ai_enabled: v ? 1 : 0 })
+                          } catch (error) {
+                            showError(error, "Could not update AI setting.")
+                          }
+                        }}
+                      />
+                    }
+                    last={settings.ai_enabled !== 1}
+                  />
+
+                  {settings.ai_enabled === 1 ? <AiSettingsForm settings={settings} /> : null}
+                </SettingsSection>
+              ) : null}
+
+              {/* YAZIO Sync */}
+              {activeSection === "sync" ? (
+                <SettingsSection title="YAZIO Sync">
+                  <SettingsRow
+                    icon="sync-outline"
+                    title="Sync diary to YAZIO"
+                    subtitle="Upload new entries as you log them (best-effort)"
+                    right={
+                      <Switch
+                        value={settings.yazio_sync_enabled === 1}
+                        accessibilityLabel="Sync diary to YAZIO"
+                        onValueChange={async (v) => {
+                          try {
+                            await updateSettings({ yazio_sync_enabled: v ? 1 : 0 })
+                          } catch (error) {
+                            showError(error, "Could not update sync setting.")
+                          }
+                        }}
+                      />
+                    }
+                  />
+                  <SettingsRow
+                    icon="cloud-upload-outline"
+                    title="Sync pending entries now"
+                    subtitle="Send unsynced diary entries to YAZIO"
+                    onPress={async () => {
+                      try {
+                        const count = await syncPendingEntries()
+                        showSuccess(
+                          count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`,
+                          "Sync",
+                        )
+                      } catch (error) {
+                        showError(error, "Could not sync entries to YAZIO.")
+                      }
+                    }}
+                  />
+                  <SettingsRow
+                    icon="cloud-download-outline"
+                    title="Import today from YAZIO"
+                    subtitle="Pull today's foods and refresh your goals"
+                    last
+                    onPress={async () => {
+                      try {
+                        const { imported, skipped, failed } = await importFromYazio(toDateKey())
+                        await refreshSettings()
+                        const parts = ["Goals updated."]
+                        if (imported > 0) {
+                          parts.push(
+                            imported === 1
+                              ? "Imported 1 food for today."
+                              : `Imported ${imported} foods for today.`,
+                          )
+                        } else if (skipped > 0 && failed === 0) {
+                          parts.push("Today's foods are already up to date.")
+                        }
+                        if (failed > 0) {
+                          parts.push(`${failed} item(s) could not be loaded.`)
+                        }
+                        showSuccess(parts.join(" "), "Imported from YAZIO")
+                      } catch (error) {
+                        showError(error, "Could not import from YAZIO.")
+                      }
+                    }}
+                  />
+                </SettingsSection>
+              ) : null}
+
+              {/* Data & Backup */}
+              {activeSection === "data" ? (
+                <SettingsSection title="Data & Storage">
+                  <SettingsRow
+                    icon="download-outline"
+                    title="Export diary (JSON)"
+                    subtitle="All entries as a JSON file"
+                    onPress={() => void handleExport("json")}
+                  />
+                  <SettingsRow
+                    icon="document-text-outline"
+                    title="Export diary (CSV)"
+                    subtitle="All entries as a spreadsheet file"
+                    onPress={() => void handleExport("csv")}
+                  />
+                  <SettingsRow
+                    icon="archive-outline"
+                    title="Back up all data"
+                    subtitle="Diary, cached foods and meals in one file"
+                    onPress={handleBackup}
+                  />
+                  <SettingsRow
+                    icon="file-tray-full-outline"
+                    title="Restore from backup"
+                    subtitle="Replace local data with a backup file"
+                    onPress={() =>
+                      confirmAction({
+                        title: "Restore backup?",
+                        message:
+                          "This replaces all current diary entries, cached foods and meals on this device.",
+                        confirmLabel: "Restore",
+                        onConfirm: handleRestore,
+                      })
+                    }
+                  />
+                  <SettingsRow
+                    icon="trash-outline"
+                    title="Clear food cache"
+                    subtitle="Remove cached YAZIO foods"
+                    danger
+                    last
+                    onPress={() => {
+                      confirmAction({
+                        title: "Clear cache?",
+                        message: "Removes cached YAZIO foods.",
+                        confirmLabel: "Clear",
+                        onConfirm: async () => {
+                          try {
+                            await clearFoodCache()
+                            showSuccess("Food cache cleared.", "Done")
+                          } catch (error) {
+                            showError(error, "Could not clear food cache.")
+                          }
+                        },
+                      })
+                    }}
+                  />
+                </SettingsSection>
+              ) : null}
+
+              {/* About & Account */}
+              {activeSection === "about" ? (
+                <>
+                  {Platform.OS === "web" ? (
+                    <SettingsSection title="Agent API (MCP)">
+                      <SettingsRow
+                        icon="terminal-outline"
+                        title="Agent API (MCP)"
+                        subtitle="Let AI agents read and log to your diary"
+                        last={!mcpExpanded}
+                        onPress={() => setMcpExpanded((v) => !v)}
+                        accessibilityLabel={
+                          mcpExpanded ? "Hide Agent API details" : "Show Agent API details"
+                        }
+                        right={
+                          <Ionicons
+                            name={mcpExpanded ? "chevron-down" : "chevron-forward"}
+                            size={20}
+                            color={colors.textMuted}
+                          />
+                        }
+                      />
+                      {mcpExpanded ? (
+                        <View className="gap-1 border-t border-outline-100 p-4">
+                          <Text size="sm" className="leading-5 text-typography-500">
+                            Point Claude Desktop, Cursor or any MCP client at{" "}
+                            <Text size="sm" className="text-typography-900">
+                              {getMcpOrigin()}/mcp
+                            </Text>{" "}
+                            to work with your diary.
+                          </Text>
+                          <Text size="xs" className="mt-2 leading-4 text-typography-500">
+                            Set MCP_API_KEY on the server to protect the endpoint (required in
+                            production). The snapshot bridge is same-origin only and never stores
+                            data on disk.
+                          </Text>
+                          <Box className="mt-2 flex-row flex-wrap gap-1.5">
+                            {[
+                              "get_diary",
+                              "get_diary_stats",
+                              "get_water",
+                              "get_weight",
+                              "get_meals",
+                              "get_favorite_foods",
+                              "get_goals",
+                              "get_settings",
+                              "get_health_summary",
+                              "log_food",
+                              "log_water",
+                              "log_weight",
+                              "log_meal",
+                              "save_meal",
+                              "update_food_entry",
+                              "delete_food_entry",
+                              "delete_water",
+                              "delete_weight",
+                              "delete_meal",
+                              "toggle_favorite",
+                              "set_goals",
+                              "set_units",
+                              "set_profile",
+                            ].map((tool) => (
+                              <Box
+                                key={tool}
+                                className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
+                              >
+                                <Text size="xs" className="font-mono text-typography-600">
+                                  {tool}
+                                </Text>
+                              </Box>
+                            ))}
+                          </Box>
+                        </View>
+                      ) : null}
+                    </SettingsSection>
+                  ) : null}
+
+                  <SettingsSection title="Account">
+                    <SettingsRow
+                      icon="information-circle-outline"
+                      title="Dietinator"
+                      subtitle={`Version ${getCurrentVersion()} · Local-first tracker`}
+                      last
+                    />
+                  </SettingsSection>
+
+                  <Box className="mt-4">
+                    <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
+                      <ButtonText>Sign out of YAZIO</ButtonText>
+                    </Button>
+                  </Box>
+                </>
+              ) : null}
+
+              {/* Bottom Quick Return to Overview */}
+              <Box className="mt-8 flex-row items-center justify-center">
+                <Pressable
+                  onPress={() => {
+                    setActiveSection(null)
+                    scrollRef.current?.scrollTo({ y: 0, animated: false })
+                  }}
+                  className="flex-row items-center gap-1.5 rounded-full bg-background-100 px-4 py-2 active:bg-background-200"
+                  accessibilityRole="button"
+                  accessibilityLabel="Return to Settings overview"
+                >
+                  <Ionicons name="arrow-back" size={16} color={colors.text} />
+                  <Text size="sm" bold style={{ color: colors.text }}>
+                    All Settings
+                  </Text>
+                </Pressable>
+              </Box>
+            </>
+          )}
+
+          <FoodDatabaseCountryPicker
+            visible={countryPickerOpen}
+            selectedCode={effectiveCountry}
+            onClose={() => setCountryPickerOpen(false)}
+            onSelect={async (code) => {
+              try {
+                await updateSettings({ food_database_country: code })
+                setProfileCountry(null)
+              } catch (error) {
+                showError(error, "Could not save food database country.")
+              }
+            }}
+          />
+        </PageContainer>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 

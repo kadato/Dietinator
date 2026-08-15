@@ -5,6 +5,7 @@ import type { DiaryEntry } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { usePressedState } from "@/hooks/usePressedState"
+import { MacroPills } from "@/components/MacroPills"
 import { formatNumber } from "@/utils/format"
 import { getFoodIcon } from "@/utils/food-icon"
 import type { ColorPalette } from "@/theme"
@@ -59,21 +60,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           <View style={styles.macroRow}>
             <Text style={styles.amountLabel}>{amountLabel}</Text>
             <Text style={styles.macroDot}>·</Text>
-            <View style={[styles.miniChip, { backgroundColor: `${colors.breakfast}15` }]}>
-              <Text style={[styles.miniChipText, { color: colors.breakfast }]}>
-                P {formatNumber(entry.protein)}g
-              </Text>
-            </View>
-            <View style={[styles.miniChip, { backgroundColor: `${colors.lunch}15` }]}>
-              <Text style={[styles.miniChipText, { color: colors.lunch }]}>
-                C {formatNumber(entry.carbs)}g
-              </Text>
-            </View>
-            <View style={[styles.miniChip, { backgroundColor: `${colors.dinner}15` }]}>
-              <Text style={[styles.miniChipText, { color: colors.dinner }]}>
-                F {formatNumber(entry.fat)}g
-              </Text>
-            </View>
+            <MacroPills protein={entry.protein} carbs={entry.carbs} fat={entry.fat} size="xs" />
           </View>
         </View>
         <View style={styles.kcalBlock}>
@@ -112,7 +99,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Edit ${entry.food_name}`}
         >
-          <Ionicons name="pencil-outline" size={14} color={accentColor} />
+          <Ionicons name="create-outline" size={15} color={accentColor} />
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}

@@ -77,7 +77,13 @@ describe("restoreBackup", () => {
 
   it("clears all tables, restores settings and entries, and reports counts", async () => {
     const result = await restoreBackup(validPayload())
-    expect(result).toEqual({ diaryEntries: 1, foodCache: 0, meals: 0 })
+    expect(result).toEqual({
+      diaryEntries: 1,
+      foodCache: 0,
+      meals: 0,
+      waterLogs: 0,
+      weightEntries: 0,
+    })
 
     const clearSql = String(execAsync.mock.calls[0][0])
     for (const table of [
@@ -86,6 +92,8 @@ describe("restoreBackup", () => {
       "diary_entries",
       "food_cache",
       "deleted_yazio_items",
+      "water_log",
+      "weight_entries",
       "settings",
     ]) {
       expect(clearSql).toContain(`DELETE FROM ${table}`)

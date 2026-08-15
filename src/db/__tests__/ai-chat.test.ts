@@ -47,15 +47,12 @@ describe("ai-chat history", () => {
     expect(db.runAsync.mock.calls[1][0]).toContain("DELETE FROM ai_chat_messages")
   })
 
-  it("updateChatMessage merges fields instead of wiping them", async () => {
+  it("updateChatMessage updates specified fields dynamically", async () => {
     const db = createMockDb()
     await updateChatMessage(7, { content: "streamed text" })
     expect(db.runAsync).toHaveBeenCalledWith(
-      expect.stringContaining("COALESCE"),
+      expect.stringContaining("UPDATE ai_chat_messages SET content = ? WHERE id = ?"),
       "streamed text",
-      null,
-      null,
-      null,
       7,
     )
   })

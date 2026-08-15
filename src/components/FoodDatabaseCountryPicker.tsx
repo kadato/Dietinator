@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react"
 import {
+  FlatList,
+  Keyboard,
   Modal,
   Platform,
-  View,
-  Text,
   Pressable,
-  FlatList,
   StyleSheet,
+  Text,
   TextInput,
+  View,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { FOOD_DATABASE_COUNTRY_CODES } from "@/constants/food-database-countries"
@@ -76,10 +77,13 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"
+          returnKeyType="search"
+          onSubmitEditing={() => Keyboard.dismiss()}
         />
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.code}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
             const selected = item.code === normalizedSelected

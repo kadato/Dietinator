@@ -1,8 +1,9 @@
 import { memo, useCallback, useState } from "react"
-import { Pressable, View } from "react-native"
+import { Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
+import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -32,8 +33,13 @@ export const MealSection = memo(function MealSection({
   onShowNutrition,
 }: Props) {
   const { colors } = useTheme()
-  // Default to expanded so logged food and macro badges are always visible
-  const [expanded, setExpanded] = useState(true)
+  // Default to collapsed for a clean, compact diary overview
+  const [expanded, setExpanded] = useState(false)
+  const [prevDateKey, setPrevDateKey] = useState(dateKey)
+  if (dateKey !== prevDateKey) {
+    setPrevDateKey(dateKey)
+    setExpanded(false)
+  }
   const handleEdit = useCallback((entryId: string) => onEdit(entryId), [onEdit])
   const handleDelete = useCallback((entryId: string) => onDelete(entryId), [onDelete])
   const accent = colors[mealType]
@@ -109,36 +115,8 @@ export const MealSection = memo(function MealSection({
             ) : null}
 
             {entries.length > 0 ? (
-              <Box className="mt-1.5 flex-row items-center gap-1.5">
-                <View
-                  className="rounded-lg px-2 py-0.5"
-                  style={{ backgroundColor: `${colors.breakfast}18` }}
-                >
-                  <Text
-                    size="2xs"
-                    bold
-                    style={{ color: colors.breakfast }}
-                    className="font-tabular"
-                  >
-                    P {Math.round(totalProtein)}g
-                  </Text>
-                </View>
-                <View
-                  className="rounded-lg px-2 py-0.5"
-                  style={{ backgroundColor: `${colors.lunch}18` }}
-                >
-                  <Text size="2xs" bold style={{ color: colors.lunch }} className="font-tabular">
-                    C {Math.round(totalCarbs)}g
-                  </Text>
-                </View>
-                <View
-                  className="rounded-lg px-2 py-0.5"
-                  style={{ backgroundColor: `${colors.dinner}18` }}
-                >
-                  <Text size="2xs" bold style={{ color: colors.dinner }} className="font-tabular">
-                    F {Math.round(totalFat)}g
-                  </Text>
-                </View>
+              <Box className="mt-1.5">
+                <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
               </Box>
             ) : (
               <Text size="xs" className="mt-0.5 text-typography-400">
@@ -149,13 +127,13 @@ export const MealSection = memo(function MealSection({
         </Pressable>
 
         <Pressable
-          className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
+          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
           onPress={() => onAdd(mealType)}
-          hitSlop={4}
+          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
-          <Ionicons name="add" size={22} color={colors.onPrimary} />
+          <Ionicons name="add" size={24} color={colors.onPrimary} />
         </Pressable>
       </Box>
 

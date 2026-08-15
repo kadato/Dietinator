@@ -1,11 +1,13 @@
 import { memo } from "react"
-import { ActivityIndicator, Pressable } from "react-native"
+import { ActivityIndicator, Pressable, View } from "react-native"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
-import { formatListNutrientLine } from "@/utils/food-display"
-import { isPerGramNutrients } from "@/utils/nutrients"
+import { displayUnit } from "@/utils/food-display"
+import { formatNumber } from "@/utils/format"
+import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
+import { MacroPills } from "@/components/MacroPills"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -15,6 +17,7 @@ type Props = {
   onToggleFavorite?: () => void
   isFavorite?: boolean
   subtitle?: string
+  amount?: number
   /** Instant-add without the dialog. Adds a "+" button on the row. */
   onQuickAdd?: () => void
   /** True while this row's quick-add is in flight (shows a spinner). */
@@ -36,6 +39,7 @@ export const FoodListItem = memo(function FoodListItem({
   onToggleFavorite,
   isFavorite,
   subtitle,
+  amount,
   onQuickAdd,
   quickAdding,
   accentColor,
@@ -44,12 +48,28 @@ export const FoodListItem = memo(function FoodListItem({
 }: Props) {
   const { colors } = useTheme()
   const accent = accentColor ?? colors.primary
-  const perGram = isPerGramNutrients(
-    food.nutrients,
-    food.base_unit || "g",
-    food.serving.serving_quantity,
-  )
-  const kcal = perGram ? Math.round(food.nutrients.kcal * 100) : Math.round(food.nutrients.kcal)
+  const unit = food.base_unit || "g"
+
+  const perGram = isPerGramNutrients(food.nutrients, unit, food.serving.serving_quantity)
+
+  const nutrients =
+    amount !== undefined
+      ? nutrientsForAmount(food.nutrients, food.serving, amount, unit)
+      : {
+          kcal: perGram ? Math.round(food.nutrients.kcal * 100) : Math.round(food.nutrients.kcal),
+          protein: perGram ? food.nutrients.protein * 100 : food.nutrients.protein,
+          carbs: perGram ? food.nutrients.carbs * 100 : food.nutrients.carbs,
+          fat: perGram ? food.nutrients.fat * 100 : food.nutrients.fat,
+        }
+
+  const portion =
+    amount !== undefined
+      ? `${formatNumber(amount)} ${displayUnit(unit)}`
+      : perGram
+        ? `100 ${unit}`
+        : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
+
+  const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
 
   return (
     <Box className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
@@ -57,7 +77,7 @@ export const FoodListItem = memo(function FoodListItem({
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${food.name}, ${kcal} calories`}
+        accessibilityLabel={`${food.name}, ${Math.round(nutrients.kcal)} calories`}
       >
         <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-100">
           <MaterialCommunityIcons
@@ -67,16 +87,31 @@ export const FoodListItem = memo(function FoodListItem({
           />
         </Box>
         <Box className="min-w-0 flex-1">
-          <Text size="md" bold className="text-typography-900">
+          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
             {food.name}
           </Text>
-          <Text size="xs" className="mt-0.5 text-typography-500">
-            {subtitle ?? formatListNutrientLine(food)}
-          </Text>
+          {subtitle ? (
+            <Text size="xs" className="mt-0.5 text-typography-500" numberOfLines={1}>
+              {subtitle}
+            </Text>
+          ) : (
+            <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
+              <Text size="xs" className="font-tabular text-typography-500">
+                {prefix}
+                {portion} · {Math.round(nutrients.kcal)} kcal
+              </Text>
+              <MacroPills
+                protein={nutrients.protein}
+                carbs={nutrients.carbs}
+                fat={nutrients.fat}
+                size="xs"
+              />
+            </View>
+          )}
         </Box>
         {showKcal ? (
-          <Text size="sm" className="ml-2 shrink-0 text-typography-500">
-            {kcal} Cal
+          <Text size="sm" className="font-tabular ml-2 shrink-0 text-typography-500">
+            {Math.round(nutrients.kcal)} Cal
           </Text>
         ) : null}
       </Pressable>

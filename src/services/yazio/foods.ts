@@ -237,5 +237,9 @@ export async function getFoodByBarcode(
   if (cached) return cached
 
   const results = await searchFoodsRemote(barcode, unitEnergy)
-  return pickBestBarcodeMatch(results, barcode)
+  const match = pickBestBarcodeMatch(results, barcode)
+  if (match) {
+    await foodCacheDb.updateFoodBarcode(match.product_id, barcode)
+  }
+  return match
 }

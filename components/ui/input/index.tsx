@@ -171,51 +171,53 @@ const InputSlot = React.forwardRef<React.ComponentRef<typeof UIInput.Slot>, IInp
 type IInputFieldProps = React.ComponentProps<typeof UIInput.Input> &
   VariantProps<typeof inputFieldStyle> & { className?: string }
 
-const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, IInputFieldProps>(
-  function InputField({ className, accessibilityLabel, ...props }, ref) {
-    const { variant: parentVariant, size: parentSize } = useStyleContext(SCOPE)
-    const hostRef = useRef<TextInput | React.ComponentProps<typeof UIInput.Input> | null>(null)
-    // The gluestack creator reads `aria-label` only (defaulting to "Input
-    // Field") and drops `accessibilityLabel` — forward whichever the caller
-    // provided so e2e selectors and screen readers see the real label.
-    const ariaLabel = accessibilityLabel ?? props["aria-label"]
+const InputField = React.forwardRef<TextInput, IInputFieldProps>(function InputField(
+  { className, accessibilityLabel, ...props },
+  ref,
+) {
+  const { variant: parentVariant, size: parentSize } = useStyleContext(SCOPE)
+  const hostRef = useRef<TextInput | React.ComponentProps<typeof UIInput.Input> | null>(null)
+  // The gluestack creator reads `aria-label` only (defaulting to "Input
+  // Field") and drops `accessibilityLabel` — forward whichever the caller
+  // provided so e2e selectors and screen readers see the real label.
+  const ariaLabel = accessibilityLabel ?? props["aria-label"]
 
-    // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
-    // value of a controlled input when it was set programmatically (not typed)
-    // until the input receives focus — e.g. goal fields appear empty on load.
-    // A focus()+blur() cycle repaints the text. Runs only when the value
-    // changes: without deps it fires on every parent re-render and yanks
-    // focus away from whichever input is being typed in. Skipped while this
-    // input itself is focused so typing is never disturbed.
-    useLayoutEffect(() => {
-      if (Platform.OS !== "web" || props.value == null) return
-      const node = hostRef.current as unknown as HTMLInputElement | null
-      if (node && typeof document !== "undefined" && document.activeElement !== node) {
-        node.focus()
-        node.blur()
-      }
-    }, [props.value])
+  // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
+  // value of a controlled input when it was set programmatically (not typed)
+  // until the input receives focus — e.g. goal fields appear empty on load.
+  // A focus()+blur() cycle repaints the text. Runs only when the value
+  // changes: without deps it fires on every parent re-render and yanks
+  // focus away from whichever input is being typed in. Skipped while this
+  // input itself is focused so typing is never disturbed.
+  useLayoutEffect(() => {
+    if (Platform.OS !== "web" || props.value == null) return
+    const node = hostRef.current as unknown as HTMLInputElement | null
+    if (node && typeof document !== "undefined" && document.activeElement !== node) {
+      node.focus()
+      node.blur()
+    }
+  }, [props.value])
 
-    return (
-      <UIInput.Input
-        ref={(node) => {
-          hostRef.current = node
-          if (typeof ref === "function") ref(node)
-          else if (ref) ref.current = node
-        }}
-        {...props}
-        aria-label={ariaLabel}
-        className={inputFieldStyle({
-          parentVariants: {
-            variant: parentVariant,
-            size: parentSize,
-          },
-          class: className,
-        })}
-      />
-    )
-  },
-)
+  return (
+    <UIInput.Input
+      ref={(node) => {
+        const textInput = node as unknown as TextInput | null
+        hostRef.current = textInput
+        if (typeof ref === "function") ref(textInput)
+        else if (ref) ref.current = textInput
+      }}
+      {...props}
+      aria-label={ariaLabel}
+      className={inputFieldStyle({
+        parentVariants: {
+          variant: parentVariant,
+          size: parentSize,
+        },
+        class: className,
+      })}
+    />
+  )
+})
 
 Input.displayName = "Input"
 InputIcon.displayName = "InputIcon"

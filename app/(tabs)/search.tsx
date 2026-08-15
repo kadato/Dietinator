@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable } from "react-native"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ActivityIndicator, FlatList, Pressable, type TextInput, View } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -20,7 +20,7 @@ import { quickLogFood } from "@/services/diary"
 import type { MealType, RecentFoodUsage, SearchFoodResult } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
-import { displayUnit, formatUsageAmountLine } from "@/utils/food-display"
+import { displayUnit } from "@/utils/food-display"
 import { MEAL_LABELS } from "@/utils/meals"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
@@ -45,6 +45,7 @@ export default function SearchScreen() {
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const insets = useSafeAreaInsets()
+  const inputRef = useRef<TextInput>(null)
   const [query, setQuery] = useState("")
   const debounced = useDebounce(query, 200)
   const [listMode, setListMode] = useState<ListMode>("recents")
@@ -159,7 +160,7 @@ export default function SearchScreen() {
         return (
           <FoodListItem
             food={item.food}
-            subtitle={formatUsageAmountLine(item.food, item.amount)}
+            amount={item.amount}
             onPress={() => openFood(item.food)}
             onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
             quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
@@ -260,11 +261,13 @@ export default function SearchScreen() {
               <Ionicons name="search" size={20} color={colors.textMuted} />
             </InputIcon>
             <InputField
+              ref={inputRef}
               placeholder="e.g. banana, oats, chicken"
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
               returnKeyType="search"
+              onSubmitEditing={() => inputRef.current?.blur()}
               accessibilityLabel="Search foods"
             />
             {query.length > 0 ? (
@@ -298,6 +301,8 @@ export default function SearchScreen() {
         <FlatList
           className="flex-1"
           data={foods}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           contentContainerClassName={foods.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-36"}
           keyExtractor={(item) =>
             isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
@@ -316,9 +321,7 @@ export default function SearchScreen() {
                       isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
                     }
                     food={isUsageRow(item) ? item.food : item}
-                    subtitle={
-                      isUsageRow(item) ? formatUsageAmountLine(item.food, item.amount) : undefined
-                    }
+                    amount={isUsageRow(item) ? item.amount : undefined}
                     onPress={() => openFood(isUsageRow(item) ? item.food : item)}
                     onQuickAdd={() =>
                       isUsageRow(item)
@@ -345,13 +348,18 @@ export default function SearchScreen() {
       </PageContainer>
 
       <FabCluster
-        center={
-          <Fab
-            icon="barcode-outline"
-            label="Scan"
-            onPress={openScan}
-            accessibilityLabel="Scan barcode"
-          />
+        right={
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Fab
+              tone="surface"
+              icon="search"
+              onPress={() => {
+                inputRef.current?.focus()
+              }}
+              accessibilityLabel="Search"
+            />
+            <Fab icon="barcode-outline" onPress={openScan} accessibilityLabel="Scan barcode" />
+          </View>
         }
         bottomOffset={24}
       />

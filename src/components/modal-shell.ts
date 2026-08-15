@@ -41,6 +41,7 @@ export function createModalShellStyles(colors: ColorPalette) {
       justifyContent: "center",
       paddingVertical: 16,
       paddingHorizontal: 16,
+      pointerEvents: "box-none",
     },
     dialogBox: {
       backgroundColor: colors.surface,

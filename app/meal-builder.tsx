@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
 } from "react-native"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useTheme } from "@/hooks/useTheme"
-import { useLayout } from "@/hooks/useLayout"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { useToast } from "@/context/ToastContext"
 import { deleteMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
 import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
@@ -23,7 +24,10 @@ import { nutrientsForAmount } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
+import { FoodListItem } from "@/components/FoodListItem"
+import { MacroPills } from "@/components/MacroPills"
 import { NumberStepper } from "@/components/NumberStepper"
+import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { spacing } from "@/theme"
@@ -36,25 +40,15 @@ function servingAmountFor(food: SearchFoodResult): number {
 }
 
 export default function MealBuilderScreen() {
-  const router = useRouter()
+  const safeBack = useSafeBack()
   const params = useLocalSearchParams<{ mealId?: string }>()
   const mealId = routeParam(params.mealId)
   const isEditing = Boolean(mealId)
 
   const { colors } = useTheme()
-  const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const { showError, showSuccess, showWarning } = useToast()
   const keyboardOpen = useKeyboardVisible()
-
-  // A deep link straight to this modal has no screen to go back to.
-  const safeBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }, [router])
 
   const [name, setName] = useState("")
   const [items, setItems] = useState<MealItem[]>([])
@@ -148,9 +142,9 @@ export default function MealBuilderScreen() {
 
   const totals = useMemo(() => mealTotals({ items }), [items])
 
-  const itemKcal = useCallback(
+  const itemNutrients = useCallback(
     (item: MealItem) =>
-      nutrientsForAmount(item.nutrients, item.serving, item.amount, item.base_unit).kcal,
+      nutrientsForAmount(item.nutrients, item.serving, item.amount, item.base_unit),
     [],
   )
 
@@ -222,6 +216,7 @@ export default function MealBuilderScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-32"
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           <Text size="sm" className="mb-4 text-typography-500">
@@ -248,43 +243,65 @@ export default function MealBuilderScreen() {
               <Text size="xs" bold className="mb-1.5 text-typography-600">
                 IN YOUR MEAL · {Math.round(totals.kcal)} KCAL
               </Text>
-              {items.map((item) => (
-                <Box
-                  key={item.product_id}
-                  className="mb-2 flex-row items-center gap-2 rounded-2xl border border-outline-200 bg-background-50 px-3 py-2.5"
-                >
-                  <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900" numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <Text size="xs" className="mt-0.5 text-typography-500">
-                      {Math.round(itemKcal(item))} kcal
-                    </Text>
-                  </Box>
-                  <NumberStepper
-                    value={item.amount === 0 ? "" : String(item.amount)}
-                    onChangeText={(value) => setItemAmount(item.product_id, value)}
-                    onSubmit={() => void handleSave()}
-                    step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
-                    decimals={1}
-                    size="sm"
-                    accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
-                  />
-                  <Text size="xs" className="w-6 text-typography-500">
-                    {item.base_unit}
-                  </Text>
-                  <Pressable
-                    onPress={() => removeItem(item.product_id)}
-                    hitSlop={6}
-                    className="h-8 w-8 items-center justify-center rounded-full"
-                    style={{ backgroundColor: `${colors.danger}14` }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${item.name}`}
+              {items.map((item) => {
+                const itemN = itemNutrients(item)
+                return (
+                  <Box
+                    key={item.product_id}
+                    className="mb-2 flex-row items-center gap-2 rounded-2xl border border-outline-200 bg-background-50 px-3 py-2.5"
                   >
-                    <Ionicons name="trash" size={17} color={colors.danger} />
-                  </Pressable>
-                </Box>
-              ))}
+                    <Box className="min-w-0 flex-1">
+                      <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Box className="mt-1 flex-row flex-wrap items-center gap-1.5">
+                        <Text size="xs" className="font-tabular text-typography-500">
+                          {Math.round(itemN.kcal)} kcal
+                        </Text>
+                        <MacroPills
+                          protein={itemN.protein}
+                          carbs={itemN.carbs}
+                          fat={itemN.fat}
+                          size="xs"
+                        />
+                      </Box>
+                    </Box>
+                    <NumberStepper
+                      value={item.amount === 0 ? "" : String(item.amount)}
+                      onChangeText={(value) => setItemAmount(item.product_id, value)}
+                      onSubmit={() => void handleSave()}
+                      step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
+                      decimals={1}
+                      size="sm"
+                      accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
+                    />
+                    <Text size="xs" className="w-6 text-typography-500">
+                      {item.base_unit}
+                    </Text>
+                    <Pressable
+                      onPress={() => removeItem(item.product_id)}
+                      hitSlop={6}
+                      className="h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: `${colors.danger}14` }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${item.name}`}
+                    >
+                      <Ionicons name="trash" size={17} color={colors.danger} />
+                    </Pressable>
+                  </Box>
+                )
+              })}
+
+              {/* Nutrition Facts: Macros & Micros Breakdown */}
+              <Box className="mb-4 mt-2">
+                <NutritionFactsCard
+                  nutrients={totals}
+                  servingLabel={
+                    items.length === 1 ? "1 food in meal" : `${items.length} foods in meal total`
+                  }
+                  baseAmount={items.reduce((s, i) => s + (i.amount || 0), 0) || 100}
+                />
+              </Box>
             </>
           ) : (
             <Text size="sm" className="mb-5 mt-2 px-6 text-center leading-5 text-typography-500">
@@ -302,6 +319,7 @@ export default function MealBuilderScreen() {
               onChangeText={setQuery}
               autoCorrect={false}
               returnKeyType="search"
+              onSubmitEditing={() => Keyboard.dismiss()}
               accessibilityLabel="Search foods to add"
             />
           </Input>
@@ -312,27 +330,14 @@ export default function MealBuilderScreen() {
           ) : null}
           {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
           {cappedResults.map((food) => (
-            <Pressable
+            <FoodListItem
               key={food.product_id}
-              className="mb-2 flex-row items-center rounded-2xl border border-outline-200 bg-background-50 px-4 py-3 active:opacity-80"
+              food={food}
+              accentColor={colors.primary}
               onPress={() => addFood(food)}
-              accessibilityRole="button"
-              accessibilityLabel={`Add ${food.name}`}
-            >
-              <Box className="mr-3 h-9 w-9 items-center justify-center rounded-full bg-primary-500/15">
-                <Ionicons name="add" size={20} color={colors.primary} />
-              </Box>
-              <Box className="min-w-0 flex-1">
-                <Text size="md" bold className="text-typography-900" numberOfLines={1}>
-                  {food.name}
-                </Text>
-                <Text size="xs" className="mt-0.5 text-typography-500" numberOfLines={1}>
-                  {food.producer?.trim()
-                    ? `${food.producer}, ${Math.round(food.nutrients.kcal)} kcal per ${food.serving.serving}`
-                    : `${Math.round(food.nutrients.kcal)} kcal per ${food.serving.serving}`}
-                </Text>
-              </Box>
-            </Pressable>
+              onQuickAdd={() => addFood(food)}
+              quickAddVariant="pill"
+            />
           ))}
           {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
             <Text size="xs" className="py-2 text-center text-typography-500">
@@ -368,7 +373,6 @@ export default function MealBuilderScreen() {
           right={
             <Fab
               icon="checkmark"
-              label={isMedium ? (isEditing ? "Save" : "Create") : undefined}
               onPress={() => void handleSave()}
               disabled={saving}
               accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}

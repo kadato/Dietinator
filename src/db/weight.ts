@@ -16,11 +16,8 @@ export async function getWeightEntries(fromDateKey?: string): Promise<WeightEntr
 }
 
 export async function getLatestWeightEntry(): Promise<WeightEntry | null> {
-  const db = await getDatabase()
-  const row = await db.getFirstAsync<WeightEntry>(
-    `SELECT ${COLUMNS} FROM weight_entries ORDER BY date DESC LIMIT 1`,
-  )
-  return row ?? null
+  const [latest] = await getRecentWeightEntries(1)
+  return latest ?? null
 }
 
 /** The most recent `limit` weight entries, newest first — for change deltas. */

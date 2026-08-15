@@ -41,8 +41,13 @@ export function MealSlotModal({ visible, title, onSelect, onClose }: Props) {
           accessibilityLabel="Dismiss meal slot picker"
         />
         <View
-          pointerEvents="box-none"
-          style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+            pointerEvents: "box-none",
+          }}
         >
           <Box className="w-full max-w-[380px] self-center rounded-3xl bg-background-50 p-4 shadow-soft-1">
             <Text size="md" bold className="mb-4 px-1 text-typography-900">

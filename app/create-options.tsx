@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { ModalContainer } from "@/components/ModalContainer"
 import { useTheme } from "@/hooks/useTheme"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { withAlpha } from "@/utils/color"
 import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
@@ -56,20 +57,12 @@ function optionColor(id: CreateOption["id"], colors: ColorPalette): string {
 
 export default function CreateOptionsScreen() {
   const router = useRouter()
+  const safeBack = useSafeBack()
   const params = useLocalSearchParams<{ meal?: string; date?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
-
-  // A deep link straight to this modal has no screen to go back to.
-  const safeBack = () => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }
 
   const onSelect = (option: CreateOption) => {
     switch (option.id) {

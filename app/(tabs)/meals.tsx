@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable } from "react-native"
+import { ActivityIndicator, FlatList, Keyboard, Pressable } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -13,6 +13,7 @@ import { PageContainer } from "@/components/PageContainer"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { EmptyState } from "@/components/EmptyState"
+import { MealListItem } from "@/components/MealListItem"
 import { MealSlotModal } from "@/components/MealSlotModal"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
@@ -134,65 +135,19 @@ export default function MealsScreen() {
   const renderMeal = useCallback(
     ({ item }: { item: Meal }) => {
       const totals = totalsById.get(item.id)
-      const kcal = Math.round(totals?.kcal ?? 0)
       return (
-        <Box className="mb-2 flex-row items-center gap-3 rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
-          <Pressable
-            className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
-            onPress={() => openBuilder(item.id)}
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${item.name}`}
-          >
-            <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
-              <Ionicons name="restaurant-outline" size={19} color={colors.primary} />
-            </Box>
-            <Box className="min-w-0 flex-1">
-              <Text size="md" bold className="text-typography-900" numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text
-                size="xs"
-                bold
-                style={{ color: colors.primary }}
-                className="font-tabular mt-0.5"
-              >
-                {kcal} Cal · {item.items.length === 1 ? "1 food" : `${item.items.length} foods`}
-              </Text>
-              <Text size="2xs" className="font-tabular mt-0.5 text-typography-500">
-                P {Math.round(totals?.protein ?? 0)}g · C {Math.round(totals?.carbs ?? 0)}g · F{" "}
-                {Math.round(totals?.fat ?? 0)}g
-              </Text>
-            </Box>
-          </Pressable>
-          <Pressable
-            onPress={() => setPendingLog(item)}
-            disabled={loggingId === item.id}
-            hitSlop={8}
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: colors.primary }}
-            accessibilityRole="button"
-            accessibilityLabel={`Log ${item.name}`}
-          >
-            {loggingId === item.id ? (
-              <ActivityIndicator size="small" color={colors.onPrimary} />
-            ) : (
-              <Ionicons name="add" size={20} color={colors.onPrimary} />
-            )}
-          </Pressable>
-          <Pressable
-            onPress={() => handleDelete(item)}
-            hitSlop={6}
-            className="h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: `${colors.danger}14` }}
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${item.name}`}
-          >
-            <Ionicons name="trash" size={16} color={colors.danger} />
-          </Pressable>
-        </Box>
+        <MealListItem
+          meal={item}
+          totals={totals}
+          onPress={() => openBuilder(item.id)}
+          onLog={() => setPendingLog(item)}
+          onDelete={() => handleDelete(item)}
+          logging={loggingId === item.id}
+          accentColor={colors.primary}
+        />
       )
     },
-    [colors, handleDelete, loggingId, openBuilder, totalsById],
+    [colors.primary, handleDelete, loggingId, openBuilder, totalsById],
   )
 
   const emptyState = (
@@ -224,6 +179,8 @@ export default function MealsScreen() {
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
+              returnKeyType="search"
+              onSubmitEditing={() => Keyboard.dismiss()}
               accessibilityLabel="Search meals"
             />
             {query.length > 0 ? (
@@ -247,6 +204,8 @@ export default function MealsScreen() {
           <FlatList
             className="flex-1"
             data={filteredMeals}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
             contentContainerClassName={
               filteredMeals.length === 0 ? "grow justify-center pb-8" : "pt-1 pb-36"
             }
@@ -271,12 +230,7 @@ export default function MealsScreen() {
 
       <FabCluster
         center={
-          <Fab
-            icon="add"
-            label="New meal"
-            onPress={() => openBuilder()}
-            accessibilityLabel="Create a new meal"
-          />
+          <Fab icon="add" onPress={() => openBuilder()} accessibilityLabel="Create a new meal" />
         }
         bottomOffset={24}
       />

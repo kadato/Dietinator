@@ -75,7 +75,7 @@ export function UpdateDialog({
           accessibilityRole="button"
           accessibilityLabel="Dismiss update dialog"
         />
-        <View pointerEvents="box-none" style={{ flex: 1, justifyContent: "center" }}>
+        <View style={{ flex: 1, justifyContent: "center", pointerEvents: "box-none" }}>
           <ModalContainer
             hug
             maxWidth={560}

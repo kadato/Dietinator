@@ -69,20 +69,31 @@ export async function updateChatMessage(
   id: number,
   partial: Partial<Pick<AiChatMessage, "content" | "reasoning" | "tool_calls" | "is_error">>,
 ): Promise<void> {
+  const clauses: string[] = []
+  const values: (string | number | null)[] = []
+
+  if (partial.content !== undefined) {
+    clauses.push("content = ?")
+    values.push(partial.content)
+  }
+  if (partial.reasoning !== undefined) {
+    clauses.push("reasoning = ?")
+    values.push(partial.reasoning)
+  }
+  if (partial.tool_calls !== undefined) {
+    clauses.push("tool_calls_json = ?")
+    values.push(partial.tool_calls ? JSON.stringify(partial.tool_calls) : null)
+  }
+  if (partial.is_error !== undefined) {
+    clauses.push("is_error = ?")
+    values.push(partial.is_error ? 1 : 0)
+  }
+
+  if (clauses.length === 0) return
+
   const db = await getDatabase()
-  await db.runAsync(
-    `UPDATE ai_chat_messages
-       SET content = COALESCE(?, content),
-           reasoning = COALESCE(?, reasoning),
-           tool_calls_json = COALESCE(?, tool_calls_json),
-           is_error = COALESCE(?, is_error)
-     WHERE id = ?`,
-    partial.content ?? null,
-    partial.reasoning ?? null,
-    partial.tool_calls ? JSON.stringify(partial.tool_calls) : null,
-    partial.is_error ?? null,
-    id,
-  )
+  values.push(id)
+  await db.runAsync(`UPDATE ai_chat_messages SET ${clauses.join(", ")} WHERE id = ?`, ...values)
 }
 
 export async function deleteChatMessage(id: number): Promise<void> {

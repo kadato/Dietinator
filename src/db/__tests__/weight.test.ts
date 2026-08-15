@@ -92,9 +92,10 @@ describe("weight entries", () => {
 
   it("getLatestWeightEntry orders by date descending", async () => {
     const db = createMockDb()
-    db.getFirstAsync.mockResolvedValue({ id: "b", date: "2026-08-11", weight_kg: 71.5 })
+    db.getAllAsync.mockResolvedValue([{ id: "b", date: "2026-08-11", weight_kg: 71.5 }])
     const entry = await getLatestWeightEntry()
-    expect(db.getFirstAsync.mock.calls[0][0]).toContain("ORDER BY date DESC LIMIT 1")
+    expect(db.getAllAsync.mock.calls[0][0]).toContain("ORDER BY date DESC LIMIT ?")
+    expect(db.getAllAsync.mock.calls[0][1]).toEqual([1])
     expect(entry?.date).toBe("2026-08-11")
   })
 

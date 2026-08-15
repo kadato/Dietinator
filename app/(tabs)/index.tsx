@@ -12,7 +12,6 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { LogWaterModal } from "@/components/LogWaterModal"
 import { MealSlotModal } from "@/components/MealSlotModal"
-import { WeekCalendarStrip } from "@/components/WeekCalendarStrip"
 import { NutritionBreakdownModal } from "@/components/NutritionBreakdownModal"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
@@ -32,8 +31,10 @@ import {
 } from "@/services/diary"
 import { getLatestWeightEntry } from "@/db/weight"
 import { addWaterEntry, getWaterTotalForDate } from "@/db/water"
+import { getCalorieHistory } from "@/db/stats"
+import { computeLogStreak } from "@/utils/adherence"
 import { confirmAction } from "@/utils/confirm"
-import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
+import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
@@ -58,6 +59,7 @@ export default function TodayScreen() {
   const [mealGoals, setMealGoals] = useState<MealGoals>({})
   const [summary, setSummary] = useState<YazioDailySummary | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [streak, setStreak] = useState(0)
   const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
   const [logWeightOpen, setLogWeightOpen] = useState(false)
   const [logWaterOpen, setLogWaterOpen] = useState(false)
@@ -141,15 +143,17 @@ export default function TodayScreen() {
       //    touched. Stale nutrient values are refined in the background below.
       let list: DiaryEntry[]
       try {
-        const [diaryEntries, weight, water] = await Promise.all([
+        const [diaryEntries, weight, water, calHistory] = await Promise.all([
           getDiaryEntriesForDate(dateKey, { remote: false }),
           getLatestWeightEntry(),
           getWaterTotalForDate(dateKey),
+          getCalorieHistory(shiftDateKey(toDateKey(), -365)),
         ])
         list = diaryEntries
         setEntries(list)
         setLocalWeight(weight)
         setLocalWaterMl(water)
+        setStreak(computeLogStreak(calHistory, toDateKey()))
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
@@ -314,11 +318,106 @@ export default function TodayScreen() {
   }
 
   const summaryCard = (
-    <Card variant="elevated" className="mb-5 overflow-hidden rounded-3xl p-1">
-      <Box className="items-center pt-2">
+    <Card variant="elevated" className="mb-5 overflow-hidden rounded-3xl p-0">
+      {/* Integrated Header: Date Navigation, Sync Status, and Copy Action */}
+      <Box className="border-b border-outline-100 bg-background-50/60 p-3">
+        <Box className="flex-row items-center justify-between">
+          {/* Date Selector: Previous Day, Interactive Date (Opens Calendar Modal), Next Day */}
+          <Box className="flex-row items-center gap-1">
+            <Pressable
+              onPress={() => setDateKey((d) => shiftDateKey(d, -1))}
+              hitSlop={8}
+              className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+              accessibilityRole="button"
+              accessibilityLabel="Previous day"
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.text} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              hitSlop={6}
+              className="flex-row items-center gap-1.5 rounded-full bg-background-100 px-3 py-1.5 active:bg-background-200"
+              accessibilityRole="button"
+              accessibilityLabel={`Selected date: ${formatHeaderDate(dateKey)}. Tap to open calendar.`}
+            >
+              <Ionicons name="calendar-outline" size={15} color={colors.primary} />
+              <Text size="sm" bold className="text-typography-900">
+                {formatHeaderDate(dateKey)}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setDateKey((d) => shiftDateKey(d, 1))}
+              hitSlop={8}
+              className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+              accessibilityRole="button"
+              accessibilityLabel="Next day"
+            >
+              <Ionicons name="chevron-forward" size={18} color={colors.text} />
+            </Pressable>
+          </Box>
+
+          {/* Streak & Sync status */}
+          <Box className="flex-row items-center gap-1.5">
+            <Box
+              className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+              style={{ backgroundColor: `${colors.lunch}18` }}
+              accessibilityRole="text"
+              accessibilityLabel={`${streak} day logging streak`}
+            >
+              <Ionicons name="flame" size={15} color={colors.lunch} />
+              <Text
+                size="xs"
+                bold
+                className="font-tabular leading-none"
+                style={{ color: colors.lunch }}
+              >
+                {streak}
+              </Text>
+            </Box>
+
+            {authenticated ? (
+              <Pressable
+                onPress={() => load({ force: true })}
+                disabled={importing || refreshing}
+                hitSlop={8}
+                className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+                accessibilityRole="button"
+                accessibilityLabel="Refresh from YAZIO"
+              >
+                <Ionicons
+                  name="cloud-download-outline"
+                  size={18}
+                  color={importing ? colors.textMuted : colors.primary}
+                />
+              </Pressable>
+            ) : null}
+          </Box>
+        </Box>
+
+        {/* Copy Action: Duplicate previous day's logged meals */}
+        <Pressable
+          onPress={onCopyPrevious}
+          hitSlop={6}
+          className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-primary-500/10 px-3 py-2 active:opacity-80"
+          accessibilityRole="button"
+          accessibilityLabel="Copy previous day's meals"
+        >
+          <Ionicons name="copy-outline" size={14} color={colors.primary} />
+          <Text size="xs" bold className="leading-none" style={{ color: colors.primary }}>
+            Copy previous day
+          </Text>
+        </Pressable>
+      </Box>
+
+      <Box className="items-center pt-3">
         <CalorieRing
           consumed={totals.kcal}
           goal={settings.calorie_goal}
+          protein={totals.protein}
+          carbs={totals.carbs}
+          fat={totals.fat}
           size={isWide ? 150 : 136}
         />
       </Box>
@@ -427,49 +526,6 @@ export default function TodayScreen() {
     <Box className="flex-1 bg-background-0">
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
-        <Box className="px-4 pb-1" style={{ paddingTop: insets.top + spacing.sm }}>
-          {/* Top app bar */}
-          <Box className="mb-2 flex-row items-center justify-between">
-            <Text size="2xl" bold className="text-typography-900">
-              Diary
-            </Text>
-            <Box className="flex-row items-center gap-1.5">
-              <Pressable
-                onPress={onCopyPrevious}
-                hitSlop={8}
-                className="h-9 w-9 items-center justify-center rounded-full bg-background-50 active:bg-background-100"
-                accessibilityRole="button"
-                accessibilityLabel="Copy previous day"
-              >
-                <Ionicons name="copy-outline" size={18} color={colors.primary} />
-              </Pressable>
-              {authenticated ? (
-                <Pressable
-                  onPress={() => load({ force: true })}
-                  disabled={importing || refreshing}
-                  hitSlop={8}
-                  className="h-9 w-9 items-center justify-center rounded-full bg-background-50 active:bg-background-100"
-                  accessibilityRole="button"
-                  accessibilityLabel="Refresh from YAZIO"
-                >
-                  <Ionicons
-                    name="cloud-download-outline"
-                    size={19}
-                    color={importing ? colors.textMuted : colors.primary}
-                  />
-                </Pressable>
-              ) : null}
-            </Box>
-          </Box>
-
-          {/* Interactive Week Calendar Strip */}
-          <WeekCalendarStrip
-            selectedDateKey={dateKey}
-            onSelectDate={(key) => setDateKey(key)}
-            onOpenDatePicker={() => setPickerOpen(true)}
-          />
-        </Box>
-
         <ScrollView
           refreshControl={
             <RefreshControl
@@ -479,6 +535,7 @@ export default function TodayScreen() {
             />
           }
           contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-36"}`}
+          style={{ paddingTop: insets.top + spacing.xs }}
         >
           {isWide ? (
             <Box className="w-full flex-row items-start gap-6">
@@ -539,19 +596,27 @@ export default function TodayScreen() {
         onClose={() => setLogSlotOpen(false)}
       />
 
-      {settings.ai_enabled === 1 ? (
-        <FabCluster
-          right={
+      <FabCluster
+        bottomOffset={24}
+        left={
+          settings.ai_enabled === 1 ? (
             <Fab
+              tone="surface"
               IconComponent={MaterialCommunityIcons}
               icon="robot-outline"
               onPress={openAiChat}
               accessibilityLabel="Open AI assistant"
             />
-          }
-          bottomOffset={24}
-        />
-      ) : null}
+          ) : undefined
+        }
+        right={
+          <Fab
+            icon="add"
+            onPress={() => setLogSlotOpen(true)}
+            accessibilityLabel="Log food into diary"
+          />
+        }
+      />
     </Box>
   )
 }

@@ -67,6 +67,15 @@ export async function getFoodByBarcode(barcode: string): Promise<SearchFoodResul
   return row ? cachedToSearchResult(rowToCached(row)) : null
 }
 
+export async function updateFoodBarcode(productId: string, barcode: string): Promise<void> {
+  const db = await getDatabase()
+  await db.runAsync(
+    "UPDATE food_cache SET barcode = ? WHERE yazio_product_id = ?",
+    barcode,
+    productId,
+  )
+}
+
 export async function getFoodById(productId: string): Promise<SearchFoodResult | null> {
   const db = await getDatabase()
   const row = await db.getFirstAsync<Record<string, unknown>>(

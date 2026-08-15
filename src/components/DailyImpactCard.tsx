@@ -23,7 +23,7 @@ type MacroCompareRowProps = {
   colors: ColorPalette
 }
 
-function MacroCompareRow({
+const MacroCompareRow = memo(function MacroCompareRow({
   label,
   current,
   added,
@@ -102,9 +102,9 @@ function MacroCompareRow({
       ) : null}
     </View>
   )
-}
+})
 
-function MicroCompareRow({
+const MicroCompareRow = memo(function MicroCompareRow({
   label,
   current,
   added,
@@ -167,7 +167,7 @@ function MicroCompareRow({
       </Text>
     </View>
   )
-}
+})
 
 export const DailyImpactCard = memo(function DailyImpactCard({
   currentDayNutrients,

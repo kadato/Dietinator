@@ -48,6 +48,7 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_diary_date ON diary_entries(date);
     CREATE INDEX IF NOT EXISTS idx_diary_yazio_item ON diary_entries(yazio_item_id);
     CREATE INDEX IF NOT EXISTS idx_diary_synced ON diary_entries(yazio_synced);
+    CREATE INDEX IF NOT EXISTS idx_diary_food_id ON diary_entries(food_id);
 
     CREATE TABLE IF NOT EXISTS food_cache (
       yazio_product_id TEXT PRIMARY KEY NOT NULL,

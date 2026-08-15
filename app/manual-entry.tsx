@@ -7,6 +7,7 @@ import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { routeParam } from "@/utils/route"
@@ -58,6 +59,7 @@ function MacroInput({
 
 export default function ManualEntryScreen() {
   const router = useRouter()
+  const safeBack = useSafeBack()
   const params = useLocalSearchParams<{ meal?: string; date?: string; quickAdd?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
@@ -74,15 +76,6 @@ export default function ManualEntryScreen() {
   const [carbs, setCarbs] = useState("")
   const [fat, setFat] = useState("")
   const [saving, setSaving] = useState(false)
-
-  // A deep link straight to this modal has no screen to go back to.
-  const safeBack = () => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }
 
   const handleSave = async () => {
     if (saving) return
@@ -147,6 +140,7 @@ export default function ManualEntryScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-28 pt-2"
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           {!isQuickAdd ? (

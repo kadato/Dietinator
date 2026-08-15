@@ -138,11 +138,7 @@ export async function updateDiaryEntryDetails(
 /** Reserve the YAZIO item id before the network push so retries reuse it (idempotent sync). */
 export async function reserveYazioItemId(id: string, yazioItemId: string): Promise<void> {
   const db = await getDatabase()
-  await db.runAsync(
-    "UPDATE diary_entries SET yazio_item_id = ? WHERE id = ? AND yazio_synced = 0",
-    yazioItemId,
-    id,
-  )
+  await db.runAsync("UPDATE diary_entries SET yazio_item_id = ? WHERE id = ?", yazioItemId, id)
 }
 
 export async function markDiaryEntrySynced(id: string, yazioItemId: string): Promise<void> {
@@ -198,6 +194,11 @@ export async function addDeletedYazioItemId(id: string): Promise<void> {
     id,
     new Date().toISOString(),
   )
+}
+
+export async function removeDeletedYazioItemId(id: string): Promise<void> {
+  const db = await getDatabase()
+  await db.runAsync("DELETE FROM deleted_yazio_items WHERE id = ?", id)
 }
 
 /** Keep tombstones tidy: drop anything older than 90 days. */

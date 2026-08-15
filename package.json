@@ -86,6 +86,7 @@
     "test:e2e:yazio": "npm run build:web && playwright test e2e/yazio.spec.ts",
     "test:e2e:install": "playwright install chromium",
     "test:mcp": "node scripts/mcp-agent-check.mjs",
+    "screenshots": "node scripts/capture-screenshots.mjs",
     "release": "node scripts/release.cjs"
   },
   "private": true,

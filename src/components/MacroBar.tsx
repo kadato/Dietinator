@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { spacing, type ColorPalette } from "@/theme"
 
 type MacroRowProps = {
   label: string
+  icon: keyof typeof MaterialCommunityIcons.glyphMap
   value: number
   goal: number
   color: string
@@ -12,7 +14,7 @@ type MacroRowProps = {
   colors: ColorPalette
 }
 
-function MacroRow({ label, value, goal, color, styles, colors }: MacroRowProps) {
+function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowProps) {
   const remaining = goal > 0 ? goal - value : 0
   const over = goal > 0 && value > goal ? value - goal : 0
   const progress = goal > 0 ? Math.min(value / goal, 1) : 0
@@ -21,7 +23,9 @@ function MacroRow({ label, value, goal, color, styles, colors }: MacroRowProps) 
     <View style={styles.row}>
       <View style={styles.rowHeader}>
         <View style={styles.labelGroup}>
-          <View style={[styles.dot, { backgroundColor: color }]} />
+          <View style={[styles.iconBox, { backgroundColor: `${color}1a` }]}>
+            <MaterialCommunityIcons name={icon} size={13} color={color} />
+          </View>
           <Text style={[styles.label, { color }]}>{label}</Text>
         </View>
 
@@ -39,15 +43,10 @@ function MacroRow({ label, value, goal, color, styles, colors }: MacroRowProps) 
             <View
               style={[
                 styles.budgetBadge,
-                { backgroundColor: over > 0 ? `${colors.danger}18` : `${colors.primary}18` },
+                { backgroundColor: over > 0 ? `${colors.danger}18` : `${color}18` },
               ]}
             >
-              <Text
-                style={[
-                  styles.budgetBadgeText,
-                  { color: over > 0 ? colors.danger : colors.primary },
-                ]}
-              >
+              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
                 {over > 0 ? `+${Math.round(over)}g over` : `${Math.round(remaining)}g left`}
               </Text>
             </View>
@@ -88,6 +87,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
     <View style={styles.container}>
       <MacroRow
         label="Protein"
+        icon="food-drumstick-outline"
         value={protein}
         goal={proteinGoal}
         color={colors.breakfast}
@@ -96,6 +96,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
       />
       <MacroRow
         label="Carbs"
+        icon="bread-slice-outline"
         value={carbs}
         goal={carbsGoal}
         color={colors.lunch}
@@ -104,6 +105,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
       />
       <MacroRow
         label="Fat"
+        icon="water-outline"
         value={fat}
         goal={fatGoal}
         color={colors.dinner}
@@ -119,13 +121,13 @@ const createStyles = (colors: ColorPalette) =>
     container: {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
-      gap: spacing.sm,
+      gap: 10,
       borderTopWidth: 1,
       borderTopColor: colors.border,
       marginTop: spacing.xs,
     },
     row: {
-      gap: 5,
+      gap: 6,
     },
     rowHeader: {
       flexDirection: "row",
@@ -137,10 +139,12 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       gap: 6,
     },
-    dot: {
-      width: 7,
-      height: 7,
-      borderRadius: 4,
+    iconBox: {
+      width: 20,
+      height: 20,
+      borderRadius: 6,
+      alignItems: "center",
+      justifyContent: "center",
     },
     label: {
       fontSize: 13,

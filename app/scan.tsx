@@ -26,6 +26,7 @@ import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { useSafeBack } from "@/hooks/useSafeBack"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
 import { spacing, type ColorPalette } from "@/theme"
@@ -197,6 +198,8 @@ function BarcodeMatchesList({
       style={styles.list}
       data={results}
       keyExtractor={(item) => item.product_id}
+      keyboardDismissMode="on-drag"
+      keyboardShouldPersistTaps="handled"
       ListHeaderComponent={
         <View style={styles.matchesHeader}>
           <View style={styles.matchesTitleWrap}>
@@ -359,13 +362,7 @@ export default function ScanScreen() {
     })
   }
 
-  const close = () => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace("/(tabs)")
-    }
-  }
+  const close = useSafeBack()
 
   if (MANUAL_SCAN_ON_WEB) {
     return (

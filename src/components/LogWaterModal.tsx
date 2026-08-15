@@ -162,6 +162,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
         <ScrollView
           className="flex-1"
           contentContainerClassName={`${isWide ? "" : "grow"} px-4 pb-4`}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           <Pressable
@@ -325,12 +326,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityLabel="Dismiss water dialog"
         />
         {isWide ? (
-          <View pointerEvents="box-none" style={shell.dialogWrap}>
-            {form}
-          </View>
+          <View style={shell.dialogWrap}>{form}</View>
         ) : (
           <KeyboardAvoidingView
-            pointerEvents="box-none"
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

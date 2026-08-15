@@ -56,13 +56,12 @@ async function doSyncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
 
     const yazioId = entry.yazio_item_id ?? generateId()
 
-    if (entry.yazio_item_id) {
-      // A previous attempt already pushed this id but never confirmed it.
-      // Remove-then-add makes the retry idempotent instead of duplicating.
+    if (entry.yazio_synced === 1 && entry.yazio_item_id) {
+      // Re-syncing an edited entry: remove the old remote item first.
       try {
         await yazio.user.removeConsumedItem(yazioId)
       } catch {
-        // Best-effort: the item may never have been created.
+        // Best-effort: the item may not exist remotely.
       }
     } else {
       // Reserve the id before the network call so a crash between push and

@@ -165,6 +165,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-4"
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.label}>Date</Text>
@@ -289,12 +290,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           accessibilityLabel="Dismiss weight dialog"
         />
         {isWide ? (
-          <View pointerEvents="box-none" style={shell.dialogWrap}>
-            {form}
-          </View>
+          <View style={shell.dialogWrap}>{form}</View>
         ) : (
           <KeyboardAvoidingView
-            pointerEvents="box-none"
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

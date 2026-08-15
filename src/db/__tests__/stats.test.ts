@@ -1,5 +1,10 @@
 import { getDatabase } from "@/db/database"
-import { getCalorieHistory, getMacroHistory, getWaterHistory } from "../stats"
+import {
+  getCalorieHistory,
+  getDailyNutritionHistory,
+  getMacroHistory,
+  getWaterHistory,
+} from "../stats"
 
 jest.mock("@/db/database", () => ({
   getDatabase: jest.fn(),
@@ -12,6 +17,29 @@ function createMockDb() {
   ;(getDatabase as jest.Mock).mockResolvedValue(db)
   return db as unknown as { getAllAsync: jest.Mock }
 }
+
+describe("getDailyNutritionHistory", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it("groups kcal and macros per day from the given date", async () => {
+    const db = createMockDb()
+    db.getAllAsync.mockResolvedValue([
+      { date: "2026-08-09", kcal: 1800, protein: 120, carbs: 180, fat: 60 },
+      { date: "2026-08-10", kcal: 2100, protein: 90, carbs: 220, fat: 70 },
+    ])
+    const history = await getDailyNutritionHistory("2026-08-09")
+
+    const [sql, params] = db.getAllAsync.mock.calls[0]
+    expect(sql).toContain("SUM(kcal)")
+    expect(sql).toContain("SUM(protein)")
+    expect(sql).toContain("GROUP BY date")
+    expect(sql).toContain("WHERE date >= ?")
+    expect(params).toEqual(["2026-08-09"])
+    expect(history[1]).toMatchObject({ date: "2026-08-10", kcal: 2100, protein: 90 })
+  })
+})
 
 describe("getCalorieHistory", () => {
   beforeEach(() => {

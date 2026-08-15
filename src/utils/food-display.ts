@@ -76,14 +76,17 @@ export function formatListNutrientLine(food: SearchFoodResult): string {
     ? `100 ${unit}`
     : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
 
-  return `${prefix}${portion} · ${kcal} kcal (P ${p}g · C ${c}g · F ${f}g)`
+  return `${prefix}${kcal} kcal · ${p}g P · ${c}g C · ${f}g F · ${portion}`
 }
 
-/** Subtitle for a recents usage row: the logged amount with its calories, e.g. "120 g · 92 Cal". */
+/** Subtitle for a recents usage row: the logged amount with its calories and macros, e.g. "92 kcal · 15g P · 4g C · 2g F · 120 g". */
 export function formatUsageAmountLine(food: SearchFoodResult, amount: number): string {
   const unit = displayUnit(food.base_unit || "g")
-  const kcal = Math.round(
-    nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit || "g").kcal,
-  )
-  return `${formatNumber(amount)} ${unit} · ${kcal} Cal`
+  const nutrients = nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit || "g")
+  const kcal = Math.round(nutrients.kcal)
+  const p = Math.round(nutrients.protein * 10) / 10
+  const c = Math.round(nutrients.carbs * 10) / 10
+  const f = Math.round(nutrients.fat * 10) / 10
+  const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
+  return `${prefix}${kcal} kcal · ${p}g P · ${c}g C · ${f}g F · ${formatNumber(amount)} ${unit}`
 }

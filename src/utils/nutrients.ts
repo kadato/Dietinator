@@ -189,15 +189,23 @@ export function scaleNutrients(
   baseAmount: number,
   targetAmount: number,
 ): FoodNutrients {
-  if (baseAmount <= 0) return base
+  if (
+    !baseAmount ||
+    baseAmount <= 0 ||
+    !Number.isFinite(baseAmount) ||
+    !Number.isFinite(targetAmount)
+  ) {
+    return base
+  }
   const factor = targetAmount / baseAmount
-  const scaleOpt = (val?: number) => (val !== undefined ? roundNutrient(val * factor) : undefined)
+  const scaleOpt = (val?: number) =>
+    val !== undefined && Number.isFinite(val) ? roundNutrient(val * factor) : undefined
 
   return {
-    kcal: Math.round(base.kcal * factor),
-    protein: roundMacro(base.protein * factor),
-    carbs: roundMacro(base.carbs * factor),
-    fat: roundMacro(base.fat * factor),
+    kcal: Math.round((base.kcal || 0) * factor),
+    protein: roundMacro((base.protein || 0) * factor),
+    carbs: roundMacro((base.carbs || 0) * factor),
+    fat: roundMacro((base.fat || 0) * factor),
     fiber: scaleOpt(base.fiber),
     sugar: scaleOpt(base.sugar),
     saturated_fat: scaleOpt(base.saturated_fat),
@@ -213,6 +221,32 @@ export function scaleNutrients(
     vitamin_c: scaleOpt(base.vitamin_c),
     vitamin_d: scaleOpt(base.vitamin_d),
     vitamin_b12: scaleOpt(base.vitamin_b12),
+  }
+}
+
+export type MacroRatios = {
+  macroKcal: number
+  proteinPct: number
+  carbsPct: number
+  fatPct: number
+}
+
+/**
+ * Compute the energy contribution and percentage ratios of protein, carbs, and fat.
+ */
+export function computeMacroRatios(protein: number, carbs: number, fat: number): MacroRatios {
+  const pKcal = Math.max(0, protein || 0) * 4
+  const cKcal = Math.max(0, carbs || 0) * 4
+  const fKcal = Math.max(0, fat || 0) * 9
+  const macroKcal = pKcal + cKcal + fKcal
+  if (macroKcal <= 0) {
+    return { macroKcal: 0, proteinPct: 0, carbsPct: 0, fatPct: 0 }
+  }
+  return {
+    macroKcal: Math.round(macroKcal),
+    proteinPct: Math.round((pKcal / macroKcal) * 100),
+    carbsPct: Math.round((cKcal / macroKcal) * 100),
+    fatPct: Math.round((fKcal / macroKcal) * 100),
   }
 }
 

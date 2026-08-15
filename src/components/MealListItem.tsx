@@ -1,0 +1,116 @@
+import { memo } from "react"
+import { ActivityIndicator, Pressable, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import type { FoodNutrients, Meal } from "@/types"
+import { useTheme } from "@/hooks/useTheme"
+import { MacroPills } from "@/components/MacroPills"
+import { Box } from "@ui/box"
+import { Text } from "@ui/text"
+
+type Props = {
+  meal: Meal
+  totals?: FoodNutrients
+  onPress: () => void
+  onLog?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+  logging?: boolean
+  accentColor?: string
+}
+
+export const MealListItem = memo(function MealListItem({
+  meal,
+  totals,
+  onPress,
+  onLog,
+  onEdit,
+  onDelete,
+  logging = false,
+  accentColor,
+}: Props) {
+  const { colors } = useTheme()
+  const accent = accentColor ?? colors.primary
+
+  const kcal = Math.round(totals?.kcal ?? 0)
+  const protein = Math.round(totals?.protein ?? 0)
+  const carbs = Math.round(totals?.carbs ?? 0)
+  const fat = Math.round(totals?.fat ?? 0)
+  const foodCount = meal.items.length === 1 ? "1 food" : `${meal.items.length} foods`
+
+  return (
+    <Box className="mb-2 flex-row items-center gap-2 rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
+      <Pressable
+        className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
+        onPress={onPress}
+        disabled={logging}
+        accessibilityRole="button"
+        accessibilityLabel={`${meal.name}, ${kcal} calories`}
+      >
+        <Box
+          className="h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: `${accent}1f` }}
+        >
+          {logging ? (
+            <ActivityIndicator size="small" color={accent} />
+          ) : (
+            <Ionicons name="restaurant-outline" size={19} color={accent} />
+          )}
+        </Box>
+        <Box className="min-w-0 flex-1">
+          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+            {meal.name}
+          </Text>
+          <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
+            <Text size="xs" className="font-tabular text-typography-500">
+              {foodCount} · {kcal} kcal
+            </Text>
+            {totals ? <MacroPills protein={protein} carbs={carbs} fat={fat} size="xs" /> : null}
+          </View>
+        </Box>
+      </Pressable>
+
+      {onLog ? (
+        <Pressable
+          onPress={onLog}
+          disabled={logging}
+          hitSlop={8}
+          className="h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: accent }}
+          accessibilityRole="button"
+          accessibilityLabel={`Log ${meal.name}`}
+        >
+          {logging ? (
+            <ActivityIndicator size="small" color={colors.onPrimary} />
+          ) : (
+            <Ionicons name="add" size={20} color={colors.onPrimary} />
+          )}
+        </Pressable>
+      ) : null}
+
+      {onEdit ? (
+        <Pressable
+          onPress={onEdit}
+          hitSlop={8}
+          className="h-9 w-9 items-center justify-center rounded-xl bg-background-100 active:bg-background-200"
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${meal.name}`}
+        >
+          <Ionicons name="create-outline" size={16} color={colors.textMuted} />
+        </Pressable>
+      ) : null}
+
+      {onDelete ? (
+        <Pressable
+          onPress={onDelete}
+          hitSlop={6}
+          className="h-8 w-8 items-center justify-center rounded-full"
+          style={{ backgroundColor: `${colors.danger}14` }}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${meal.name}`}
+        >
+          <Ionicons name="trash" size={15} color={colors.danger} />
+        </Pressable>
+      ) : null}
+    </Box>
+  )
+})

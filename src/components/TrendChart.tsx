@@ -131,7 +131,7 @@ export function TrendChart({
     const barWidth = slot < 3 ? slot : Math.min(26, slot * 0.7)
     const barX = (dateKey: string) =>
       PAD.left +
-      slot * (Math.min(1, Math.max(0, dayIndex(dateKey, rangeStart))) + 0.5) -
+      slot * (Math.min(totalDays - 1, Math.max(0, dayIndex(dateKey, rangeStart))) + 0.5) -
       barWidth / 2
 
     // X tick labels — ~6 evenly spaced dates across the range (deduplicated),

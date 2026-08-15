@@ -14,14 +14,12 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import {
   getWeightEntries,
-  getLatestWeightEntry,
   getRecentWeightEntries,
   deleteWeightEntry,
   saveWeightEntry,
 } from "@/db/weight"
 import {
-  getCalorieHistory,
-  getMacroHistory,
+  getDailyNutritionHistory,
   getWaterHistory,
   type DailyKcal,
   type DailyMacros,
@@ -30,6 +28,7 @@ import {
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { formatWeight, formatWaterAmount } from "@/utils/units"
 import { computeAdherence, computeLogStreak } from "@/utils/adherence"
+import { computeMacroRatios } from "@/utils/nutrients"
 import { confirmAction } from "@/utils/confirm"
 import type { WeightEntry } from "@/types"
 import { spacing } from "@/theme"
@@ -99,20 +98,24 @@ export default function StatsScreen() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [chartWeights, latestWeight, recentTwo, kcalHistory, macroHistory, waterHistory] =
-        await Promise.all([
-          getWeightEntries(fromKey),
-          getLatestWeightEntry(),
-          getRecentWeightEntries(2),
-          getCalorieHistory(fromKey),
-          getMacroHistory(fromKey),
-          getWaterHistory(fromKey),
-        ])
+      const [chartWeights, recentTwo, nutritionHistory, waterHistory] = await Promise.all([
+        getWeightEntries(fromKey),
+        getRecentWeightEntries(2),
+        getDailyNutritionHistory(fromKey),
+        getWaterHistory(fromKey),
+      ])
       setWeightEntries(chartWeights)
-      setLatest(latestWeight)
+      setLatest(recentTwo[0] ?? null)
       setPrevious(recentTwo[1] ?? null)
-      setCalories(kcalHistory)
-      setMacros(macroHistory)
+      setCalories(nutritionHistory.map((n) => ({ date: n.date, kcal: n.kcal })))
+      setMacros(
+        nutritionHistory.map((n) => ({
+          date: n.date,
+          protein: n.protein,
+          carbs: n.carbs,
+          fat: n.fat,
+        })),
+      )
       setWater(waterHistory)
       setLoadError(false)
     } catch (error) {
@@ -139,6 +142,30 @@ export default function StatsScreen() {
     setEditWeightDate(null)
     setLogWeightOpen(true)
   }, [])
+
+  // Derived aggregates (KPI cards)
+  const adherence = useMemo(
+    () => computeAdherence(calories, settings.calorie_goal),
+    [calories, settings.calorie_goal],
+  )
+  const logStreak = useMemo(() => computeLogStreak(calories), [calories])
+
+  const avgMacros = useMemo(() => {
+    if (macros.length === 0) return null
+    const count = macros.length
+    const protein = Math.round(macros.reduce((s, m) => s + m.protein, 0) / count)
+    const carbs = Math.round(macros.reduce((s, m) => s + m.carbs, 0) / count)
+    const fat = Math.round(macros.reduce((s, m) => s + m.fat, 0) / count)
+    const ratios = computeMacroRatios(protein, carbs, fat)
+    return {
+      protein,
+      carbs,
+      fat,
+      proteinPct: ratios.proteinPct,
+      carbsPct: ratios.carbsPct,
+      fatPct: ratios.fatPct,
+    }
+  }, [macros])
 
   const onDeleteWeight = useCallback(
     (entry: WeightEntry) => {
@@ -209,37 +236,6 @@ export default function StatsScreen() {
           calorieChartData.reduce((sum, day) => sum + day.value, 0) / calorieChartData.length,
         )
       : null
-
-  const macroGoal = settings[`${macroMetric}_goal`]
-  const macroColor =
-    macroMetric === "protein"
-      ? colors.breakfast
-      : macroMetric === "carbs"
-        ? colors.lunch
-        : colors.dinner
-
-  const adherence = useMemo(
-    () => computeAdherence(calories, settings.calorie_goal),
-    [calories, settings.calorie_goal],
-  )
-  const logStreak = useMemo(() => computeLogStreak(calories), [calories])
-
-  const avgMacros = useMemo(() => {
-    if (macros.length === 0) return null
-    const count = macros.length
-    const protein = Math.round(macros.reduce((s, m) => s + m.protein, 0) / count)
-    const carbs = Math.round(macros.reduce((s, m) => s + m.carbs, 0) / count)
-    const fat = Math.round(macros.reduce((s, m) => s + m.fat, 0) / count)
-    const totalKcal = protein * 4 + carbs * 4 + fat * 9
-    return {
-      protein,
-      carbs,
-      fat,
-      proteinPct: totalKcal > 0 ? Math.round(((protein * 4) / totalKcal) * 100) : 0,
-      carbsPct: totalKcal > 0 ? Math.round(((carbs * 4) / totalKcal) * 100) : 0,
-      fatPct: totalKcal > 0 ? Math.round(((fat * 9) / totalKcal) * 100) : 0,
-    }
-  }, [macros])
 
   // Body metrics — BMI needs a height, goal progress needs a target weight.
   const heightCm = settings.height_cm > 0 ? settings.height_cm : 0
@@ -549,19 +545,22 @@ export default function StatsScreen() {
 
               {/* Calories */}
               <Card variant="elevated" className="p-4">
-                <Box className="flex-row items-center gap-2.5">
-                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                    <Ionicons name="flame-outline" size={18} color={colors.primary} />
-                  </Box>
-                  <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900">
-                      Calories
-                    </Text>
-                    <Text size="xs" className="text-typography-500">
-                      {avgKcal !== null
-                        ? `Avg ${avgKcal.toLocaleString()} kcal/day · goal ${Math.round(settings.calorie_goal).toLocaleString()}`
-                        : `Goal ${Math.round(settings.calorie_goal).toLocaleString()} kcal/day`}
-                    </Text>
+                <Box className="flex-row items-center justify-between gap-3">
+                  <Box className="flex-row items-center gap-2.5">
+                    <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                      <Ionicons name="flame-outline" size={18} color={colors.primary} />
+                    </Box>
+                    <Box>
+                      <Text size="md" bold className="text-typography-900">
+                        Calories
+                      </Text>
+                      <Text size="xs" className="text-typography-500">
+                        Daily average {avgKcal !== null ? `${avgKcal} kcal` : "—"}
+                        {settings.calorie_goal > 0
+                          ? ` · goal ${Math.round(settings.calorie_goal)}`
+                          : ""}
+                      </Text>
+                    </Box>
                   </Box>
                 </Box>
 
@@ -569,12 +568,12 @@ export default function StatsScreen() {
                   {calorieChartData.length > 0 ? (
                     <TrendChart
                       data={calorieChartData}
-                      color={colors.lunch}
-                      goalValue={settings.calorie_goal}
+                      color={colors.primary}
+                      goalValue={settings.calorie_goal > 0 ? settings.calorie_goal : undefined}
                       variant="bars"
                       rangeStart={fromKey}
                       rangeEnd={toDateKey()}
-                      formatValue={(value) => Math.round(value).toLocaleString()}
+                      formatValue={(value) => `${Math.round(value)} kcal`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
                       height={CHART_HEIGHT}
                       onPointPress={setSelectedKcal}
@@ -587,12 +586,11 @@ export default function StatsScreen() {
 
                 {selectedKcal ? (
                   <Text size="xs" bold className="mt-2 px-1 text-typography-600">
-                    {formatDisplayDate(selectedKcal.date)} —{" "}
-                    {Math.round(selectedKcal.value).toLocaleString()} kcal
+                    {formatDisplayDate(selectedKcal.date)} — {Math.round(selectedKcal.value)} kcal
                     {settings.calorie_goal > 0
                       ? selectedKcal.value > settings.calorie_goal
-                        ? " · over goal"
-                        : " · under goal"
+                        ? ` · +${Math.round(selectedKcal.value - settings.calorie_goal)} over`
+                        : ` · ${Math.round(settings.calorie_goal - selectedKcal.value)} left`
                       : ""}
                   </Text>
                 ) : null}
@@ -600,37 +598,54 @@ export default function StatsScreen() {
 
               {/* Macros */}
               <Card variant="elevated" className="p-4">
-                <Box className="flex-row items-center gap-2.5">
-                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                    <Ionicons name="nutrition-outline" size={18} color={colors.primary} />
-                  </Box>
-                  <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900">
-                      Macros
-                    </Text>
-                    <Text size="xs" className="text-typography-500">
-                      Protein, carb and fat trends
-                    </Text>
+                <Box className="flex-row items-center justify-between gap-3">
+                  <Box className="flex-row items-center gap-2.5">
+                    <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                      <Ionicons name="pie-chart-outline" size={18} color={colors.primary} />
+                    </Box>
+                    <Box>
+                      <Text size="md" bold className="text-typography-900">
+                        Macronutrients
+                      </Text>
+                      <Text size="xs" className="text-typography-500">
+                        Daily average breakdown
+                      </Text>
+                    </Box>
                   </Box>
                 </Box>
 
-                <View className="mt-3">
-                  <SegmentedControl<MacroMetric>
+                <Box className="mt-3">
+                  <SegmentedControl
                     value={macroMetric}
                     options={MACRO_METRICS}
                     onChange={setMacroMetric}
                   />
-                </View>
+                </Box>
 
                 <View className="mt-3">
                   {macroChartData.length > 0 ? (
                     <TrendChart
                       data={macroChartData}
-                      color={macroColor}
-                      goalValue={macroGoal}
+                      color={
+                        macroMetric === "protein"
+                          ? colors.breakfast
+                          : macroMetric === "carbs"
+                            ? colors.lunch
+                            : colors.dinner
+                      }
+                      goalValue={
+                        macroMetric === "protein" && settings.protein_goal > 0
+                          ? settings.protein_goal
+                          : macroMetric === "carbs" && settings.carbs_goal > 0
+                            ? settings.carbs_goal
+                            : macroMetric === "fat" && settings.fat_goal > 0
+                              ? settings.fat_goal
+                              : undefined
+                      }
+                      variant="bars"
                       rangeStart={fromKey}
                       rangeEnd={toDateKey()}
-                      formatValue={(value) => `${Math.round(value)} g`}
+                      formatValue={(value) => `${Math.round(value)}g`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
                       height={CHART_HEIGHT}
                       onPointPress={setSelectedMacro}
@@ -640,7 +655,7 @@ export default function StatsScreen() {
                     <EmptyState
                       icon="nutrition-outline"
                       iconColor={colors.primary}
-                      title={`No macro data logged ${range === "1w" ? "this week" : "in this range"} yet.`}
+                      title={`No macros logged ${range === "1w" ? "this week" : "in this range"} yet.`}
                       variant="compact"
                     />
                   )}
@@ -648,22 +663,17 @@ export default function StatsScreen() {
 
                 {selectedMacro ? (
                   <Text size="xs" bold className="mt-2 px-1 text-typography-600">
-                    {formatDisplayDate(selectedMacro.date)} —{" "}
-                    {Math.round(selectedMacro.value).toLocaleString()} g{" "}
-                    {macroGoal > 0
-                      ? selectedMacro.value > macroGoal
-                        ? "· over goal"
-                        : "· under goal"
-                      : ""}
+                    {formatDisplayDate(selectedMacro.date)} — {Math.round(selectedMacro.value)}g{" "}
+                    {macroMetric}
                   </Text>
                 ) : null}
 
                 {avgMacros ? (
                   <Box className="mt-3 border-t border-outline-100 pt-3">
-                    <Text size="xs" bold className="mb-2 text-typography-500">
-                      Average Daily Macro Split
+                    <Text size="2xs" bold className="mb-2 text-typography-500">
+                      AVERAGE MACRO SPLIT
                     </Text>
-                    <Box className="flex-row items-center gap-2">
+                    <Box className="flex-row gap-2">
                       <Box
                         className="flex-1 items-center rounded-2xl p-2.5"
                         style={{ backgroundColor: `${colors.breakfast}15` }}
@@ -675,7 +685,7 @@ export default function StatsScreen() {
                           {avgMacros.protein}g
                         </Text>
                         <Text size="2xs" className="text-typography-500">
-                          {avgMacros.proteinPct}% kcal
+                          {avgMacros.proteinPct}%
                         </Text>
                       </Box>
                       <Box
@@ -689,7 +699,7 @@ export default function StatsScreen() {
                           {avgMacros.carbs}g
                         </Text>
                         <Text size="2xs" className="text-typography-500">
-                          {avgMacros.carbsPct}% kcal
+                          {avgMacros.carbsPct}%
                         </Text>
                       </Box>
                       <Box
@@ -703,7 +713,7 @@ export default function StatsScreen() {
                           {avgMacros.fat}g
                         </Text>
                         <Text size="2xs" className="text-typography-500">
-                          {avgMacros.fatPct}% kcal
+                          {avgMacros.fatPct}%
                         </Text>
                       </Box>
                     </Box>
