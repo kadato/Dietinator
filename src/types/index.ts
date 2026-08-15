@@ -84,6 +84,36 @@ export interface FoodNutrients {
   protein: number
   carbs: number
   fat: number
+  /** Dietary fiber in grams */
+  fiber?: number
+  /** Total sugars in grams */
+  sugar?: number
+  /** Saturated fat in grams */
+  saturated_fat?: number
+  /** Unsaturated fat in grams */
+  unsaturated_fat?: number
+  /** Sodium in milligrams */
+  sodium?: number
+  /** Potassium in milligrams */
+  potassium?: number
+  /** Cholesterol in milligrams */
+  cholesterol?: number
+  /** Calcium in milligrams */
+  calcium?: number
+  /** Iron in milligrams */
+  iron?: number
+  /** Magnesium in milligrams */
+  magnesium?: number
+  /** Zinc in milligrams */
+  zinc?: number
+  /** Vitamin A in micrograms */
+  vitamin_a?: number
+  /** Vitamin C in milligrams */
+  vitamin_c?: number
+  /** Vitamin D in micrograms */
+  vitamin_d?: number
+  /** Vitamin B12 in micrograms */
+  vitamin_b12?: number
 }
 
 export interface FoodServing {

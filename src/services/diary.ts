@@ -2,7 +2,7 @@ import * as diaryDb from "@/db/diary"
 import * as foodCacheDb from "@/db/food-cache"
 import { getSettings } from "@/db/settings"
 import type { DiaryEntry, FoodNutrients, MealType, SearchFoodResult } from "@/types"
-import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
+import { isPerGramNutrients, nutrientsForAmount, sumNutrients } from "@/utils/nutrients"
 import { generateId } from "@/utils/id"
 import { pushSnapshot } from "./agent-bridge"
 import { getFoodRemote } from "./yazio/foods"
@@ -296,6 +296,46 @@ export async function copyEntriesToDate(sourceDate: string, targetDate: string):
     pushSnapshot().catch(() => undefined)
   }
   return count
+}
+
+export async function getNutritionBreakdownForEntries(
+  entries: DiaryEntry[],
+): Promise<FoodNutrients> {
+  const foodIds = entries.map((e) => e.food_id).filter((id): id is string => Boolean(id))
+  const cached = await foodCacheDb.getFoodsByIds(foodIds)
+
+  const nutrientsList: FoodNutrients[] = entries.map((entry) => {
+    if (entry.food_id) {
+      const food = cached.get(entry.food_id)
+      if (food) {
+        return nutrientsForAmount(food.nutrients, food.serving, entry.amount, food.base_unit)
+      }
+    }
+    return {
+      kcal: entry.kcal,
+      protein: entry.protein,
+      carbs: entry.carbs,
+      fat: entry.fat,
+    }
+  })
+
+  return sumNutrients(nutrientsList)
+}
+
+export async function getNutritionBreakdownForEntry(entry: DiaryEntry): Promise<FoodNutrients> {
+  if (entry.food_id) {
+    const row = await foodCacheDb.getCachedFoodById(entry.food_id)
+    const food = row ? foodCacheDb.cachedToSearchResult(row) : null
+    if (food) {
+      return nutrientsForAmount(food.nutrients, food.serving, entry.amount, food.base_unit)
+    }
+  }
+  return {
+    kcal: entry.kcal,
+    protein: entry.protein,
+    carbs: entry.carbs,
+    fat: entry.fat,
+  }
 }
 
 export { exportDiaryJson, exportDiaryCsv } from "@/db/diary"

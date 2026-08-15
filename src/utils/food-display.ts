@@ -65,18 +65,18 @@ export function formatNutrientsServingLabel(
 export function formatListNutrientLine(food: SearchFoodResult): string {
   const unit = food.base_unit || "g"
   const perGram = isPerGramNutrients(food.nutrients, unit, food.serving.serving_quantity)
-  if (perGram) {
-    // Search rows carry per-gram values — show them as per-100 g for readability.
-    const prefix = food.producer ? `${food.producer} · ` : ""
-    return `${prefix}${Math.round(food.nutrients.kcal * 100)} kcal / 100 ${unit}`
-  }
-  const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit)
-  const prefix = food.producer ? `${food.producer} · ` : ""
-  const servingLabel =
-    ref === food.serving.amount
-      ? `${formatNumber(ref)}${unit}`
-      : `${formatNumber(ref)}${unit} (default ${formatNumber(food.serving.amount)}${unit})`
-  return `${prefix}${Math.round(food.nutrients.kcal)} kcal / ${servingLabel}`
+  const scale = perGram ? 100 : 1
+  const kcal = Math.round(food.nutrients.kcal * scale)
+  const p = Math.round(food.nutrients.protein * scale * 10) / 10
+  const c = Math.round(food.nutrients.carbs * scale * 10) / 10
+  const f = Math.round(food.nutrients.fat * scale * 10) / 10
+
+  const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
+  const portion = perGram
+    ? `100 ${unit}`
+    : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
+
+  return `${prefix}${portion} · ${kcal} kcal (P ${p}g · C ${c}g · F ${f}g)`
 }
 
 /** Subtitle for a recents usage row: the logged amount with its calories, e.g. "120 g · 92 Cal". */

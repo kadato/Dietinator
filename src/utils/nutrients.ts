@@ -61,13 +61,60 @@ export function nutrientsFromYazio(
   multiplier = 1,
 ): FoodNutrients {
   const scale = multiplier
+  const extract = (key: string, conversion = 1) => {
+    const val = nutrients[key]
+    if (val === undefined || val === null || Number.isNaN(val)) return undefined
+    return roundNutrient(val * scale * conversion)
+  }
+
   return {
     kcal: toKcal((nutrients["energy.energy"] ?? 0) * scale, unitEnergy),
     protein: roundMacro((nutrients["nutrient.protein"] ?? 0) * scale),
     carbs: roundMacro((nutrients["nutrient.carb"] ?? 0) * scale),
     fat: roundMacro((nutrients["nutrient.fat"] ?? 0) * scale),
+    fiber: extract("nutrient.fiber"),
+    sugar: extract("nutrient.sugar"),
+    saturated_fat:
+      extract("nutrient.saturated_fat") ??
+      extract("nutrient.fat_sat") ??
+      extract("nutrient.fat_saturated"),
+    unsaturated_fat:
+      extract("nutrient.unsaturated_fat") ??
+      extract("nutrient.fat_unsat") ??
+      extract("nutrient.fat_unsaturated"),
+    sodium: extract("nutrient.sodium", 1000) ?? extract("nutrient.salt", 400),
+    potassium: extract("nutrient.potassium", 1000),
+    cholesterol: extract("nutrient.cholesterol", 1000),
+    calcium: extract("nutrient.calcium", 1000),
+    iron: extract("nutrient.iron", 1000),
+    magnesium: extract("nutrient.magnesium", 1000),
+    zinc: extract("nutrient.zinc", 1000),
+    vitamin_a: extract("nutrient.vitamin_a"),
+    vitamin_c: extract("nutrient.vitamin_c", 1000),
+    vitamin_d: extract("nutrient.vitamin_d"),
+    vitamin_b12: extract("nutrient.vitamin_b12"),
   }
 }
+
+/**
+ * Standard Recommended Daily Intake (RDI / DRI) reference guidelines for adults.
+ */
+export const DAILY_RECOMMENDED_INTAKE = {
+  fiber: { value: 30, unit: "g", label: "Dietary Fiber" },
+  sugar: { value: 50, unit: "g", label: "Max Added Sugar" },
+  saturated_fat: { value: 20, unit: "g", label: "Max Saturated Fat" },
+  sodium: { value: 2300, unit: "mg", label: "Sodium" },
+  potassium: { value: 3400, unit: "mg", label: "Potassium" },
+  cholesterol: { value: 300, unit: "mg", label: "Cholesterol" },
+  calcium: { value: 1000, unit: "mg", label: "Calcium" },
+  iron: { value: 18, unit: "mg", label: "Iron" },
+  magnesium: { value: 400, unit: "mg", label: "Magnesium" },
+  zinc: { value: 11, unit: "mg", label: "Zinc" },
+  vitamin_a: { value: 900, unit: "µg", label: "Vitamin A" },
+  vitamin_c: { value: 90, unit: "mg", label: "Vitamin C" },
+  vitamin_d: { value: 20, unit: "µg", label: "Vitamin D" },
+  vitamin_b12: { value: 2.4, unit: "µg", label: "Vitamin B12" },
+} as const
 
 /**
  * Grams/ml (or base units) the stored `nutrients` values apply to.
@@ -144,11 +191,28 @@ export function scaleNutrients(
 ): FoodNutrients {
   if (baseAmount <= 0) return base
   const factor = targetAmount / baseAmount
+  const scaleOpt = (val?: number) => (val !== undefined ? roundNutrient(val * factor) : undefined)
+
   return {
     kcal: Math.round(base.kcal * factor),
     protein: roundMacro(base.protein * factor),
     carbs: roundMacro(base.carbs * factor),
     fat: roundMacro(base.fat * factor),
+    fiber: scaleOpt(base.fiber),
+    sugar: scaleOpt(base.sugar),
+    saturated_fat: scaleOpt(base.saturated_fat),
+    unsaturated_fat: scaleOpt(base.unsaturated_fat),
+    sodium: scaleOpt(base.sodium),
+    potassium: scaleOpt(base.potassium),
+    cholesterol: scaleOpt(base.cholesterol),
+    calcium: scaleOpt(base.calcium),
+    iron: scaleOpt(base.iron),
+    magnesium: scaleOpt(base.magnesium),
+    zinc: scaleOpt(base.zinc),
+    vitamin_a: scaleOpt(base.vitamin_a),
+    vitamin_c: scaleOpt(base.vitamin_c),
+    vitamin_d: scaleOpt(base.vitamin_d),
+    vitamin_b12: scaleOpt(base.vitamin_b12),
   }
 }
 
@@ -171,6 +235,7 @@ export function nutrientsForAmount(
  * per-item nutrients and must not be multiplied.
  */
 export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
+  const scale100 = (val?: number) => (val !== undefined ? roundNutrient(val * 100) : undefined)
   return {
     ...food,
     nutrients: {
@@ -178,6 +243,21 @@ export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
       protein: food.nutrients.protein * 100,
       carbs: food.nutrients.carbs * 100,
       fat: food.nutrients.fat * 100,
+      fiber: scale100(food.nutrients.fiber),
+      sugar: scale100(food.nutrients.sugar),
+      saturated_fat: scale100(food.nutrients.saturated_fat),
+      unsaturated_fat: scale100(food.nutrients.unsaturated_fat),
+      sodium: scale100(food.nutrients.sodium),
+      potassium: scale100(food.nutrients.potassium),
+      cholesterol: scale100(food.nutrients.cholesterol),
+      calcium: scale100(food.nutrients.calcium),
+      iron: scale100(food.nutrients.iron),
+      magnesium: scale100(food.nutrients.magnesium),
+      zinc: scale100(food.nutrients.zinc),
+      vitamin_a: scale100(food.nutrients.vitamin_a),
+      vitamin_c: scale100(food.nutrients.vitamin_c),
+      vitamin_d: scale100(food.nutrients.vitamin_d),
+      vitamin_b12: scale100(food.nutrients.vitamin_b12),
     },
     serving: {
       serving: food.base_unit === "ml" ? "100 ml" : "100 g",
@@ -191,14 +271,43 @@ function roundMacro(value: number): number {
   return Math.round(value * 10) / 10
 }
 
+function roundNutrient(value: number): number {
+  return Math.round(value * 10) / 10
+}
+
 export function sumNutrients(entries: FoodNutrients[]): FoodNutrients {
-  return entries.reduce(
-    (acc, n) => ({
-      kcal: acc.kcal + n.kcal,
-      protein: roundMacro(acc.protein + n.protein),
-      carbs: roundMacro(acc.carbs + n.carbs),
-      fat: roundMacro(acc.fat + n.fat),
-    }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  )
+  const sumField = (key: keyof FoodNutrients) => {
+    let sum = 0
+    let hasAny = false
+    for (const entry of entries) {
+      const val = entry[key]
+      if (val !== undefined && val > 0) {
+        sum += val
+        hasAny = true
+      }
+    }
+    return hasAny ? roundNutrient(sum) : undefined
+  }
+
+  return {
+    kcal: entries.reduce((acc, n) => acc + (n.kcal || 0), 0),
+    protein: roundMacro(entries.reduce((acc, n) => acc + (n.protein || 0), 0)),
+    carbs: roundMacro(entries.reduce((acc, n) => acc + (n.carbs || 0), 0)),
+    fat: roundMacro(entries.reduce((acc, n) => acc + (n.fat || 0), 0)),
+    fiber: sumField("fiber"),
+    sugar: sumField("sugar"),
+    saturated_fat: sumField("saturated_fat"),
+    unsaturated_fat: sumField("unsaturated_fat"),
+    sodium: sumField("sodium"),
+    potassium: sumField("potassium"),
+    cholesterol: sumField("cholesterol"),
+    calcium: sumField("calcium"),
+    iron: sumField("iron"),
+    magnesium: sumField("magnesium"),
+    zinc: sumField("zinc"),
+    vitamin_a: sumField("vitamin_a"),
+    vitamin_c: sumField("vitamin_c"),
+    vitamin_d: sumField("vitamin_d"),
+    vitamin_b12: sumField("vitamin_b12"),
+  }
 }
