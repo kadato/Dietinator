@@ -74,7 +74,7 @@ export const MealSection = memo(function MealSection({
           <Box className="min-w-0 flex-1">
             <Box className="flex-row items-center justify-between gap-2">
               <Box className="flex-row items-center gap-1.5">
-                <Text size="md" bold className="text-typography-900">
+                <Text size="md" bold className="text-[16px] text-typography-900">
                   {MEAL_LABELS[mealType]}
                 </Text>
                 {entries.length > 0 ? (
@@ -85,9 +85,9 @@ export const MealSection = memo(function MealSection({
                   />
                 ) : null}
               </Box>
-              <Text size="sm" bold className="font-tabular text-typography-900">
+              <Text size="md" bold className="font-tabular text-[15px] text-typography-900">
                 {Math.round(totalKcal)}{" "}
-                <Text size="2xs" className="font-normal text-typography-500">
+                <Text size="xs" className="font-normal text-typography-500">
                   kcal
                 </Text>
               </Text>
@@ -95,7 +95,7 @@ export const MealSection = memo(function MealSection({
 
             {goal ? (
               <Box className="mt-0.5 flex-row items-center gap-1">
-                <Text size="xs" className="font-tabular text-typography-500">
+                <Text size="xs" className="font-tabular text-[12px] text-typography-500">
                   of {Math.round(goal)} kcal goal
                 </Text>
                 <Text size="xs" className="text-typography-400">
@@ -105,7 +105,7 @@ export const MealSection = memo(function MealSection({
                   size="xs"
                   bold
                   style={{ color: overKcal ? colors.danger : colors.primary }}
-                  className="font-tabular"
+                  className="font-tabular text-[12px]"
                 >
                   {overKcal
                     ? `+${Math.round(overKcal)} over`
@@ -115,7 +115,7 @@ export const MealSection = memo(function MealSection({
             ) : null}
 
             {entries.length > 0 ? (
-              <Box className="mt-1.5">
+              <Box className="mt-1.5 min-w-0 flex-row flex-wrap">
                 <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
               </Box>
             ) : (

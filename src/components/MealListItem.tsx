@@ -38,7 +38,7 @@ export const MealListItem = memo(function MealListItem({
   const foodCount = meal.items.length === 1 ? "1 food" : `${meal.items.length} foods`
 
   return (
-    <Box className="mb-2 flex-row items-center gap-2 rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
+    <Box className="mb-2.5 flex-row items-center gap-2 rounded-2xl border border-outline-100 bg-background-50 px-4 py-3.5">
       <Pressable
         className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
         onPress={onPress}
@@ -47,21 +47,26 @@ export const MealListItem = memo(function MealListItem({
         accessibilityLabel={`${meal.name}, ${kcal} calories`}
       >
         <Box
-          className="h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          className="h-11 w-11 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundColor: `${accent}1f` }}
         >
           {logging ? (
             <ActivityIndicator size="small" color={accent} />
           ) : (
-            <Ionicons name="restaurant-outline" size={19} color={accent} />
+            <Ionicons name="restaurant-outline" size={21} color={accent} />
           )}
         </Box>
         <Box className="min-w-0 flex-1">
-          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+          <Text
+            size="md"
+            bold
+            className="text-[15.5px] leading-5 text-typography-900"
+            numberOfLines={1}
+          >
             {meal.name}
           </Text>
-          <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
-            <Text size="xs" className="font-tabular text-typography-500">
+          <View className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
+            <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
               {foodCount} · {kcal} kcal
             </Text>
             {totals ? <MacroPills protein={protein} carbs={carbs} fat={fat} size="xs" /> : null}

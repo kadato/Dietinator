@@ -109,7 +109,7 @@ export const MacroPills = memo(function MacroPills({
 
   const isXs = size === "xs"
   const isDetailed = variant === "detailed"
-  const iconSize = isXs ? 12 : 14
+  const iconSize = isXs ? 13 : size === "md" ? 16 : 14.5
 
   return (
     <View style={styles.pillContainer}>
@@ -117,7 +117,7 @@ export const MacroPills = memo(function MacroPills({
       <View
         style={[
           styles.pill,
-          isXs ? styles.pillXs : styles.pillSm,
+          isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
           { backgroundColor: `${colors.breakfast}22`, borderColor: `${colors.breakfast}45` },
         ]}
       >
@@ -130,7 +130,7 @@ export const MacroPills = memo(function MacroPills({
         <Text
           style={[
             styles.pillText,
-            isXs ? styles.pillTextXs : styles.pillTextSm,
+            isXs ? styles.pillTextXs : size === "md" ? styles.pillTextMd : styles.pillTextSm,
             { color: colors.breakfast },
           ]}
         >
@@ -142,7 +142,7 @@ export const MacroPills = memo(function MacroPills({
       <View
         style={[
           styles.pill,
-          isXs ? styles.pillXs : styles.pillSm,
+          isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
           { backgroundColor: `${colors.lunch}22`, borderColor: `${colors.lunch}45` },
         ]}
       >
@@ -155,7 +155,7 @@ export const MacroPills = memo(function MacroPills({
         <Text
           style={[
             styles.pillText,
-            isXs ? styles.pillTextXs : styles.pillTextSm,
+            isXs ? styles.pillTextXs : size === "md" ? styles.pillTextMd : styles.pillTextSm,
             { color: colors.lunch },
           ]}
         >
@@ -167,7 +167,7 @@ export const MacroPills = memo(function MacroPills({
       <View
         style={[
           styles.pill,
-          isXs ? styles.pillXs : styles.pillSm,
+          isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
           { backgroundColor: `${colors.dinner}22`, borderColor: `${colors.dinner}45` },
         ]}
       >
@@ -180,7 +180,7 @@ export const MacroPills = memo(function MacroPills({
         <Text
           style={[
             styles.pillText,
-            isXs ? styles.pillTextXs : styles.pillTextSm,
+            isXs ? styles.pillTextXs : size === "md" ? styles.pillTextMd : styles.pillTextSm,
             { color: colors.dinner },
           ]}
         >
@@ -195,23 +195,30 @@ const styles = StyleSheet.create({
   pillContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
     flexWrap: "wrap",
+    maxWidth: "100%",
   },
   pill: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
+    flexShrink: 0,
   },
   pillXs: {
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    borderRadius: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   pillSm: {
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 9,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 10,
+  },
+  pillMd: {
+    paddingHorizontal: 11,
+    paddingVertical: 5.5,
+    borderRadius: 11,
   },
   pillIcon: {
     marginRight: 3.5,
@@ -221,22 +228,28 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   pillTextXs: {
-    fontSize: 11,
-    lineHeight: 13,
-  },
-  pillTextSm: {
     fontSize: 12,
     lineHeight: 15,
+  },
+  pillTextSm: {
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  pillTextMd: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   cardContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    width: "100%",
   },
   cardItem: {
     flex: 1,
+    minWidth: 0,
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 12,
     borderWidth: 1,
   },
@@ -244,12 +257,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   cardIconBox: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -261,9 +274,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "baseline",
     gap: 3,
+    flexWrap: "wrap",
   },
   cardGrams: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
     fontVariant: ["tabular-nums"],
   },

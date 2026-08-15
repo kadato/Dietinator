@@ -248,14 +248,19 @@ export default function MealBuilderScreen() {
                 return (
                   <Box
                     key={item.product_id}
-                    className="mb-2 flex-row items-center gap-2 rounded-2xl border border-outline-200 bg-background-50 px-3 py-2.5"
+                    className="mb-2.5 flex-row items-center gap-2.5 rounded-2xl border border-outline-200 bg-background-50 px-3.5 py-3"
                   >
                     <Box className="min-w-0 flex-1">
-                      <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+                      <Text
+                        size="md"
+                        bold
+                        className="text-[15.5px] leading-5 text-typography-900"
+                        numberOfLines={1}
+                      >
                         {item.name}
                       </Text>
-                      <Box className="mt-1 flex-row flex-wrap items-center gap-1.5">
-                        <Text size="xs" className="font-tabular text-typography-500">
+                      <Box className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
+                        <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
                           {Math.round(itemN.kcal)} kcal
                         </Text>
                         <MacroPills

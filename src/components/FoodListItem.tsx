@@ -72,31 +72,36 @@ export const FoodListItem = memo(function FoodListItem({
   const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
 
   return (
-    <Box className="mx-4 mb-2 flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-3.5 py-3">
+    <Box className="mx-4 mb-2.5 flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-4 py-3.5">
       <Pressable
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${food.name}, ${Math.round(nutrients.kcal)} calories`}
       >
-        <Box className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-background-100">
+        <Box className="mr-3.5 h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background-100">
           <MaterialCommunityIcons
             name={getFoodIcon(food.name, food.nutrients)}
-            size={22}
+            size={24}
             color={accent}
           />
         </Box>
         <Box className="min-w-0 flex-1">
-          <Text size="md" bold className="text-typography-900" numberOfLines={1}>
+          <Text
+            size="md"
+            bold
+            className="text-[15.5px] leading-5 text-typography-900"
+            numberOfLines={1}
+          >
             {food.name}
           </Text>
           {subtitle ? (
-            <Text size="xs" className="mt-0.5 text-typography-500" numberOfLines={1}>
+            <Text size="xs" className="mt-0.5 text-[12.5px] text-typography-500" numberOfLines={1}>
               {subtitle}
             </Text>
           ) : (
             <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
-              <Text size="xs" className="font-tabular text-typography-500">
+              <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
                 {prefix}
                 {portion} · {Math.round(nutrients.kcal)} kcal
               </Text>
@@ -110,7 +115,10 @@ export const FoodListItem = memo(function FoodListItem({
           )}
         </Box>
         {showKcal ? (
-          <Text size="sm" className="font-tabular ml-2 shrink-0 text-typography-500">
+          <Text
+            size="sm"
+            className="font-tabular ml-2 shrink-0 text-sm font-semibold text-typography-500"
+          >
             {Math.round(nutrients.kcal)} Cal
           </Text>
         ) : null}

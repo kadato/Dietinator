@@ -49,7 +49,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         <View style={[styles.iconWrap, { backgroundColor: accentColor + "1a" }]}>
           <MaterialCommunityIcons
             name={getFoodIcon(entry.food_name, entry)}
-            size={18}
+            size={20}
             color={accentColor}
           />
         </View>
@@ -83,7 +83,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
             accessibilityRole="button"
             accessibilityLabel={`View nutrition facts for ${entry.food_name}`}
           >
-            <Ionicons name="pie-chart-outline" size={13} color={colors.primary} />
+            <Ionicons name="pie-chart-outline" size={14} color={colors.primary} />
           </Pressable>
         ) : null}
         <Pressable
@@ -99,7 +99,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Edit ${entry.food_name}`}
         >
-          <Ionicons name="create-outline" size={15} color={accentColor} />
+          <Ionicons name="create-outline" size={16} color={accentColor} />
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
@@ -114,7 +114,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Delete ${entry.food_name}`}
         >
-          <Ionicons name="trash-outline" size={14} color={colors.danger} />
+          <Ionicons name="trash-outline" size={15} color={colors.danger} />
         </Pressable>
       </View>
     </View>
@@ -127,9 +127,9 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingVertical: 6,
+      paddingVertical: 8,
       paddingHorizontal: 4,
-      borderRadius: 12,
+      borderRadius: 14,
     },
     main: {
       flex: 1,
@@ -138,36 +138,36 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       gap: 10,
       borderRadius: 10,
-      paddingVertical: 2,
+      paddingVertical: 3,
     },
     rowPressed: { backgroundColor: colors.surfaceAlt },
     iconWrap: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 38,
+      height: 38,
+      borderRadius: 12,
       alignItems: "center",
       justifyContent: "center",
     },
     info: { flex: 1, minWidth: 0 },
     name: {
-      fontSize: 14,
+      fontSize: 15.5,
       fontWeight: "600",
       color: colors.text,
-      lineHeight: 18,
+      lineHeight: 20,
     },
     macroRow: {
       flexDirection: "row",
       alignItems: "center",
       flexWrap: "wrap",
       gap: 4,
-      marginTop: 2,
+      marginTop: 2.5,
     },
     amountLabel: {
-      fontSize: 12,
+      fontSize: 12.5,
       color: colors.textMuted,
     },
     macroDot: {
-      fontSize: 12,
+      fontSize: 12.5,
       color: colors.textMuted,
     },
     miniChip: {
@@ -191,13 +191,13 @@ const createStyles = (colors: ColorPalette) =>
       paddingLeft: 4,
     },
     kcalValue: {
-      fontSize: 15,
+      fontSize: 16,
       fontWeight: "700",
       color: colors.text,
       fontVariant: ["tabular-nums"],
     },
     kcalUnit: {
-      fontSize: 10,
+      fontSize: 10.5,
       fontWeight: "500",
       color: colors.textMuted,
     },
@@ -208,9 +208,9 @@ const createStyles = (colors: ColorPalette) =>
       marginLeft: 4,
     },
     actionBtn: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: "center",
       justifyContent: "center",
     },
