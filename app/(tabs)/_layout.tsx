@@ -67,8 +67,8 @@ export default function TabLayout() {
           title: "Today",
           headerShown: false,
           tabBarAccessibilityLabel: "Today",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="today-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "today" : "today-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -78,8 +78,8 @@ export default function TabLayout() {
           title: "Search",
           headerShown: false,
           tabBarAccessibilityLabel: "Search",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "search" : "search-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -89,8 +89,12 @@ export default function TabLayout() {
           title: "Meals",
           headerShown: false,
           tabBarAccessibilityLabel: "Meals",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="restaurant-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "restaurant" : "restaurant-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -100,8 +104,12 @@ export default function TabLayout() {
           title: "Stats",
           headerShown: false,
           tabBarAccessibilityLabel: "Stats",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "stats-chart" : "stats-chart-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -111,8 +119,8 @@ export default function TabLayout() {
           title: "Settings",
           headerShown: false,
           tabBarAccessibilityLabel: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "settings" : "settings-outline"} size={size} color={color} />
           ),
         }}
       />

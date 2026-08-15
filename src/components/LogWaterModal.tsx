@@ -14,7 +14,7 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { createModalShellStyles, topInset } from "@/components/modal-shell"
+import { createModalShellStyles } from "@/components/modal-shell"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -128,6 +128,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           isWide ? styles.dialogBodyWide : { maxHeight: "90%" },
         ]}
       >
+        <Box className="items-center pt-2">
+          <Box className="h-1 w-9 rounded-full bg-outline-200" />
+        </Box>
         {isWide ? (
           <Text
             size="2xl"
@@ -138,10 +141,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             Water
           </Text>
         ) : (
-          <Box
-            className="flex-row items-center gap-3 px-5 pb-1"
-            style={{ paddingTop: topInset(insets) + spacing.md }}
-          >
+          <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
             <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
               <Ionicons name="water-outline" size={20} color={colors.primary} />
             </Box>
@@ -325,9 +325,12 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityLabel="Dismiss water dialog"
         />
         {isWide ? (
-          <View style={shell.dialogWrap}>{form}</View>
+          <View pointerEvents="box-none" style={shell.dialogWrap}>
+            {form}
+          </View>
         ) : (
           <KeyboardAvoidingView
+            pointerEvents="box-none"
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

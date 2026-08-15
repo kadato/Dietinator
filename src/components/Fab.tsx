@@ -87,6 +87,12 @@ export function Fab({
         ? styles.extended
         : styles.round
   const iconSize = size === "sm" ? (label ? 18 : 22) : label ? 22 : 26
+  const border =
+    tone === "primary"
+      ? `${colors.primaryStrong}4d`
+      : tone === "danger"
+        ? `${colors.danger}66`
+        : colors.border
 
   return (
     <Pressable
@@ -100,14 +106,17 @@ export function Fab({
       style={[
         shape,
         styles.shadow,
-        { backgroundColor: bg },
-        tone === "surface" ? { borderWidth: 1, borderColor: colors.border } : styles.idle,
+        {
+          backgroundColor: bg,
+          borderWidth: 1,
+          borderColor: border,
+        },
         pressed ? pressedStyle : styles.idle,
       ]}
     >
       <FabGlyph IconComponent={IconComponent} icon={icon} size={iconSize} color={fg} />
       {label ? (
-        <Text size={size === "sm" ? "sm" : "md"} bold style={{ color: fg }}>
+        <Text size={size === "sm" ? "sm" : "md"} bold style={{ color: fg, letterSpacing: 0.2 }}>
           {label}
         </Text>
       ) : null}
@@ -117,45 +126,45 @@ export function Fab({
 
 const styles = StyleSheet.create({
   round: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
   },
   roundSm: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
   extended: {
     minHeight: 56,
-    paddingHorizontal: 22,
-    borderRadius: 18,
+    paddingHorizontal: 24,
+    borderRadius: 28,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
   extendedSm: {
     minHeight: 44,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+    paddingHorizontal: 18,
+    borderRadius: 22,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
   shadow: {
-    elevation: 6,
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+    elevation: 8,
+    boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.22)",
   },
   pressed: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.94,
+    transform: [{ scale: 0.92 }],
+    opacity: 0.92,
   },
   disabled: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
   idle: {},
 })

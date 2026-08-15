@@ -1,11 +1,9 @@
-import { Modal, Platform, Pressable, ScrollView, View } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { GitHubRelease } from "@/services/updates"
 import { getApkAsset } from "@/services/updates"
 import { Markdown } from "@/components/Markdown"
 import { ModalContainer } from "@/components/ModalContainer"
-import { topInset } from "@/components/modal-shell"
 import { useTheme } from "@/hooks/useTheme"
 import { spacing } from "@/theme"
 import { Box } from "@ui/box"
@@ -49,7 +47,6 @@ export function UpdateDialog({
   onDownload,
 }: Props) {
   const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
   const apk = getApkAsset(release)
   const published = formatReleaseDate(release.publishedAt)
 
@@ -72,98 +69,110 @@ export function UpdateDialog({
         : {})}
     >
       <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.45)" }}>
-        <ModalContainer maxWidth={560} outerClassName="bg-background-50">
-          <Box
-            className="flex-row items-center gap-3 px-5 pb-3"
-            style={{ paddingTop: topInset(insets) + spacing.md }}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss update dialog"
+        />
+        <View pointerEvents="box-none" style={{ flex: 1, justifyContent: "center" }}>
+          <ModalContainer
+            hug
+            maxWidth={560}
+            outerClassName="bg-background-50 rounded-2xl mx-4 my-auto overflow-hidden"
           >
-            <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
-              <Ionicons name="download-outline" size={24} color={colors.primary} />
-            </Box>
-            <Box className="min-w-0 flex-1">
-              <Text size="xl" bold className="text-typography-900">
-                Update available
-              </Text>
-              <Text size="xs" className="mt-0.5 text-typography-500">
-                {currentVersion} → {release.tag}
-                {published ? ` · ${published}` : ""}
-              </Text>
-            </Box>
-            <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              className="p-1"
-              accessibilityRole="button"
-              accessibilityLabel="Close"
+            <Box
+              className="flex-row items-center gap-3 px-5 pb-3"
+              style={{ paddingTop: spacing.lg }}
             >
-              <Ionicons name="close" size={24} color={colors.textMuted} />
-            </Pressable>
-          </Box>
-
-          <ScrollView
-            className="max-h-[45vh]"
-            contentContainerClassName="px-5 pb-3"
-            showsVerticalScrollIndicator
-          >
-            <Text size="sm" className="mb-3 leading-[20px] text-typography-500">
-              A new version of Dietinator is ready. Your diary, meals and settings stay on this
-              device — updating never touches your data.
-            </Text>
-
-            {release.notes?.trim() ? (
-              <>
-                <Text size="xs" bold className="mb-2 uppercase tracking-wide text-typography-500">
-                  What&apos;s new
+              <Box className="h-11 w-11 items-center justify-center rounded-full bg-primary-500/15">
+                <Ionicons name="download-outline" size={24} color={colors.primary} />
+              </Box>
+              <Box className="min-w-0 flex-1">
+                <Text size="xl" bold className="text-typography-900">
+                  Update available
                 </Text>
-                <Markdown source={release.notes} />
-              </>
-            ) : (
-              <Text size="sm" className="text-typography-500">
-                No release notes published for this version.
-              </Text>
-            )}
-
-            {!apk ? (
-              <Text size="sm" className="mt-3 text-typography-500">
-                This release has no Android APK attached yet.
-              </Text>
-            ) : null}
-          </ScrollView>
-
-          <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
-            <Pressable
-              onPress={onNeverAsk}
-              hitSlop={8}
-              disabled={downloading}
-              accessibilityRole="button"
-              accessibilityLabel="Don't ask again"
-            >
-              <Text
-                size="sm"
-                bold
-                className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+                <Text size="xs" className="mt-0.5 text-typography-500">
+                  {currentVersion} → {release.tag}
+                  {published ? ` · ${published}` : ""}
+                </Text>
+              </Box>
+              <Pressable
+                onPress={onClose}
+                hitSlop={12}
+                className="p-1"
+                accessibilityRole="button"
+                accessibilityLabel="Close"
               >
-                Don&apos;t ask again
-              </Text>
-            </Pressable>
-            <View className="flex-1" />
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              onPress={onClose}
-              isDisabled={downloading}
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </Pressable>
+            </Box>
+
+            <ScrollView
+              className="max-h-[45vh]"
+              contentContainerClassName="px-5 pb-3"
+              showsVerticalScrollIndicator
             >
-              <ButtonText>Later</ButtonText>
-            </Button>
-            {apk ? (
-              <Button size="md" onPress={onDownload} isDisabled={downloading}>
-                {downloading ? <ButtonSpinner /> : null}
-                <ButtonText>{progressLabel}</ButtonText>
+              <Text size="sm" className="mb-3 leading-[20px] text-typography-500">
+                A new version of Dietinator is ready. Your diary, meals and settings stay on this
+                device — updating never touches your data.
+              </Text>
+
+              {release.notes?.trim() ? (
+                <>
+                  <Text size="xs" bold className="mb-2 uppercase tracking-wide text-typography-500">
+                    What&apos;s new
+                  </Text>
+                  <Markdown source={release.notes} />
+                </>
+              ) : (
+                <Text size="sm" className="text-typography-500">
+                  No release notes published for this version.
+                </Text>
+              )}
+
+              {!apk ? (
+                <Text size="sm" className="mt-3 text-typography-500">
+                  This release has no Android APK attached yet.
+                </Text>
+              ) : null}
+            </ScrollView>
+
+            <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
+              <Pressable
+                onPress={onNeverAsk}
+                hitSlop={8}
+                disabled={downloading}
+                accessibilityRole="button"
+                accessibilityLabel="Don't ask again"
+              >
+                <Text
+                  size="sm"
+                  bold
+                  className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+                >
+                  Don&apos;t ask again
+                </Text>
+              </Pressable>
+              <View className="flex-1" />
+              <Button
+                size="md"
+                variant="outline"
+                action="secondary"
+                onPress={onClose}
+                isDisabled={downloading}
+              >
+                <ButtonText>Later</ButtonText>
               </Button>
-            ) : null}
-          </Box>
-        </ModalContainer>
+              {apk ? (
+                <Button size="md" onPress={onDownload} isDisabled={downloading}>
+                  {downloading ? <ButtonSpinner /> : null}
+                  <ButtonText>{progressLabel}</ButtonText>
+                </Button>
+              ) : null}
+            </Box>
+          </ModalContainer>
+        </View>
       </View>
     </Modal>
   )

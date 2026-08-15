@@ -51,7 +51,7 @@ export function ModalContainer({
   if (!isWide) {
     return (
       <Box
-        className={`w-full flex-1 ${outerClassName ?? ""}`}
+        className={`w-full ${hug ? "" : "flex-1"} ${outerClassName ?? ""}`}
         style={surface ? { backgroundColor: colors.surface } : undefined}
       >
         {children}

@@ -456,6 +456,19 @@ export function AiChatModal() {
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <Box className="flex-row items-end gap-2">
+            <Pressable
+              onPress={closeAiChat}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Close AI chat"
+              className="h-11 w-11 shrink-0 items-center justify-center rounded-full border border-outline-200 bg-background-100 active:opacity-70"
+              style={{
+                boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)",
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="chevron-down" size={22} color={colors.text} />
+            </Pressable>
             <Box
               className="min-w-0 flex-1 justify-center rounded-[22px] border border-outline-200 bg-background-100 px-4"
               style={{
@@ -540,10 +553,7 @@ export function AiChatModal() {
           accessibilityLabel="Dismiss AI chat"
         />
         {isWide ? (
-          // box-none (registered on dialogWrap): taps on the dimmed area
-          // around the dialog fall through to the dismiss Pressable; taps on
-          // the dialog itself stay in it.
-          <View style={shell.dialogWrap}>
+          <View pointerEvents="box-none" style={shell.dialogWrap}>
             <View
               testID="ai-chat-dialog"
               style={[shell.dialogBox, { width: "100%", maxWidth: 720, height: "100%" }]}
@@ -555,15 +565,15 @@ export function AiChatModal() {
           <View style={[shell.sheet, { backgroundColor: colors.surface }]}>{chat}</View>
         )}
 
-        {/* Cancel FAB — floats on the backdrop outside the dialog on wide
-            screens; on phones it sits above the composer so it never covers
-            the input. */}
-        <FabCluster
-          bottomOffset={isWide ? insets.bottom + 24 : insets.bottom + 84}
-          left={
-            <Fab tone="surface" icon="close" onPress={closeAiChat} accessibilityLabel="Cancel" />
-          }
-        />
+        {/* Cancel FAB — floats on the backdrop outside the dialog on wide screens only */}
+        {isWide ? (
+          <FabCluster
+            bottomOffset={insets.bottom + 24}
+            left={
+              <Fab tone="surface" icon="close" onPress={closeAiChat} accessibilityLabel="Cancel" />
+            }
+          />
+        ) : null}
       </View>
     </Modal>
   )

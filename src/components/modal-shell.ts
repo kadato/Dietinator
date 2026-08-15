@@ -32,18 +32,15 @@ export function createModalShellStyles(colors: ColorPalette) {
     },
     sheet: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
     },
     dialogWrap: {
       flex: 1,
       width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 32,
-      paddingHorizontal: 24,
-      // Registered (not inline) so react-native-web compiles it: taps on the
-      // dimmed area fall through to the dismiss Pressable behind this layer.
-      pointerEvents: "box-none",
+      paddingVertical: 16,
+      paddingHorizontal: 16,
     },
     dialogBox: {
       backgroundColor: colors.surface,

@@ -223,7 +223,7 @@ function BarcodeMatchesList({
 }
 
 /** Floating header pill — dark glass over the camera feed, theme surface in the browser. */
-function ScanHeader({ overlay = false }: { overlay?: boolean }) {
+function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?: () => void }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
@@ -232,7 +232,7 @@ function ScanHeader({ overlay = false }: { overlay?: boolean }) {
     <View
       style={[
         overlay ? cameraStyles.headerOverlay : styles.headerFlow,
-        { paddingTop: overlay ? insets.top + spacing.md : insets.top + 16 },
+        { paddingTop: overlay ? insets.top + spacing.sm : insets.top + 16 },
       ]}
     >
       <View
@@ -249,6 +249,17 @@ function ScanHeader({ overlay = false }: { overlay?: boolean }) {
             Scan barcode
           </Text>
         </View>
+        {onClose ? (
+          <Pressable
+            onPress={onClose}
+            hitSlop={8}
+            className="h-8 w-8 items-center justify-center rounded-full active:bg-background-200"
+            accessibilityRole="button"
+            accessibilityLabel="Close camera"
+          >
+            <Ionicons name="close" size={20} color={tint} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   )
@@ -544,7 +555,7 @@ export default function ScanScreen() {
 
       {cameraActive ? <Viewfinder /> : null}
 
-      <ScanHeader />
+      <ScanHeader overlay={cameraActive} onClose={close} />
 
       {loading && (
         <View style={styles.overlay}>

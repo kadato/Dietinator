@@ -14,7 +14,7 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { createModalShellStyles, topInset } from "@/components/modal-shell"
+import { createModalShellStyles } from "@/components/modal-shell"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -117,12 +117,23 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     }
   }
 
+  const currentWeightKg = parseWeightInput(weightText, settings.units)
+  const bmi =
+    currentWeightKg && settings.height_cm > 0
+      ? Math.round(
+          (currentWeightKg / ((settings.height_cm / 100) * (settings.height_cm / 100))) * 10,
+        ) / 10
+      : null
+
   const form = (
     <>
       <View
         testID="log-weight-dialog"
         style={[shell.dialogBox, { width: "100%", maxWidth: 420, maxHeight: "90%" }]}
       >
+        <Box className="items-center pt-2">
+          <Box className="h-1 w-9 rounded-full bg-outline-200" />
+        </Box>
         {isWide ? (
           <Text
             size="2xl"
@@ -133,10 +144,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             Log weight
           </Text>
         ) : (
-          <Box
-            className="flex-row items-center gap-3 px-5 pb-1"
-            style={{ paddingTop: topInset(insets) + spacing.md }}
-          >
+          <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
             <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
               <Ionicons name="scale-outline" size={20} color={colors.primary} />
             </Box>
@@ -181,16 +189,39 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               value={weightText}
               onChangeText={setWeightText}
               onSubmit={() => void handleSave()}
-              step={0.1}
+              step={isImperial(settings.units) ? 0.5 : 0.1}
               decimals={1}
               accessibilityLabel="Weight"
               placeholder={isImperial(settings.units) ? "e.g. 165.4" : "e.g. 75.2"}
-              style={{ flexGrow: 0 }}
+              style={{ flex: 1 }}
             />
             <Text size="sm" bold className="text-typography-500">
               {isImperial(settings.units) ? "lb" : "kg"}
             </Text>
           </Box>
+
+          {bmi !== null ? (
+            <Box className="mt-3 flex-row items-center justify-between rounded-2xl bg-primary-500/10 px-4 py-3">
+              <Box>
+                <Text size="xs" bold className="text-typography-900">
+                  BMI {bmi}
+                </Text>
+                <Text size="2xs" className="text-typography-500">
+                  Height: {settings.height_cm} cm
+                </Text>
+              </Box>
+              <Text size="xs" bold style={{ color: colors.primary }}>
+                {bmi < 18.5
+                  ? "Underweight"
+                  : bmi < 25
+                    ? "Normal weight"
+                    : bmi < 30
+                      ? "Overweight"
+                      : "Obese"}
+              </Text>
+            </Box>
+          ) : null}
+
           <Text size="xs" className="mt-1 leading-4 text-typography-500">
             Stored in kg — switching units later keeps your history intact.
           </Text>
@@ -258,12 +289,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           accessibilityLabel="Dismiss weight dialog"
         />
         {isWide ? (
-          // box-none is on the registered dialogWrap style: taps on the
-          // dimmed area around the dialog fall through to the dismiss
-          // Pressable; taps on the dialog itself stay in it.
-          <View style={shell.dialogWrap}>{form}</View>
+          <View pointerEvents="box-none" style={shell.dialogWrap}>
+            {form}
+          </View>
         ) : (
           <KeyboardAvoidingView
+            pointerEvents="box-none"
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

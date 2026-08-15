@@ -1,10 +1,12 @@
 import { useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { routeParam } from "@/utils/route"
@@ -61,6 +63,7 @@ export default function ManualEntryScreen() {
   const date = routeParam(params.date) ?? toDateKey()
   const isQuickAdd = routeParam(params.quickAdd) === "1"
   const { showError, showWarning } = useToast()
+  const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
   const { width } = useLayout()
@@ -118,24 +121,34 @@ export default function ManualEntryScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ModalContainer hug maxWidth={520}>
-        <Text
-          size="2xl"
-          bold
-          className="px-6 text-center text-typography-900"
-          style={{ paddingTop: insets.top + spacing.sm }}
+      <ModalContainer hug maxWidth={520} outerClassName="bg-background-50">
+        <Box
+          className="flex-row items-center justify-between px-6 pb-2"
+          style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
         >
-          {isQuickAdd ? "Quick Add" : "Manual entry"}
-        </Text>
+          <Box>
+            <Text size="2xl" bold className="text-typography-900">
+              {isQuickAdd ? "Quick Add" : "Manual entry"}
+            </Text>
+            <Text size="sm" className="mt-0.5 text-typography-500">
+              {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
+            </Text>
+          </Box>
+          <Pressable
+            onPress={safeBack}
+            hitSlop={8}
+            className="h-9 w-9 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.textMuted} />
+          </Pressable>
+        </Box>
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-4"
+          contentContainerClassName="px-4 pb-28 pt-2"
           keyboardShouldPersistTaps="handled"
         >
-          <Text size="sm" className="mb-4 text-typography-500">
-            {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
-          </Text>
-
           {!isQuickAdd ? (
             <>
               <Text style={styles.label}>Name</Text>

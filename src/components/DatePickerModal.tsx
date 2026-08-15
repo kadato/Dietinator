@@ -66,101 +66,114 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
     <Modal
       visible={visible}
       transparent
+      animationType="fade"
       onRequestClose={onClose}
       {...(Platform.OS === "android"
         ? { statusBarTranslucent: true, hardwareAccelerated: true }
         : {})}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.sheet}>
-          <View style={styles.monthRow}>
-            <Pressable
-              onPress={() => shiftMonth(-1)}
-              hitSlop={10}
-              style={styles.navBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Previous month"
-            >
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
-            </Pressable>
-            <Text style={styles.monthLabel}>{monthLabel}</Text>
-            <Pressable
-              onPress={() => shiftMonth(1)}
-              hitSlop={10}
-              style={styles.navBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Next month"
-            >
-              <Ionicons name="chevron-forward" size={22} color={colors.text} />
-            </Pressable>
-          </View>
+      <View style={styles.modalRoot}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss date picker"
+        />
+        <View pointerEvents="box-none" style={styles.centerWrap}>
+          <View style={styles.sheet}>
+            <View style={styles.monthRow}>
+              <Pressable
+                onPress={() => shiftMonth(-1)}
+                hitSlop={10}
+                style={styles.navBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Previous month"
+              >
+                <Ionicons name="chevron-back" size={22} color={colors.text} />
+              </Pressable>
+              <Text style={styles.monthLabel}>{monthLabel}</Text>
+              <Pressable
+                onPress={() => shiftMonth(1)}
+                hitSlop={10}
+                style={styles.navBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Next month"
+              >
+                <Ionicons name="chevron-forward" size={22} color={colors.text} />
+              </Pressable>
+            </View>
 
-          <View style={styles.weekRow}>
-            {WEEKDAYS.map((label) => (
-              <Text key={label} style={styles.weekday}>
-                {label}
-              </Text>
-            ))}
-          </View>
+            <View style={styles.weekRow}>
+              {WEEKDAYS.map((label) => (
+                <Text key={label} style={styles.weekday}>
+                  {label}
+                </Text>
+              ))}
+            </View>
 
-          <View style={styles.grid}>
-            {cells.map((day, index) => {
-              if (day === null) return <View key={`blank-${index}`} style={styles.cell} />
-              const key = toDateKey(new Date(view.year, view.month, day))
-              const isSelected = key === dateKey
-              const isToday = key === todayKey
-              const cellStyle = isSelected
-                ? { backgroundColor: colors.primary }
-                : isToday
-                  ? { borderWidth: 1, borderColor: colors.primary }
-                  : null
-              const dayTextStyle = isSelected
-                ? { color: colors.onPrimary, fontWeight: "700" as const }
-                : isToday
-                  ? { color: colors.primary, fontWeight: "700" as const }
-                  : null
-              return (
-                <Pressable
-                  key={key}
-                  style={cellStyle ? { ...styles.cell, ...cellStyle } : styles.cell}
-                  onPress={() => pick(day)}
-                  accessibilityRole="button"
-                  accessibilityLabel={key}
-                  accessibilityState={{ selected: isSelected }}
-                >
-                  <Text
-                    style={dayTextStyle ? { ...styles.dayText, ...dayTextStyle } : styles.dayText}
+            <View style={styles.grid}>
+              {cells.map((day, index) => {
+                if (day === null) return <View key={`blank-${index}`} style={styles.cell} />
+                const key = toDateKey(new Date(view.year, view.month, day))
+                const isSelected = key === dateKey
+                const isToday = key === todayKey
+                const cellStyle = isSelected
+                  ? { backgroundColor: colors.primary }
+                  : isToday
+                    ? { borderWidth: 1, borderColor: colors.primary }
+                    : null
+                const dayTextStyle = isSelected
+                  ? { color: colors.onPrimary, fontWeight: "700" as const }
+                  : isToday
+                    ? { color: colors.primary, fontWeight: "700" as const }
+                    : null
+                return (
+                  <Pressable
+                    key={key}
+                    style={cellStyle ? { ...styles.cell, ...cellStyle } : styles.cell}
+                    onPress={() => pick(day)}
+                    accessibilityRole="button"
+                    accessibilityLabel={key}
+                    accessibilityState={{ selected: isSelected }}
                   >
-                    {day}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
+                    <Text
+                      style={dayTextStyle ? { ...styles.dayText, ...dayTextStyle } : styles.dayText}
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </View>
 
-          <Pressable
-            style={styles.todayBtn}
-            onPress={() => {
-              onSelect(todayKey)
-              onClose()
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Go to today"
-          >
-            <Text style={styles.todayText}>Today</Text>
-          </Pressable>
+            <Pressable
+              style={styles.todayBtn}
+              onPress={() => {
+                onSelect(todayKey)
+                onClose()
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Go to today"
+            >
+              <Text style={styles.todayText}>Today</Text>
+            </Pressable>
+          </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   )
 }
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    backdrop: {
+    modalRoot: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.4)",
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    centerWrap: {
+      flex: 1,
       justifyContent: "center",
+      alignItems: "center",
       padding: 24,
     },
     sheet: {

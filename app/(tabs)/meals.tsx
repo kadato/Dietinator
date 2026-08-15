@@ -147,13 +147,20 @@ export default function MealsScreen() {
               <Ionicons name="restaurant-outline" size={19} color={colors.primary} />
             </Box>
             <Box className="min-w-0 flex-1">
-              <Text size="md" bold className="text-typography-900" numberOfLines={2}>
+              <Text size="md" bold className="text-typography-900" numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text size="xs" className="mt-0.5 text-typography-500">
-                {item.items.length === 1
-                  ? `1 food · ${kcal} Cal`
-                  : `${item.items.length} foods · ${kcal} Cal`}
+              <Text
+                size="xs"
+                bold
+                style={{ color: colors.primary }}
+                className="font-tabular mt-0.5"
+              >
+                {kcal} Cal · {item.items.length === 1 ? "1 food" : `${item.items.length} foods`}
+              </Text>
+              <Text size="2xs" className="font-tabular mt-0.5 text-typography-500">
+                P {Math.round(totals?.protein ?? 0)}g · C {Math.round(totals?.carbs ?? 0)}g · F{" "}
+                {Math.round(totals?.fat ?? 0)}g
               </Text>
             </Box>
           </Pressable>

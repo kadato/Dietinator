@@ -56,13 +56,24 @@ export function FabCluster({
   return (
     <>
       {left ? (
-        <View style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}>{left}</View>
+        <View
+          pointerEvents="box-none"
+          style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}
+        >
+          {left}
+        </View>
       ) : null}
       {center ? (
-        <View style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}>{center}</View>
+        <View
+          pointerEvents="box-none"
+          style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}
+        >
+          {center}
+        </View>
       ) : null}
       {right ? (
         <View
+          pointerEvents="box-none"
           style={[
             styles.cluster,
             styles.clusterRight,
