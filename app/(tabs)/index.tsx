@@ -12,6 +12,8 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { LogWaterModal } from "@/components/LogWaterModal"
 import { MealSlotModal } from "@/components/MealSlotModal"
+import { WeekCalendarStrip } from "@/components/WeekCalendarStrip"
+import { NutritionBreakdownModal } from "@/components/NutritionBreakdownModal"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
@@ -19,17 +21,19 @@ import { useAiChatModal } from "@/context/AiChatContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
-import type { DiaryEntry, MealType, WeightEntry } from "@/types"
+import type { DiaryEntry, FoodNutrients, MealType, WeightEntry } from "@/types"
 import {
   copyEntriesToDate,
   deleteFoodEntry,
   getDiaryEntriesForDate,
+  getNutritionBreakdownForEntries,
+  getNutritionBreakdownForEntry,
   restoreFoodEntry,
 } from "@/services/diary"
 import { getLatestWeightEntry } from "@/db/weight"
-import { getWaterTotalForDate } from "@/db/water"
+import { addWaterEntry, getWaterTotalForDate } from "@/db/water"
 import { confirmAction } from "@/utils/confirm"
-import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
+import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
@@ -46,7 +50,7 @@ export default function TodayScreen() {
   const { openAiChat } = useAiChatModal()
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide, width } = useLayout()
+  const { isWide } = useLayout()
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -59,8 +63,60 @@ export default function TodayScreen() {
   const [logWaterOpen, setLogWaterOpen] = useState(false)
   const [logSlotOpen, setLogSlotOpen] = useState(false)
   const [localWaterMl, setLocalWaterMl] = useState(0)
+  const [nutritionModal, setNutritionModal] = useState<{
+    visible: boolean
+    nutrients: FoodNutrients
+    title?: string
+    subtitle?: string
+  }>({
+    visible: false,
+    nutrients: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+  })
 
   const totals = useMemo(() => sumNutrients(entries), [entries])
+
+  const handleShowItemNutrition = useCallback(async (entry: DiaryEntry) => {
+    try {
+      const nut = await getNutritionBreakdownForEntry(entry)
+      setNutritionModal({
+        visible: true,
+        nutrients: nut,
+        title: entry.food_name,
+        subtitle: `${entry.amount} ${entry.unit} · ${Math.round(entry.kcal)} kcal`,
+      })
+    } catch {
+      setNutritionModal({
+        visible: true,
+        nutrients: {
+          kcal: entry.kcal,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+        },
+        title: entry.food_name,
+        subtitle: `${entry.amount} ${entry.unit} · ${Math.round(entry.kcal)} kcal`,
+      })
+    }
+  }, [])
+
+  const handleShowDayNutrition = useCallback(async () => {
+    try {
+      const nut = await getNutritionBreakdownForEntries(entries)
+      setNutritionModal({
+        visible: true,
+        nutrients: nut,
+        title: "Daily Nutrition & Micros",
+        subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
+      })
+    } catch {
+      setNutritionModal({
+        visible: true,
+        nutrients: totals,
+        title: "Daily Nutrition & Micros",
+        subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
+      })
+    }
+  }, [dateKey, entries, totals])
 
   const mealEntries = useMemo(() => {
     const grouped: Record<MealType, DiaryEntry[]> = {
@@ -137,10 +193,6 @@ export default function TodayScreen() {
       load({ quiet: true })
     }, [load]),
   )
-
-  const shiftDate = (delta: number) => {
-    setDateKey((current) => shiftDateKey(current, delta))
-  }
 
   const openAdd = useCallback(
     (mealType: MealType) => {
@@ -232,6 +284,7 @@ export default function TodayScreen() {
           onAdd={openAdd}
           onEdit={openEdit}
           onDelete={onDeleteEntry}
+          onShowNutrition={handleShowItemNutrition}
         />
       )
       return grid ? (
@@ -243,7 +296,6 @@ export default function TodayScreen() {
       )
     })
 
-  const isToday = dateKey === toDateKey()
   const yazioWeight = summary?.weight
   // Locally logged weigh-ins take precedence over the YAZIO profile weight.
   const displayedWeight = localWeight?.weight_kg ?? yazioWeight
@@ -252,9 +304,24 @@ export default function TodayScreen() {
   const waterGoal = settings.water_goal_ml > 0 ? settings.water_goal_ml : (summary?.waterGoal ?? 0)
   const insets = useSafeAreaInsets()
 
+  const handleQuickWater = async (amount: number) => {
+    try {
+      await addWaterEntry({ date: dateKey, amountMl: amount })
+      await load({ quiet: true })
+    } catch (error) {
+      showError(error, "Could not log water.")
+    }
+  }
+
   const summaryCard = (
-    <Card variant="elevated" className="mb-6 overflow-hidden">
-      <CalorieRing consumed={totals.kcal} goal={settings.calorie_goal} size={isWide ? 150 : 128} />
+    <Card variant="elevated" className="mb-5 overflow-hidden rounded-3xl p-1">
+      <Box className="items-center pt-2">
+        <CalorieRing
+          consumed={totals.kcal}
+          goal={settings.calorie_goal}
+          size={isWide ? 150 : 136}
+        />
+      </Box>
       <MacroBar
         protein={totals.protein}
         carbs={totals.carbs}
@@ -263,34 +330,53 @@ export default function TodayScreen() {
         carbsGoal={settings.carbs_goal}
         fatGoal={settings.fat_goal}
       />
-      <Box className="flex-row items-center gap-2 border-t border-outline-100 p-3">
-        <Pressable
-          onPress={() => setLogWaterOpen(true)}
-          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 px-3 py-2.5 active:opacity-80"
-          accessibilityRole="button"
-          accessibilityLabel="Log water"
-        >
-          <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
-            <Ionicons name="water-outline" size={18} color={colors.primary} />
-          </Box>
-          <Box className="min-w-0 flex-1">
-            <Text size="md" bold numberOfLines={1} className="text-typography-900">
-              {formatWaterAmount(waterIntake, settings.units)}
-              {waterGoal > 0 ? (
-                <Text size="xs" className="text-typography-500">
-                  {" "}
-                  / {formatWaterAmount(waterGoal, settings.units)}
-                </Text>
-              ) : null}
+      <Pressable
+        onPress={() => void handleShowDayNutrition()}
+        className="mx-3 mb-2 flex-row items-center justify-center gap-2 rounded-2xl bg-background-100 py-2.5 active:opacity-80"
+        accessibilityRole="button"
+        accessibilityLabel="View full nutrition and micronutrients breakdown"
+      >
+        <Ionicons name="pie-chart-outline" size={15} color={colors.primary} />
+        <Text size="xs" bold style={{ color: colors.primary }}>
+          View Nutrition & Micros
+        </Text>
+      </Pressable>
+      <Box className="flex-row items-center gap-2.5 border-t border-outline-100 p-3">
+        <Box className="min-w-0 flex-1 flex-row items-center rounded-2xl bg-primary-500/10 p-2.5">
+          <Pressable
+            onPress={() => setLogWaterOpen(true)}
+            className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-80"
+            accessibilityRole="button"
+            accessibilityLabel="Log water"
+          >
+            <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
+              <Ionicons name="water-outline" size={18} color={colors.primary} />
+            </Box>
+            <Box className="min-w-0 flex-1">
+              <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+                {formatWaterAmount(waterIntake, settings.units)}
+              </Text>
+              <Text size="2xs" className="text-typography-500">
+                {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
+              </Text>
+            </Box>
+          </Pressable>
+          <Pressable
+            onPress={() => void handleQuickWater(250)}
+            hitSlop={4}
+            className="h-8 items-center justify-center rounded-full bg-primary-500 px-2.5 active:opacity-80"
+            accessibilityRole="button"
+            accessibilityLabel="Quick add 250ml water"
+          >
+            <Text size="2xs" bold style={{ color: colors.onPrimary }}>
+              +250ml
             </Text>
-            <Text size="2xs" className="text-typography-500">
-              Water
-            </Text>
-          </Box>
-        </Pressable>
+          </Pressable>
+        </Box>
+
         <Pressable
           onPress={() => setLogWeightOpen(true)}
-          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 px-3 py-2.5 active:opacity-80"
+          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 p-2.5 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel="Log weight"
         >
@@ -298,7 +384,7 @@ export default function TodayScreen() {
             <Ionicons name="scale-outline" size={18} color={colors.primary} />
           </Box>
           <Box className="min-w-0 flex-1">
-            <Text size="md" bold numberOfLines={1} className="text-typography-900">
+            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
               {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "—"}
             </Text>
             <Text size="2xs" className="text-typography-500">
@@ -325,13 +411,13 @@ export default function TodayScreen() {
       </Text>
       <Pressable
         onPress={() => setLogSlotOpen(true)}
-        className="flex-row items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1.5 active:opacity-80"
+        className="flex-row items-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-1.5 active:opacity-80"
         accessibilityRole="button"
         accessibilityLabel="Log food"
       >
-        <Ionicons name="add" size={16} color={colors.primary} />
-        <Text size="sm" bold className="text-primary-500">
-          Log
+        <Ionicons name="add" size={16} color={colors.onPrimary} />
+        <Text size="sm" bold style={{ color: colors.onPrimary }}>
+          Log food
         </Text>
       </Pressable>
     </Box>
@@ -342,53 +428,16 @@ export default function TodayScreen() {
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
         <Box className="px-4 pb-1" style={{ paddingTop: insets.top + spacing.sm }}>
-          <Box className="flex-row items-center gap-0.5">
-            <Pressable
-              onPress={() => shiftDate(-1)}
-              hitSlop={12}
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
-              accessibilityRole="button"
-              accessibilityLabel="Previous day"
-            >
-              <Ionicons name="chevron-back" size={21} color={colors.text} />
-            </Pressable>
-            <Box className="min-h-10 min-w-0 flex-1 items-center justify-center">
-              <Pressable
-                onPress={() => setPickerOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Open calendar"
-              >
-                <Text size="md" bold numberOfLines={1} className="text-typography-900">
-                  {width < 375 ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
-                </Text>
-              </Pressable>
-              {!isToday ? (
-                <Pressable
-                  onPress={() => setDateKey(toDateKey())}
-                  className="mt-0.5 rounded-full bg-primary-500/10 px-2.5 py-0.5 active:opacity-80"
-                  accessibilityRole="button"
-                  accessibilityLabel="Jump to today"
-                >
-                  <Text size="2xs" bold className="text-primary-500">
-                    Today
-                  </Text>
-                </Pressable>
-              ) : null}
-            </Box>
-            <Pressable
-              onPress={() => shiftDate(1)}
-              hitSlop={12}
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
-              accessibilityRole="button"
-              accessibilityLabel="Next day"
-            >
-              <Ionicons name="chevron-forward" size={21} color={colors.text} />
-            </Pressable>
-            <Box className="ml-1 flex-row items-center gap-1">
+          {/* Top app bar */}
+          <Box className="mb-2 flex-row items-center justify-between">
+            <Text size="2xl" bold className="text-typography-900">
+              Diary
+            </Text>
+            <Box className="flex-row items-center gap-1.5">
               <Pressable
                 onPress={onCopyPrevious}
-                hitSlop={12}
-                className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+                hitSlop={8}
+                className="h-9 w-9 items-center justify-center rounded-full bg-background-50 active:bg-background-100"
                 accessibilityRole="button"
                 accessibilityLabel="Copy previous day"
               >
@@ -398,7 +447,8 @@ export default function TodayScreen() {
                 <Pressable
                   onPress={() => load({ force: true })}
                   disabled={importing || refreshing}
-                  className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+                  hitSlop={8}
+                  className="h-9 w-9 items-center justify-center rounded-full bg-background-50 active:bg-background-100"
                   accessibilityRole="button"
                   accessibilityLabel="Refresh from YAZIO"
                 >
@@ -411,6 +461,13 @@ export default function TodayScreen() {
               ) : null}
             </Box>
           </Box>
+
+          {/* Interactive Week Calendar Strip */}
+          <WeekCalendarStrip
+            selectedDateKey={dateKey}
+            onSelectDate={(key) => setDateKey(key)}
+            onOpenDatePicker={() => setPickerOpen(true)}
+          />
         </Box>
 
         <ScrollView
@@ -440,6 +497,14 @@ export default function TodayScreen() {
           )}
         </ScrollView>
       </PageContainer>
+
+      <NutritionBreakdownModal
+        visible={nutritionModal.visible}
+        onClose={() => setNutritionModal((s) => ({ ...s, visible: false }))}
+        nutrients={nutritionModal.nutrients}
+        title={nutritionModal.title}
+        subtitle={nutritionModal.subtitle}
+      />
 
       <DatePickerModal
         visible={pickerOpen}

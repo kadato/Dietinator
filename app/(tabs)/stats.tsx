@@ -224,6 +224,23 @@ export default function StatsScreen() {
   )
   const logStreak = useMemo(() => computeLogStreak(calories), [calories])
 
+  const avgMacros = useMemo(() => {
+    if (macros.length === 0) return null
+    const count = macros.length
+    const protein = Math.round(macros.reduce((s, m) => s + m.protein, 0) / count)
+    const carbs = Math.round(macros.reduce((s, m) => s + m.carbs, 0) / count)
+    const fat = Math.round(macros.reduce((s, m) => s + m.fat, 0) / count)
+    const totalKcal = protein * 4 + carbs * 4 + fat * 9
+    return {
+      protein,
+      carbs,
+      fat,
+      proteinPct: totalKcal > 0 ? Math.round(((protein * 4) / totalKcal) * 100) : 0,
+      carbsPct: totalKcal > 0 ? Math.round(((carbs * 4) / totalKcal) * 100) : 0,
+      fatPct: totalKcal > 0 ? Math.round(((fat * 9) / totalKcal) * 100) : 0,
+    }
+  }, [macros])
+
   // Body metrics — BMI needs a height, goal progress needs a target weight.
   const heightCm = settings.height_cm > 0 ? settings.height_cm : 0
   const targetKg = settings.target_weight_kg > 0 ? settings.target_weight_kg : 0
@@ -639,6 +656,58 @@ export default function StatsScreen() {
                         : "· under goal"
                       : ""}
                   </Text>
+                ) : null}
+
+                {avgMacros ? (
+                  <Box className="mt-3 border-t border-outline-100 pt-3">
+                    <Text size="xs" bold className="mb-2 text-typography-500">
+                      Average Daily Macro Split
+                    </Text>
+                    <Box className="flex-row items-center gap-2">
+                      <Box
+                        className="flex-1 items-center rounded-2xl p-2.5"
+                        style={{ backgroundColor: `${colors.breakfast}15` }}
+                      >
+                        <Text size="xs" bold style={{ color: colors.breakfast }}>
+                          Protein
+                        </Text>
+                        <Text size="sm" bold className="text-typography-900">
+                          {avgMacros.protein}g
+                        </Text>
+                        <Text size="2xs" className="text-typography-500">
+                          {avgMacros.proteinPct}% kcal
+                        </Text>
+                      </Box>
+                      <Box
+                        className="flex-1 items-center rounded-2xl p-2.5"
+                        style={{ backgroundColor: `${colors.lunch}15` }}
+                      >
+                        <Text size="xs" bold style={{ color: colors.lunch }}>
+                          Carbs
+                        </Text>
+                        <Text size="sm" bold className="text-typography-900">
+                          {avgMacros.carbs}g
+                        </Text>
+                        <Text size="2xs" className="text-typography-500">
+                          {avgMacros.carbsPct}% kcal
+                        </Text>
+                      </Box>
+                      <Box
+                        className="flex-1 items-center rounded-2xl p-2.5"
+                        style={{ backgroundColor: `${colors.dinner}15` }}
+                      >
+                        <Text size="xs" bold style={{ color: colors.dinner }}>
+                          Fat
+                        </Text>
+                        <Text size="sm" bold className="text-typography-900">
+                          {avgMacros.fat}g
+                        </Text>
+                        <Text size="2xs" className="text-typography-500">
+                          {avgMacros.fatPct}% kcal
+                        </Text>
+                      </Box>
+                    </Box>
+                  </Box>
                 ) : null}
               </Card>
 

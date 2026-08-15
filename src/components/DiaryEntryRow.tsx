@@ -1,18 +1,20 @@
 import { memo } from "react"
 import { Pressable, Text, View, StyleSheet } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { DiaryEntry } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { usePressedState } from "@/hooks/usePressedState"
 import { formatNumber } from "@/utils/format"
-import { spacing, type ColorPalette } from "@/theme"
+import { getFoodIcon } from "@/utils/food-icon"
+import type { ColorPalette } from "@/theme"
 
 type Props = {
   entry: DiaryEntry
   accentColor: string
   onEdit: (entryId: string) => void
   onDelete: (entryId: string) => void
+  onShowNutrition?: (entry: DiaryEntry) => void
 }
 
 export const DiaryEntryRow = memo(function DiaryEntryRow({
@@ -20,12 +22,14 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
   accentColor,
   onEdit,
   onDelete,
+  onShowNutrition,
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const amountLabel =
     entry.unit === "serving" ? "1 serving" : `${formatNumber(entry.amount)}${entry.unit}`
   const mainPress = usePressedState()
+  const infoPress = usePressedState()
   const editPress = usePressedState()
   const deletePress = usePressedState()
 
@@ -41,32 +45,68 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
         accessibilityHint="Tap to edit, long press to delete"
       >
-        <View style={[styles.iconWrap, { backgroundColor: accentColor + "1f" }]}>
-          <Ionicons name="nutrition-outline" size={17} color={accentColor} />
+        <View style={[styles.iconWrap, { backgroundColor: accentColor + "1a" }]}>
+          <MaterialCommunityIcons
+            name={getFoodIcon(entry.food_name, entry)}
+            size={18}
+            color={accentColor}
+          />
         </View>
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>
             {entry.food_name}
           </Text>
-          <Text style={styles.meta}>
-            {amountLabel} · P {formatNumber(entry.protein)}g · C {formatNumber(entry.carbs)}g · F{" "}
-            {formatNumber(entry.fat)}g
-          </Text>
+          <View style={styles.macroRow}>
+            <Text style={styles.amountLabel}>{amountLabel}</Text>
+            <Text style={styles.macroDot}>·</Text>
+            <View style={[styles.miniChip, { backgroundColor: `${colors.breakfast}15` }]}>
+              <Text style={[styles.miniChipText, { color: colors.breakfast }]}>
+                P {formatNumber(entry.protein)}g
+              </Text>
+            </View>
+            <View style={[styles.miniChip, { backgroundColor: `${colors.lunch}15` }]}>
+              <Text style={[styles.miniChipText, { color: colors.lunch }]}>
+                C {formatNumber(entry.carbs)}g
+              </Text>
+            </View>
+            <View style={[styles.miniChip, { backgroundColor: `${colors.dinner}15` }]}>
+              <Text style={[styles.miniChipText, { color: colors.dinner }]}>
+                F {formatNumber(entry.fat)}g
+              </Text>
+            </View>
+          </View>
         </View>
         <View style={styles.kcalBlock}>
           <Text style={styles.kcalValue}>{Math.round(entry.kcal)}</Text>
-          <Text style={styles.kcalUnit}>Cal</Text>
+          <Text style={styles.kcalUnit}>kcal</Text>
         </View>
       </Pressable>
       <View style={styles.actions}>
+        {onShowNutrition ? (
+          <Pressable
+            onPress={() => onShowNutrition(entry)}
+            hitSlop={6}
+            onPressIn={infoPress.onPressIn}
+            onPressOut={infoPress.onPressOut}
+            style={[
+              styles.actionBtn,
+              { backgroundColor: `${colors.primary}14` },
+              ...(infoPress.pressed ? [styles.actionPressed] : []),
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`View nutrition facts for ${entry.food_name}`}
+          >
+            <Ionicons name="pie-chart-outline" size={13} color={colors.primary} />
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => onEdit(entry.id)}
-          hitSlop={4}
+          hitSlop={6}
           onPressIn={editPress.onPressIn}
           onPressOut={editPress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${accentColor}1a` },
+            { backgroundColor: `${accentColor}14` },
             ...(editPress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
@@ -76,18 +116,18 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
-          hitSlop={4}
+          hitSlop={6}
           onPressIn={deletePress.onPressIn}
           onPressOut={deletePress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${colors.danger}1a` },
+            { backgroundColor: `${colors.danger}14` },
             ...(deletePress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Delete ${entry.food_name}`}
         >
-          <Ionicons name="trash" size={14} color={colors.danger} />
+          <Ionicons name="trash-outline" size={14} color={colors.danger} />
         </Pressable>
       </View>
     </View>
@@ -99,65 +139,91 @@ const createStyles = (colors: ColorPalette) =>
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.xs,
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.xs,
-      borderRadius: 10,
+      gap: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+      borderRadius: 12,
     },
     main: {
       flex: 1,
       minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.sm,
+      gap: 10,
       borderRadius: 10,
+      paddingVertical: 2,
     },
     rowPressed: { backgroundColor: colors.surfaceAlt },
     iconWrap: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
       alignItems: "center",
       justifyContent: "center",
     },
     info: { flex: 1, minWidth: 0 },
     name: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "600",
       color: colors.text,
-      lineHeight: 20,
+      lineHeight: 18,
     },
-    meta: {
-      fontSize: 12,
-      color: colors.textMuted,
+    macroRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: 4,
       marginTop: 2,
     },
+    amountLabel: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    macroDot: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    miniChip: {
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 6,
+    },
+    miniChipText: {
+      fontSize: 11,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+    },
+    macroPill: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontVariant: ["tabular-nums"],
+    },
     kcalBlock: {
-      flexDirection: "row",
-      alignItems: "baseline",
-      gap: 3,
+      alignItems: "flex-end",
+      justifyContent: "center",
+      paddingLeft: 4,
     },
     kcalValue: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: "700",
       color: colors.text,
       fontVariant: ["tabular-nums"],
     },
     kcalUnit: {
-      fontSize: 11,
-      fontWeight: "600",
+      fontSize: 10,
+      fontWeight: "500",
       color: colors.textMuted,
     },
     actions: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.xs,
-      marginLeft: spacing.xs,
+      gap: 4,
+      marginLeft: 4,
     },
     actionBtn: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
     },

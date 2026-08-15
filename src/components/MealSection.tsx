@@ -1,5 +1,5 @@
 import { memo, useCallback, useState } from "react"
-import { Pressable } from "react-native"
+import { Pressable, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
@@ -18,13 +18,7 @@ type Props = {
   onAdd: (mealType: MealType) => void
   onEdit: (entryId: string) => void
   onDelete: (id: string) => void
-}
-
-function formatFoodPreview(entries: DiaryEntry[]): string {
-  if (entries.length === 0) return "Nothing logged yet"
-  const names = entries.map((e) => e.food_name)
-  const joined = names.join(", ")
-  return joined.length > 72 ? `${joined.slice(0, 69)}…` : joined
+  onShowNutrition?: (entry: DiaryEntry) => void
 }
 
 export const MealSection = memo(function MealSection({
@@ -35,20 +29,25 @@ export const MealSection = memo(function MealSection({
   onAdd,
   onEdit,
   onDelete,
+  onShowNutrition,
 }: Props) {
   const { colors } = useTheme()
-  const [expanded, setExpanded] = useState(false)
+  // Default to expanded so logged food and macro badges are always visible
+  const [expanded, setExpanded] = useState(true)
   const handleEdit = useCallback((entryId: string) => onEdit(entryId), [onEdit])
   const handleDelete = useCallback((entryId: string) => onDelete(entryId), [onDelete])
   const accent = colors[mealType]
   const totalKcal = entries.reduce((s, e) => s + e.kcal, 0)
   const goal = mealGoal && mealGoal > 0 ? mealGoal : undefined
-  const calorieLabel = goal
-    ? `${Math.round(totalKcal)} / ${Math.round(goal)} Cal`
-    : `${Math.round(totalKcal)} Cal`
+  const remainingKcal = goal ? Math.max(goal - totalKcal, 0) : null
+  const overKcal = goal && totalKcal > goal ? totalKcal - goal : null
+
+  const totalProtein = entries.reduce((s, e) => s + (e.protein || 0), 0)
+  const totalCarbs = entries.reduce((s, e) => s + (e.carbs || 0), 0)
+  const totalFat = entries.reduce((s, e) => s + (e.fat || 0), 0)
 
   return (
-    <Card variant="elevated" className="mb-3 overflow-hidden p-4">
+    <Card variant="elevated" className="mb-3 overflow-hidden rounded-3xl p-4">
       <Box className="flex-row items-center gap-3">
         <Pressable
           onPress={() => {
@@ -57,45 +56,111 @@ export const MealSection = memo(function MealSection({
           }}
           className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
           accessibilityRole="button"
-          accessibilityLabel={`${MEAL_LABELS[mealType]}, ${calorieLabel}`}
+          accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} calories`}
         >
           <Box
-            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+            className="h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
             style={{ backgroundColor: `${accent}1f` }}
           >
-            <Ionicons name={MEAL_ICONS[mealType]} size={21} color={accent} />
+            <Ionicons name={MEAL_ICONS[mealType]} size={22} color={accent} />
           </Box>
 
           <Box className="min-w-0 flex-1">
-            <Text size="md" bold className="text-typography-900">
-              {MEAL_LABELS[mealType]}
-            </Text>
-            <Text size="xs" bold style={{ color: accent }}>
-              {calorieLabel}
-            </Text>
-            <Text
-              size="xs"
-              className="mt-0.5 leading-[16px] text-typography-500"
-              numberOfLines={expanded ? undefined : 1}
-            >
-              {formatFoodPreview(entries)}
-            </Text>
+            <Box className="flex-row items-center justify-between gap-2">
+              <Box className="flex-row items-center gap-1.5">
+                <Text size="md" bold className="text-typography-900">
+                  {MEAL_LABELS[mealType]}
+                </Text>
+                {entries.length > 0 ? (
+                  <Ionicons
+                    name={expanded ? "chevron-up" : "chevron-down"}
+                    size={14}
+                    color={colors.textMuted}
+                  />
+                ) : null}
+              </Box>
+              <Text size="sm" bold className="font-tabular text-typography-900">
+                {Math.round(totalKcal)}{" "}
+                <Text size="2xs" className="font-normal text-typography-500">
+                  kcal
+                </Text>
+              </Text>
+            </Box>
+
+            {goal ? (
+              <Box className="mt-0.5 flex-row items-center gap-1">
+                <Text size="xs" className="font-tabular text-typography-500">
+                  of {Math.round(goal)} kcal goal
+                </Text>
+                <Text size="xs" className="text-typography-400">
+                  ·
+                </Text>
+                <Text
+                  size="xs"
+                  bold
+                  style={{ color: overKcal ? colors.danger : colors.primary }}
+                  className="font-tabular"
+                >
+                  {overKcal
+                    ? `+${Math.round(overKcal)} over`
+                    : `${Math.round(remainingKcal ?? 0)} left`}
+                </Text>
+              </Box>
+            ) : null}
+
+            {entries.length > 0 ? (
+              <Box className="mt-1.5 flex-row items-center gap-1.5">
+                <View
+                  className="rounded-lg px-2 py-0.5"
+                  style={{ backgroundColor: `${colors.breakfast}18` }}
+                >
+                  <Text
+                    size="2xs"
+                    bold
+                    style={{ color: colors.breakfast }}
+                    className="font-tabular"
+                  >
+                    P {Math.round(totalProtein)}g
+                  </Text>
+                </View>
+                <View
+                  className="rounded-lg px-2 py-0.5"
+                  style={{ backgroundColor: `${colors.lunch}18` }}
+                >
+                  <Text size="2xs" bold style={{ color: colors.lunch }} className="font-tabular">
+                    C {Math.round(totalCarbs)}g
+                  </Text>
+                </View>
+                <View
+                  className="rounded-lg px-2 py-0.5"
+                  style={{ backgroundColor: `${colors.dinner}18` }}
+                >
+                  <Text size="2xs" bold style={{ color: colors.dinner }} className="font-tabular">
+                    F {Math.round(totalFat)}g
+                  </Text>
+                </View>
+              </Box>
+            ) : (
+              <Text size="xs" className="mt-0.5 text-typography-400">
+                Nothing logged yet
+              </Text>
+            )}
           </Box>
         </Pressable>
 
         <Pressable
-          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
+          className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
           onPress={() => onAdd(mealType)}
           hitSlop={4}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
-          <Ionicons name="add" size={24} color={colors.onPrimary} />
+          <Ionicons name="add" size={22} color={colors.onPrimary} />
         </Pressable>
       </Box>
 
       {expanded && entries.length > 0 ? (
-        <Box className="mt-3 gap-0.5 border-t border-outline-100 pt-3">
+        <Box className="mt-3 gap-1 border-t border-outline-100 pt-2.5">
           {entries.map((entry) => (
             <DiaryEntryRow
               key={`${dateKey}-${entry.id}`}
@@ -103,6 +168,7 @@ export const MealSection = memo(function MealSection({
               accentColor={accent}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onShowNutrition={onShowNutrition}
             />
           ))}
         </Box>
