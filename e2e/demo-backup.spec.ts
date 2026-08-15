@@ -1,4 +1,4 @@
-import { expect, test, bootAuthenticated } from "./helpers"
+import { expect, test, bootAuthenticated, openSettingsSection } from "./helpers"
 
 /**
  * Demo mode and full backup/restore round-trip. Both are offline paths:
@@ -7,7 +7,11 @@ import { expect, test, bootAuthenticated } from "./helpers"
 
 /** Simulate a long-press on an element (RN long-press affordance). */
 async function longPress(page: import("@playwright/test").Page, selector: string) {
-  const box = await page.locator(selector).boundingBox()
+  // Meal rows sit below the fold on the phone viewport — scrolling is
+  // required for the synthetic mouse events to reach the element.
+  const target = page.locator(selector)
+  await target.scrollIntoViewIfNeeded()
+  const box = await target.boundingBox()
   if (!box) throw new Error(`No bounding box for ${selector}`)
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
@@ -25,10 +29,13 @@ test.describe("demo mode", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
-    // Seeded demo entries are rendered inside the meal section buttons.
+    // Meal sections start collapsed — expand Breakfast and Snacks to reveal
+    // the seeded entries.
+    await page.getByRole("button", { name: /^Breakfast, / }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
+    await page.getByRole("button", { name: /^Snacks, / }).click()
     await expect(page.getByText("Banana", { exact: false })).toBeVisible()
   })
 
@@ -37,6 +44,8 @@ test.describe("demo mode", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
+    // Sections start collapsed — expand Breakfast to reveal the oatmeal entry.
+    await page.getByRole("button", { name: /^Breakfast, / }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
@@ -51,15 +60,18 @@ test.describe("backup and restore (offline)", () => {
     await page.getByRole("button", { name: "Add food to Snacks" }).click()
     await page.getByRole("button", { name: "More" }).click()
     await page.getByRole("button", { name: "Quick Add" }).click()
-    await expect(page.getByLabel("Calories")).toBeVisible()
-    await page.getByLabel("Calories").fill("777")
+    await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
+    await page.getByRole("textbox", { name: "Calories" }).fill("777")
     await page.getByRole("button", { name: "Add to diary" }).click()
-    await expect(page.getByText("Quick add", { exact: true })).toBeVisible({ timeout: 15_000 })
+    // The section stays collapsed — the header total proves the entry landed.
+    await expect(page.getByRole("button", { name: "Snacks, 777 calories" })).toBeVisible({
+      timeout: 15_000,
+    })
 
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await expect(page.getByRole("button", { name: "Goals settings" })).toBeVisible()
-    await page.getByRole("button", { name: "Data settings" }).click()
+    await expect(page.getByRole("button", { name: "Goals & Nutrition settings" })).toBeVisible()
+    await page.getByRole("button", { name: "Data & Backup settings" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Back up all data" }).click(),
@@ -77,8 +89,9 @@ test.describe("backup and restore (offline)", () => {
     await expect(row).toHaveCount(0, { timeout: 15_000 })
 
     // Restore from the downloaded file: confirm dialog, then file picker.
-    await page.getByRole("tab", { name: /Settings/ }).click()
-    await page.getByRole("button", { name: "Data settings" }).click()
+    // (Tab screens stay mounted, so the drilldown may still be open — the
+    // helper returns to the hub first.)
+    await openSettingsSection(page, "Data & Backup settings")
     page.once("dialog", (dialog) => void dialog.accept())
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser"),
@@ -89,9 +102,10 @@ test.describe("backup and restore (offline)", () => {
       timeout: 15_000,
     })
 
-    // The entry is back on the dashboard.
+    // The entry is back on the dashboard (section state may reset between
+    // tab switches, so assert the collapsed header total instead of a row).
     await page.getByRole("tab", { name: /Today/ }).click()
-    await expect(page.getByRole("button", { name: /Quick add, \d+ calories/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Snacks, 777 calories" })).toBeVisible({
       timeout: 15_000,
     })
   })

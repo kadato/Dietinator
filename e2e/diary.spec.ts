@@ -2,7 +2,11 @@ import { expect, test, bootAuthenticated } from "./helpers"
 
 /** Simulate a long-press on an element (RN long-press affordance). */
 async function longPress(page: import("@playwright/test").Page, selector: string) {
-  const box = await page.locator(selector).boundingBox()
+  // Meal rows sit below the fold on the phone viewport — scrolling is
+  // required for the synthetic mouse events to reach the element.
+  const target = page.locator(selector)
+  await target.scrollIntoViewIfNeeded()
+  const box = await target.boundingBox()
   if (!box) throw new Error(`No bounding box for ${selector}`)
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
@@ -16,7 +20,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: `Add food to ${meal}` }).click()
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
     await page.getByRole("button", { name: "More" }).click()
-    await expect(page.getByText("What would you like to create?")).toBeVisible()
+    await expect(page.getByText("What would you like to log or create?")).toBeVisible()
   }
 
   test("quick add a manual entry and see it on the dashboard", async ({ page }) => {
@@ -25,12 +29,13 @@ test.describe("diary flows (offline, local-first)", () => {
     await openCreateOptions(page, "Snacks")
     await page.getByRole("button", { name: "Quick Add" }).click()
     // The create-options card behind the modal also says "Quick Add" — assert the form instead.
-    await expect(page.getByLabel("Calories")).toBeVisible()
+    await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
 
-    await page.getByLabel("Calories").fill("320")
+    await page.getByRole("textbox", { name: "Calories" }).fill("320")
     await page.getByRole("button", { name: "Add to diary" }).click()
 
-    // Back on the dashboard, the snack card preview lists the entry.
+    // Back on the dashboard, expand the snack card to reveal the entry.
+    await page.getByRole("button", { name: /^Snacks, / }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
@@ -44,10 +49,12 @@ test.describe("diary flows (offline, local-first)", () => {
     await expect(page.getByText("Manual entry", { exact: true })).toBeVisible()
 
     await page.getByLabel("Food name").fill("Homemade soup")
-    await page.getByLabel("Calories").fill("250")
+    await page.getByRole("textbox", { name: "Calories" }).fill("250")
     await page.getByLabel("Protein (g)").fill("12")
     await page.getByRole("button", { name: "Add to diary" }).click()
 
+    // Expand the lunch card to reveal the new entry.
+    await page.getByRole("button", { name: /^Lunch, / }).click()
     await expect(page.getByText("Homemade soup", { exact: true })).toBeVisible()
   })
 
@@ -57,15 +64,15 @@ test.describe("diary flows (offline, local-first)", () => {
     // Seed an entry first.
     await openCreateOptions(page, "Dinner")
     await page.getByRole("button", { name: "Quick Add" }).click()
-    await expect(page.getByLabel("Calories")).toBeVisible()
-    await page.getByLabel("Calories").fill("180")
+    await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
+    await page.getByRole("textbox", { name: "Calories" }).fill("180")
     await page.getByRole("button", { name: "Add to diary" }).click()
+
+    // Expand the dinner section to reveal the entry, then verify the row.
+    await page.getByRole("button", { name: /^Dinner, / }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-
-    // Expand the dinner section to reveal rows.
-    await page.getByRole("button", { name: /^Dinner, / }).click()
     const row = page.getByRole("button", { name: /Quick add, \d+ calories/ })
     await expect(row).toHaveCount(1)
 
@@ -108,10 +115,11 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add food to Snacks" }).click()
     await page.getByRole("button", { name: "More" }).click()
     await page.getByRole("button", { name: "Quick Add" }).click()
-    await page.getByLabel("Calories").fill("250")
+    await page.getByRole("textbox", { name: "Calories" }).fill("250")
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // The entry appears on tomorrow's dashboard (and the ring reflects 250 kcal).
+    await page.getByRole("button", { name: /^Snacks, / }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })

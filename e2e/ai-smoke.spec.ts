@@ -9,7 +9,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await expect(page.getByRole("button", { name: "Open AI assistant" })).toBeHidden()
 
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await page.getByRole("button", { name: "AI settings" }).click()
+    await page.getByRole("button", { name: "AI Assistant settings" }).click()
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
     await page.getByRole("tab", { name: /Today/ }).click()
     await expect(page.getByRole("button", { name: "Open AI assistant" })).toBeVisible()
@@ -25,7 +25,8 @@ test.describe("AI assistant + FABs (offline)", () => {
     // Chat input is present but gated on configuration.
     await expect(page.getByLabel("Message the AI assistant")).toBeVisible()
 
-    await page.getByRole("button", { name: "Close AI chat" }).click()
+    // The header X and the composer chevron both say "Close AI chat" — use the header X.
+    await page.getByRole("button", { name: "Close AI chat" }).first().click()
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
   })
 
@@ -35,22 +36,24 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("tab", { name: /Settings/ }).click()
 
     // AI settings live on the AI tab.
-    await page.getByRole("button", { name: "AI settings" }).click()
-    await expect(page.getByText("AI assistant", { exact: true }).first()).toBeVisible()
+    await page.getByRole("button", { name: "AI Assistant settings" }).click()
+    await expect(page.getByText("AI Assistant", { exact: true }).first()).toBeVisible()
 
     // Toggle the assistant on.
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
     await expect(page.getByPlaceholder("https://api.openai.com/v1")).toBeVisible()
 
-    // Agent API section lists the MCP tools on the About tab (expand the row first).
-    await page.getByRole("button", { name: "About settings" }).click()
+    // Agent API section lists the MCP tools on the About section (expand the row first).
+    await page.getByRole("button", { name: "Back to all settings" }).click()
+    await page.getByRole("button", { name: "About & Account settings" }).click()
     await expect(page.getByText("Agent API (MCP)", { exact: true }).first()).toBeVisible()
     await page.getByRole("button", { name: "Show Agent API details" }).click()
     await expect(page.getByText("get_diary", { exact: true })).toBeVisible()
     await expect(page.getByText("log_food", { exact: true })).toBeVisible()
 
     // Turn it back off to leave a clean state for other specs.
-    await page.getByRole("button", { name: "AI settings" }).click()
+    await page.getByRole("button", { name: "Back to all settings" }).click()
+    await page.getByRole("button", { name: "AI Assistant settings" }).click()
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 

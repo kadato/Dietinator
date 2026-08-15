@@ -25,5 +25,19 @@ export async function bootAuthenticated(page: Page): Promise<void> {
   })
 }
 
+/**
+ * Settings is a hub + drilldown, and tab screens stay mounted, so a drilldown
+ * survives tab switches. Return to the hub (when a section is already open)
+ * before opening another one.
+ */
+export async function openSettingsSection(page: Page, label: string): Promise<void> {
+  await page.getByRole("tab", { name: /Settings/ }).click()
+  const back = page.getByRole("button", { name: "Back to all settings" })
+  if ((await back.count()) > 0) {
+    await back.click()
+  }
+  await page.getByRole("button", { name: label }).click()
+}
+
 export const test = base
 export { expect }

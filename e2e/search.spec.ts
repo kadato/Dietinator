@@ -36,21 +36,25 @@ test.describe("food search (offline)", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
   })
 
-  test("settings screen tabs group goals, sync, and about sections", async ({ page }) => {
+  test("settings screen sections group goals, sync, and about", async ({ page }) => {
     await bootAuthenticated(page)
 
     await page.getByRole("tab", { name: "Settings" }).click()
 
-    // Goals tab is the default.
-    await expect(page.getByText("Daily goals", { exact: true })).toBeVisible()
-    await expect(page.getByText("Calories (kcal)")).toBeVisible()
+    // The hub lists sections; the Goals row opens the goal form.
+    await page.getByRole("button", { name: "Goals & Nutrition settings" }).click()
+    await expect(page.getByText("Goals & Nutrition", { exact: true })).toBeVisible()
+    await expect(page.getByText("Calories", { exact: true })).toBeVisible()
 
-    // Sync tab.
-    await page.getByRole("button", { name: "Sync settings" }).click()
-    await expect(page.getByText("YAZIO sync", { exact: true })).toBeVisible()
+    // Sync section.
+    await page.getByRole("button", { name: "Back to all settings" }).click()
+    await page.getByRole("button", { name: "YAZIO Sync settings" }).click()
+    // The drilldown header and the section label both read "YAZIO Sync".
+    await expect(page.getByText("YAZIO Sync", { exact: true }).first()).toBeVisible()
 
-    // About tab hosts the sign-out button.
-    await page.getByRole("button", { name: "About settings" }).click()
+    // About section hosts the sign-out button.
+    await page.getByRole("button", { name: "Back to all settings" }).click()
+    await page.getByRole("button", { name: "About & Account settings" }).click()
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible()
   })
 })

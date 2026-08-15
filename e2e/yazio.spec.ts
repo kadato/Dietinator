@@ -99,9 +99,9 @@ test.describe("YAZIO (real account)", () => {
   test("syncs an entry to YAZIO and deletes it (both sides)", async ({ page }) => {
     await login(page)
 
-    // Enable best-effort sync (lives on the Sync settings tab).
+    // Enable best-effort sync (lives in the YAZIO Sync settings section).
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await page.getByRole("button", { name: "Sync settings" }).click()
+    await page.getByRole("button", { name: "YAZIO Sync settings" }).click()
     await page.getByRole("switch", { name: "Sync diary to YAZIO" }).click()
     await expect(page.getByRole("switch", { name: "Sync diary to YAZIO" })).toBeChecked()
 

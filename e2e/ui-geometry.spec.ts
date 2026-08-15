@@ -1,4 +1,4 @@
-import { expect, test, bootAuthenticated } from "./helpers"
+import { expect, test, bootAuthenticated, openSettingsSection } from "./helpers"
 
 /**
  * Geometry checks for the modal/statistics UI rework. Verifies with DOM
@@ -16,9 +16,11 @@ test.describe("ui rework geometry checks", () => {
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
     await page.getByRole("button", { name: "More" }).click()
     await page.getByRole("button", { name: "Quick Add" }).click()
-    await expect(page.getByLabel("Calories")).toBeVisible()
-    await page.getByLabel("Calories").fill(kcal)
+    await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
+    await page.getByRole("textbox", { name: "Calories" }).fill(kcal)
     await page.getByRole("button", { name: "Add to diary" }).click()
+    // Sections start collapsed — expand Snacks to reveal the entry.
+    await page.getByRole("button", { name: /^Snacks, / }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({ timeout: 15_000 })
   }
 
@@ -99,11 +101,12 @@ test.describe("ui rework geometry checks", () => {
   })
 
   test("AI chat composer input is symmetric (centered placeholder)", async ({ page }) => {
+    // Desktop layout: the backdrop Cancel FAB only exists on wide screens.
+    await page.setViewportSize({ width: 1280, height: 800 })
     await bootAuthenticated(page)
 
     // Enable the assistant so the chat opens with a live composer.
-    await page.getByRole("tab", { name: "Settings" }).click()
-    await page.getByRole("button", { name: "AI settings" }).click()
+    await openSettingsSection(page, "AI Assistant settings")
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
     await page.getByRole("tab", { name: "Today" }).click()
 
@@ -118,8 +121,9 @@ test.describe("ui rework geometry checks", () => {
     expect(box!.height).toBeGreaterThanOrEqual(42)
     expect(box!.height).toBeLessThanOrEqual(46)
 
-    // Close via the header X, then via the backdrop-cancel FAB path (reopen).
-    await page.getByRole("button", { name: "Close AI chat" }).click()
+    // Close via the header X (the composer chevron shares the same label),
+    // then via the backdrop-cancel FAB path (reopen).
+    await page.getByRole("button", { name: "Close AI chat" }).first().click()
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
 
     await page.getByRole("button", { name: "Open AI assistant" }).click()
@@ -128,8 +132,7 @@ test.describe("ui rework geometry checks", () => {
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
 
     // Leave AI disabled for other specs.
-    await page.getByRole("tab", { name: "Settings" }).click()
-    await page.getByRole("button", { name: "AI settings", exact: true }).click()
+    await openSettingsSection(page, "AI Assistant settings")
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 })
