@@ -41,17 +41,17 @@ your account is optional and best-effort. No account needed to try it.
 <strong>Diary</strong> · <strong>AI assistant</strong> · <strong>Food search</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/dashboard-dark.png">
-  <img alt="Daily dashboard with calorie ring, meals and weight logging" src="./docs/screenshots/dashboard-light.png" width="190">
+  <img alt="Daily dashboard with calorie ring, macro progress, meal breakdown and water tracking" src="./docs/screenshots/dashboard-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/ai-chat-dark.png">
-  <img alt="AI assistant with one-tap presets" src="./docs/screenshots/ai-chat-light.png" width="190">
+  <img alt="AI assistant with on-device tools and one-tap presets" src="./docs/screenshots/ai-chat-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
-  <img alt="Food search with recent picks kept visible" src="./docs/screenshots/search-light.png" width="190">
+  <img alt="Food search with dynamic icons and recent picks kept visible" src="./docs/screenshots/search-light.png" width="190">
 </picture>
 </p>
 
@@ -59,7 +59,7 @@ your account is optional and best-effort. No account needed to try it.
 <strong>Log a food</strong> · <strong>Quick Add</strong> · <strong>Meal builder</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/add-food-dark.png">
-  <img alt="Serving sizes, amount stepper and nutrition preview" src="./docs/screenshots/add-food-light.png" width="190">
+  <img alt="Serving sizes, amount steppers and live daily budget impact" src="./docs/screenshots/add-food-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
@@ -69,7 +69,7 @@ your account is optional and best-effort. No account needed to try it.
 &nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/meal-builder-dark.png">
-  <img alt="Compose reusable meals with amount steppers" src="./docs/screenshots/meal-builder-light.png" width="190">
+  <img alt="Compose reusable meals with amount steppers and nutrition facts" src="./docs/screenshots/meal-builder-light.png" width="190">
 </picture>
 </p>
 
@@ -77,12 +77,12 @@ your account is optional and best-effort. No account needed to try it.
 <strong>Diary details</strong> · <strong>Settings</strong> · <strong>Login</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/log-meal-dark.png">
-  <img alt="Already logged entries with edit and delete" src="./docs/screenshots/log-meal-light.png" width="190">
+  <img alt="Meal slot budget overview and logged entries with quick edit" src="./docs/screenshots/log-meal-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/settings-dark.png">
-  <img alt="Daily goals with quick-adjust steppers" src="./docs/screenshots/settings-light.png" width="190">
+  <img alt="Daily goals and nutrition settings with quick-adjust steppers" src="./docs/screenshots/settings-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
@@ -95,29 +95,23 @@ your account is optional and best-effort. No account needed to try it.
 
 ## Features
 
-- **Local-first diary.** Instant logging to SQLite, fully offline, cached foods included.
-- **Daily dashboard.** Calorie ring, macro goals, color-coded meal sections, weight
-  logging right from the weight row, floating action buttons on phones.
-- **Food search.** Debounced YAZIO search, cached in SQLite, with favorites and
-  recents that stay visible while you type and a one-tap clear button.
-- **Serving sizes.** Named portions such as cup, whole or each are one tap away,
-  and the amount you logged last time is prefilled.
-- **Numeric steppers.** Every number field has minus and plus buttons, and holding
-  a button repeats the step for fast changes.
-- **Barcode scanning.** EAN/UPC camera scan on device, manual entry on web.
-- **Meals and Quick Add.** Save food combinations, log calories without searching.
-- **Logging overview.** The logging screen shows what is already logged for the
-  day, with edit and delete right there.
-- **AI assistant.** In-app chat with your diary using any OpenAI-compatible
-  provider, OpenAI, OpenRouter, Ollama and more. Streaming answers, on-device
-  tools for diary, goals and food search, destructive actions need your approval,
-  history survives restarts.
-- **Agent API, MCP.** The web build exposes the diary snapshot and goals to
-  external AI agents such as Claude Desktop or Cursor over the Model Context
-  Protocol at `/mcp`.
-- **Backup and export.** Full JSON backup and restore, JSON and CSV export.
-- **Demo mode.** Explore everything without an account.
-- **Light and dark themes.** Adaptive, responsive layouts from phone to desktop.
+- **Local-first diary.** Instant logging to SQLite with WAL mode, fully offline, cached foods included.
+- **Daily dashboard.** Dynamic calorie ring, macro budget bars, color-coded meal sections, water logging, weight tracking, and a one-tap "Copy previous day" shortcut.
+- **Live daily budget impact.** Real-time calculation when logging food showing exactly how adding an item impacts your remaining calories, macros, and daily targets before saving.
+- **Micronutrient tracking.** Detailed vitamins and minerals breakdown modal (fiber, sugar, saturated fat, sodium, potassium, calcium, iron, and more) available from the dashboard and food logs.
+- **Food search and dynamic icons.** Debounced YAZIO search with multilingual dynamic food category icon resolution, favorites and recents kept visible, and SQLite caching.
+- **Serving sizes and portions.** Named portions such as cup, whole, piece, or custom gram amounts with remembered quantities from your previous logs.
+- **Numeric steppers and repeat actions.** Minus and plus buttons on all numeric fields with press-and-hold repeat for fast adjustments.
+- **Meal builder and Quick Add.** Save reusable food combinations with quantity steppers and aggregate nutrition facts, or quickly log calories and macros directly.
+- **Real-time meal slot budgeting.** The logging screen displays remaining meal slot budgets, daily totals, instant-add pill actions, and inline entry editing.
+- **Barcode scanning.** Fast camera-based EAN/UPC barcode scanner on mobile devices with cache-first lookup.
+- **Water and body weight tracking.** Log daily hydration with quick-add presets (+250ml) and record weight check-ins with BMI calculation and trend charts.
+- **AI assistant.** In-app nutrition assistant with support for OpenAI, OpenRouter, Ollama, and any OpenAI-compatible provider. Features streaming answers, on-device tools over SQLite, destructive action confirmations, and persistent chat history.
+- **Agent API (MCP).** Model Context Protocol endpoint at `/mcp` exposing real-time diary snapshots and tools to external coding and desktop agents such as Claude Desktop or Cursor.
+- **Backup, export and restore.** Export diary data to CSV or JSON, and perform full on-device database backup and restore.
+- **In-app updates on Android.** Automatic GitHub release checks on startup with one-tap background APK download and direct package installation.
+- **Demo mode.** Try all features and explore a populated session with a single tap, no account required.
+- **Light and dark themes.** Full theme system with system preference detection and responsive mobile and desktop layouts.
 
 ## Tech stack
 
@@ -129,6 +123,7 @@ your account is optional and best-effort. No account needed to try it.
 | Sync      | unofficial `yazio` npm client, `withRetry`, offline-first                      |
 | AI chat   | OpenAI-compatible streaming client under `src/services/ai/`, tools over SQLite |
 | Agent API | MCP server in `scripts/mcp-server.cjs`, served by Metro and `serve:web`        |
+| Updates   | expo-intent-launcher, GitHub releases pipeline                                 |
 | Auth/data | expo-secure-store, React Context                                               |
 | Tests     | Jest unit tests · Playwright e2e on the web build                              |
 | Quality   | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks           |
@@ -175,15 +170,17 @@ The web host, Metro dev server or `npm run serve:web`, mounts a stateless
 Model Context Protocol server at `/mcp` plus a same-origin snapshot bridge at
 `/api/agent/*`:
 
-1. The web app pushes a snapshot of the last 14 diary days, goals and meals on
-   boot and after every diary change. The snapshot is in-memory only, nothing
+1. The web app pushes a snapshot of the last 14 diary days, goals, water, weight, meals,
+   and favorites on boot and after every data change. The snapshot is in-memory only, nothing
    touches disk.
 2. Any MCP client, such as Claude Desktop, Cursor or MCP Inspector, connects to
    `http://localhost:8082/mcp` and gets these tools:
-   `get_diary`, `get_diary_stats`, `get_goals`, `get_settings`, `get_meals`,
-   `log_food`, `update_food_entry`, `delete_food_entry`, `set_goals`,
-   `set_units`, `log_meal`. Write tools mirror their changes into the
-   snapshot, so multi-step agent flows like log, update and delete work.
+   `get_diary`, `get_diary_stats`, `get_water`, `get_weight`, `get_meals`,
+   `get_favorite_foods`, `get_goals`, `get_settings`, `get_health_summary`,
+   `log_food`, `log_water`, `log_weight`, `log_meal`, `save_meal`,
+   `update_food_entry`, `delete_food_entry`, `delete_water`, `delete_weight`,
+   `delete_meal`, `toggle_favorite`, `set_goals`, `set_units`, `set_profile`.
+   Write tools mirror their changes into the snapshot, so multi-step agent flows work seamlessly.
 3. Agent changes are queued as a revisioned change log. The app pulls and
    applies them into SQLite on the next dashboard focus.
 

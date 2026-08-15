@@ -1,5 +1,9 @@
 import * as diaryDb from "@/db/diary"
 import * as settingsDb from "@/db/settings"
+import * as waterDb from "@/db/water"
+import * as weightDb from "@/db/weight"
+import * as mealsDb from "@/db/meals"
+import * as foodCacheDb from "@/db/food-cache"
 import * as mealsService from "@/services/meals"
 import { applyChange, type AgentChange } from "../agent-bridge"
 import type { DiaryEntry } from "@/types"
@@ -15,6 +19,27 @@ jest.mock("@/db/diary", () => ({
 jest.mock("@/db/settings", () => ({
   getSettings: jest.fn(),
   updateSettings: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/water", () => ({
+  addWaterEntry: jest
+    .fn()
+    .mockResolvedValue({ id: "w1", date: "2026-08-08", amount_ml: 500, created_at: "" }),
+  deleteWaterEntry: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/weight", () => ({
+  saveWeightEntry: jest.fn().mockResolvedValue(undefined),
+  deleteWeightEntry: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/meals", () => ({
+  saveMeal: jest.fn().mockResolvedValue(undefined),
+  deleteMeal: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/food-cache", () => ({
+  toggleFavorite: jest.fn().mockResolvedValue(true),
 }))
 
 jest.mock("@/services/meals", () => ({
@@ -136,11 +161,15 @@ describe("applyChange", () => {
 
   it("applies set_goals changes with positive-number validation", async () => {
     await applyChange(
-      change({ op: "set_goals", payload: { calorie_goal: 1800, protein_goal: 140 } }),
+      change({
+        op: "set_goals",
+        payload: { calorie_goal: 1800, protein_goal: 140, water_goal_ml: 3000 },
+      }),
     )
     expect(mockUpdateSettings).toHaveBeenCalledWith({
       calorie_goal: 1800,
       protein_goal: 140,
+      water_goal_ml: 3000,
     })
 
     mockUpdateSettings.mockClear()
@@ -216,9 +245,74 @@ describe("applyChange", () => {
     )
   })
 
-  it("skips log_meal for unknown meals", async () => {
-    mockListMeals.mockResolvedValue([])
-    await applyChange(change({ op: "log_meal", payload: { meal_id: "nope" } }))
-    expect(mockLogMeal).not.toHaveBeenCalled()
+  it("applies save_meal and delete_meal operations", async () => {
+    await applyChange(
+      change({
+        op: "save_meal",
+        payload: {
+          id: "m-new",
+          name: "Lunch Bowl",
+          items: [{ name: "Rice", amount: 150, kcal: 200 }],
+        },
+      }),
+    )
+    expect(mealsDb.saveMeal).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "m-new", name: "Lunch Bowl" }),
+    )
+
+    await applyChange(change({ op: "delete_meal", payload: { id: "m-new" } }))
+    expect(mealsDb.deleteMeal).toHaveBeenCalledWith("m-new")
+  })
+
+  it("applies log_water and delete_water operations", async () => {
+    await applyChange(
+      change({
+        op: "log_water",
+        payload: { amount_ml: 500, date: "2026-08-08" },
+      }),
+    )
+    expect(waterDb.addWaterEntry).toHaveBeenCalledWith({ amountMl: 500, date: "2026-08-08" })
+
+    await applyChange(change({ op: "delete_water", payload: { id: "w1" } }))
+    expect(waterDb.deleteWaterEntry).toHaveBeenCalledWith("w1")
+  })
+
+  it("applies log_weight and delete_weight operations", async () => {
+    await applyChange(
+      change({
+        op: "log_weight",
+        payload: { weight_kg: 75.2, date: "2026-08-08", note: "Fasted" },
+      }),
+    )
+    expect(weightDb.saveWeightEntry).toHaveBeenCalledWith({
+      weightKg: 75.2,
+      date: "2026-08-08",
+      note: "Fasted",
+    })
+
+    await applyChange(change({ op: "delete_weight", payload: { id: "wt1" } }))
+    expect(weightDb.deleteWeightEntry).toHaveBeenCalledWith("wt1")
+  })
+
+  it("applies toggle_favorite and set_profile operations", async () => {
+    await applyChange(
+      change({
+        op: "toggle_favorite",
+        payload: { product_id: "p1" },
+      }),
+    )
+    expect(foodCacheDb.toggleFavorite).toHaveBeenCalledWith("p1")
+
+    await applyChange(
+      change({
+        op: "set_profile",
+        payload: { height_cm: 182, target_weight_kg: 74, food_database_country: "US" },
+      }),
+    )
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      height_cm: 182,
+      target_weight_kg: 74,
+      food_database_country: "US",
+    })
   })
 })

@@ -44,24 +44,34 @@ function truncateToolResult(json: string): string {
 async function buildSystemPrompt(): Promise<string> {
   const settings = await getSettings()
   const now = new Date()
+  const customInstructions = settings.ai_system_prompt?.trim()
+    ? `\n\nCustom Instructions:\n${settings.ai_system_prompt.trim()}`
+    : ""
   return [
-    "You are Dietinator AI, an assistant inside Dietinator, a local-first calorie and macro tracker.",
+    "You are Dietinator AI, an assistant inside Dietinator, a local-first calorie, macro, water, and weight tracker.",
     `Current date: ${now.toISOString()} (local time ${now.toLocaleTimeString()})`,
-    `Daily goals: ${settings.calorie_goal} kcal, ${settings.protein_goal} g protein, ${settings.carbs_goal} g carbs, ${settings.fat_goal} g fat.`,
+    `Daily goals: ${settings.calorie_goal} kcal, ${settings.protein_goal} g protein, ${settings.carbs_goal} g carbs, ${settings.fat_goal} g fat, ${settings.water_goal_ml || 2500} ml water.`,
+    settings.target_weight_kg > 0 ? `Target weight: ${settings.target_weight_kg} kg.` : "",
+    settings.height_cm > 0 ? `Height: ${settings.height_cm} cm.` : "",
     "",
     "Capabilities:",
-    "- Read and summarize diary entries (get_diary_summary).",
-    "- Read and update daily goals (get_goals, set_goals).",
-    "- Log food manually with nutrients (log_food).",
-    "- Delete diary entries (delete_food_entry — the user confirms before it runs).",
-    "- Look up foods and their nutrition (search_foods).",
+    "- Diary: Read and summarize diary entries (get_diary_summary), get multi-day diary stats (get_diary_stats), log food (log_food), edit amount/slot (update_food_entry), delete entries (delete_food_entry).",
+    "- Water: View hydration intake and goals (get_water), log water (log_water), delete water logs (delete_water_entry).",
+    "- Weight & BMI: View weight logs, BMI, and trends (get_weight), record weight (log_weight), delete weight entries (delete_weight_entry).",
+    "- Saved Meals: View meals and itemized ingredients (get_meals), log full meals to diary (log_meal), create/save meal templates (save_meal), delete meals (delete_meal).",
+    "- Food Database & Favorites: Search database (search_foods), view favorites (get_favorite_foods), star/unstar foods (toggle_favorite_food), view recent food portions (get_recent_foods).",
+    "- Profile & Goals: Read and update goals (get_goals, set_goals), read settings (get_settings), set display units (set_units), update profile (set_profile).",
+    "- Analytics: Multi-day comprehensive nutrition, hydration, and weight progress summary (get_health_summary).",
     "",
     "Guidelines:",
     "- Be concise, clear, encouraging and informative.",
-    "- Use GitHub Markdown for structured data (tables for macros).",
+    "- Use GitHub Markdown for structured data (tables for macros, nutrition, and summaries).",
     "- Prefer search_foods to get real nutrition before logging.",
     "- Ask the user before deleting entries; never log food the user did not ask for.",
-  ].join("\n")
+    customInstructions,
+  ]
+    .filter(Boolean)
+    .join("\n")
 }
 
 /**
@@ -117,8 +127,22 @@ export class AiAssistant {
 
     this.busy = true
     this.paused = false
+    const pendingToCancel = this.pending
     this.pending = []
     this.aborter = new AbortController()
+
+    if (pendingToCancel.length > 0) {
+      for (const item of pendingToCancel) {
+        await this.appendToolResult(
+          item.call.id,
+          item.call.name,
+          JSON.stringify({
+            success: false,
+            error: "Action superseded by new user message.",
+          }),
+        )
+      }
+    }
 
     await this.append({
       role: "user",

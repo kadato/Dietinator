@@ -114,7 +114,7 @@ describe("agent HTTP middleware", () => {
       makeReq("/mcp", { body: { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} } }),
       res2,
     )
-    expect(JSON.parse(res2.body).result.tools).toHaveLength(11)
+    expect(JSON.parse(res2.body).result.tools).toHaveLength(23)
   })
 
   it("answers notifications with HTTP 202 and no body", async () => {

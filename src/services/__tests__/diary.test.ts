@@ -37,6 +37,10 @@ jest.mock("../yazio/sync", () => ({
   removeEntryFromYazio: jest.fn().mockResolvedValue(undefined),
 }))
 
+jest.mock("../agent-bridge", () => ({
+  pushSnapshot: jest.fn().mockResolvedValue(undefined),
+}))
+
 const mockAddDiaryEntry = diaryDb.addDiaryEntry as jest.MockedFunction<typeof diaryDb.addDiaryEntry>
 const mockGetEntryById = diaryDb.getDiaryEntryById as jest.MockedFunction<
   typeof diaryDb.getDiaryEntryById

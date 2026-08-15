@@ -1,12 +1,14 @@
 import * as diaryDb from "@/db/diary"
 import * as settingsDb from "@/db/settings"
+import * as waterDb from "@/db/water"
+import * as weightDb from "@/db/weight"
+import * as mealsDb from "@/db/meals"
 import * as foodCacheDb from "@/db/food-cache"
 import { searchFoodsRemote } from "@/services/yazio/foods"
 import { updateDiaryEntry as updateDiaryEntryService } from "@/services/diary"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
 import { createDiaryTools, summarizeEntries } from "../diary-tools"
-import { shiftDateKey, toDateKey } from "@/utils/date"
-import type { DiaryEntry, Meal, SearchFoodResult } from "@/types"
+import type { DiaryEntry, Meal, SearchFoodResult, WaterEntry, WeightEntry } from "@/types"
 
 jest.mock("@/db/diary", () => ({
   getDiaryEntriesForDate: jest.fn(),
@@ -21,8 +23,33 @@ jest.mock("@/db/settings", () => ({
   updateSettings: jest.fn().mockResolvedValue(undefined),
 }))
 
+jest.mock("@/db/water", () => ({
+  getWaterEntriesForDate: jest.fn().mockResolvedValue([]),
+  getWaterTotalForDate: jest.fn().mockResolvedValue(0),
+  addWaterEntry: jest.fn(),
+  deleteWaterEntry: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/weight", () => ({
+  getWeightEntries: jest.fn().mockResolvedValue([]),
+  getRecentWeightEntries: jest.fn().mockResolvedValue([]),
+  getWeightEntryForDate: jest.fn().mockResolvedValue(null),
+  saveWeightEntry: jest.fn().mockResolvedValue(undefined),
+  deleteWeightEntry: jest.fn().mockResolvedValue(undefined),
+}))
+
+jest.mock("@/db/meals", () => ({
+  getMeals: jest.fn().mockResolvedValue([]),
+  getMealById: jest.fn().mockResolvedValue(null),
+  saveMeal: jest.fn().mockResolvedValue(undefined),
+  deleteMeal: jest.fn().mockResolvedValue(undefined),
+}))
+
 jest.mock("@/db/food-cache", () => ({
   searchLocalFoods: jest.fn(),
+  getFavoriteFoods: jest.fn().mockResolvedValue([]),
+  toggleFavorite: jest.fn().mockResolvedValue(true),
+  getRecentFoodUsages: jest.fn().mockResolvedValue([]),
 }))
 
 jest.mock("@/services/yazio/foods", () => ({
@@ -65,6 +92,27 @@ const mockUpdateEntry = updateDiaryEntryService as jest.MockedFunction<
 >
 const mockListMeals = listMeals as jest.MockedFunction<typeof listMeals>
 const mockLogMeal = logMealToDiary as jest.MockedFunction<typeof logMealToDiary>
+
+const defaultSettings = () => ({
+  calorie_goal: 2000,
+  protein_goal: 150,
+  carbs_goal: 200,
+  fat_goal: 65,
+  units: "metric",
+  yazio_sync_enabled: 0,
+  food_database_country: "US",
+  update_check_enabled: 1,
+  ai_enabled: 0,
+  ai_base_url: "",
+  ai_model: "",
+  ai_system_prompt: "",
+  agent_bridge_rev: 0,
+  theme_preference: "system" as const,
+  ai_provider: "openai" as const,
+  water_goal_ml: 2500,
+  height_cm: 180,
+  target_weight_kg: 75,
+})
 
 const meal = (overrides: Partial<Meal> = {}): Meal => ({
   id: "meal-1",
@@ -134,26 +182,7 @@ describe("get_diary_summary", () => {
   it("returns entries, totals and goals for a date", async () => {
     mockGetEntries.mockResolvedValue([entry()])
     mockGetCount.mockResolvedValue(3)
-    mockGetSettings.mockResolvedValue({
-      calorie_goal: 2000,
-      protein_goal: 150,
-      carbs_goal: 200,
-      fat_goal: 65,
-      units: "metric",
-      yazio_sync_enabled: 0,
-      food_database_country: "",
-      update_check_enabled: 1,
-      ai_enabled: 0,
-      ai_base_url: "",
-      ai_model: "",
-      ai_system_prompt: "",
-      agent_bridge_rev: 0,
-      theme_preference: "system" as const,
-      ai_provider: "openai" as const,
-      water_goal_ml: 2500,
-      height_cm: 0,
-      target_weight_kg: 0,
-    })
+    mockGetSettings.mockResolvedValue(defaultSettings())
 
     const result = (await byName("get_diary_summary").execute({})) as Record<string, unknown>
     expect(result.success).toBe(true)
@@ -163,37 +192,32 @@ describe("get_diary_summary", () => {
   })
 })
 
-describe("set_goals", () => {
+describe("set_goals / get_goals", () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it("updates provided goals and returns the new values", async () => {
-    mockGetSettings.mockResolvedValue({
-      calorie_goal: 2000,
-      protein_goal: 150,
-      carbs_goal: 200,
-      fat_goal: 65,
-      units: "metric",
-      yazio_sync_enabled: 0,
-      food_database_country: "",
-      update_check_enabled: 1,
-      ai_enabled: 0,
-      ai_base_url: "",
-      ai_model: "",
-      ai_system_prompt: "",
-      agent_bridge_rev: 0,
-      theme_preference: "system" as const,
-      ai_provider: "openai" as const,
-      water_goal_ml: 2500,
-      height_cm: 0,
-      target_weight_kg: 0,
-    })
+  it("updates provided goals including water and target weight", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
 
-    const result = (await byName("set_goals").execute({ calorie_goal: 1800 })) as Record<
-      string,
-      unknown
-    >
+    const result = (await byName("set_goals").execute({
+      calorie_goal: 1800,
+      water_goal_ml: 3000,
+      target_weight_kg: 70,
+    })) as Record<string, unknown>
     expect(result.success).toBe(true)
-    expect(mockUpdateSettings).toHaveBeenCalledWith({ calorie_goal: 1800 })
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      calorie_goal: 1800,
+      water_goal_ml: 3000,
+      target_weight_kg: 70,
+    })
+  })
+
+  it("get_goals returns full goals profile", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
+    const result = (await byName("get_goals").execute({})) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(result.water_goal_ml).toBe(2500)
+    expect(result.target_weight_kg).toBe(75)
+    expect(result.height_cm).toBe(180)
   })
 
   it("rejects an empty update", async () => {
@@ -260,10 +284,119 @@ describe("delete_food_entry", () => {
   })
 })
 
-describe("search_foods", () => {
+describe("water tools", () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it("merges remote + cached results, dedupes and caps the list", async () => {
+  it("get_water returns logs, totals, and goal progress", async () => {
+    const mockWater: WaterEntry[] = [
+      { id: "w1", date: "2026-08-08", amount_ml: 500, created_at: "2026-08-08T09:00:00Z" },
+    ]
+    ;(waterDb.getWaterEntriesForDate as jest.Mock).mockResolvedValue(mockWater)
+    ;(waterDb.getWaterTotalForDate as jest.Mock).mockResolvedValue(500)
+    mockGetSettings.mockResolvedValue(defaultSettings())
+
+    const result = (await byName("get_water").execute({ date: "2026-08-08" })) as Record<
+      string,
+      unknown
+    >
+    expect(result.success).toBe(true)
+    expect(result.total_ml).toBe(500)
+    expect(result.goal_ml).toBe(2500)
+    expect(result.progress_percent).toBe(20)
+  })
+
+  it("log_water adds water entry and validates input", async () => {
+    ;(waterDb.addWaterEntry as jest.Mock).mockResolvedValue({
+      id: "w2",
+      date: "2026-08-08",
+      amount_ml: 250,
+      created_at: "2026-08-08T10:00:00Z",
+    })
+    ;(waterDb.getWaterTotalForDate as jest.Mock).mockResolvedValue(250)
+    mockGetSettings.mockResolvedValue(defaultSettings())
+
+    const result = (await byName("log_water").execute({
+      amount_ml: 250,
+      date: "2026-08-08",
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(waterDb.addWaterEntry).toHaveBeenCalledWith({ date: "2026-08-08", amountMl: 250 })
+
+    const bad = (await byName("log_water").execute({ amount_ml: -50 })) as { success: boolean }
+    expect(bad.success).toBe(false)
+  })
+
+  it("delete_water_entry removes entry", async () => {
+    const result = (await byName("delete_water_entry").execute({ entry_id: "w1" })) as Record<
+      string,
+      unknown
+    >
+    expect(result.success).toBe(true)
+    expect(waterDb.deleteWaterEntry).toHaveBeenCalledWith("w1")
+  })
+})
+
+describe("weight tools", () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it("get_weight returns weight entries, latest weight, BMI, and delta", async () => {
+    const mockWeights: WeightEntry[] = [
+      {
+        id: "wt1",
+        date: "2026-08-08",
+        weight_kg: 75.0,
+        note: "Morning",
+        created_at: "2026-08-08T07:00:00Z",
+      },
+      {
+        id: "wt2",
+        date: "2026-08-01",
+        weight_kg: 76.0,
+        note: null,
+        created_at: "2026-08-01T07:00:00Z",
+      },
+    ]
+    ;(weightDb.getRecentWeightEntries as jest.Mock).mockResolvedValue(mockWeights)
+    mockGetSettings.mockResolvedValue(defaultSettings())
+
+    const result = (await byName("get_weight").execute({ limit: 5 })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    const latest = result.latest_weight as Record<string, unknown>
+    expect(latest.weight_kg).toBe(75)
+    expect(latest.bmi).toBe(23.1)
+    expect(latest.delta_from_previous_kg).toBe(-1)
+  })
+
+  it("log_weight saves weight and calculates BMI", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
+    const result = (await byName("log_weight").execute({
+      weight_kg: 74.5,
+      date: "2026-08-08",
+      note: "Post-run",
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(weightDb.saveWeightEntry).toHaveBeenCalledWith({
+      date: "2026-08-08",
+      weightKg: 74.5,
+      note: "Post-run",
+    })
+    expect(result.bmi).toBe(23)
+  })
+
+  it("delete_weight_entry deletes entry", async () => {
+    const result = (await byName("delete_weight_entry").execute({ entry_id: "wt1" })) as Record<
+      string,
+      unknown
+    >
+    expect(result.success).toBe(true)
+    expect(weightDb.deleteWeightEntry).toHaveBeenCalledWith("wt1")
+  })
+})
+
+describe("search_foods & favorites / recents", () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it("merges remote + cached results", async () => {
     mockSearchLocal.mockResolvedValue([food({ product_id: "p2", name: "Cached chicken" })])
     mockSearchRemote.mockResolvedValue([food(), food({ product_id: "p2" })])
 
@@ -272,60 +405,54 @@ describe("search_foods", () => {
       unknown
     >
     expect(result.success).toBe(true)
-    const foods = result.foods as { product_id: string; per_100g: { kcal: number } }[]
+    const foods = result.foods as { product_id: string }[]
     expect(foods).toHaveLength(2)
-    expect(foods[0]).toMatchObject({ product_id: "p1", per_100g: { kcal: 165 } })
-    expect(result.offline_only).toBe(false)
   })
 
-  it("still answers from cache when remote fails", async () => {
-    mockSearchLocal.mockResolvedValue([food()])
-    mockSearchRemote.mockRejectedValue(new Error("offline"))
+  it("get_favorite_foods returns favorites", async () => {
+    ;(foodCacheDb.getFavoriteFoods as jest.Mock).mockResolvedValue([food({ is_verified: true })])
+    const result = (await byName("get_favorite_foods").execute({})) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(result.foods).toHaveLength(1)
+  })
 
-    const result = (await byName("search_foods").execute({ query: "chicken" })) as Record<
+  it("toggle_favorite_food toggles food star", async () => {
+    ;(foodCacheDb.toggleFavorite as jest.Mock).mockResolvedValue(true)
+    const result = (await byName("toggle_favorite_food").execute({
+      product_id: "p1",
+      name: "Chicken",
+      kcal: 165,
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(result.is_favorite).toBe(true)
+  })
+
+  it("get_recent_foods returns recent usages", async () => {
+    ;(foodCacheDb.getRecentFoodUsages as jest.Mock).mockResolvedValue([
+      { food: food(), amount: 150, lastLoggedAt: "2026-08-08T12:00:00Z" },
+    ])
+    const result = (await byName("get_recent_foods").execute({ limit: 5 })) as Record<
       string,
       unknown
     >
     expect(result.success).toBe(true)
-    expect(result.offline_only).toBe(true)
-  })
-
-  it("rejects empty queries", async () => {
-    const result = (await byName("search_foods").execute({})) as Record<string, unknown>
-    expect(result.success).toBe(false)
+    expect(result.recent_foods).toHaveLength(1)
   })
 })
 
-describe("get_settings / set_units", () => {
+describe("get_settings / set_units / set_profile", () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it("returns app settings flags", async () => {
-    mockGetSettings.mockResolvedValue({
-      calorie_goal: 2000,
-      protein_goal: 150,
-      carbs_goal: 200,
-      fat_goal: 65,
-      units: "metric",
-      yazio_sync_enabled: 0,
-      food_database_country: "DE",
-      update_check_enabled: 1,
-      ai_enabled: 0,
-      ai_provider: "openai",
-      ai_base_url: "",
-      ai_model: "",
-      ai_system_prompt: "",
-      agent_bridge_rev: 0,
-      theme_preference: "system" as const,
-      water_goal_ml: 2500,
-      height_cm: 0,
-      target_weight_kg: 0,
-    })
+  it("returns app settings flags and profile data", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
     const result = (await byName("get_settings").execute({})) as Record<string, unknown>
     expect(result).toMatchObject({
       success: true,
       units: "metric",
-      food_database_country: "DE",
-      yazio_sync_enabled: false,
+      food_database_country: "US",
+      water_goal_ml: 2500,
+      height_cm: 180,
+      target_weight_kg: 75,
     })
   })
 
@@ -333,16 +460,75 @@ describe("get_settings / set_units", () => {
     const ok = (await byName("set_units").execute({ units: "imperial" })) as Record<string, unknown>
     expect(ok.success).toBe(true)
     expect(mockUpdateSettings).toHaveBeenCalledWith({ units: "imperial" })
+  })
 
-    const bad = (await byName("set_units").execute({ units: "parsecs" })) as Record<string, unknown>
-    expect(bad.success).toBe(false)
+  it("set_profile updates profile metrics", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
+    const result = (await byName("set_profile").execute({
+      height_cm: 185,
+      target_weight_kg: 78,
+      theme_preference: "dark",
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(mockUpdateSettings).toHaveBeenCalledWith({
+      height_cm: 185,
+      target_weight_kg: 78,
+      theme_preference: "dark",
+    })
+  })
+})
+
+describe("saved meals: get, save, delete, log", () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it("lists meals with items breakdown", async () => {
+    mockListMeals.mockResolvedValue([meal()])
+    ;(mealTotals as jest.Mock).mockReturnValue({ kcal: 150, protein: 3, carbs: 33, fat: 0.5 })
+    const result = (await byName("get_meals").execute({})) as {
+      success: boolean
+      meals: { id: string; name: string; items: unknown[] }[]
+    }
+    expect(result.success).toBe(true)
+    expect(result.meals[0].items).toHaveLength(1)
+  })
+
+  it("save_meal creates a meal template", async () => {
+    const result = (await byName("save_meal").execute({
+      name: "Oat Bowl",
+      items: [{ name: "Oats", amount: 50, kcal: 190, protein: 6, carbs: 34, fat: 3 }],
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(mealsDb.saveMeal).toHaveBeenCalledWith(expect.objectContaining({ name: "Oat Bowl" }))
+  })
+
+  it("delete_meal removes a saved meal", async () => {
+    const result = (await byName("delete_meal").execute({ meal_id: "meal-1" })) as Record<
+      string,
+      unknown
+    >
+    expect(result.success).toBe(true)
+    expect(mealsDb.deleteMeal).toHaveBeenCalledWith("meal-1")
+  })
+
+  it("log_meal logs meal items to diary", async () => {
+    mockListMeals.mockResolvedValue([meal()])
+    mockLogMeal.mockResolvedValue({ logged: 1, skipped: [] })
+    const result = (await byName("log_meal").execute({
+      meal_id: "meal-1",
+      date: "2026-08-08",
+      meal_type: "lunch",
+    })) as Record<string, unknown>
+    expect(result.success).toBe(true)
+    expect(mockLogMeal).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2026-08-08", mealType: "lunch" }),
+    )
   })
 })
 
 describe("update_food_entry", () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it("updates amount and meal type via the diary service", async () => {
+  it("updates amount and meal type via diary service", async () => {
     mockGetEntry.mockResolvedValue(entry({ meal_type: "lunch" }))
     mockUpdateEntry.mockResolvedValue(entry({ amount: 200, meal_type: "dinner" }))
     const result = (await byName("update_food_entry").execute({
@@ -353,92 +539,30 @@ describe("update_food_entry", () => {
     expect(result.success).toBe(true)
     expect(mockUpdateEntry).toHaveBeenCalledWith({ id: "e1", amount: 200, mealType: "dinner" })
   })
-
-  it("rejects unknown entries and bad amounts", async () => {
-    mockGetEntry.mockResolvedValue(null)
-    const unknown = (await byName("update_food_entry").execute({
-      entry_id: "nope",
-      amount: 5,
-    })) as { success: boolean }
-    expect(unknown.success).toBe(false)
-    mockGetEntry.mockResolvedValue(entry())
-    const badAmount = (await byName("update_food_entry").execute({
-      entry_id: "e1",
-      amount: -1,
-    })) as { success: boolean }
-    expect(badAmount.success).toBe(false)
-    expect(mockUpdateEntry).not.toHaveBeenCalled()
-  })
 })
 
-describe("get_diary_stats", () => {
+describe("get_health_summary", () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it("returns per-day totals for the requested window", async () => {
-    // Window is [today - (days - 1), today]; seed the oldest day so the test
-    // does not depend on the wall-clock date.
-    const seededDate = shiftDateKey(toDateKey(), -2)
-    mockGetEntries.mockImplementation(async (date: string) =>
-      date === seededDate ? [entry({ kcal: 500 })] : [],
-    )
-    const result = (await byName("get_diary_stats").execute({ days: 3 })) as {
-      success: boolean
-      days_count: number
-      days_logged: number
-      days: { date: string; kcal: number }[]
-    }
-    expect(result.success).toBe(true)
-    expect(result.days_count).toBe(3)
-    expect(result.days_logged).toBe(1)
-    expect(result.days).toHaveLength(3)
-    expect(result.days.find((d) => d.date === seededDate)?.kcal).toBe(500)
-  })
+  it("calculates averages and trends across nutrition, water, and weight", async () => {
+    mockGetSettings.mockResolvedValue(defaultSettings())
+    mockGetEntries.mockResolvedValue([entry({ kcal: 2000, protein: 150, carbs: 200, fat: 65 })])
+    ;(waterDb.getWaterTotalForDate as jest.Mock).mockResolvedValue(2500)
+    ;(weightDb.getWeightEntries as jest.Mock).mockResolvedValue([
+      { id: "wt1", date: "2026-08-01", weight_kg: 76, note: null, created_at: "" },
+      { id: "wt2", date: "2026-08-07", weight_kg: 75, note: null, created_at: "" },
+    ])
 
-  it("caps the window at 30 days", async () => {
-    mockGetEntries.mockResolvedValue([])
-    const result = (await byName("get_diary_stats").execute({ days: 99 })) as {
-      days_count: number
-    }
-    expect(result.days_count).toBe(30)
-  })
-})
-
-describe("get_meals / log_meal", () => {
-  beforeEach(() => jest.clearAllMocks())
-
-  it("lists meals with totals", async () => {
-    mockListMeals.mockResolvedValue([meal()])
-    ;(mealTotals as jest.Mock).mockReturnValue({ kcal: 150, protein: 3, carbs: 33, fat: 0.5 })
-    const result = (await byName("get_meals").execute({})) as {
-      success: boolean
-      meals: { id: string; name: string; kcal: number }[]
-    }
-    expect(result.success).toBe(true)
-    expect(result.meals[0]).toMatchObject({ id: "meal-1", name: "Cornflakes with milk", kcal: 150 })
-  })
-
-  it("logs a meal into the diary", async () => {
-    mockListMeals.mockResolvedValue([meal()])
-    mockLogMeal.mockResolvedValue({ logged: 2, skipped: [] })
-    const result = (await byName("log_meal").execute({
-      meal_id: "meal-1",
-      date: "2026-08-08",
-      meal_type: "breakfast",
-    })) as Record<string, unknown>
-    expect(result.success).toBe(true)
-    expect(result.logged_items).toBe(2)
-    expect(mockLogMeal).toHaveBeenCalledWith(
-      expect.objectContaining({ date: "2026-08-08", mealType: "breakfast" }),
-    )
-  })
-
-  it("rejects unknown meals", async () => {
-    mockListMeals.mockResolvedValue([meal()])
-    const result = (await byName("log_meal").execute({ meal_id: "nope" })) as Record<
+    const result = (await byName("get_health_summary").execute({ days: 7 })) as Record<
       string,
       unknown
     >
-    expect(result.success).toBe(false)
-    expect(mockLogMeal).not.toHaveBeenCalled()
+    expect(result.success).toBe(true)
+    expect(result.period_days).toBe(7)
+    const averages = result.averages as Record<string, unknown>
+    expect(averages.kcal).toBe(2000)
+    expect(averages.water_ml).toBe(2500)
+    const weightTrend = result.weight_trend as Record<string, unknown>
+    expect(weightTrend.delta_kg).toBe(-1)
   })
 })

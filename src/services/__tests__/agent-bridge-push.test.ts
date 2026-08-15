@@ -15,6 +15,18 @@ jest.mock("@/db/settings", () => ({
   updateSettings: jest.fn().mockResolvedValue(undefined),
 }))
 
+jest.mock("@/db/water", () => ({
+  getWaterEntriesForDate: jest.fn().mockResolvedValue([]),
+}))
+
+jest.mock("@/db/weight", () => ({
+  getWeightEntries: jest.fn().mockResolvedValue([]),
+}))
+
+jest.mock("@/db/food-cache", () => ({
+  getFavoriteFoods: jest.fn().mockResolvedValue([]),
+}))
+
 jest.mock("@/services/meals", () => ({
   listMeals: jest.fn().mockResolvedValue([]),
   mealTotals: jest.fn(() => ({ kcal: 0, protein: 0, carbs: 0, fat: 0 })),
@@ -92,7 +104,7 @@ describe("pushSnapshot", () => {
     jest.clearAllMocks()
   })
 
-  it("posts the last 14 days of diary plus goals", async () => {
+  it("posts the last 14 days of diary plus goals, water, weight, and meals", async () => {
     const fetchMock = jest.fn().mockResolvedValue({ ok: true })
     globalThis.fetch = fetchMock as unknown as typeof fetch
     mockGetEntries.mockResolvedValue([entry()])
@@ -109,6 +121,10 @@ describe("pushSnapshot", () => {
     expect(body.diary).toHaveLength(14)
     expect(body.diary[0]).toMatchObject({ id: "e1", food_name: "Rice", kcal: 200 })
     expect(body.settings.calorie_goal).toBe(2000)
+    expect(body.settings.water_goal_ml).toBe(2500)
+    expect(body.water).toBeDefined()
+    expect(body.weight).toBeDefined()
+    expect(body.favorites).toBeDefined()
   })
 
   it("throws when the server rejects the snapshot", async () => {
