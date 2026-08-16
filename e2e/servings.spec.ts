@@ -36,8 +36,8 @@ test.describe("serving sizes (real account)", () => {
 
   /** Search and open the row whose aria-label starts with the exact product name. */
   async function openFood(page: Page, query: string, productName: string) {
-    await page.getByRole("tab", { name: "Search" }).click()
-    await page.getByPlaceholder("e.g. banana, oats, chicken").fill(query)
+    await page.getByRole("button", { name: "Add food to Lunch" }).click()
+    await page.getByPlaceholder("Search foods…").fill(query)
     const row = page.locator(`[aria-label^="${productName}, "]`).first()
     // Local cache rows can push remote results below the fold and FlatList
     // only renders visible rows — scroll until the target row exists in DOM.

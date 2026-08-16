@@ -1,20 +1,20 @@
 import { expect, test, bootAuthenticated } from "./helpers"
 
 test.describe("AI assistant + FABs (offline)", () => {
-  test("Today shows the FAB cluster and opens the AI chat modal", async ({ page }) => {
+  test("AI nav tab appears when enabled in Settings", async ({ page }) => {
     await bootAuthenticated(page)
 
-    // Phone viewport: the AI FAB is hidden until the assistant is enabled
-    // in Settings.
-    await expect(page.getByRole("button", { name: "Open AI assistant" })).toBeHidden()
+    // The AI tab is hidden until the assistant is enabled in Settings.
+    await expect(page.getByRole("tab", { name: "AI" })).toBeHidden()
 
     await page.getByRole("tab", { name: /Settings/ }).click()
     await page.getByRole("button", { name: "AI Assistant settings" }).click()
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
-    await page.getByRole("tab", { name: /Today/ }).click()
-    await expect(page.getByRole("button", { name: "Open AI assistant" })).toBeVisible()
 
-    await page.getByRole("button", { name: "Open AI assistant" }).click()
+    // Now the AI tab is visible in navigation.
+    await expect(page.getByRole("tab", { name: "AI" })).toBeVisible()
+
+    await page.getByRole("tab", { name: "AI" }).click()
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeVisible()
     await expect(page.getByText("Your nutrition assistant", { exact: true })).toBeVisible()
 
@@ -22,12 +22,12 @@ test.describe("AI assistant + FABs (offline)", () => {
     await expect(page.getByText("How can I help you eat well?")).toBeVisible()
     await expect(page.getByRole("button", { name: "Preset: Daily review" })).toBeVisible()
 
-    // Chat input is present but gated on configuration.
+    // Chat input is present.
     await expect(page.getByLabel("Message the AI assistant")).toBeVisible()
 
-    // The header X and the composer chevron both say "Close AI chat" — use the header X.
-    await page.getByRole("button", { name: "Close AI chat" }).first().click()
-    await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
+    // Navigate back to Today tab.
+    await page.getByRole("tab", { name: /Today/ }).click()
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
   })
 
   test("Settings exposes the AI assistant section and the MCP agent info", async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 
-  test("barcode scanning is available in food tracking and the Search tab", async ({ page }) => {
+  test("barcode scanning is available in food tracking", async ({ page }) => {
     await bootAuthenticated(page)
 
     // No direct scanner shortcut on the dashboard anymore.
@@ -67,10 +67,5 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
     await page.getByRole("button", { name: "Cancel" }).click()
-
-    // The Search tab has a scan FAB.
-    await page.getByRole("tab", { name: "Search" }).click()
-    await expect(page.getByPlaceholder("e.g. banana, oats, chicken")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeVisible()
   })
 })
