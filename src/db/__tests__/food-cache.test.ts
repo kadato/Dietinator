@@ -1,10 +1,13 @@
 import type { SQLiteDatabase } from "expo-sqlite"
 import {
   cachedToSearchResult,
+  getFavoriteFoods,
   getRecentFoodUsages,
   saveFoodToCache,
   saveSearchResultToCache,
+  toggleFavorite,
   touchFoodUsed,
+  updateFavoriteOrder,
 } from "../food-cache"
 import { getDatabase } from "@/db/database"
 import type { CachedFood, SearchFoodResult } from "@/types"
@@ -19,10 +22,13 @@ const db = {
   runAsync: jest.fn().mockResolvedValue(undefined),
   getAllAsync: jest.fn().mockResolvedValue([]),
   getFirstAsync: jest.fn().mockResolvedValue(null),
+  withTransactionAsync: jest.fn().mockImplementation(async (cb: () => Promise<unknown>) => cb()),
 }
 
 beforeEach(() => {
   db.runAsync.mockClear()
+  db.getAllAsync.mockClear()
+  db.getFirstAsync.mockClear()
   mockGetDatabase.mockResolvedValue(db as unknown as SQLiteDatabase)
 })
 
@@ -170,5 +176,52 @@ describe("getRecentFoodUsages", () => {
     const usages = await getRecentFoodUsages()
     expect(usages).toHaveLength(0)
     expect(db.getAllAsync).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("favorites and reordering", () => {
+  it("getFavoriteFoods queries ordered by favorite_order ASC, name ASC", async () => {
+    db.getAllAsync.mockResolvedValueOnce([])
+    await getFavoriteFoods()
+    const sql = db.getAllAsync.mock.calls[0][0] as string
+    expect(sql).toContain("ORDER BY favorite_order ASC, name ASC")
+  })
+
+  it("toggleFavorite appends with next favorite_order when favoriting", async () => {
+    db.getFirstAsync
+      .mockResolvedValueOnce(null) // is_favorite query -> 0
+      .mockResolvedValueOnce({ max_order: 3 }) // max order query -> 3
+    const result = await toggleFavorite("prod-1", food())
+    expect(result).toBe(true)
+    const updateCall = db.runAsync.mock.calls.find((call) =>
+      String(call[0]).includes("UPDATE food_cache SET is_favorite = 1"),
+    )
+    expect(updateCall).toBeDefined()
+    expect(updateCall?.[1]).toBe(4) // 3 + 1 = 4
+    expect(updateCall?.[2]).toBe("prod-1")
+  })
+
+  it("updateFavoriteOrder persists new indices for all items", async () => {
+    db.runAsync.mockClear()
+    await updateFavoriteOrder(["prod-b", "prod-a", "prod-c"])
+    expect(db.runAsync).toHaveBeenCalledTimes(3)
+    expect(db.runAsync).toHaveBeenNthCalledWith(
+      1,
+      "UPDATE food_cache SET favorite_order = ? WHERE yazio_product_id = ?",
+      0,
+      "prod-b",
+    )
+    expect(db.runAsync).toHaveBeenNthCalledWith(
+      2,
+      "UPDATE food_cache SET favorite_order = ? WHERE yazio_product_id = ?",
+      1,
+      "prod-a",
+    )
+    expect(db.runAsync).toHaveBeenNthCalledWith(
+      3,
+      "UPDATE food_cache SET favorite_order = ? WHERE yazio_product_id = ?",
+      2,
+      "prod-c",
+    )
   })
 })

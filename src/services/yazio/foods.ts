@@ -19,16 +19,25 @@ function mapSearchResult(
   },
   unitEnergy = "kcal",
 ): SearchFoodResult {
+  const baseUnit = item.base_unit || "g"
+  const perGram = isPerGramRawNutrients(item.nutrients, baseUnit, unitEnergy)
+  const mappedNutrients = nutrientsFromYazio(item.nutrients, unitEnergy, perGram ? 100 : 1)
   return {
     product_id: item.product_id,
     name: item.name,
     producer: item.producer ?? "",
-    nutrients: nutrientsFromYazio(item.nutrients, unitEnergy),
-    serving: {
-      serving: item.serving,
-      amount: item.amount,
-      serving_quantity: item.serving_quantity,
-    },
+    nutrients: mappedNutrients,
+    serving: perGram
+      ? {
+          serving: item.serving || (baseUnit === "ml" ? "100 ml" : "100 g"),
+          amount: item.amount > 1 ? item.amount : 100,
+          serving_quantity: 100,
+        }
+      : {
+          serving: item.serving,
+          amount: item.amount,
+          serving_quantity: item.serving_quantity,
+        },
     base_unit: item.base_unit,
     is_verified: item.is_verified,
   }

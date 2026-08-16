@@ -2,7 +2,7 @@ import type { DiaryEntry, SearchFoodResult } from "@/types"
 
 import * as diaryDb from "@/db/diary"
 import * as foodCacheDb from "@/db/food-cache"
-import { deleteFoodEntry, logFood, logManualEntry, updateDiaryEntry } from "../diary"
+import { deleteFoodEntry, logFood, logManualEntry, quickLogFood, updateDiaryEntry } from "../diary"
 import { getFoodRemote } from "../yazio/foods"
 import { removeEntryFromYazio, syncEntryToYazio } from "../yazio/sync"
 
@@ -20,6 +20,7 @@ jest.mock("@/db/diary", () => ({
 jest.mock("@/db/food-cache", () => ({
   getFoodsByIds: jest.fn(),
   getFoodById: jest.fn(),
+  getCachedFoodById: jest.fn(),
   saveFoodToCache: jest.fn().mockResolvedValue(undefined),
   touchFoodUsed: jest.fn().mockResolvedValue(undefined),
 }))
@@ -207,5 +208,47 @@ describe("deleteFoodEntry", () => {
     await deleteFoodEntry(current.id)
     expect(diaryDb.addDeletedYazioItemId).not.toHaveBeenCalled()
     expect(removeEntryFromYazio).not.toHaveBeenCalled()
+  })
+})
+
+describe("quickLogFood", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockAddDiaryEntry.mockImplementation(async (partial) => entry({ ...(partial as DiaryEntry) }))
+  })
+
+  it("uses the passed amount when provided", async () => {
+    const result = await quickLogFood({
+      date: "2026-08-08",
+      mealType: "lunch",
+      food: food(),
+      amount: 75,
+    })
+    expect(result.amount).toBe(75)
+    expect(result.entry.amount).toBe(75)
+  })
+
+  it("uses food.last_amount when amount is omitted", async () => {
+    const result = await quickLogFood({
+      date: "2026-08-08",
+      mealType: "lunch",
+      food: food({ last_amount: 50 }),
+    })
+    expect(result.amount).toBe(50)
+    expect(result.entry.amount).toBe(50)
+  })
+
+  it("falls back to cached.last_amount when food.last_amount is omitted", async () => {
+    ;(foodCacheDb.getCachedFoodById as jest.Mock).mockResolvedValueOnce({
+      yazio_product_id: "food-1",
+      last_amount: 60,
+    })
+    const result = await quickLogFood({
+      date: "2026-08-08",
+      mealType: "lunch",
+      food: food({ last_amount: undefined }),
+    })
+    expect(result.amount).toBe(60)
+    expect(result.entry.amount).toBe(60)
   })
 })

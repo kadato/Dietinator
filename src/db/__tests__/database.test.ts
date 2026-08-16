@@ -49,7 +49,13 @@ function createMockDb(options: {
       }
       if (query.includes("table_info(food_cache)")) {
         return (
-          options.columns?.food_cache ?? ["base_unit", "source", "servings_json", "last_amount"]
+          options.columns?.food_cache ?? [
+            "base_unit",
+            "source",
+            "servings_json",
+            "last_amount",
+            "favorite_order",
+          ]
         ).map((name) => ({ name }))
       }
       return []
@@ -78,6 +84,7 @@ describe("migrate", () => {
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_food_id")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_food_barcode")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_meals_last_used")
+    expect(db.sql.join("\n")).toContain("CREATE INDEX IF NOT EXISTS idx_food_favorite_order")
   })
 
   it("sets WAL journal mode on native platforms", async () => {
@@ -109,6 +116,8 @@ describe("migrate", () => {
         "food_cache.base_unit",
         "food_cache.source",
         "food_cache.servings_json",
+        "food_cache.last_amount",
+        "food_cache.favorite_order",
       ]),
     )
   })

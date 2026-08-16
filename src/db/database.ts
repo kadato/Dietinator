@@ -61,6 +61,7 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       base_unit TEXT NOT NULL DEFAULT 'g',
       cached_at TEXT NOT NULL,
       is_favorite INTEGER NOT NULL DEFAULT 0,
+      favorite_order INTEGER NOT NULL DEFAULT 0,
       last_used_at TEXT,
       last_amount REAL,
       source TEXT
@@ -230,6 +231,14 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     // add-food screen so repeat logging remembers the previous portion.
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN last_amount REAL`)
   }
+  if (!foodCacheColumns.some((column) => column.name === "favorite_order")) {
+    await database.execAsync(
+      `ALTER TABLE food_cache ADD COLUMN favorite_order INTEGER NOT NULL DEFAULT 0`,
+    )
+  }
+  await database.execAsync(
+    `CREATE INDEX IF NOT EXISTS idx_food_favorite_order ON food_cache(is_favorite, favorite_order ASC)`,
+  )
 
   // One-time cleanup (user_version 0 → 1): drop cached foods whose stored
   // nutrients look per-gram (kcal < 10). They are either legacy raw per-gram

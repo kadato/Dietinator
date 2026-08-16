@@ -20,6 +20,7 @@ function rowToCached(row: Record<string, unknown>): CachedFood {
     base_unit: row.base_unit ? String(row.base_unit) : "g",
     cached_at: String(row.cached_at),
     is_favorite: Number(row.is_favorite),
+    favorite_order: row.favorite_order != null ? Number(row.favorite_order) : 0,
     last_used_at: row.last_used_at ? String(row.last_used_at) : null,
     last_amount: row.last_amount != null ? Number(row.last_amount) : null,
     servings_json: row.servings_json ? String(row.servings_json) : null,
@@ -41,6 +42,8 @@ export function cachedToSearchResult(cached: CachedFood): SearchFoodResult | nul
     servings: servings && servings.length > 0 ? servings : undefined,
     base_unit: cached.base_unit || "g",
     is_verified: true,
+    last_amount:
+      cached.last_amount != null && cached.last_amount > 0 ? cached.last_amount : undefined,
   }
 }
 
@@ -172,7 +175,7 @@ export async function getRecentFoodUsages(limit = 20): Promise<RecentFoodUsage[]
 export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {
   const db = await getDatabase()
   const rows = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM food_cache WHERE is_favorite = 1 ORDER BY name ASC LIMIT 100",
+    "SELECT * FROM food_cache WHERE is_favorite = 1 ORDER BY favorite_order ASC, name ASC LIMIT 100",
   )
   return mapRows(rows)
 }
@@ -311,12 +314,36 @@ export async function toggleFavorite(productId: string, food?: SearchFoodResult)
   }
   const current = row?.is_favorite ?? 0
   const next = current ? 0 : 1
-  await db.runAsync(
-    "UPDATE food_cache SET is_favorite = ? WHERE yazio_product_id = ?",
-    next,
-    productId,
-  )
+  if (next === 1) {
+    const maxRow = await db.getFirstAsync<{ max_order: number | null }>(
+      "SELECT MAX(favorite_order) AS max_order FROM food_cache WHERE is_favorite = 1",
+    )
+    const nextOrder = (maxRow?.max_order ?? -1) + 1
+    await db.runAsync(
+      "UPDATE food_cache SET is_favorite = 1, favorite_order = ? WHERE yazio_product_id = ?",
+      nextOrder,
+      productId,
+    )
+  } else {
+    await db.runAsync("UPDATE food_cache SET is_favorite = 0 WHERE yazio_product_id = ?", productId)
+  }
   return next === 1
+}
+
+/**
+ * Persist custom favorite items order in SQLite.
+ */
+export async function updateFavoriteOrder(orderedProductIds: string[]): Promise<void> {
+  const db = await getDatabase()
+  await db.withTransactionAsync(async () => {
+    for (let i = 0; i < orderedProductIds.length; i++) {
+      await db.runAsync(
+        "UPDATE food_cache SET favorite_order = ? WHERE yazio_product_id = ?",
+        i,
+        orderedProductIds[i],
+      )
+    }
+  })
 }
 
 export async function clearFoodCache(): Promise<void> {

@@ -27,6 +27,7 @@ export interface CachedFood {
   base_unit: string
   cached_at: string
   is_favorite: number
+  favorite_order?: number
   last_used_at: string | null
   /** Base-unit amount logged the last time this food was consumed. */
   last_amount: number | null
@@ -132,6 +133,8 @@ export interface SearchFoodResult {
   servings?: FoodServing[]
   base_unit: string
   is_verified: boolean
+  /** Remembered amount logged the last time this food was consumed. */
+  last_amount?: number
 }
 
 /**

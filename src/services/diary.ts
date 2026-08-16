@@ -129,9 +129,21 @@ export async function quickLogFood(params: {
   const { date, mealType, food } = params
   let amount = params.amount
   if (amount == null || !Number.isFinite(amount) || amount <= 0) {
-    const cached = await foodCacheDb.getCachedFoodById(food.product_id)
-    amount =
-      cached?.last_amount && cached.last_amount > 0 ? cached.last_amount : food.serving.amount
+    if (food.last_amount && food.last_amount > 0) {
+      amount = food.last_amount
+    } else {
+      const cached = await foodCacheDb.getCachedFoodById(food.product_id)
+      if (cached?.last_amount && cached.last_amount > 0) {
+        amount = cached.last_amount
+      } else {
+        const perGram = isPerGramNutrients(
+          food.nutrients,
+          food.base_unit || "g",
+          food.serving.serving_quantity,
+        )
+        amount = perGram ? 100 : food.serving.amount
+      }
+    }
   }
   const resolved = (await getFoodRemote(food.product_id)) ?? food
   const entry = await logFood({ date, mealType, food: resolved, amount })
