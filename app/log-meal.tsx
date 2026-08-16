@@ -14,16 +14,17 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
+import { SortableFavoriteList } from "@/components/SortableFavoriteList"
 import { EmptyState } from "@/components/EmptyState"
-import { FilterDropdown, type DropdownOption } from "@/components/FilterDropdown"
 import { OfflineBanner } from "@/components/OfflineBanner"
+import { CreateOptionsModal } from "@/components/CreateOptionsModal"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getFoodIcon } from "@/utils/food-icon"
 import { getSuggestedFoods } from "@/services/yazio/foods"
-import { getFavoriteFoods, getRecentFoodUsages } from "@/db/food-cache"
+import { getFavoriteFoods, getRecentFoodUsages, updateFavoriteOrder } from "@/db/food-cache"
 import { deleteFoodEntry, getDiaryEntriesForDate, quickLogFood } from "@/services/diary"
 import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
 import type {
@@ -50,23 +51,27 @@ import { MealListItem } from "@/components/MealListItem"
 import { MacroPills } from "@/components/MacroPills"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type FoodCategory = "foods" | "meals"
 type ListMode = "frequent" | "recent" | "favorites"
+export type ActiveTab = "frequent" | "recent" | "favorites" | "meals"
 
-const CATEGORY_OPTIONS: DropdownOption<FoodCategory>[] = [
-  { value: "foods", label: "Foods", icon: "nutrition-outline" },
-  { value: "meals", label: "Meals", icon: "restaurant-outline" },
+interface TabOption {
+  id: ActiveTab
+  label: string
+  icon: keyof typeof Ionicons.glyphMap
+  activeIcon: keyof typeof Ionicons.glyphMap
+}
+
+const TABS: TabOption[] = [
+  { id: "frequent", label: "Frequent", icon: "sparkles-outline", activeIcon: "sparkles" },
+  { id: "recent", label: "Recent", icon: "time-outline", activeIcon: "time" },
+  { id: "favorites", label: "Favorites", icon: "star-outline", activeIcon: "star" },
+  { id: "meals", label: "Meals", icon: "restaurant-outline", activeIcon: "restaurant" },
 ]
 
 const ZERO_TOTALS: FoodNutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
-
-const LIST_MODE_OPTIONS: DropdownOption<ListMode>[] = [
-  { value: "frequent", label: "Frequent", icon: "sparkles-outline" },
-  { value: "recent", label: "Recent", icon: "time-outline" },
-  { value: "favorites", label: "Favorites", icon: "star-outline" },
-]
 
 let rememberedCategory: FoodCategory = "foods"
 let rememberedListMode: ListMode = "frequent"
@@ -112,6 +117,8 @@ export default function LogMealScreen() {
   const [listMode, setListModeState] = useState<ListMode>(rememberedListMode)
   const [meals, setMeals] = useState<Meal[]>([])
   const [loggingMealId, setLoggingMealId] = useState<string | null>(null)
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const [reorderFavorites, setReorderFavorites] = useState(false)
 
   const setCategory = useCallback((cat: FoodCategory) => {
     rememberedCategory = cat
@@ -122,6 +129,20 @@ export default function LogMealScreen() {
     rememberedListMode = mode
     setListModeState(mode)
   }, [])
+
+  const activeTab: ActiveTab = category === "meals" ? "meals" : listMode
+
+  const handleTabPress = useCallback(
+    (tabId: ActiveTab) => {
+      if (tabId === "meals") {
+        setCategory("meals")
+      } else {
+        setCategory("foods")
+        setListMode(tabId)
+      }
+    },
+    [setCategory, setListMode],
+  )
   // YAZIO's suggestions for this meal slot arrive async and patch into the
   // "Frequent" list — the local favorites/recents render instantly instead of
   // waiting on the network.
@@ -254,7 +275,8 @@ export default function LogMealScreen() {
 
   const handleQuickAdd = useCallback(
     async (food: SearchFoodResult, amount?: number) => {
-      const key = amount != null ? `${food.product_id}:${amount}` : food.product_id
+      const targetAmount = amount ?? food.last_amount
+      const key = targetAmount != null ? `${food.product_id}:${targetAmount}` : food.product_id
       if (addingKey === key) return
       setAddingKey(key)
       try {
@@ -262,7 +284,7 @@ export default function LogMealScreen() {
           date,
           mealType,
           food,
-          amount,
+          amount: targetAmount,
         })
         await loadLoggedEntries()
         refresh()
@@ -336,8 +358,34 @@ export default function LogMealScreen() {
     [date, loggingMealId, mealType, router, showError, showSuccess, showWarning],
   )
 
+  const handleReorderFavorites = useCallback(
+    async (reordered: SearchFoodResult[]) => {
+      const orderedIds = reordered.map((f) => f.product_id)
+      await updateFavoriteOrder(orderedIds)
+      refresh()
+    },
+    [refresh],
+  )
+
+  const moveFavorite = useCallback(
+    async (index: number, direction: -1 | 1) => {
+      const targetIndex = index + direction
+      if (targetIndex < 0 || targetIndex >= foods.length) return
+      const currentList = [...foods]
+      const [item] = currentList.splice(index, 1)
+      currentList.splice(targetIndex, 0, item)
+      const orderedIds = currentList.map((f) => (isUsageRow(f) ? f.food.product_id : f.product_id))
+      await updateFavoriteOrder(orderedIds)
+      refresh()
+    },
+    [foods, refresh],
+  )
+
   const renderFood = useCallback(
-    ({ item }: { item: FoodRow }) => {
+    ({ item, index }: { item: FoodRow; index: number }) => {
+      const isFavMode = category === "foods" && listMode === "favorites" && !debounced.trim()
+      const isReordering = isFavMode && reorderFavorites
+
       if (isUsageRow(item)) {
         return (
           <FoodListItem
@@ -348,6 +396,11 @@ export default function LogMealScreen() {
             onPress={() => openFood(item.food)}
             onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
             quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
+            isReordering={isReordering}
+            canMoveUp={index > 0}
+            canMoveDown={index < foods.length - 1}
+            onMoveUp={() => moveFavorite(index, -1)}
+            onMoveDown={() => moveFavorite(index, 1)}
           />
         )
       }
@@ -359,10 +412,26 @@ export default function LogMealScreen() {
           onPress={() => openFood(item)}
           onQuickAdd={() => handleQuickAdd(item)}
           quickAdding={addingKey === item.product_id}
+          isReordering={isReordering}
+          canMoveUp={index > 0}
+          canMoveDown={index < foods.length - 1}
+          onMoveUp={() => moveFavorite(index, -1)}
+          onMoveDown={() => moveFavorite(index, 1)}
         />
       )
     },
-    [accent, addingKey, handleQuickAdd, openFood],
+    [
+      accent,
+      addingKey,
+      category,
+      debounced,
+      foods.length,
+      handleQuickAdd,
+      listMode,
+      moveFavorite,
+      openFood,
+      reorderFavorites,
+    ],
   )
 
   const mealTotalsById = useMemo(() => {
@@ -416,11 +485,14 @@ export default function LogMealScreen() {
     category === "foods" && loggedEntries.length > 0 ? (
       <View style={styles.loggedWrap}>
         <View style={styles.loggedHeader}>
-          <Text style={styles.loggedTitle}>Logged in {MEAL_LABELS[mealType]}</Text>
-          <View style={styles.loggedMetaRow}>
+          <View style={styles.loggedHeaderTop}>
+            <Text style={styles.loggedTitle}>Logged in {MEAL_LABELS[mealType]}</Text>
             <Text style={styles.loggedMeta}>
-              {loggedEntries.length} items · {mealKcal} kcal
+              {loggedEntries.length} {loggedEntries.length === 1 ? "item" : "items"} · {mealKcal}{" "}
+              kcal
             </Text>
+          </View>
+          <View style={styles.loggedHeaderMacros}>
             <MacroPills
               protein={mealTotalsValues.protein}
               carbs={mealTotalsValues.carbs}
@@ -485,6 +557,33 @@ export default function LogMealScreen() {
       </View>
     ) : null
 
+  const favoritesToolbar =
+    category === "foods" && listMode === "favorites" && !debounced.trim() && foods.length > 1 ? (
+      <View style={styles.reorderBar}>
+        <Text style={styles.reorderTitle}>
+          {foods.length} {foods.length === 1 ? "Favorite" : "Favorites"}
+        </Text>
+        <Pressable
+          style={[
+            styles.reorderBtn,
+            reorderFavorites && { backgroundColor: accent, borderColor: accent },
+          ]}
+          onPress={() => setReorderFavorites((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={reorderFavorites ? "Done reordering" : "Reorder favorites"}
+        >
+          <Ionicons
+            name={reorderFavorites ? "checkmark-circle" : "swap-vertical"}
+            size={15}
+            color={reorderFavorites ? colors.onPrimary : colors.text}
+          />
+          <Text style={[styles.reorderBtnText, reorderFavorites && { color: colors.onPrimary }]}>
+            {reorderFavorites ? "Done" : "Reorder"}
+          </Text>
+        </Pressable>
+      </View>
+    ) : null
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -509,13 +608,11 @@ export default function LogMealScreen() {
           </View>
 
           <Pressable
-            onPress={() =>
-              router.push({ pathname: "/create-options", params: { meal: mealType, date } })
-            }
+            onPress={() => setOptionsOpen(true)}
             hitSlop={8}
             style={styles.moreBtn}
             accessibilityRole="button"
-            accessibilityLabel="More"
+            accessibilityLabel="More options"
           >
             <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
           </Pressable>
@@ -562,24 +659,48 @@ export default function LogMealScreen() {
           </View>
         </View>
 
-        {/* Compact Filter Row: Dropdowns for Type & Mode */}
-        <View style={styles.filterRow}>
-          <FilterDropdown<FoodCategory>
-            value={category}
-            options={CATEGORY_OPTIONS}
-            onChange={setCategory}
-            title="Select Type"
-            accentColor={accent}
-          />
-          {category === "foods" && !debounced.trim() ? (
-            <FilterDropdown<ListMode>
-              value={listMode}
-              options={LIST_MODE_OPTIONS}
-              onChange={setListMode}
-              title="Filter Foods"
-              accentColor={accent}
-            />
-          ) : null}
+        {/* Always visible quick-switch tabs: Frequent, Recent, Favorites, Meals */}
+        <View style={styles.tabBar}>
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => handleTabPress(tab.id)}
+                style={[
+                  styles.tabItem,
+                  isActive
+                    ? [
+                        styles.tabItemActive,
+                        {
+                          backgroundColor: `${accent}1f`,
+                          borderColor: `${accent}55`,
+                        },
+                      ]
+                    : styles.tabItemInactive,
+                ]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={tab.label}
+              >
+                <Ionicons
+                  name={isActive ? tab.activeIcon : tab.icon}
+                  size={14.5}
+                  color={isActive ? accent : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: isActive ? accent : colors.textMuted },
+                    isActive && styles.tabLabelActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
         </View>
 
         {/* Search Bar (Expandable / Focusable via Search FAB) */}
@@ -627,67 +748,93 @@ export default function LogMealScreen() {
         {loading ? <ActivityIndicator style={styles.loader} color={accent} /> : null}
 
         {category === "foods" ? (
-          <FlatList
-            style={styles.list}
-            data={foods}
-            keyExtractor={(item) =>
-              isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
-            }
-            keyboardDismissMode="on-drag"
-            keyboardShouldPersistTaps="handled"
-            contentContainerClassName={
-              foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-36"
-            }
-            ListHeaderComponent={loggedSection}
-            renderItem={renderFood}
-            ListEmptyComponent={
-              !loading ? (
-                <EmptyState
-                  icon="fast-food-outline"
-                  iconColor={accent}
-                  title={emptyMessage}
-                  variant="compact"
-                />
-              ) : null
-            }
-            ListFooterComponent={
-              debounced && contextual.length > 0 ? (
-                <View style={styles.contextualWrap}>
-                  <Text style={styles.contextualTitle}>
-                    {listMode === "favorites"
-                      ? "Favorite picks"
-                      : listMode === "recent"
-                        ? "Recently used"
-                        : "Frequent picks"}
-                  </Text>
-                  {contextual.map((item) =>
-                    isUsageRow(item) ? (
-                      <FoodListItem
-                        key={`${item.food.product_id}-${item.amount}`}
-                        food={item.food}
-                        amount={item.amount}
-                        accentColor={accent}
-                        quickAddVariant="pill"
-                        onPress={() => openFood(item.food)}
-                        onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
-                        quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
-                      />
-                    ) : (
-                      <FoodListItem
-                        key={item.product_id}
-                        food={item}
-                        accentColor={accent}
-                        quickAddVariant="pill"
-                        onPress={() => openFood(item)}
-                        onQuickAdd={() => handleQuickAdd(item)}
-                        quickAdding={addingKey === item.product_id}
-                      />
-                    ),
-                  )}
-                </View>
-              ) : undefined
-            }
-          />
+          listMode === "favorites" && !debounced.trim() && reorderFavorites ? (
+            <FlatList
+              style={styles.list}
+              data={[]}
+              renderItem={() => null}
+              ListHeaderComponent={
+                <>
+                  {loggedSection}
+                  {favoritesToolbar}
+                  <SortableFavoriteList
+                    foods={foods as SearchFoodResult[]}
+                    onReorder={handleReorderFavorites}
+                    onOpenFood={openFood}
+                    onMoveOne={moveFavorite}
+                    accentColor={accent}
+                  />
+                </>
+              }
+            />
+          ) : (
+            <FlatList
+              style={styles.list}
+              data={foods}
+              keyExtractor={(item) =>
+                isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
+              }
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              contentContainerClassName={
+                foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-36"
+              }
+              ListHeaderComponent={
+                <>
+                  {loggedSection}
+                  {favoritesToolbar}
+                </>
+              }
+              renderItem={renderFood}
+              ListEmptyComponent={
+                !loading ? (
+                  <EmptyState
+                    icon="fast-food-outline"
+                    iconColor={accent}
+                    title={emptyMessage}
+                    variant="compact"
+                  />
+                ) : null
+              }
+              ListFooterComponent={
+                debounced && contextual.length > 0 ? (
+                  <View style={styles.contextualWrap}>
+                    <Text style={styles.contextualTitle}>
+                      {listMode === "favorites"
+                        ? "Favorite picks"
+                        : listMode === "recent"
+                          ? "Recently used"
+                          : "Frequent picks"}
+                    </Text>
+                    {contextual.map((item) =>
+                      isUsageRow(item) ? (
+                        <FoodListItem
+                          key={`${item.food.product_id}-${item.amount}`}
+                          food={item.food}
+                          amount={item.amount}
+                          accentColor={accent}
+                          quickAddVariant="pill"
+                          onPress={() => openFood(item.food)}
+                          onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
+                          quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
+                        />
+                      ) : (
+                        <FoodListItem
+                          key={item.product_id}
+                          food={item}
+                          accentColor={accent}
+                          quickAddVariant="pill"
+                          onPress={() => openFood(item)}
+                          onQuickAdd={() => handleQuickAdd(item)}
+                          quickAdding={addingKey === item.product_id}
+                        />
+                      ),
+                    )}
+                  </View>
+                ) : undefined
+              }
+            />
+          )
         ) : (
           <FlatList
             style={styles.list}
@@ -743,6 +890,13 @@ export default function LogMealScreen() {
           </View>
         }
       />
+
+      <CreateOptionsModal
+        visible={optionsOpen}
+        mealType={mealType}
+        date={date}
+        onClose={() => setOptionsOpen(false)}
+      />
     </KeyboardAvoidingView>
   )
 }
@@ -780,6 +934,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 15,
       fontWeight: "800",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       marginLeft: 2,
     },
@@ -796,14 +951,35 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    filterRow: {
+    tabBar: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "flex-end",
-      gap: 8,
-      paddingHorizontal: spacing.md,
-      paddingTop: spacing.xs,
-      paddingBottom: spacing.xs,
+      gap: 6,
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.xs,
+    },
+    tabItem: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4.5,
+      paddingVertical: 7,
+      paddingHorizontal: 2,
+      borderRadius: 12,
+      borderWidth: 1,
+    },
+    tabItemActive: {},
+    tabItemInactive: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    tabLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    tabLabelActive: {
+      fontWeight: "700",
     },
     searchWrap: {
       flexDirection: "row",
@@ -848,18 +1024,28 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     loggedHeader: {
+      marginBottom: spacing.xs,
+      gap: 6,
+    },
+    loggedHeaderTop: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: spacing.xs,
-    },
-    loggedTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
-    loggedMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
       gap: spacing.xs,
     },
-    loggedMeta: { fontSize: 12, fontWeight: "600", color: colors.textMuted },
+    loggedTitle: { fontSize: 14, fontWeight: "700", color: colors.text },
+    loggedMeta: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+    },
+    loggedHeaderMacros: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+    },
     loggedRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -900,6 +1086,7 @@ const createStyles = (colors: ColorPalette) =>
     miniChipText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     budgetBar: {
@@ -938,6 +1125,7 @@ const createStyles = (colors: ColorPalette) =>
     dayBudgetBadgeText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     budgetPillsRow: {
@@ -963,5 +1151,34 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "700",
       color: colors.textMuted,
       marginBottom: spacing.xs,
+    },
+    reorderBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.md + 4,
+      paddingVertical: spacing.xs,
+      marginBottom: spacing.xs,
+    },
+    reorderTitle: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.textMuted,
+    },
+    reorderBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 10,
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    reorderBtnText: {
+      fontSize: 12.5,
+      fontWeight: "700",
+      color: colors.text,
     },
   })

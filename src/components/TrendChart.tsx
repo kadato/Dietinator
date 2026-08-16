@@ -20,7 +20,7 @@ import Svg, {
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, shiftDateKey } from "@/utils/date"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 export type TrendPoint = { date: string; value: number }
 
@@ -44,7 +44,7 @@ type Props = {
   onPointPress?: (point: TrendPoint) => void
 }
 
-const PAD = { top: 14, right: 12, bottom: 24, left: 46 }
+const PAD = { top: 14, right: 12, bottom: 24, left: 54 }
 const DAY_MS = 86400000
 
 function dayIndex(dateKey: string, startKey: string): number {
@@ -134,15 +134,17 @@ export function TrendChart({
       slot * (Math.min(totalDays - 1, Math.max(0, dayIndex(dateKey, rangeStart))) + 0.5) -
       barWidth / 2
 
-    // X tick labels — ~6 evenly spaced dates across the range (deduplicated),
-    // so the axis visibly changes with the selected range.
-    const targetTicks = 6
-    const step = Math.max(1, Math.ceil((totalDays - 1) / targetTicks))
+    // X tick labels — evenly spaced dates across the range (deduplicated),
+    // so the axis visibly changes with the selected range without label crowding.
+    const targetTicks = 3
     const tickDates: string[] = []
-    for (let day = 0; day < totalDays; day += step) {
-      tickDates.push(shiftDateKey(rangeStart, day))
+    for (let i = 0; i <= targetTicks; i++) {
+      const day = Math.round((i * (totalDays - 1)) / targetTicks)
+      const key = shiftDateKey(rangeStart, day)
+      if (!tickDates.includes(key)) {
+        tickDates.push(key)
+      }
     }
-    if (tickDates[tickDates.length - 1] !== rangeEnd) tickDates.push(rangeEnd)
 
     // Y grid lines at min / mid / max, but labels only at min / max so the
     // mid label never collides with a data dot sitting on the mid value.
@@ -234,6 +236,7 @@ export function TrendChart({
               x={PAD.left - 6}
               y={geometry.yFor(value) + 3.5}
               fontSize={10}
+              fontFamily={fonts.mono}
               fill={colors.textMuted}
               textAnchor="end"
             >
@@ -247,6 +250,7 @@ export function TrendChart({
               x={geometry.xFor(dateKey)}
               y={height - 6}
               fontSize={10}
+              fontFamily={fonts.mono}
               fill={colors.textMuted}
               textAnchor={
                 index === 0 ? "start" : index === geometry.tickDates.length - 1 ? "end" : "middle"
@@ -271,6 +275,7 @@ export function TrendChart({
                 x={PAD.left + geometry.innerW}
                 y={goalY - 5}
                 fontSize={10}
+                fontFamily={fonts.mono}
                 fill={colors.warning}
                 textAnchor="end"
               >

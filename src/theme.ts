@@ -88,3 +88,8 @@ export const layout = {
   /** Fixed bottom tab bar height on phones (excluding the safe-area inset). */
   tabBarHeight: 64,
 }
+
+export const fonts = {
+  mono: "'JetBrains Mono', 'JetBrainsMono Nerd Font', 'Geist Mono', monospace",
+  sans: "'Plus Jakarta Sans', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+}

@@ -204,10 +204,10 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           {bmi !== null ? (
             <Box className="mt-3 flex-row items-center justify-between rounded-2xl bg-primary-500/10 px-4 py-3">
               <Box>
-                <Text size="xs" bold className="text-typography-900">
+                <Text size="xs" bold className="font-tabular text-typography-900">
                   BMI {bmi}
                 </Text>
-                <Text size="2xs" className="text-typography-500">
+                <Text size="2xs" className="font-tabular text-typography-500">
                   Height: {settings.height_cm} cm
                 </Text>
               </Box>

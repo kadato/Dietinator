@@ -30,7 +30,6 @@ import { NumberStepper } from "@/components/NumberStepper"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { spacing } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -203,14 +202,34 @@ export default function MealBuilderScreen() {
     >
       <ModalContainer maxWidth={640}>
         <Box
-          className="flex-row items-center px-4 pb-2"
-          style={{ paddingTop: insets.top + spacing.md }}
+          className="flex-row items-center justify-between px-4 pb-2"
+          style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 16 }}
         >
-          <Box className="h-11 w-11" />
-          <Text size="2xl" bold className="flex-1 text-center text-typography-900">
+          <Pressable
+            onPress={safeBack}
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={22} color={colors.text} />
+          </Pressable>
+          <Text size="xl" bold className="flex-1 text-center text-typography-900">
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
-          <Box className="w-11" />
+          {isEditing ? (
+            <Pressable
+              onPress={handleDelete}
+              hitSlop={8}
+              className="h-10 w-10 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+              accessibilityRole="button"
+              accessibilityLabel="Delete meal"
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+            </Pressable>
+          ) : (
+            <Box className="w-10" />
+          )}
         </Box>
 
         <ScrollView

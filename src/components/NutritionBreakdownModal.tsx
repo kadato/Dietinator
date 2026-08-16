@@ -8,7 +8,7 @@ import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   visible: boolean
@@ -462,6 +462,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 32,
       fontWeight: "800",
       color: colors.primary,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     energyLabel: {
@@ -482,6 +483,7 @@ const createStyles = (colors: ColorPalette) =>
     macroPillLabel: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     sectionHeading: {
@@ -530,6 +532,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 14,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     unitText: {
@@ -542,6 +545,7 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "700",
       minWidth: 54,
       textAlign: "right",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     rdiColor: {

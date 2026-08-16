@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type MacroRowProps = {
   label: string
@@ -159,12 +159,14 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 13,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     goalText: {
       fontSize: 12,
       fontWeight: "500",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
     },
     budgetBadge: {
       paddingHorizontal: 7,
@@ -174,6 +176,7 @@ const createStyles = (colors: ColorPalette) =>
     budgetBadgeText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     barBg: {

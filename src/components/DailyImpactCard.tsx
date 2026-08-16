@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { AppSettings, FoodNutrients } from "@/types"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   currentDayNutrients: FoodNutrients
@@ -424,11 +424,11 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 20,
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: colors.border,
       padding: spacing.md,
-      marginBottom: spacing.md,
+      marginBottom: spacing.sm,
     },
     cardHeader: {
       marginBottom: spacing.sm,
@@ -470,6 +470,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 14,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       marginTop: 2,
     },
@@ -491,6 +492,7 @@ const createStyles = (colors: ColorPalette) =>
     calorieBadgeText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     heroBarTrack: {
@@ -538,6 +540,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 12,
       fontWeight: "600",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     arrowText: {
@@ -560,6 +563,7 @@ const createStyles = (colors: ColorPalette) =>
     budgetBadgeText: {
       fontSize: 10,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     barTrack: {
@@ -615,6 +619,7 @@ const createStyles = (colors: ColorPalette) =>
     microValues: {
       fontSize: 11,
       color: colors.textMuted,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     microProjected: {
@@ -640,6 +645,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 9,
       color: colors.textMuted,
       marginTop: 1,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
   })

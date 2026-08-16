@@ -338,7 +338,7 @@ export default function StatsScreen() {
                   <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
                     <Box className="flex-row items-center gap-1">
                       <Ionicons name="flame" size={14} color={colors.warning} />
-                      <Text size="lg" bold className="text-typography-900">
+                      <Text size="lg" bold className="font-tabular text-typography-900">
                         {logStreak}
                       </Text>
                     </Box>
@@ -347,7 +347,7 @@ export default function StatsScreen() {
                     </Text>
                   </Box>
                   <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
-                    <Text size="lg" bold className="text-typography-900">
+                    <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.loggedDays}
                     </Text>
                     <Text size="xs" className="mt-0.5 text-typography-500">
@@ -355,7 +355,7 @@ export default function StatsScreen() {
                     </Text>
                   </Box>
                   <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
-                    <Text size="lg" bold className="text-typography-900">
+                    <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "—"}
                     </Text>
                     <Text size="xs" className="mt-0.5 text-typography-500">
@@ -390,6 +390,7 @@ export default function StatsScreen() {
                             <Text
                               size="xs"
                               bold
+                              className="font-tabular"
                               style={{ color: weightDelta < 0 ? colors.primary : colors.danger }}
                             >
                               {formatWeight(Math.abs(weightDelta), settings.units)}
@@ -403,7 +404,7 @@ export default function StatsScreen() {
                       </Text>
                     )}
                   </Box>
-                  <Text size="lg" bold className="text-typography-900">
+                  <Text size="lg" bold className="font-tabular text-typography-900">
                     {latest ? formatWeight(latest.weight_kg, settings.units) : "—"}
                   </Text>
                 </Box>
@@ -413,13 +414,13 @@ export default function StatsScreen() {
                     {bmi !== null ? (
                       <Box className="flex-row items-center gap-1">
                         <Ionicons name="body-outline" size={13} color={colors.textMuted} />
-                        <Text size="xs" bold className="text-typography-600">
+                        <Text size="xs" bold className="font-tabular text-typography-600">
                           BMI {bmi}
                         </Text>
                       </Box>
                     ) : null}
                     {goalDelta !== null ? (
-                      <Text size="xs" bold className="text-typography-600">
+                      <Text size="xs" bold className="font-tabular text-typography-600">
                         {goalDelta <= 0.05
                           ? "At goal weight"
                           : `${formatWeight(Math.abs(goalDelta), settings.units)} to goal`}
@@ -435,7 +436,7 @@ export default function StatsScreen() {
                         {goalProgress >= 1 ? "Goal reached" : "Goal progress"}
                       </Text>
                       {goalProgress < 1 ? (
-                        <Text size="xs" bold className="text-typography-600">
+                        <Text size="xs" bold className="font-tabular text-typography-600">
                           {Math.round(goalProgress * 100)}%
                         </Text>
                       ) : null}
@@ -480,40 +481,40 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedWeight ? (
-                  <Box className="mt-3 flex-row items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2">
+                  <Box className="mt-3 flex-row flex-wrap items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2.5">
                     <Ionicons name="location-outline" size={15} color={colors.primary} />
-                    <Box className="min-w-0 flex-1">
+                    <Box className="min-w-[120px] flex-1">
                       <Text size="xs" bold className="text-typography-900">
                         {formatDisplayDate(selectedWeight.date)}
                       </Text>
-                      <Text size="xs" className="text-typography-500">
+                      <Text size="xs" className="font-tabular text-typography-500">
                         {formatWeight(selectedWeight.weight_kg, settings.units)}
                         {selectedWeight.note ? ` · ${selectedWeight.note}` : ""}
                       </Text>
                     </Box>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="secondary"
-                      className="w-20"
-                      onPress={() => {
-                        setEditWeightDate(selectedWeight.date)
-                        setLogWeightOpen(true)
-                      }}
-                      accessibilityLabel="Edit selected weight"
-                    >
-                      <ButtonText>Edit</ButtonText>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      action="negative"
-                      className="w-20"
-                      onPress={() => onDeleteWeight(selectedWeight)}
-                      accessibilityLabel="Delete selected weight"
-                    >
-                      <ButtonText>Delete</ButtonText>
-                    </Button>
+                    <Box className="flex-row items-center gap-1.5">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        action="secondary"
+                        onPress={() => {
+                          setEditWeightDate(selectedWeight.date)
+                          setLogWeightOpen(true)
+                        }}
+                        accessibilityLabel="Edit selected weight"
+                      >
+                        <ButtonText>Edit</ButtonText>
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        action="negative"
+                        onPress={() => onDeleteWeight(selectedWeight)}
+                        accessibilityLabel="Delete selected weight"
+                      >
+                        <ButtonText>Delete</ButtonText>
+                      </Button>
+                    </Box>
                   </Box>
                 ) : null}
 
@@ -554,7 +555,7 @@ export default function StatsScreen() {
                       <Text size="md" bold className="text-typography-900">
                         Calories
                       </Text>
-                      <Text size="xs" className="text-typography-500">
+                      <Text size="xs" className="font-tabular text-typography-500">
                         Daily average {avgKcal !== null ? `${avgKcal} kcal` : "—"}
                         {settings.calorie_goal > 0
                           ? ` · goal ${Math.round(settings.calorie_goal)}`
@@ -585,7 +586,7 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedKcal ? (
-                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
                     {formatDisplayDate(selectedKcal.date)} — {Math.round(selectedKcal.value)} kcal
                     {settings.calorie_goal > 0
                       ? selectedKcal.value > settings.calorie_goal
@@ -662,7 +663,7 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedMacro ? (
-                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
                     {formatDisplayDate(selectedMacro.date)} — {Math.round(selectedMacro.value)}g{" "}
                     {macroMetric}
                   </Text>
@@ -681,10 +682,10 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.breakfast }}>
                           Protein
                         </Text>
-                        <Text size="sm" bold className="text-typography-900">
+                        <Text size="sm" bold className="font-tabular text-typography-900">
                           {avgMacros.protein}g
                         </Text>
-                        <Text size="2xs" className="text-typography-500">
+                        <Text size="2xs" className="font-tabular text-typography-500">
                           {avgMacros.proteinPct}%
                         </Text>
                       </Box>
@@ -695,10 +696,10 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.lunch }}>
                           Carbs
                         </Text>
-                        <Text size="sm" bold className="text-typography-900">
+                        <Text size="sm" bold className="font-tabular text-typography-900">
                           {avgMacros.carbs}g
                         </Text>
-                        <Text size="2xs" className="text-typography-500">
+                        <Text size="2xs" className="font-tabular text-typography-500">
                           {avgMacros.carbsPct}%
                         </Text>
                       </Box>
@@ -709,10 +710,10 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.dinner }}>
                           Fat
                         </Text>
-                        <Text size="sm" bold className="text-typography-900">
+                        <Text size="sm" bold className="font-tabular text-typography-900">
                           {avgMacros.fat}g
                         </Text>
-                        <Text size="2xs" className="text-typography-500">
+                        <Text size="2xs" className="font-tabular text-typography-500">
                           {avgMacros.fatPct}%
                         </Text>
                       </Box>
@@ -731,7 +732,7 @@ export default function StatsScreen() {
                     <Text size="md" bold className="text-typography-900">
                       Water
                     </Text>
-                    <Text size="xs" className="text-typography-500">
+                    <Text size="xs" className="font-tabular text-typography-500">
                       Daily intake
                       {settings.water_goal_ml > 0
                         ? ` · goal ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
@@ -766,7 +767,7 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedWater ? (
-                  <Text size="xs" bold className="mt-2 px-1 text-typography-600">
+                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
                     {formatDisplayDate(selectedWater.date)} —{" "}
                     {formatWaterAmount(selectedWater.value, settings.units)}
                     {settings.water_goal_ml > 0

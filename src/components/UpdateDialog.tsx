@@ -138,38 +138,47 @@ export function UpdateDialog({
               ) : null}
             </ScrollView>
 
-            <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
+            <Box className="gap-2.5 border-t border-outline-100 px-5 py-4">
+              <Box className="flex-row items-center gap-3">
+                <Button
+                  size="md"
+                  variant="outline"
+                  action="secondary"
+                  className="flex-1"
+                  onPress={onClose}
+                  isDisabled={downloading}
+                >
+                  <ButtonText>Later</ButtonText>
+                </Button>
+                {apk ? (
+                  <Button
+                    size="md"
+                    className="flex-1"
+                    onPress={onDownload}
+                    isDisabled={downloading}
+                  >
+                    {downloading ? <ButtonSpinner /> : null}
+                    <ButtonText>{progressLabel}</ButtonText>
+                  </Button>
+                ) : null}
+              </Box>
+
               <Pressable
                 onPress={onNeverAsk}
                 hitSlop={8}
                 disabled={downloading}
+                className="items-center justify-center py-1"
                 accessibilityRole="button"
                 accessibilityLabel="Don't ask again"
               >
                 <Text
-                  size="sm"
+                  size="xs"
                   bold
-                  className={`${downloading ? "opacity-40" : ""} text-typography-500`}
+                  className={`${downloading ? "opacity-40" : ""} text-typography-400`}
                 >
                   Don&apos;t ask again
                 </Text>
               </Pressable>
-              <View className="flex-1" />
-              <Button
-                size="md"
-                variant="outline"
-                action="secondary"
-                onPress={onClose}
-                isDisabled={downloading}
-              >
-                <ButtonText>Later</ButtonText>
-              </Button>
-              {apk ? (
-                <Button size="md" onPress={onDownload} isDisabled={downloading}>
-                  {downloading ? <ButtonSpinner /> : null}
-                  <ButtonText>{progressLabel}</ButtonText>
-                </Button>
-              ) : null}
             </Box>
           </ModalContainer>
         </View>

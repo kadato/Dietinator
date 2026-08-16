@@ -31,6 +31,12 @@ type Props = {
    * with the accent color — the log-meal quick-log affordance.
    */
   quickAddVariant?: "icon" | "pill"
+  /** Whether reorder mode is active (shows move up/down buttons). */
+  isReordering?: boolean
+  onMoveUp?: () => void
+  onMoveDown?: () => void
+  canMoveUp?: boolean
+  canMoveDown?: boolean
 }
 
 export const FoodListItem = memo(function FoodListItem({
@@ -45,16 +51,27 @@ export const FoodListItem = memo(function FoodListItem({
   accentColor,
   showKcal,
   quickAddVariant = "icon",
+  isReordering = false,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }: Props) {
   const { colors } = useTheme()
   const accent = accentColor ?? colors.primary
   const unit = food.base_unit || "g"
 
   const perGram = isPerGramNutrients(food.nutrients, unit, food.serving.serving_quantity)
+  const effectiveAmount =
+    amount !== undefined
+      ? amount
+      : food.last_amount && food.last_amount > 0
+        ? food.last_amount
+        : undefined
 
   const nutrients =
-    amount !== undefined
-      ? nutrientsForAmount(food.nutrients, food.serving, amount, unit)
+    effectiveAmount !== undefined
+      ? nutrientsForAmount(food.nutrients, food.serving, effectiveAmount, unit)
       : {
           kcal: perGram ? Math.round(food.nutrients.kcal * 100) : Math.round(food.nutrients.kcal),
           protein: perGram ? food.nutrients.protein * 100 : food.nutrients.protein,
@@ -63,10 +80,10 @@ export const FoodListItem = memo(function FoodListItem({
         }
 
   const portion =
-    amount !== undefined
-      ? `${formatNumber(amount)} ${displayUnit(unit)}`
+    effectiveAmount !== undefined
+      ? `${formatNumber(effectiveAmount)} ${displayUnit(unit)}`
       : perGram
-        ? `100 ${unit}`
+        ? `100 ${displayUnit(unit)}`
         : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
 
   const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
@@ -123,21 +140,66 @@ export const FoodListItem = memo(function FoodListItem({
           </Text>
         ) : null}
       </Pressable>
-      {onQuickAdd ? (
+      {isReordering ? (
+        <Box className="ml-2 flex-row items-center gap-1.5">
+          <Pressable
+            onPress={onMoveUp}
+            disabled={!canMoveUp}
+            hitSlop={6}
+            className={`h-9 w-9 items-center justify-center rounded-xl bg-background-100 ${
+              canMoveUp ? "active:bg-background-200" : "opacity-30"
+            }`}
+            accessibilityRole="button"
+            accessibilityLabel={`Move ${food.name} up`}
+          >
+            <Ionicons
+              name="chevron-up"
+              size={18}
+              color={canMoveUp ? colors.text : colors.textMuted}
+            />
+          </Pressable>
+          <Pressable
+            onPress={onMoveDown}
+            disabled={!canMoveDown}
+            hitSlop={6}
+            className={`h-9 w-9 items-center justify-center rounded-xl bg-background-100 ${
+              canMoveDown ? "active:bg-background-200" : "opacity-30"
+            }`}
+            accessibilityRole="button"
+            accessibilityLabel={`Move ${food.name} down`}
+          >
+            <Ionicons
+              name="chevron-down"
+              size={18}
+              color={canMoveDown ? colors.text : colors.textMuted}
+            />
+          </Pressable>
+        </Box>
+      ) : onQuickAdd ? (
         quickAddVariant === "pill" ? (
           <Pressable
             onPress={onQuickAdd}
             disabled={quickAdding}
-            hitSlop={8}
-            className="ml-2 h-11 w-11 items-center justify-center rounded-full"
-            style={{ backgroundColor: accent }}
+            hitSlop={6}
+            className="ml-2 flex-row items-center justify-center rounded-xl px-2.5 py-1.5 active:opacity-85"
+            style={{ backgroundColor: accent, minHeight: 34, minWidth: 44 }}
             accessibilityRole="button"
-            accessibilityLabel={`Add ${food.name} to diary`}
+            accessibilityLabel={`Add ${portion} of ${food.name} to diary`}
           >
             {quickAdding ? (
               <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
-              <Ionicons name="add" size={22} color={colors.onPrimary} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                <Ionicons name="add" size={16} color={colors.onPrimary} />
+                <Text
+                  size="xs"
+                  bold
+                  className="font-tabular text-[12px] leading-4"
+                  style={{ color: colors.onPrimary }}
+                >
+                  {portion}
+                </Text>
+              </View>
             )}
           </Pressable>
         ) : (
@@ -157,7 +219,7 @@ export const FoodListItem = memo(function FoodListItem({
           </Pressable>
         )
       ) : null}
-      {onToggleFavorite ? (
+      {!isReordering && onToggleFavorite ? (
         <Pressable
           onPress={onToggleFavorite}
           hitSlop={12}
@@ -172,9 +234,9 @@ export const FoodListItem = memo(function FoodListItem({
             color={isFavorite ? colors.warning : colors.textMuted}
           />
         </Pressable>
-      ) : (
+      ) : !isReordering && !onQuickAdd ? (
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      )}
+      ) : null}
     </Box>
   )
 })

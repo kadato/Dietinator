@@ -212,11 +212,13 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
               <Text
                 key={index}
                 style={{
-                  fontFamily: "monospace",
-                  fontSize: 13,
+                  fontFamily: "JetBrains Mono, JetBrainsMono Nerd Font, monospace",
+                  fontSize: 12.5,
                   backgroundColor: colors.surfaceAlt,
                   borderRadius: 4,
-                  paddingHorizontal: 3,
+                  paddingHorizontal: 4,
+                  paddingVertical: 1,
+                  color: colors.primary,
                 }}
               >
                 {token.text}
@@ -282,7 +284,7 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
         <Box className="rounded-lg border border-outline-100 bg-background-100 px-3 py-2">
           <Text
             style={{
-              fontFamily: "monospace",
+              fontFamily: "JetBrains Mono, JetBrainsMono Nerd Font, monospace",
               fontSize: 12,
               color: colors.text,
               lineHeight: 18,

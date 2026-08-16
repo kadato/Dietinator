@@ -3,7 +3,7 @@ import Svg, { Circle, G } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { computeMacroRatios } from "@/utils/nutrients"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   consumed: number
@@ -194,6 +194,7 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "800",
       color: colors.text,
       letterSpacing: -0.5,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     remainingLabel: {
@@ -214,6 +215,7 @@ const createStyles = (colors: ColorPalette) =>
     statValue: {
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     statLabel: {

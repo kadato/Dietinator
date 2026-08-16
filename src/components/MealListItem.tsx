@@ -32,9 +32,9 @@ export const MealListItem = memo(function MealListItem({
   const accent = accentColor ?? colors.primary
 
   const kcal = Math.round(totals?.kcal ?? 0)
-  const protein = Math.round(totals?.protein ?? 0)
-  const carbs = Math.round(totals?.carbs ?? 0)
-  const fat = Math.round(totals?.fat ?? 0)
+  const protein = totals?.protein ?? 0
+  const carbs = totals?.carbs ?? 0
+  const fat = totals?.fat ?? 0
   const foodCount = meal.items.length === 1 ? "1 food" : `${meal.items.length} foods`
 
   return (

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { formatNumber } from "@/utils/format"
+import { fonts } from "@/theme"
 
 type Props = {
   protein: number
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   pillContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
     flexWrap: "wrap",
     maxWidth: "100%",
   },
@@ -206,9 +207,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   pillXs: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 7,
   },
   pillSm: {
     paddingHorizontal: 9,
@@ -225,6 +226,7 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontWeight: "700",
+    fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
   },
   pillTextXs: {
@@ -279,11 +281,13 @@ const styles = StyleSheet.create({
   cardGrams: {
     fontSize: 15,
     fontWeight: "800",
+    fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
   },
   cardPct: {
     fontSize: 11,
     fontWeight: "600",
+    fontFamily: fonts.mono,
     opacity: 0.75,
   },
 })

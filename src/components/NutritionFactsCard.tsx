@@ -6,7 +6,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import { MacroPills } from "@/components/MacroPills"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   nutrients: FoodNutrients
@@ -222,6 +222,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 22,
       fontWeight: "800",
       color: colors.primary,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     calorieUnit: {
@@ -275,12 +276,14 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 13,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     macroPct: {
       fontSize: 11,
       fontWeight: "500",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
     },
     microSection: {
       marginTop: 8,
@@ -324,6 +327,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 12,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     microBasis: {
@@ -337,6 +341,7 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.textMuted,
       minWidth: 42,
       textAlign: "right",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
   })

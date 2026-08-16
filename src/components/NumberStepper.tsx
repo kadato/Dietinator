@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type NumberStepperProps = {
   value: string
@@ -194,18 +194,18 @@ const createStyles = (colors: ColorPalette) =>
       // row edge (the "white block" look in modal rows).
       justifyContent: "center",
     },
-    rowSm: { gap: 4 },
+    rowSm: { gap: 6 },
     btn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    btnSm: { width: 32, height: 32, borderRadius: 16 },
+    btnSm: { width: 36, height: 36, borderRadius: 18 },
     btnDisabled: { opacity: 0.4 },
     input: {
       // Fixed width so native and web render the compact stepper identically
@@ -215,23 +215,28 @@ const createStyles = (colors: ColorPalette) =>
       width: 120,
       minWidth: 0,
       backgroundColor: colors.surface,
-      borderRadius: 10,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      paddingVertical: spacing.md,
+      paddingVertical: spacing.sm + 4,
       paddingHorizontal: spacing.md,
       color: colors.text,
-      fontSize: 18,
+      fontSize: 19,
+      fontWeight: "700",
       textAlign: "center",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     inputSm: {
       flexGrow: 0,
       flexShrink: 0,
-      width: 64,
-      minWidth: 54,
-      paddingVertical: spacing.xs,
+      width: 68,
+      minWidth: 56,
+      paddingVertical: spacing.xs + 2,
       paddingHorizontal: spacing.xs,
       fontSize: 15,
-      fontWeight: "600",
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
   })

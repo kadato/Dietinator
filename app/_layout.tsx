@@ -12,6 +12,7 @@ import { ToastProvider } from "@/context/ToastContext"
 import { UpdateProvider } from "@/context/UpdateContext"
 import { ThemeProvider } from "@/context/ThemeContext"
 import { useTheme } from "@/hooks/useTheme"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import type { ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
@@ -120,18 +121,20 @@ function ThemedApp() {
   const gluestackMode = isDark ? "dark" : "light"
 
   return (
-    <GluestackUIProvider mode={gluestackMode}>
-      <NetworkProvider>
-        <ToastProvider>
-          <UpdateProvider>
-            <AiChatModalProvider>
-              <RootNavigator />
-              <AiChatModal />
-            </AiChatModalProvider>
-          </UpdateProvider>
-        </ToastProvider>
-      </NetworkProvider>
-    </GluestackUIProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GluestackUIProvider mode={gluestackMode}>
+        <NetworkProvider>
+          <ToastProvider>
+            <UpdateProvider>
+              <AiChatModalProvider>
+                <RootNavigator />
+                <AiChatModal />
+              </AiChatModalProvider>
+            </UpdateProvider>
+          </ToastProvider>
+        </NetworkProvider>
+      </GluestackUIProvider>
+    </GestureHandlerRootView>
   )
 }
 

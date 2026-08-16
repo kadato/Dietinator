@@ -181,10 +181,10 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           </Pressable>
 
           <Box className="my-3 items-center rounded-2xl bg-primary-500/10 px-4 py-3">
-            <Text size="2xl" bold className="text-typography-900">
+            <Text size="2xl" bold className="font-tabular text-typography-900">
               {formatWaterAmount(totalMl, settings.units)}
             </Text>
-            <Text size="xs" className="mt-0.5 text-typography-500">
+            <Text size="xs" className="font-tabular mt-0.5 text-typography-500">
               {goalMl > 0
                 ? `of ${formatWaterAmount(goalMl, settings.units)} goal`
                 : "logged this day"}
@@ -212,7 +212,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 accessibilityLabel={`Add ${amount} ml of water`}
                 className="min-w-[76px] flex-1 items-center rounded-full bg-primary-500 px-3 py-2.5 active:opacity-80"
               >
-                <Text size="sm" bold style={{ color: colors.onPrimary }}>
+                <Text size="sm" bold className="font-tabular" style={{ color: colors.onPrimary }}>
                   +{amount}
                 </Text>
               </Pressable>
@@ -262,7 +262,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   className="mb-1.5 flex-row items-center rounded-xl border border-outline-100 bg-background-50 px-3 py-2.5"
                 >
                   <Ionicons name="water-outline" size={16} color={colors.primary} />
-                  <Text size="sm" bold className="ml-2 flex-1 text-typography-900">
+                  <Text size="sm" bold className="font-tabular ml-2 flex-1 text-typography-900">
                     {formatWaterAmount(entry.amount_ml, settings.units)}
                   </Text>
                   <Pressable

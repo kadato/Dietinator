@@ -8,7 +8,7 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { MacroPills } from "@/components/MacroPills"
 import { formatNumber } from "@/utils/format"
 import { getFoodIcon } from "@/utils/food-icon"
-import type { ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   entry: DiaryEntry
@@ -72,7 +72,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         {onShowNutrition ? (
           <Pressable
             onPress={() => onShowNutrition(entry)}
-            hitSlop={6}
+            hitSlop={8}
             onPressIn={infoPress.onPressIn}
             onPressOut={infoPress.onPressOut}
             style={[
@@ -83,12 +83,12 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
             accessibilityRole="button"
             accessibilityLabel={`View nutrition facts for ${entry.food_name}`}
           >
-            <Ionicons name="pie-chart-outline" size={14} color={colors.primary} />
+            <Ionicons name="pie-chart-outline" size={15} color={colors.primary} />
           </Pressable>
         ) : null}
         <Pressable
           onPress={() => onEdit(entry.id)}
-          hitSlop={6}
+          hitSlop={8}
           onPressIn={editPress.onPressIn}
           onPressOut={editPress.onPressOut}
           style={[
@@ -103,7 +103,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
-          hitSlop={6}
+          hitSlop={8}
           onPressIn={deletePress.onPressIn}
           onPressOut={deletePress.onPressOut}
           style={[
@@ -114,7 +114,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Delete ${entry.food_name}`}
         >
-          <Ionicons name="trash-outline" size={15} color={colors.danger} />
+          <Ionicons name="trash-outline" size={16} color={colors.danger} />
         </Pressable>
       </View>
     </View>
@@ -178,11 +178,13 @@ const createStyles = (colors: ColorPalette) =>
     miniChipText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     macroPill: {
       fontSize: 11,
       color: colors.textMuted,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     kcalBlock: {
@@ -194,6 +196,7 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 16,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     kcalUnit: {

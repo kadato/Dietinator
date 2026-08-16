@@ -19,7 +19,6 @@ import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
-import { useAiChatModal } from "@/context/AiChatContext"
 import { useToast } from "@/context/ToastContext"
 import { useUpdates } from "@/context/UpdateContext"
 import { getCurrentVersion } from "@/services/updates"
@@ -504,7 +503,7 @@ function SettingsField({ label, children }: { label: string; children: ReactNode
 
 /** AI form — isolated state so typing an API key or model never re-renders other parts. */
 function AiSettingsForm({ settings }: { settings: AppSettings }) {
-  const { openAiChat } = useAiChatModal()
+  const router = useRouter()
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
@@ -804,7 +803,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             variant="outline"
             action="secondary"
             className="min-w-[140px] flex-1"
-            onPress={openAiChat}
+            onPress={() => router.push("/(tabs)/ai")}
           >
             <ButtonText>Open AI chat</ButtonText>
           </Button>

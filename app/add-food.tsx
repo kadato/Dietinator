@@ -46,7 +46,7 @@ import { useApp } from "@/context/AppContext"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useToast } from "@/context/ToastContext"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 
 /**
@@ -400,7 +400,7 @@ export default function AddFoodScreen() {
           style={styles.scroll}
           contentContainerStyle={[
             styles.content,
-            { paddingTop: insets.top + spacing.md, paddingBottom: 120 },
+            { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + 96 },
           ]}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -410,134 +410,154 @@ export default function AddFoodScreen() {
             variant="narrow"
             contentStyle={isWide ? [styles.page, { maxWidth: 520 }] : styles.page}
           >
-            <View style={styles.titleRow}>
-              <View style={styles.titleBlock}>
-                <Text style={styles.title}>{food.name}</Text>
-                {food.producer ? <Text style={styles.producer}>{food.producer}</Text> : null}
+            {/* Header: Title, Producer, Date, Favorite */}
+            <View style={styles.headerBlock}>
+              <View style={styles.titleRow}>
+                <View style={styles.titleBlock}>
+                  <Text style={styles.title} numberOfLines={2}>
+                    {food.name}
+                  </Text>
+                  {food.producer ? <Text style={styles.producer}>{food.producer}</Text> : null}
+                </View>
+                {!isEditing ? (
+                  <Pressable
+                    onPress={handleToggleFavorite}
+                    disabled={favoriteToggling}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    accessibilityState={{ disabled: favoriteToggling }}
+                    style={{ opacity: favoriteToggling ? 0.5 : 1 }}
+                  >
+                    <Ionicons
+                      name={isFavorite ? "star" : "star-outline"}
+                      size={26}
+                      color={colors.warning}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
-              {!isEditing ? (
-                <Pressable
-                  onPress={handleToggleFavorite}
-                  disabled={favoriteToggling}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  accessibilityState={{ disabled: favoriteToggling }}
-                  style={{ opacity: favoriteToggling ? 0.5 : 1 }}
-                >
-                  <Ionicons
-                    name={isFavorite ? "star" : "star-outline"}
-                    size={28}
-                    color={colors.warning}
-                  />
-                </Pressable>
-              ) : null}
+              <Text style={styles.subtitle}>
+                {MEAL_LABELS[selectedMeal]} · {date}
+              </Text>
             </View>
-            <Text style={styles.subtitle}>
-              {MEAL_LABELS[selectedMeal]} · {date}
-            </Text>
 
+            {/* Meal Selector (Edit Mode) */}
             {isEditing ? (
-              <>
-                <Text style={styles.label}>Meal</Text>
+              <View style={styles.mealSection}>
+                <Text style={styles.sectionLabel}>Meal</Text>
                 <View style={styles.mealRow}>
                   {MEAL_TYPES.map((meal) => {
                     const active = meal === selectedMeal
                     return (
                       <Pressable
                         key={meal}
-                        style={[styles.chip, active && styles.chipSelected]}
+                        style={[styles.mealChip, active && styles.mealChipSelected]}
                         onPress={() => setSelectedMeal(meal)}
                         accessibilityRole="button"
                         accessibilityLabel={MEAL_LABELS[meal]}
                         accessibilityState={{ selected: active }}
                       >
-                        <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+                        <Text style={[styles.mealChipText, active && styles.mealChipTextSelected]}>
                           {MEAL_LABELS[meal]}
                         </Text>
                       </Pressable>
                     )
                   })}
                 </View>
-              </>
+              </View>
             ) : null}
 
-            <Text style={styles.sectionLabel}>Serving size</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.servingRow}
-              keyboardShouldPersistTaps="handled"
-            >
-              {servingOptions.map((option) => {
-                const key = `${option.serving}-${option.amount}`
-                const selected = key === selectedServingKey
-                return (
-                  <Pressable
-                    key={key}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => selectServing(option)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
-                    accessibilityState={{ selected }}
-                  >
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {formatServingOption(option, unit)}
-                    </Text>
-                  </Pressable>
-                )
-              })}
-            </ScrollView>
-
-            <Text style={styles.label}>Amount ({displayUnit(unit)})</Text>
-            <NumberStepper
-              value={amount}
-              onChangeText={(text) => {
-                amountTouched.current = true
-                setAmount(text)
-              }}
-              onSubmit={() => void handleSave()}
-              step={unit === "g" || unit === "ml" ? 10 : 1}
-              decimals={1}
-              accessibilityLabel={`Amount in ${displayUnit(unit)}`}
-              style={{ marginBottom: spacing.xs }}
-            />
-
-            {/* Quick Multiplier Chips */}
-            <View style={styles.multiplierRow}>
-              {[0.5, 1, 1.5, 2, 3].map((mult) => (
-                <Pressable
-                  key={mult}
-                  onPress={() => {
-                    const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
-                    const val = Math.round(base * mult * 10) / 10
-                    amountTouched.current = true
-                    setAmount(String(val))
-                  }}
-                  style={styles.multiplierChip}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Scale to ${mult}x serving`}
-                >
-                  <Text style={styles.multiplierText}>{mult}×</Text>
-                </Pressable>
-              ))}
-            </View>
-
+            {/* Nutrition Facts & Daily Budget Impact Cards (Top) */}
             {preview && (
-              <>
-                <DailyImpactCard
-                  currentDayNutrients={currentDayNutrients}
-                  itemNutrients={preview}
-                  settings={settings}
-                />
+              <View style={styles.nutritionSection}>
                 <NutritionFactsCard
                   nutrients={preview}
                   servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
                   baseAmount={Number(amount) || 100}
                   baseUnit={food.base_unit || "g"}
                 />
-              </>
+                <DailyImpactCard
+                  currentDayNutrients={currentDayNutrients}
+                  itemNutrients={preview}
+                  settings={settings}
+                />
+              </View>
             )}
+
+            {/* Compact Portion & Serving Controls (Bottom) */}
+            <View style={styles.portionCard}>
+              <View style={styles.portionHeaderRow}>
+                <Text style={styles.portionTitle}>Portion & Serving</Text>
+                <Text style={styles.unitBadge}>Base unit: {displayUnit(unit)}</Text>
+              </View>
+
+              {/* Serving Unit Chips */}
+              {servingOptions.length > 0 ? (
+                <View style={styles.servingBlock}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.servingRow}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {servingOptions.map((option) => {
+                      const key = `${option.serving}-${option.amount}`
+                      const selected = key === selectedServingKey
+                      return (
+                        <Pressable
+                          key={key}
+                          style={[styles.chip, selected && styles.chipSelected]}
+                          onPress={() => selectServing(option)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
+                          accessibilityState={{ selected }}
+                        >
+                          <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                            {formatServingOption(option, unit)}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
+
+              {/* Amount Stepper Control */}
+              <View style={styles.stepperContainer}>
+                <NumberStepper
+                  value={amount}
+                  onChangeText={(text) => {
+                    amountTouched.current = true
+                    setAmount(text)
+                  }}
+                  onSubmit={() => void handleSave()}
+                  step={unit === "g" || unit === "ml" ? 10 : 1}
+                  decimals={1}
+                  accessibilityLabel={`Amount in ${displayUnit(unit)}`}
+                />
+              </View>
+
+              {/* Quick Multiplier Chips */}
+              <View style={styles.multiplierRow}>
+                {[0.5, 1, 1.5, 2, 3].map((mult) => (
+                  <Pressable
+                    key={mult}
+                    onPress={() => {
+                      const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
+                      const val = Math.round(base * mult * 10) / 10
+                      amountTouched.current = true
+                      setAmount(String(val))
+                    }}
+                    style={styles.multiplierChip}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Scale to ${mult}x serving`}
+                  >
+                    <Text style={styles.multiplierText}>{mult}×</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
           </PageContainer>
         </ScrollView>
       </ModalContainer>
@@ -565,7 +585,7 @@ const createStyles = (colors: ColorPalette) =>
     container: { flex: 1, backgroundColor: colors.background },
     scroll: { flex: 1 },
     content: { flexGrow: 1 },
-    page: { padding: spacing.lg },
+    page: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm },
     center: {
       flex: 1,
       backgroundColor: colors.background,
@@ -579,40 +599,103 @@ const createStyles = (colors: ColorPalette) =>
     },
     loadingText: { color: colors.textMuted, fontSize: 14 },
     link: { color: colors.primary, marginTop: spacing.md },
+    headerBlock: {
+      marginBottom: 2,
+    },
     titleRow: {
       flexDirection: "row",
       alignItems: "flex-start",
       gap: spacing.sm,
     },
     titleBlock: { flex: 1 },
-    title: { fontSize: 24, fontWeight: "700", color: colors.text },
+    title: { fontSize: 20, fontWeight: "700", color: colors.text, letterSpacing: -0.2 },
     producer: {
-      fontSize: 15,
+      fontSize: 13,
       color: colors.textMuted,
-      marginTop: spacing.xs,
+      marginTop: 2,
     },
     subtitle: {
+      fontSize: 12,
       color: colors.textMuted,
-      marginTop: spacing.xs,
-      marginBottom: spacing.lg,
+      marginTop: 3,
+    },
+    mealSection: {
+      marginBottom: 2,
     },
     sectionLabel: {
       color: colors.textMuted,
-      fontSize: 13,
-      fontWeight: "600",
-      marginBottom: spacing.sm,
+      fontSize: 11,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginBottom: 6,
     },
     mealRow: {
       flexDirection: "row",
       flexWrap: "wrap",
+      gap: 6,
+    },
+    mealChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: 7,
+      borderRadius: 14,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mealChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    mealChipText: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: "600",
+    },
+    mealChipTextSelected: {
+      color: colors.onPrimary,
+    },
+    nutritionSection: {
+      gap: spacing.xs,
+    },
+    portionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
       gap: spacing.sm,
-      marginBottom: spacing.lg,
+    },
+    portionHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 2,
+    },
+    portionTitle: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.text,
+      letterSpacing: 0.2,
+    },
+    unitBadge: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: colors.textMuted,
+    },
+    servingBlock: {
+      marginBottom: 2,
+    },
+    servingRow: {
+      flexDirection: "row",
+      gap: 6,
+      paddingBottom: 2,
     },
     chip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: 12,
-      borderRadius: 20,
-      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.sm + 4,
+      paddingVertical: 7,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
       borderColor: colors.border,
     },
@@ -621,38 +704,41 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.primary,
     },
     chipText: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors.text,
       fontWeight: "500",
+      fontFamily: fonts.mono,
     },
     chipTextSelected: {
       color: colors.onPrimary,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
     },
-    servingRow: {
-      flexDirection: "row",
-      gap: spacing.sm,
-      paddingBottom: spacing.md,
+    stepperContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      marginVertical: 2,
     },
-    label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
     multiplierRow: {
       flexDirection: "row",
-      gap: spacing.xs,
-      marginBottom: spacing.lg,
-      marginTop: spacing.xs,
+      gap: 6,
+      marginTop: 2,
     },
     multiplierChip: {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 6,
-      borderRadius: 12,
+      paddingVertical: 7,
+      borderRadius: 10,
       backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
       borderColor: colors.border,
     },
     multiplierText: {
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: 12,
+      fontWeight: "700",
       color: colors.primary,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
   })

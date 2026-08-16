@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { Pressable, RefreshControl, ScrollView, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Ionicons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
@@ -16,7 +16,6 @@ import { NutritionBreakdownModal } from "@/components/NutritionBreakdownModal"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
-import { useAiChatModal } from "@/context/AiChatContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
@@ -48,7 +47,6 @@ import { Card } from "@ui/card"
 export default function TodayScreen() {
   const router = useRouter()
   const { settings, yazioAvailable, authenticated } = useApp()
-  const { openAiChat } = useAiChatModal()
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide } = useLayout()
@@ -455,7 +453,7 @@ export default function TodayScreen() {
               <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
                 {formatWaterAmount(waterIntake, settings.units)}
               </Text>
-              <Text size="2xs" className="text-typography-500">
+              <Text size="2xs" className="font-tabular text-typography-500">
                 {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
               </Text>
             </Box>
@@ -467,7 +465,7 @@ export default function TodayScreen() {
             accessibilityRole="button"
             accessibilityLabel="Quick add 250ml water"
           >
-            <Text size="2xs" bold style={{ color: colors.onPrimary }}>
+            <Text size="2xs" bold className="font-tabular" style={{ color: colors.onPrimary }}>
               +250ml
             </Text>
           </Pressable>
@@ -495,7 +493,7 @@ export default function TodayScreen() {
       {summary && summary.steps > 0 ? (
         <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-100 pb-3 pt-2">
           <Ionicons name="footsteps-outline" size={15} color={colors.primary} />
-          <Text size="xs" className="text-typography-900">
+          <Text size="xs" className="font-tabular text-typography-900">
             {summary.steps.toLocaleString()} steps
           </Text>
         </Box>
@@ -598,17 +596,6 @@ export default function TodayScreen() {
 
       <FabCluster
         bottomOffset={24}
-        left={
-          settings.ai_enabled === 1 ? (
-            <Fab
-              tone="surface"
-              IconComponent={MaterialCommunityIcons}
-              icon="robot-outline"
-              onPress={openAiChat}
-              accessibilityLabel="Open AI assistant"
-            />
-          ) : undefined
-        }
         right={
           <Fab
             icon="add"
