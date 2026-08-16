@@ -38,33 +38,33 @@ your account is optional and best-effort. No account needed to try it.
 <div align="center">
 
 <p align="center">
-<strong>Diary</strong> · <strong>AI assistant</strong> · <strong>Food search</strong><br><br>
+<strong>Daily dashboard</strong> · <strong>Stats &amp; trends</strong> · <strong>AI assistant</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/dashboard-dark.png">
   <img alt="Daily dashboard with calorie ring, macro progress, meal breakdown and water tracking" src="./docs/screenshots/dashboard-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/ai-chat-dark.png">
-  <img alt="AI assistant with on-device tools and one-tap presets" src="./docs/screenshots/ai-chat-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/stats-dark.png">
+  <img alt="Consistency streaks, weight trends with BMI and goal progress, calorie history, and macro split" src="./docs/screenshots/stats-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
-  <img alt="Food search with dynamic icons and recent picks kept visible" src="./docs/screenshots/search-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/ai-chat-dark.png">
+  <img alt="AI assistant with on-device tools and one-tap presets" src="./docs/screenshots/ai-chat-light.png" width="190">
 </picture>
 </p>
 
 <p align="center">
-<strong>Log a food</strong> · <strong>Quick Add</strong> · <strong>Meal builder</strong><br><br>
+<strong>Food search &amp; favorites</strong> · <strong>Food &amp; portion details</strong> · <strong>Meal builder</strong><br><br>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/add-food-dark.png">
-  <img alt="Serving sizes, amount steppers and live daily budget impact" src="./docs/screenshots/add-food-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
+  <img alt="Food search with dynamic icons, recents, and one-tap favorites" src="./docs/screenshots/search-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/quick-add-dark.png">
-  <img alt="Quick Add with calorie and macro steppers" src="./docs/screenshots/quick-add-light.png" width="190">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/add-food-dark.png">
+  <img alt="Serving sizes, amount steppers and live daily budget impact" src="./docs/screenshots/add-food-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
@@ -74,7 +74,7 @@ your account is optional and best-effort. No account needed to try it.
 </p>
 
 <p align="center">
-<strong>Diary details</strong> · <strong>Settings</strong> · <strong>Login</strong><br><br>
+<strong>Meal slot tracking</strong> · <strong>Goals &amp; settings</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/log-meal-dark.png">
   <img alt="Meal slot budget overview and logged entries with quick edit" src="./docs/screenshots/log-meal-light.png" width="190">
@@ -83,11 +83,6 @@ your account is optional and best-effort. No account needed to try it.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/settings-dark.png">
   <img alt="Daily goals and nutrition settings with quick-adjust steppers" src="./docs/screenshots/settings-light.png" width="190">
-</picture>
-&nbsp;&nbsp;
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/login-dark.png">
-  <img alt="Login screen with demo mode" src="./docs/screenshots/login-light.png" width="190">
 </picture>
 </p>
 

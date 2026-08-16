@@ -51,69 +51,37 @@ async function captureAll() {
 
       const page = await context.newPage()
 
-      // 1. LOGIN SCREEN (clear auth)
-      console.log(`Capturing login-${scheme}...`)
-      await page.goto(`${BASE_URL}/login`)
-      await page.evaluate(() => localStorage.clear())
-      await page.goto(`${BASE_URL}/login`)
-      await page.waitForTimeout(1000)
-      await page.screenshot({ path: join(OUT_DIR, `login-${scheme}.png`) })
-
-      // 2. DASHBOARD (DEMO SESSION)
+      // 1. DASHBOARD (DEMO SESSION)
       console.log(`Capturing dashboard-${scheme}...`)
       await page.goto(`${BASE_URL}/?demo=1`)
       await page.getByRole("button", { name: "Open calendar" }).waitFor({ timeout: 30000 })
       await page.waitForTimeout(1500)
       await page.screenshot({ path: join(OUT_DIR, `dashboard-${scheme}.png`) })
 
+      // 2. STATS & TRENDS
+      console.log(`Capturing stats-${scheme}...`)
+      await page.getByRole("tab", { name: "Stats" }).click()
+      await page.getByText("Consistency", { exact: false }).waitFor({ timeout: 15000 })
+      await page.getByText("Body weight", { exact: false }).waitFor({ timeout: 15000 })
+      await page.waitForTimeout(1500)
+      await page.screenshot({ path: join(OUT_DIR, `stats-${scheme}.png`) })
+
       // 3. AI CHAT
       console.log(`Capturing ai-chat-${scheme}...`)
-      // Enable AI assistant in Settings first
-      await page.getByRole("tab", { name: /Settings/ }).click()
-      await page.waitForTimeout(500)
-      const aiSectionBtn = page.getByRole("button", { name: /AI Assistant/i }).first()
-      await aiSectionBtn.waitFor({ timeout: 15000 })
-      await aiSectionBtn.click()
-      await page.waitForTimeout(500)
-
-      const aiSwitch = page.getByRole("switch", { name: "Enable AI assistant" })
-      if (await aiSwitch.isVisible()) {
-        const isChecked = await aiSwitch.getAttribute("aria-checked")
-        if (isChecked !== "true") {
-          await aiSwitch.click()
-          await page.waitForTimeout(500)
-        }
-      }
-
-      // Go back to Today tab and open AI assistant
-      await page.getByRole("tab", { name: /Today/ }).click()
-      await page.waitForTimeout(500)
-      const aiFab = page.getByRole("button", { name: "Open AI assistant" })
-      await aiFab.waitFor({ timeout: 10000 })
-      await aiFab.click()
-      await page.getByText("Dietinator AI", { exact: true }).waitFor({ timeout: 10000 })
+      await page.getByRole("tab", { name: "AI Assistant" }).click()
+      await page.getByText("Dietinator AI", { exact: false }).waitFor({ timeout: 15000 })
       await page.waitForTimeout(1000)
       await page.screenshot({ path: join(OUT_DIR, `ai-chat-${scheme}.png`) })
 
-      // Close AI chat modal
-      const closeAi = page.getByRole("button", { name: "Close AI chat" }).first()
-      if (await closeAi.isVisible()) {
-        await closeAi.click()
-      } else {
-        await page.keyboard.press("Escape")
-      }
-      await page.waitForTimeout(500)
-
-      // 4. SEARCH TAB
+      // 4. FOOD SEARCH & FAVORITES
       console.log(`Capturing search-${scheme}...`)
-      await page.getByRole("tab", { name: "Search" }).click()
-      await page.getByPlaceholder("e.g. banana, oats, chicken").waitFor({ timeout: 15000 })
-      await page.waitForTimeout(1000)
+      await page.goto(`${BASE_URL}/log-meal?meal=dinner`)
+      await page.getByPlaceholder(/Search/i).waitFor({ timeout: 15000 })
+      await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `search-${scheme}.png`) })
 
       // 5. ADD FOOD MODAL
       console.log(`Capturing add-food-${scheme}...`)
-      // Click on Banana or Oatmeal in the search list
       const bananaItem = page.getByText("Banana").first()
       const oatmealItem = page.getByText("Oatmeal, cooked").first()
       if (await bananaItem.isVisible()) {
@@ -124,32 +92,19 @@ async function captureAll() {
         await page.locator('[aria-label*="calories"]').first().click()
       }
       await page.getByRole("button", { name: "Add to diary" }).waitFor({ timeout: 15000 })
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `add-food-${scheme}.png`) })
 
       // Dismiss modal
-      await page.getByRole("button", { name: "Cancel" }).first().click()
+      const cancelBtn = page.getByRole("button", { name: "Cancel" }).first()
+      if (await cancelBtn.isVisible()) {
+        await cancelBtn.click()
+      } else {
+        await page.keyboard.press("Escape")
+      }
       await page.waitForTimeout(500)
 
-      // 6. QUICK ADD MODAL
-      console.log(`Capturing quick-add-${scheme}...`)
-      await page.goto(`${BASE_URL}/create-options?meal_type=snack`)
-      await page.waitForTimeout(600)
-      await page.getByRole("button", { name: "Quick Add" }).first().click()
-      await page.getByLabel("Calories").waitFor({ timeout: 15000 })
-      await page.getByLabel("Calories").fill("350")
-      await page.getByLabel("Protein (g)").fill("20")
-      await page.getByLabel("Carbs (g)").fill("45")
-      await page.getByLabel("Fat (g)").fill("10")
-      await page.evaluate(() => document.activeElement?.blur?.())
-      await page.waitForTimeout(800)
-      await page.screenshot({ path: join(OUT_DIR, `quick-add-${scheme}.png`) })
-
-      // Dismiss
-      await page.getByRole("button", { name: "Cancel" }).first().click()
-      await page.waitForTimeout(500)
-
-      // 7. MEAL BUILDER MODAL
+      // 6. MEAL BUILDER MODAL
       console.log(`Capturing meal-builder-${scheme}...`)
       await page.goto(`${BASE_URL}/meal-builder`)
       await page.getByLabel("Meal name").waitFor({ timeout: 15000 })
@@ -176,16 +131,22 @@ async function captureAll() {
       await page.screenshot({ path: join(OUT_DIR, `meal-builder-${scheme}.png`) })
 
       // Dismiss
-      await page.getByRole("button", { name: "Cancel" }).first().click()
+      const cancelMb = page.getByRole("button", { name: "Cancel" }).first()
+      if (await cancelMb.isVisible()) {
+        await cancelMb.click()
+      } else {
+        await page.keyboard.press("Escape")
+      }
       await page.waitForTimeout(500)
 
-      // 8. LOG MEAL SCREEN
+      // 7. LOG MEAL SCREEN
       console.log(`Capturing log-meal-${scheme}...`)
-      await page.goto(`${BASE_URL}/log-meal?meal_type=breakfast`)
-      await page.waitForTimeout(1000)
+      await page.goto(`${BASE_URL}/log-meal?meal=lunch`)
+      await page.getByText("Logged in Lunch", { exact: false }).waitFor({ timeout: 15000 })
+      await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `log-meal-${scheme}.png`) })
 
-      // 9. SETTINGS SCREEN (Goals & Nutrition drilldown)
+      // 8. SETTINGS SCREEN (Goals & Nutrition drilldown)
       console.log(`Capturing settings-${scheme}...`)
       await page.goto(`${BASE_URL}/(tabs)/settings`)
       await page.waitForTimeout(500)
@@ -199,7 +160,7 @@ async function captureAll() {
     }
 
     await browser.close()
-    console.log("\nAll 18 screenshots generated successfully!\n")
+    console.log("\nAll 16 screenshots generated successfully!\n")
   } finally {
     server.kill("SIGTERM")
   }

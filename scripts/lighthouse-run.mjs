@@ -56,7 +56,7 @@ const OUT_DIR = process.env.REPORT_DIR ?? join(ROOT, "lighthouse-reports")
 const EMAIL = process.env.YAZIO_EMAIL
 const PASSWORD = process.env.YAZIO_PASSWORD
 
-const ROUTE_NAMES = { "/": "dashboard", "/search": "search", "/settings": "settings" }
+const ROUTE_NAMES = { "/": "dashboard", "/stats": "stats", "/settings": "settings" }
 const requested = process.argv.slice(2)
 const targets = requested.length ? requested : ["/"]
 
