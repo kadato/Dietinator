@@ -19,8 +19,14 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
 
   const visibleRoutes = state.routes.filter((route: (typeof state.routes)[number]) => {
     const descriptor = descriptors[route.key]
-    const href = (descriptor?.options as { href?: string | null } | undefined)?.href
-    return href !== null
+    const options = descriptor?.options as
+      { href?: string | null; tabBarItemStyle?: { display?: string } } | undefined
+    // expo-router strips `href` from the options it passes to a custom tab bar
+    // and marks hidden tabs via `tabBarItemStyle: { display: "none" }` instead
+    // (TabsClient replaces href with a tabBarButton that renders null).
+    const hiddenByHref = options?.href === null
+    const hiddenByStyle = options?.tabBarItemStyle?.display === "none"
+    return !hiddenByHref && !hiddenByStyle
   })
 
   if (isWide) {

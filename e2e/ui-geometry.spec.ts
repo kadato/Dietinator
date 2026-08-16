@@ -101,16 +101,16 @@ test.describe("ui rework geometry checks", () => {
   })
 
   test("AI chat composer input is symmetric (centered placeholder)", async ({ page }) => {
-    // Desktop layout: the backdrop Cancel FAB only exists on wide screens.
+    // Desktop layout: the tab bar becomes a left sidebar on wide screens.
     await page.setViewportSize({ width: 1280, height: 800 })
     await bootAuthenticated(page)
 
-    // Enable the assistant so the chat opens with a live composer.
+    // Enable the assistant so the AI tab appears with a live composer.
     await openSettingsSection(page, "AI Assistant settings")
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
-    await page.getByRole("tab", { name: "Today" }).click()
+    await page.getByRole("tab", { name: "AI" }).click()
+    await expect(page.getByText("Dietinator AI", { exact: true })).toBeVisible()
 
-    await page.getByRole("button", { name: "Open AI assistant" }).click()
     const input = page.getByRole("textbox", { name: "Message the AI assistant" })
     await expect(input).toBeVisible()
 
@@ -120,16 +120,6 @@ test.describe("ui rework geometry checks", () => {
     // the placeholder is vertically centered by construction.
     expect(box!.height).toBeGreaterThanOrEqual(42)
     expect(box!.height).toBeLessThanOrEqual(46)
-
-    // Close via the header X (the composer chevron shares the same label),
-    // then via the backdrop-cancel FAB path (reopen).
-    await page.getByRole("button", { name: "Close AI chat" }).first().click()
-    await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
-
-    await page.getByRole("button", { name: "Open AI assistant" }).click()
-    await expect(input).toBeVisible()
-    await page.getByRole("button", { name: "Cancel" }).click()
-    await expect(page.getByText("Dietinator AI", { exact: true })).toBeHidden()
 
     // Leave AI disabled for other specs.
     await openSettingsSection(page, "AI Assistant settings")

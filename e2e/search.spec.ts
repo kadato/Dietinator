@@ -6,13 +6,15 @@ test.describe("food search (offline)", () => {
 
     await page.getByRole("button", { name: "Add food to Breakfast" }).click()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Favorites" })).toBeVisible()
+    // The unified log-meal screen switches lists via quick tabs, not buttons.
+    await expect(page.getByRole("tab", { name: "Favorites" })).toBeVisible()
 
     await page.getByPlaceholder("Search foods…").click()
     await expect(page.getByPlaceholder("Search foods…")).toBeFocused()
     await page.getByPlaceholder("Search foods…").fill("oats")
     // No YAZIO in tests → remote fails, offline banner appears, cached list stays usable.
-    await expect(page.getByText(/YAZIO unavailable/i).first()).toBeVisible({
+    // The dashboard behind the modal renders the same banner, so match the visible one.
+    await expect(page.getByText(/YAZIO unavailable/i).filter({ visible: true })).toBeVisible({
       timeout: 20_000,
     })
   })
