@@ -132,6 +132,11 @@ npm start          # Metro: scan the QR with Expo Go
 npm run web        # or run in the browser
 ```
 
+The dev scripts pin port **9082** (`--port 9082`). Expo's default (8081) is
+inside the Hyper-V excluded range on Windows dev machines, which made the
+CLI fall into an interactive port prompt that breaks in non-TTY shells. If
+9082 is taken, pass another free port explicitly, e.g. `npm start -- --port 9090`.
+
 Useful: `npm run test:coverage` · `npm run test:e2e` · `npm run build:web` ·
 `npm run typecheck` · `npm run lint`
 
@@ -169,7 +174,8 @@ Model Context Protocol server at `/mcp` plus a same-origin snapshot bridge at
    and favorites on boot and after every data change. The snapshot is in-memory only, nothing
    touches disk.
 2. Any MCP client, such as Claude Desktop, Cursor or MCP Inspector, connects to
-   `http://localhost:8082/mcp` and gets these tools:
+   `http://localhost:9082/mcp` (the default dev/serve port on this machine —
+   see below) and gets these tools:
    `get_diary`, `get_diary_stats`, `get_water`, `get_weight`, `get_meals`,
    `get_favorite_foods`, `get_goals`, `get_settings`, `get_health_summary`,
    `log_food`, `log_water`, `log_weight`, `log_meal`, `save_meal`,
