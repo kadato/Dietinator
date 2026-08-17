@@ -166,8 +166,9 @@ function SortableItem({
         <Pressable
           className="min-w-0 flex-1 flex-row items-center pr-1 active:opacity-80"
           onPress={() => onOpenFood(item)}
+          // No aria-label: the accessible name is the visible row text — always
+          // satisfies 2.5.3 label-in-name.
           accessibilityRole="button"
-          accessibilityLabel={`${item.name}, ${Math.round(nutrients.kcal)} calories`}
         >
           <Box className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
             <MaterialCommunityIcons
@@ -183,7 +184,7 @@ function SortableItem({
               className="text-[15px] leading-5 text-typography-900"
               numberOfLines={1}
             >
-              {item.name}
+              {item.name}{" "}
             </Text>
             <View className="mt-0.5 flex-row flex-wrap items-center gap-1.5">
               <Text size="xs" className="font-tabular text-[12px] text-typography-500">

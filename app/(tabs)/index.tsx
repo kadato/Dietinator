@@ -431,7 +431,8 @@ export default function TodayScreen() {
         onPress={() => void handleShowDayNutrition()}
         className="mx-3 mb-2 flex-row items-center justify-center gap-2 rounded-2xl bg-background-100 py-2.5 active:opacity-80"
         accessibilityRole="button"
-        accessibilityLabel="View full nutrition and micronutrients breakdown"
+        // Starts with the visible label text so the name contains it (2.5.3).
+        accessibilityLabel="View Nutrition & Micros, full nutrition and micronutrient breakdown"
       >
         <Ionicons name="pie-chart-outline" size={15} color={colors.primary} />
         <Text size="xs" bold style={{ color: colors.primary }}>
@@ -444,14 +445,18 @@ export default function TodayScreen() {
             onPress={() => setLogWaterOpen(true)}
             className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-80"
             accessibilityRole="button"
-            accessibilityLabel="Log water"
+            // Mirrors the visible amount + goal text (2.5.3 label-in-name).
+            accessibilityLabel={`Log water, ${formatWaterAmount(waterIntake, settings.units)} / ${
+              waterGoal > 0 ? formatWaterAmount(waterGoal, settings.units) : "Water"
+            }`}
           >
             <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
               <Ionicons name="water-outline" size={18} color={colors.primary} />
             </Box>
             <Box className="min-w-0 flex-1">
+              {/* Trailing space keeps the concatenated name "1.75 L / 2.5 L". */}
               <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
-                {formatWaterAmount(waterIntake, settings.units)}
+                {formatWaterAmount(waterIntake, settings.units)}{" "}
               </Text>
               <Text size="2xs" className="font-tabular text-typography-500">
                 {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
@@ -475,14 +480,18 @@ export default function TodayScreen() {
           onPress={() => setLogWeightOpen(true)}
           className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 p-2.5 active:opacity-80"
           accessibilityRole="button"
-          accessibilityLabel="Log weight"
+          // Contains the visible value + "Weight" caption text (2.5.3).
+          accessibilityLabel={`Log weight, ${
+            displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} weight` : ""
+          }`}
         >
           <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
             <Ionicons name="scale-outline" size={18} color={colors.primary} />
           </Box>
           <Box className="min-w-0 flex-1">
+            {/* Trailing space keeps the concatenated name "75.2 kg Weight". */}
             <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
-              {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "—"}
+              {displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} ` : "— "}
             </Text>
             <Text size="2xs" className="text-typography-500">
               {displayedWeight != null ? "Weight" : "Log weight"}

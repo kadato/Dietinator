@@ -507,7 +507,8 @@ export default function LogMealScreen() {
               style={styles.loggedMain}
               onPress={() => openEdit(entry)}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${entry.food_name}`}
+              // Mirrors the visible name + portion + kcal + macro pills (2.5.3).
+              accessibilityLabel={`Edit ${entry.food_name}, ${formatNumber(entry.amount)} ${displayUnit(entry.unit)}, ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
             >
               <View style={[styles.loggedIconWrap, { backgroundColor: `${accent}18` }]}>
                 <MaterialCommunityIcons
@@ -518,7 +519,7 @@ export default function LogMealScreen() {
               </View>
               <View style={styles.loggedInfo}>
                 <Text style={styles.loggedName} numberOfLines={2}>
-                  {entry.food_name}
+                  {entry.food_name}{" "}
                 </Text>
                 <View style={styles.loggedSubRow}>
                   <Text style={styles.loggedSub}>
@@ -539,7 +540,7 @@ export default function LogMealScreen() {
               onPress={() => openEdit(entry)}
               hitSlop={6}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${entry.food_name}`}
+              accessibilityLabel={`Edit ${entry.food_name}, ${Math.round(entry.kcal)} kcal`}
             >
               <Ionicons name="create-outline" size={16} color={accent} />
             </Pressable>
@@ -660,7 +661,7 @@ export default function LogMealScreen() {
         </View>
 
         {/* Always visible quick-switch tabs: Frequent, Recent, Favorites, Meals */}
-        <View style={styles.tabBar}>
+        <View style={styles.tabBar} accessibilityRole="tablist">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id
             return (
@@ -723,21 +724,19 @@ export default function LogMealScreen() {
               <Pressable
                 style={styles.searchClear}
                 onPress={() => setQuery("")}
-                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
               >
-                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
               </Pressable>
             ) : (
               <Pressable
                 style={styles.searchClear}
                 onPress={() => setSearchOpen(false)}
-                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Collapse search"
               >
-                <Ionicons name="chevron-up-circle-outline" size={18} color={colors.textMuted} />
+                <Ionicons name="chevron-up-circle-outline" size={20} color={colors.textMuted} />
               </Pressable>
             )}
           </View>
@@ -999,7 +998,17 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 15,
       color: colors.text,
     },
-    searchClear: { position: "absolute", right: spacing.md, zIndex: 1 },
+    // 28x28 (icon 20 + padding) keeps the tap target above the 24px minimum.
+    searchClear: {
+      position: "absolute",
+      right: spacing.md - 4,
+      zIndex: 1,
+      width: 28,
+      height: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 14,
+    },
     loader: { marginVertical: spacing.sm },
     list: { flex: 1 },
     newMealBtn: {

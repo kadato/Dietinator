@@ -43,8 +43,9 @@ export const MealListItem = memo(function MealListItem({
         className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
         onPress={onPress}
         disabled={logging}
+        // No aria-label: the accessible name is the visible row text — always
+        // satisfies 2.5.3 label-in-name.
         accessibilityRole="button"
-        accessibilityLabel={`${meal.name}, ${kcal} calories`}
       >
         <Box
           className="h-11 w-11 shrink-0 items-center justify-center rounded-xl"
@@ -63,7 +64,7 @@ export const MealListItem = memo(function MealListItem({
             className="text-[15.5px] leading-5 text-typography-900"
             numberOfLines={1}
           >
-            {meal.name}
+            {meal.name}{" "}
           </Text>
           <View className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
             <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">

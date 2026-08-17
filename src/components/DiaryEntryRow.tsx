@@ -27,8 +27,11 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  // Trailing/leading spaces are invisible (flex gaps already separate the
+  // chips) but make the concatenated accessible name read "200g 5g 24g …"
+  // instead of "200g5g24g…" — required for 2.5.3 label-in-name to match.
   const amountLabel =
-    entry.unit === "serving" ? "1 serving" : `${formatNumber(entry.amount)}${entry.unit}`
+    entry.unit === "serving" ? "1 serving " : `${formatNumber(entry.amount)}${entry.unit} `
   const mainPress = usePressedState()
   const infoPress = usePressedState()
   const editPress = usePressedState()
@@ -43,7 +46,9 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         onPressOut={mainPress.onPressOut}
         style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
         accessibilityRole="button"
-        accessibilityLabel={`${entry.food_name}, ${Math.round(entry.kcal)} calories`}
+        // Built from the visible row content so the accessible name contains
+        // all visible text (2.5.3 label-in-name).
+        accessibilityLabel={`${entry.food_name}, ${amountLabel.trim()}, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g, ${Math.round(entry.kcal)} kcal`}
         accessibilityHint="Tap to edit, long press to delete"
       >
         <View style={[styles.iconWrap, { backgroundColor: accentColor + "1a" }]}>
@@ -52,10 +57,10 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
             size={20}
             color={accentColor}
           />
-        </View>
+        </View>{" "}
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>
-            {entry.food_name}
+            {entry.food_name}{" "}
           </Text>
           <View style={styles.macroRow}>
             <Text style={styles.amountLabel}>{amountLabel}</Text>
@@ -65,7 +70,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </View>
         <View style={styles.kcalBlock}>
           <Text style={styles.kcalValue}>{Math.round(entry.kcal)}</Text>
-          <Text style={styles.kcalUnit}>kcal</Text>
+          <Text style={styles.kcalUnit}> kcal</Text>
         </View>
       </Pressable>
       <View style={styles.actions}>

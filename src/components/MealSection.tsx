@@ -5,6 +5,7 @@ import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
+import { formatNumber } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -62,7 +63,22 @@ export const MealSection = memo(function MealSection({
           }}
           className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
           accessibilityRole="button"
-          accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} calories`}
+          // 2.5.3 label-in-name: the accessible name must contain the visible
+          // text inside the button (goal line, pills, empty hint), so it is
+          // built from the same data.
+          accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} kcal, ${
+            goal
+              ? `of ${Math.round(goal)} kcal goal, ${
+                  overKcal
+                    ? `+${Math.round(overKcal)} over`
+                    : `${Math.round(remainingKcal ?? 0)} left`
+                }, `
+              : ""
+          }${
+            entries.length === 0
+              ? "Nothing logged yet"
+              : `${formatNumber(totalProtein)}g ${formatNumber(totalCarbs)}g ${formatNumber(totalFat)}g`
+          }`}
         >
           <Box
             className="h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
@@ -74,8 +90,10 @@ export const MealSection = memo(function MealSection({
           <Box className="min-w-0 flex-1">
             <Box className="flex-row items-center justify-between gap-2">
               <Box className="flex-row items-center gap-1.5">
+                {/* Trailing space separates the label from the kcal number in
+                    the concatenated accessible name (2.5.3). */}
                 <Text size="md" bold className="text-[16px] text-typography-900">
-                  {MEAL_LABELS[mealType]}
+                  {MEAL_LABELS[mealType]}{" "}
                 </Text>
                 {entries.length > 0 ? (
                   <Ionicons
@@ -89,7 +107,7 @@ export const MealSection = memo(function MealSection({
                 {Math.round(totalKcal)}{" "}
                 <Text size="xs" className="font-normal text-typography-500">
                   kcal
-                </Text>
+                </Text>{" "}
               </Text>
             </Box>
 

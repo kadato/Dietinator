@@ -94,7 +94,10 @@ export const FoodListItem = memo(function FoodListItem({
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${food.name}, ${Math.round(nutrients.kcal)} calories`}
+        // Contains every visible text fragment in order (name, prefix, portion,
+        // kcal, macro grams, Cal suffix) — satisfies 2.5.3 label-in-name and
+        // gives search-result swapping a stable label to compare.
+        accessibilityLabel={`${food.name}, ${prefix.trim()} ${portion}, ${Math.round(nutrients.kcal)} kcal, ${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g, ${Math.round(nutrients.kcal)} Cal`}
       >
         <Box className="mr-3.5 h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background-100">
           <MaterialCommunityIcons
@@ -110,7 +113,7 @@ export const FoodListItem = memo(function FoodListItem({
             className="text-[15.5px] leading-5 text-typography-900"
             numberOfLines={1}
           >
-            {food.name}
+            {food.name}{" "}
           </Text>
           {subtitle ? (
             <Text size="xs" className="mt-0.5 text-[12.5px] text-typography-500" numberOfLines={1}>

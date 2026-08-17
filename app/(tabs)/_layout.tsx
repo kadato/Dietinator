@@ -32,6 +32,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   if (isWide) {
     return (
       <View
+        accessibilityRole="tablist"
         style={{
           width: 104,
           backgroundColor: colors.surface,
@@ -147,6 +148,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   // Mobile Bottom Tab Bar
   return (
     <View
+      accessibilityRole="tablist"
       style={{
         flexDirection: "row",
         backgroundColor: colors.surface,
