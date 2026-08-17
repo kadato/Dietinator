@@ -3,7 +3,10 @@ import { spawn } from "node:child_process"
 import { existsSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 
-const PORT = 8089
+// 8089 is inside the Hyper-V excluded range (8081-8180) on Windows dev
+// machines (same issue documented for the 9082 dev port), which makes
+// serve-dist.mjs fail with EACCES. Use 9089.
+const PORT = 9089
 const BASE_URL = `http://localhost:${PORT}`
 const OUT_DIR = join(process.cwd(), "docs", "screenshots")
 

@@ -2,6 +2,23 @@ const path = require("path")
 
 require("./polyfill-os.cjs")
 
+// Metro's web bundle (and full cache-crawl rebuilds) can exceed Node's
+// default ~2GB heap on this project and OOM mid-bundle (the progress bar
+// stalls around 0% and the process dies with "heap out of memory").
+// Re-spawn with a larger heap unless one is already configured.
+if (
+  !process.execArgv.some((arg) => arg.startsWith("--max-old-space-size")) &&
+  !/max-old-space-size/.test(process.env.NODE_OPTIONS || "")
+) {
+  const { spawnSync } = require("node:child_process")
+  const result = spawnSync(
+    process.execPath,
+    ["--max-old-space-size=8192", __filename, ...process.argv.slice(2)],
+    { stdio: "inherit", env: process.env },
+  )
+  process.exit(result.status ?? 1)
+}
+
 const version = process.versions.node
 const [major, minor, patch] = version.split(".").map(Number)
 const meetsExpo =

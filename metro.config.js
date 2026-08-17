@@ -16,6 +16,12 @@ const config = getDefaultConfig(__dirname)
 // Watchman is installed and fast; use it for the file-map crawl and watch.
 config.resolver.useWatchman = true
 
+// On Windows, pnpm's deep node_modules plus the per-process file-handle
+// limit (~8K on this machine) can trigger EMFILE during Metro's crawl and
+// concurrent dev SSR renders. Capping workers keeps peak concurrent file
+// opens low; transforms are still fast with 2.
+config.maxWorkers = 2
+
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push("wasm")
 

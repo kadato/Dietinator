@@ -64,12 +64,12 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "node scripts/expo-cli.cjs start",
-    "dev": "node scripts/expo-cli.cjs start",
-    "android": "node scripts/expo-cli.cjs start --android",
-    "ios": "node scripts/expo-cli.cjs start --ios",
-    "web": "node scripts/expo-cli.cjs start --web",
-    "dev:web": "node scripts/expo-cli.cjs start --web",
+    "start": "node scripts/expo-cli.cjs start --port 9082",
+    "dev": "node scripts/expo-cli.cjs start --port 9082",
+    "android": "node scripts/expo-cli.cjs start --android --port 9082",
+    "ios": "node scripts/expo-cli.cjs start --ios --port 9082",
+    "web": "node scripts/expo-cli.cjs start --web --port 9082",
+    "dev:web": "node scripts/expo-cli.cjs start --web --port 9082",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
