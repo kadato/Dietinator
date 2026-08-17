@@ -23,7 +23,7 @@ async function openFoodPreview(
   await page.getByRole("button", { name: "Add food to Lunch" }).click()
   const searchBox = page.getByPlaceholder("Search foods…")
   await expect(searchBox).toBeVisible()
-  const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ calories/ }).first()
+  const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ kcal, / }).first()
   const suggestionLabel = namePattern ? null : await firstRow.getAttribute("aria-label")
   await searchBox.fill(query)
   // The modal shows live suggestions before the query results arrive — wait
@@ -129,18 +129,18 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     // Tomorrow's dashboard shows the entry; recorded kcal matches the preview
     // math (preview at 100 g × 1.2), i.e. no conversion drift through the pipeline.
     await page.getByRole("button", { name: /^Lunch, / }).click()
-    const entry = page.getByRole("button", { name: /, \d+ calories/ }).first()
+    const entry = page.getByRole("button", { name: /, \d+ kcal, / }).first()
     await expect(entry).toBeVisible({ timeout: 15_000 })
     const label = (await entry.getAttribute("aria-label")) ?? ""
-    const logged = Number(/, (\d+) calories/.exec(label)?.[1] ?? 0)
+    const logged = Number(/, (\d+) kcal, /.exec(label)?.[1] ?? 0)
     expect(Math.abs(logged - kcal100 * 1.2)).toBeLessThanOrEqual(15)
-    const name = label.replace(/, \d+ calories$/, "")
+    const name = label.replace(/, \d+ kcal.*$/, "")
 
     // Back to today: the same product must NOT appear there.
     await page.getByRole("button", { name: "Open calendar" }).click()
     await page.getByRole("button", { name: "Go to today" }).click()
     await expect(
-      page.getByRole("button", { name: new RegExp(`${name}, \\d+ calories`) }),
+      page.getByRole("button", { name: new RegExp(`${name}, \\d+ kcal, `) }),
     ).toHaveCount(0)
   })
 })

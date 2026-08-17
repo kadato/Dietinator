@@ -73,7 +73,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    const row = page.getByRole("button", { name: /Quick add, \d+ calories/ })
+    const row = page.getByRole("button", { name: /^Quick add, / })
     await expect(row).toHaveCount(1)
 
     // Reject first — nothing should change.

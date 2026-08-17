@@ -59,9 +59,9 @@ test.describe("YAZIO (real account)", () => {
     await page.getByRole("button", { name: "Cancel" }).click()
   }
 
-  /** The diary row for a specific food (labels are `<name>, N calories`). */
+  /** The diary row for a specific food (labels end with `<name>, …, N kcal`). */
   function mealEntry(page: Page, foodName: string) {
-    return page.getByRole("button", { name: new RegExp(`^${foodName}, \\d+ calories`) }).first()
+    return page.getByRole("button", { name: new RegExp(`^${foodName}, .* \\d+ kcal$`) }).first()
   }
 
   test("signs in with real credentials and reaches the dashboard", async ({ page }) => {
@@ -80,8 +80,9 @@ test.describe("YAZIO (real account)", () => {
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await page.getByPlaceholder("Search foods…").fill("banane")
 
-    // Remote results arrive with real product rows (aria-label "<name>, <kcal> calories").
-    const rows = page.locator('[aria-label$=" calories"]')
+    // Remote results arrive with real product rows (aria-label ends with the
+    // kcal + Cal summary: "<name>, <portion>, <kcal> kcal, …, <kcal> Cal").
+    const rows = page.locator('[aria-label$=" Cal"]')
     await expect(rows.first()).toBeVisible({ timeout: 30_000 })
     expect(await rows.count()).toBeGreaterThan(0)
   })
@@ -90,7 +91,12 @@ test.describe("YAZIO (real account)", () => {
     await login(page)
     await logFoodViaSearch(page, "Lunch", "banane", "Banán")
 
-    // Back on the dashboard, the lunch card lists the entry.
+    // Back on the dashboard, the lunch card lists the entry. Wait for the
+    // focus-reload to land before clicking — an empty section header navigates
+    // to log-meal instead of expanding.
+    await expect(page.getByRole("button", { name: /^Lunch, [1-9]\d* kcal/ })).toBeVisible({
+      timeout: 15_000,
+    })
     await page.getByRole("button", { name: /^Lunch, / }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
@@ -109,6 +115,9 @@ test.describe("YAZIO (real account)", () => {
     await logFoodViaSearch(page, "Dinner", "banane", "Banán")
 
     // Wait for the entry, then delete it (long-press → confirm).
+    await expect(page.getByRole("button", { name: /^Dinner, [1-9]\d* kcal/ })).toBeVisible({
+      timeout: 15_000,
+    })
     await page.getByRole("button", { name: /^Dinner, / }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
