@@ -30,9 +30,6 @@ import type { AiChatMessage } from "@/types"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
-/** Frosted white chips on the teal header — the same overlay in both themes. */
-const HEADER_OVERLAY = "rgba(255, 255, 255, 0.18)"
-
 function formatTime(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ""
@@ -149,7 +146,7 @@ function AiChatModalContent() {
                 <Text
                   size="xs"
                   className="mt-0.5 text-right"
-                  style={{ color: colors.onPrimary, opacity: 0.7 }}
+                  style={{ color: colors.onPrimaryMuted }}
                 >
                   {formatTime(item.created_at)}
                 </Text>
@@ -369,7 +366,7 @@ function AiChatModalContent() {
           <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">
             <Box
               className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: HEADER_OVERLAY }}
+              style={{ backgroundColor: colors.primaryOverlay }}
             >
               <MaterialCommunityIcons name="robot" size={20} color={colors.onPrimary} />
             </Box>
@@ -377,7 +374,7 @@ function AiChatModalContent() {
               <Text size="md" bold style={{ color: colors.onPrimary }}>
                 Dietinator AI
               </Text>
-              <Text size="xs" style={{ color: colors.onPrimary, opacity: 0.78 }}>
+              <Text size="xs" style={{ color: colors.onPrimaryMuted }}>
                 Your nutrition assistant
               </Text>
             </Box>
@@ -385,7 +382,7 @@ function AiChatModalContent() {
           <Box className="ml-2 flex-row items-center gap-1">
             <Box
               className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{ backgroundColor: HEADER_OVERLAY }}
+              style={{ backgroundColor: colors.primaryOverlay }}
             >
               <Box
                 className="h-1.5 w-1.5 rounded-full"
@@ -404,7 +401,7 @@ function AiChatModalContent() {
               accessibilityLabel="Clear chat history"
               className="ml-1 h-9 w-9 items-center justify-center rounded-full"
               style={[
-                { backgroundColor: HEADER_OVERLAY },
+                { backgroundColor: colors.primaryOverlay },
                 ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
               ]}
             >
@@ -419,7 +416,7 @@ function AiChatModalContent() {
               accessibilityLabel="Close AI chat"
               className="h-9 w-9 items-center justify-center rounded-full"
               style={[
-                { backgroundColor: HEADER_OVERLAY },
+                { backgroundColor: colors.primaryOverlay },
                 ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
               ]}
             >

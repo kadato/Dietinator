@@ -106,7 +106,8 @@ export const config = {
     "--color-typography-100": "229 229 229",
     "--color-typography-200": "219 219 220",
     "--color-typography-300": "212 212 212",
-    "--color-typography-400": "163 163 163",
+    // Light muted text (#a3a3a3) fails 4.5:1 on white cards — use gray-500.
+    "--color-typography-400": "107 114 128",
     "--color-typography-500": "71 85 105",
     "--color-typography-600": "115 115 115",
     "--color-typography-700": "15 23 42",

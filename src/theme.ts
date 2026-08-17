@@ -7,6 +7,10 @@ export type ColorPalette = {
   primaryStrong: string
   primaryMuted: string
   onPrimary: string
+  /** Secondary text on primary surfaces (headers, bubbles) — clears 4.5:1 in both themes. */
+  onPrimaryMuted: string
+  /** Translucent chip/avatar surface laid on top of primary backgrounds. */
+  primaryOverlay: string
   text: string
   textMuted: string
   /** Section titles and chrome on the page background (not on cards). */
@@ -29,6 +33,8 @@ export const darkColors: ColorPalette = {
   primaryStrong: "#5eead4",
   primaryMuted: "#14b8a6",
   onPrimary: "#042f2e",
+  onPrimaryMuted: "#0b4f49",
+  primaryOverlay: "rgba(255, 255, 255, 0.18)",
   text: "#fafafa",
   textMuted: "#9d9da7",
   textOnBackground: "#f4f4f5",
@@ -46,10 +52,20 @@ export const lightColors: ColorPalette = {
   background: "#f4f5f7",
   surface: "#ffffff",
   surfaceAlt: "#e8eaee",
-  primary: "#0d9488",
-  primaryStrong: "#115e59",
-  primaryMuted: "#14b8a6",
+  // teal-700 (#0f766e) fails as bold 11px text on the tinted budget badge
+  // (4.05 on surfaceAlt) — teal-800 (#115e59) clears 4.5:1 there and on white
+  // while keeping white button text at 7.7:1.
+  primary: "#115e59",
+  primaryStrong: "#0f766e",
+  // teal-500 keeps the icon/avatar above 3:1 non-text contrast with white.
+  primaryMuted: "#0d9488",
   onPrimary: "#ffffff",
+  // Light teal text on the teal header/bubbles — 4.7:1 on primary (#115e59)
+  // and 6+:1 on the darkened header chips.
+  onPrimaryMuted: "#e0f1ef",
+  // Darker than the dark theme's white overlay: white text/ON DEVICE chip on a
+  // light teal header needs a darker chip to clear 4.5:1.
+  primaryOverlay: "rgba(0, 0, 0, 0.16)",
   text: "#0f172a",
   textMuted: "#55606f",
   textOnBackground: "#111827",
@@ -57,10 +73,13 @@ export const lightColors: ColorPalette = {
   warning: "#d97706",
   onWarning: "#1a1a1a",
   border: "#d9dde3",
-  breakfast: "#0d9488",
-  lunch: "#ea580c",
-  dinner: "#db2777",
-  snack: "#ca8a04",
+  // Meal accents at 700/800 level: bold 11-13px labels on white cards and on
+  // their own ~13% tinted chips need ≥4.5:1, which the 700s barely miss on the
+  // tints (3.6-4.3) — the 800s clear 5.5:1 everywhere.
+  breakfast: "#115e59",
+  lunch: "#9a3412",
+  dinner: "#9d174d",
+  snack: "#854d0e",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {

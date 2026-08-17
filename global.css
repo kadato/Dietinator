@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap");
-
+/* Google Fonts are linked in app/+html.tsx — importing them here too would
+ * duplicate the request from the runtime-injected stylesheet. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,6 +30,21 @@ button,
 textarea,
 select {
   font-family: inherit;
+}
+
+/*
+ * Tailwind v3 preflight paints placeholders AND empty inputs (::placeholder-shown)
+ * gray-400 (#9ca3af, 2.5:1 on white). That overrides themed input colors on
+ * react-native-web TextInputs whose color lives in a lower-specificity class.
+ * Neutralize it so the app's own colors (and RNW's --placeholderTextColor)
+ * win; the app sets an explicit placeholderTextColor on every input.
+ */
+:is(input:placeholder-shown, textarea:placeholder-shown) {
+  color: inherit;
+}
+input::placeholder,
+textarea::placeholder {
+  color: inherit;
 }
 
 /*

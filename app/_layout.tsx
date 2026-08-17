@@ -1,4 +1,9 @@
-import { Stack, useRouter, useSegments } from "expo-router"
+import {
+  Stack,
+  ThemeProvider as NavigationThemeProvider,
+  useRouter,
+  useSegments,
+} from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native"
@@ -25,6 +30,30 @@ function RootNavigator() {
   const segments = useSegments()
   const router = useRouter()
 
+  // React Navigation paints the screen container with its own theme. Without
+  // this, the light DefaultTheme (background #f2f2f2) flashes behind the app
+  // in dark mode during transitions/overscroll. Match it to the app palette.
+  const navTheme = useMemo(
+    () => ({
+      dark: isDark,
+      colors: {
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.primary,
+      },
+      fonts: {
+        regular: { fontFamily: "sans-serif", fontWeight: "400" as const },
+        medium: { fontFamily: "sans-serif", fontWeight: "500" as const },
+        bold: { fontFamily: "sans-serif", fontWeight: "700" as const },
+        heavy: { fontFamily: "sans-serif", fontWeight: "800" as const },
+      },
+    }),
+    [colors, isDark],
+  )
+
   useEffect(() => {
     if (!ready) return
     const inAuth = segments[0] === "login"
@@ -50,7 +79,7 @@ function RootNavigator() {
   }
 
   return (
-    <>
+    <NavigationThemeProvider value={navTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
@@ -64,7 +93,7 @@ function RootNavigator() {
         <Stack.Screen name="scan" options={{ presentation: "modal" }} />
         <Stack.Screen name="add-food" options={{ presentation: "modal" }} />
       </Stack>
-    </>
+    </NavigationThemeProvider>
   )
 }
 

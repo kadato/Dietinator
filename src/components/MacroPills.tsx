@@ -62,8 +62,8 @@ export const MacroPills = memo(function MacroPills({
             <Text style={[styles.cardLabel, { color: colors.breakfast }]}>Protein</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={styles.cardGrams}>{formatNumber(p)}g</Text>
-            <Text style={styles.cardPct}>({pPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(p)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({pPct}%)</Text>
           </View>
         </View>
 
@@ -81,8 +81,8 @@ export const MacroPills = memo(function MacroPills({
             <Text style={[styles.cardLabel, { color: colors.lunch }]}>Carbs</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={styles.cardGrams}>{formatNumber(c)}g</Text>
-            <Text style={styles.cardPct}>({cPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(c)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({cPct}%)</Text>
           </View>
         </View>
 
@@ -100,8 +100,8 @@ export const MacroPills = memo(function MacroPills({
             <Text style={[styles.cardLabel, { color: colors.dinner }]}>Fat</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={styles.cardGrams}>{formatNumber(f)}g</Text>
-            <Text style={styles.cardPct}>({fPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(f)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({fPct}%)</Text>
           </View>
         </View>
       </View>
@@ -135,7 +135,8 @@ export const MacroPills = memo(function MacroPills({
             { color: colors.breakfast },
           ]}
         >
-          {formatNumber(p)}g{isDetailed ? ` (${pPct}%)` : ""}
+          {" "}
+          {formatNumber(p)}g{isDetailed ? ` (${pPct}%)` : ""}{" "}
         </Text>
       </View>
 
@@ -160,7 +161,8 @@ export const MacroPills = memo(function MacroPills({
             { color: colors.lunch },
           ]}
         >
-          {formatNumber(c)}g{isDetailed ? ` (${cPct}%)` : ""}
+          {" "}
+          {formatNumber(c)}g{isDetailed ? ` (${cPct}%)` : ""}{" "}
         </Text>
       </View>
 
@@ -185,7 +187,8 @@ export const MacroPills = memo(function MacroPills({
             { color: colors.dinner },
           ]}
         >
-          {formatNumber(f)}g{isDetailed ? ` (${fPct}%)` : ""}
+          {" "}
+          {formatNumber(f)}g{isDetailed ? ` (${fPct}%)` : ""}{" "}
         </Text>
       </View>
     </View>
