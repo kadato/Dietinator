@@ -30,9 +30,16 @@ export function useAiChat() {
 
   useEffect(() => {
     let cancelled = false
-    void refresh().then(() => {
-      if (!cancelled) setLoaded(true)
-    })
+    void refresh()
+      .then(() => {
+        if (!cancelled) setLoaded(true)
+      })
+      // History is best-effort; a transient DB error must not surface as an
+      // unhandled rejection (e.g. the SQLite worker re-initializing on web
+      // after a page reload).
+      .catch(() => {
+        if (!cancelled) setLoaded(true)
+      })
     return () => {
       cancelled = true
     }

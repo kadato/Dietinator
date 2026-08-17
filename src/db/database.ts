@@ -14,13 +14,40 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return dbPromise
 }
 
-async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
-  const database = await SQLite.openDatabaseAsync("dietinator.db", {
-    useNewConnection: false,
-  })
-  await migrate(database)
-  return database
+function isVfsInitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /VFS|access handle|Failed to initialize/i.test(message)
 }
+
+async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
+  try {
+    const database = await SQLite.openDatabaseAsync("dietinator.db", {
+      useNewConnection: false,
+    })
+    await migrate(database)
+    return database
+  } catch (error) {
+    // On web, the wa-sqlite worker occasionally fails its one-time VFS init:
+    // opening OPFS sync access handles races the previous page's worker being
+    // torn down. The worker is then permanently poisoned (every later call
+    // fails with "Invalid VFS state"), so the only recovery is a fresh page.
+    // Reload once per tab; the fresh worker then acquires the released handles.
+    if (isVfsInitError(error) && typeof window !== "undefined") {
+      try {
+        if (!sessionStorage.getItem(RELOAD_KEY)) {
+          sessionStorage.setItem(RELOAD_KEY, "1")
+          window.location.reload()
+        }
+      } catch {
+        // sessionStorage can throw in some embedded webviews — degrade to the
+        // existing behavior (boot continues, screens show their error states).
+      }
+    }
+    throw error
+  }
+}
+
+const RELOAD_KEY = "dietinator-db-reloaded"
 
 export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   // WAL uses extra OPFS files; web OPFS allows only one sync handle per file.
