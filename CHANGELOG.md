@@ -71,5 +71,5 @@ First public release.
 - Playwright e2e suite (phone viewport, offline/local-first flows)
 - CI runs typecheck, lint, format check, unit tests, e2e, and secret scan
 
-[1.1.0]: https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.1.0
-[1.0.0]: https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.0.0
+[1.1.0]: https://github.com/kadato/Dietinator/releases/tag/v1.1.0
+[1.0.0]: https://github.com/kadato/Dietinator/releases/tag/v1.0.0

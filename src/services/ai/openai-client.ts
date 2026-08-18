@@ -81,7 +81,7 @@ function buildHeaders(settings: AiProviderSettings): Record<string, string> {
     headers.authorization = `Bearer ${settings.api_key}`
   }
   if (needsAppHeaders(settings.provider)) {
-    headers["HTTP-Referer"] = "https://github.com/tothKarolyDavid/Dietinator"
+    headers["HTTP-Referer"] = "https://github.com/kadato/Dietinator"
     headers["X-Title"] = "Dietinator Calorie Tracker"
   }
   return headers

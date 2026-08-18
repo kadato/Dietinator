@@ -217,7 +217,7 @@ async function providerChat(messages, tools) {
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${API_KEY}`,
-      "HTTP-Referer": "https://github.com/tothKarolyDavid/Dietinator",
+      "HTTP-Referer": "https://github.com/kadato/Dietinator",
       "X-Title": "Dietinator MCP agent check",
     },
     body: JSON.stringify({

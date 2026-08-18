@@ -2,8 +2,8 @@
 
 <div align="center">
 
-[![CI](https://img.shields.io/github/actions/workflow/status/tothKarolyDavid/Dietinator/ci.yml?label=CI&logo=github)](https://github.com/tothKarolyDavid/Dietinator/actions)
-[![Android APK](https://img.shields.io/badge/Android-latest%20APK-3ddc84?logo=android&logoColor=white)](https://github.com/tothKarolyDavid/Dietinator/releases/latest/download/Dietinator-Android.apk)
+[![CI](https://img.shields.io/github/actions/workflow/status/kadato/Dietinator/ci.yml?label=CI&logo=github)](https://github.com/kadato/Dietinator/actions)
+[![Android APK](https://img.shields.io/badge/Android-latest%20APK-3ddc84?logo=android&logoColor=white)](https://github.com/kadato/Dietinator/releases/latest/download/Dietinator-Android.apk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Expo SDK 56](https://img.shields.io/badge/Expo-SDK%2056-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -23,7 +23,7 @@ your account is optional and best-effort. No account needed to try it.
 
 <div align="center">
 
-[![Download Dietinator for Android](https://img.shields.io/badge/Download-Dietinator%20Android%20APK-0d9488?style=for-the-badge&logo=android&logoColor=white)](https://github.com/tothKarolyDavid/Dietinator/releases/latest/download/Dietinator-Android.apk)
+[![Download Dietinator for Android](https://img.shields.io/badge/Download-Dietinator%20Android%20APK-0d9488?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kadato/Dietinator/releases/latest/download/Dietinator-Android.apk)
 
 </div>
 

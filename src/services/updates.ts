@@ -2,7 +2,7 @@ import Constants from "expo-constants"
 import { withRetry } from "@/utils/retry"
 
 /** GitHub repository that publishes Dietinator releases (APK + changelog). */
-export const GITHUB_REPO = "tothKarolyDavid/Dietinator"
+export const GITHUB_REPO = "kadato/Dietinator"
 
 /** GitHub web URL of the repository — used by the quota-free redirect fallback. */
 export const RELEASE_PAGE_URL = `https://github.com/${GITHUB_REPO}`

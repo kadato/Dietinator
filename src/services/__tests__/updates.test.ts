@@ -62,20 +62,20 @@ describe("parseRelease", () => {
 describe("parseTagFromRedirectUrl", () => {
   it("extracts the tag from a latest-redirect target", () => {
     expect(
-      parseTagFromRedirectUrl("https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.1.0"),
+      parseTagFromRedirectUrl("https://github.com/kadato/Dietinator/releases/tag/v1.1.0"),
     ).toBe("v1.1.0")
     expect(parseTagFromRedirectUrl("https://github.com/other/releases/tag/v2.0.0?x=1")).toBe(
       "v2.0.0",
     )
     expect(
-      parseTagFromRedirectUrl("https://github.com/tothKarolyDavid/Dietinator/releases/latest"),
+      parseTagFromRedirectUrl("https://github.com/kadato/Dietinator/releases/latest"),
     ).toBeNull()
     expect(parseTagFromRedirectUrl("")).toBeNull()
   })
 })
 
 describe("fetchLatestReleaseViaRedirect", () => {
-  const latestUrl = "https://github.com/tothKarolyDavid/Dietinator/releases/latest"
+  const latestUrl = "https://github.com/kadato/Dietinator/releases/latest"
 
   afterEach(() => {
     jest.restoreAllMocks()
@@ -87,7 +87,7 @@ describe("fetchLatestReleaseViaRedirect", () => {
       .mockRejectedValueOnce(new Error("GitHub responded (403)"))
       .mockResolvedValueOnce(
         responseOf({
-          url: "https://github.com/tothKarolyDavid/Dietinator/releases/tag/v1.1.0",
+          url: "https://github.com/kadato/Dietinator/releases/tag/v1.1.0",
         }),
       )
     globalThis.fetch = fetchMock as unknown as typeof fetch
@@ -96,7 +96,7 @@ describe("fetchLatestReleaseViaRedirect", () => {
     expect(release?.tag).toBe("v1.1.0")
     expect(release?.assets[0].name).toBe("Dietinator-Android.apk")
     expect(release?.assets[0].downloadUrl).toBe(
-      "https://github.com/tothKarolyDavid/Dietinator/releases/latest/download/Dietinator-Android.apk",
+      "https://github.com/kadato/Dietinator/releases/latest/download/Dietinator-Android.apk",
     )
   })
 
