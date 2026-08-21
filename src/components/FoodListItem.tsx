@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { ActivityIndicator, Pressable, View } from "react-native"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { displayUnit } from "@/utils/food-display"
 import { formatNumber } from "@/utils/format"
@@ -8,6 +8,7 @@ import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
 import { MacroPills } from "@/components/MacroPills"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -28,7 +29,7 @@ type Props = {
   showKcal?: boolean
   /**
    * `icon` (default): outline add-circle button. `pill`: filled round button
-   * with the accent color — the log-meal quick-log affordance.
+   * with the accent color, the log-meal quick-log affordance.
    */
   quickAddVariant?: "icon" | "pill"
   /** Whether reorder mode is active (shows move up/down buttons). */
@@ -86,20 +87,37 @@ export const FoodListItem = memo(function FoodListItem({
         ? `100 ${displayUnit(unit)}`
         : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
 
-  const prefix = food.producer?.trim() ? `${food.producer.trim()} · ` : ""
+  const prefix = food.producer?.trim() ? `${food.producer.trim()}, ` : ""
 
   return (
-    <Box className="mx-4 mb-2.5 flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-4 py-3.5">
+    <Box
+      className="mx-4 mb-2.5 flex-row items-center rounded-none bg-background-50 px-4 py-3.5"
+      style={{
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        borderRadius: 0,
+        backgroundColor: colors.surface,
+        boxShadow: "none",
+        elevation: 0,
+      }}
+    >
       <Pressable
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
-        // Contains every visible text fragment in order (name, prefix, portion,
-        // kcal, macro grams, Cal suffix) — satisfies 2.5.3 label-in-name and
-        // gives search-result swapping a stable label to compare.
         accessibilityLabel={`${food.name}, ${prefix.trim()} ${portion}, ${Math.round(nutrients.kcal)} kcal, ${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g, ${Math.round(nutrients.kcal)} Cal`}
       >
-        <Box className="mr-3.5 h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background-100">
+        <Box
+          className="mr-3.5 h-11 w-11 shrink-0 items-center justify-center rounded-none bg-background-100"
+          style={{
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            borderRadius: 0,
+            backgroundColor: colors.surfaceAlt,
+            boxShadow: "none",
+            elevation: 0,
+          }}
+        >
           <MaterialCommunityIcons
             name={getFoodIcon(food.name, food.nutrients)}
             size={24}
@@ -111,19 +129,42 @@ export const FoodListItem = memo(function FoodListItem({
             size="md"
             bold
             className="text-[15.5px] leading-5 text-typography-900"
-            numberOfLines={1}
+            style={{
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+              flexWrap: "wrap",
+            }}
           >
             {food.name}{" "}
           </Text>
           {subtitle ? (
-            <Text size="xs" className="mt-0.5 text-[12.5px] text-typography-500" numberOfLines={1}>
+            <Text
+              size="xs"
+              className="mt-0.5 text-[12.5px] text-typography-500"
+              style={{
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
               {subtitle}
             </Text>
           ) : (
             <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
-              <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
+              <Text
+                size="xs"
+                className="text-[12.5px] text-typography-500"
+                style={{
+                  fontFamily: fonts.mono,
+                  fontVariant: ["tabular-nums"],
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
                 {prefix}
-                {portion} · {Math.round(nutrients.kcal)} kcal
+                {portion}, {Math.round(nutrients.kcal)} kcal
               </Text>
               <MacroPills
                 protein={nutrients.protein}
@@ -137,7 +178,13 @@ export const FoodListItem = memo(function FoodListItem({
         {showKcal ? (
           <Text
             size="sm"
-            className="font-tabular ml-2 shrink-0 text-sm font-semibold text-typography-500"
+            className="ml-2 shrink-0 text-sm font-semibold text-typography-500"
+            style={{
+              fontFamily: fonts.mono,
+              fontVariant: ["tabular-nums"],
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+            }}
           >
             {Math.round(nutrients.kcal)} Cal
           </Text>
@@ -149,13 +196,20 @@ export const FoodListItem = memo(function FoodListItem({
             onPress={onMoveUp}
             disabled={!canMoveUp}
             hitSlop={6}
-            className={`h-9 w-9 items-center justify-center rounded-xl bg-background-100 ${
-              canMoveUp ? "active:bg-background-200" : "opacity-30"
-            }`}
+            className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: colors.surfaceAlt,
+              boxShadow: "none",
+              elevation: 0,
+              opacity: canMoveUp ? 1 : 0.3,
+            }}
             accessibilityRole="button"
             accessibilityLabel={`Move ${food.name} up`}
           >
-            <Ionicons
+            <Feather
               name="chevron-up"
               size={18}
               color={canMoveUp ? colors.text : colors.textMuted}
@@ -165,13 +219,20 @@ export const FoodListItem = memo(function FoodListItem({
             onPress={onMoveDown}
             disabled={!canMoveDown}
             hitSlop={6}
-            className={`h-9 w-9 items-center justify-center rounded-xl bg-background-100 ${
-              canMoveDown ? "active:bg-background-200" : "opacity-30"
-            }`}
+            className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: colors.surfaceAlt,
+              boxShadow: "none",
+              elevation: 0,
+              opacity: canMoveDown ? 1 : 0.3,
+            }}
             accessibilityRole="button"
             accessibilityLabel={`Move ${food.name} down`}
           >
-            <Ionicons
+            <Feather
               name="chevron-down"
               size={18}
               color={canMoveDown ? colors.text : colors.textMuted}
@@ -184,8 +245,17 @@ export const FoodListItem = memo(function FoodListItem({
             onPress={onQuickAdd}
             disabled={quickAdding}
             hitSlop={6}
-            className="ml-2 flex-row items-center justify-center rounded-xl px-2.5 py-1.5 active:opacity-85"
-            style={{ backgroundColor: accent, minHeight: 34, minWidth: 44 }}
+            className="ml-2 flex-row items-center justify-center rounded-none px-2.5 py-1.5 active:opacity-85"
+            style={{
+              backgroundColor: accent,
+              borderWidth: 1.5,
+              borderColor: accent,
+              borderRadius: 0,
+              minHeight: 34,
+              minWidth: 44,
+              boxShadow: "none",
+              elevation: 0,
+            }}
             accessibilityRole="button"
             accessibilityLabel={`Add ${portion} of ${food.name} to diary`}
           >
@@ -193,12 +263,18 @@ export const FoodListItem = memo(function FoodListItem({
               <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                <Ionicons name="add" size={16} color={colors.onPrimary} />
+                <Feather name="plus" size={16} color={colors.onPrimary} />
                 <Text
                   size="xs"
                   bold
-                  className="font-tabular text-[12px] leading-4"
-                  style={{ color: colors.onPrimary }}
+                  className="text-[12px] leading-4"
+                  style={{
+                    color: colors.onPrimary,
+                    fontFamily: fonts.mono,
+                    fontVariant: ["tabular-nums"],
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
                 >
                   {portion}
                 </Text>
@@ -211,13 +287,21 @@ export const FoodListItem = memo(function FoodListItem({
             disabled={quickAdding}
             hitSlop={12}
             className="p-1 pl-2"
+            style={{
+              borderWidth: 1.5,
+              borderColor: "transparent",
+              borderRadius: 0,
+              backgroundColor: "transparent",
+              boxShadow: "none",
+              elevation: 0,
+            }}
             accessibilityRole="button"
             accessibilityLabel={`Add ${food.name} to diary`}
           >
             {quickAdding ? (
               <ActivityIndicator size="small" color={accent} />
             ) : (
-              <Ionicons name="add-circle" size={24} color={accent} />
+              <Feather name="plus-circle" size={24} color={accent} />
             )}
           </Pressable>
         )
@@ -227,18 +311,22 @@ export const FoodListItem = memo(function FoodListItem({
           onPress={onToggleFavorite}
           hitSlop={12}
           className="p-1 pl-2"
+          style={{
+            borderWidth: 1.5,
+            borderColor: "transparent",
+            borderRadius: 0,
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            elevation: 0,
+          }}
           accessibilityRole="button"
           accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
           accessibilityState={{ selected: Boolean(isFavorite) }}
         >
-          <Ionicons
-            name={isFavorite ? "star" : "star-outline"}
-            size={22}
-            color={isFavorite ? colors.warning : colors.textMuted}
-          />
+          <Feather name="star" size={22} color={isFavorite ? colors.warning : colors.textMuted} />
         </Pressable>
       ) : !isReordering && !onQuickAdd ? (
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        <Feather name="chevron-right" size={18} color={colors.textMuted} />
       ) : null}
     </Box>
   )

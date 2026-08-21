@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet } from "react-native"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type MacroRowProps = {
   label: string
-  icon: keyof typeof MaterialCommunityIcons.glyphMap
+  icon: keyof typeof Feather.glyphMap
   value: number
   goal: number
   color: string
@@ -23,8 +23,10 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
     <View style={styles.row}>
       <View style={styles.rowHeader}>
         <View style={styles.labelGroup}>
-          <View style={[styles.iconBox, { backgroundColor: `${color}1a` }]}>
-            <MaterialCommunityIcons name={icon} size={13} color={color} />
+          <View
+            style={[styles.iconBox, { borderColor: colors.border, backgroundColor: `${color}14` }]}
+          >
+            <Feather name={icon} size={12} color={color} />
           </View>
           <Text style={[styles.label, { color }]}>{label}</Text>
         </View>
@@ -43,7 +45,10 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
             <View
               style={[
                 styles.budgetBadge,
-                { backgroundColor: over > 0 ? `${colors.danger}18` : `${color}18` },
+                {
+                  backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
+                  borderColor: over > 0 ? colors.danger : color,
+                },
               ]}
             >
               <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
@@ -78,7 +83,6 @@ type Props = {
   fatGoal: number
 }
 
-/** Daily macro progress: clean, high-legibility macro rows with tracked amount, goal, and remaining budget pill. */
 export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
@@ -87,7 +91,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
     <View style={styles.container}>
       <MacroRow
         label="Protein"
-        icon="food-drumstick-outline"
+        icon="zap"
         value={protein}
         goal={proteinGoal}
         color={colors.breakfast}
@@ -96,7 +100,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
       />
       <MacroRow
         label="Carbs"
-        icon="bread-slice-outline"
+        icon="box"
         value={carbs}
         goal={carbsGoal}
         color={colors.lunch}
@@ -105,7 +109,7 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
       />
       <MacroRow
         label="Fat"
-        icon="water-outline"
+        icon="droplet"
         value={fat}
         goal={fatGoal}
         color={colors.dinner}
@@ -122,12 +126,16 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       gap: 10,
-      borderTopWidth: 1,
+      borderTopWidth: 1.5,
       borderTopColor: colors.border,
       marginTop: spacing.xs,
+      borderRadius: 0,
+      boxShadow: "none",
+      elevation: 0,
     },
     row: {
       gap: 6,
+      borderRadius: 0,
     },
     rowHeader: {
       flexDirection: "row",
@@ -142,13 +150,20 @@ const createStyles = (colors: ColorPalette) =>
     iconBox: {
       width: 20,
       height: 20,
-      borderRadius: 6,
+      borderRadius: 0,
+      borderWidth: 1.5,
       alignItems: "center",
       justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
     },
     label: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     valueGroup: {
       flexDirection: "row",
@@ -156,37 +171,51 @@ const createStyles = (colors: ColorPalette) =>
       gap: 8,
     },
     trackedText: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     goalText: {
-      fontSize: 12,
-      fontWeight: "500",
+      fontSize: 11,
+      fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     budgetBadge: {
       paddingHorizontal: 7,
       paddingVertical: 2,
-      borderRadius: 8,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      boxShadow: "none",
+      elevation: 0,
     },
     budgetBadgeText: {
       fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     barBg: {
       height: 6,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 999,
+      borderRadius: 0,
       overflow: "hidden",
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
     },
     barFill: {
       height: "100%",
-      borderRadius: 999,
+      borderRadius: 0,
     },
   })

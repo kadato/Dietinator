@@ -1,6 +1,6 @@
 import { memo, useState } from "react"
 import { View, Text, StyleSheet, Pressable } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
@@ -42,13 +42,13 @@ const MacroCompareRow = memo(function MacroCompareRow({
     <View style={styles.macroRow}>
       <View style={styles.macroRowHeader}>
         <View style={styles.labelGroup}>
-          <View style={[styles.dot, { backgroundColor: color }]} />
+          <View style={[styles.dot, { backgroundColor: color, borderColor: colors.border }]} />
           <Text style={[styles.macroLabel, { color }]}>{label}</Text>
         </View>
 
         <View style={styles.valueGroup}>
           <Text style={styles.transitionText}>
-            {Math.round(current)}g <Text style={styles.arrowText}>→</Text>{" "}
+            {Math.round(current)}g <Text style={styles.arrowText}>to</Text>{" "}
             <Text style={styles.projectedText}>{Math.round(projected)}g</Text>{" "}
             <Text style={[styles.addedText, { color }]}>(+{Math.round(added)}g)</Text>
           </Text>
@@ -58,7 +58,8 @@ const MacroCompareRow = memo(function MacroCompareRow({
               style={[
                 styles.budgetBadge,
                 {
-                  backgroundColor: over > 0 ? `${colors.danger}18` : `${colors.primary}18`,
+                  backgroundColor: over > 0 ? `${colors.danger}14` : `${colors.primary}14`,
+                  borderColor: over > 0 ? colors.danger : color,
                 },
               ]}
             >
@@ -77,7 +78,6 @@ const MacroCompareRow = memo(function MacroCompareRow({
 
       {goal > 0 ? (
         <View style={styles.barTrack}>
-          {/* Current Day Intake */}
           <View
             style={[
               styles.barSegment,
@@ -88,7 +88,6 @@ const MacroCompareRow = memo(function MacroCompareRow({
               },
             ]}
           />
-          {/* Added Portion Impact */}
           <View
             style={[
               styles.barSegment,
@@ -131,7 +130,7 @@ const MicroCompareRow = memo(function MicroCompareRow({
       <View style={styles.microHeader}>
         <Text style={styles.microLabel}>{label}</Text>
         <Text style={styles.microValues}>
-          {Math.round(current * 10) / 10} →{" "}
+          {Math.round(current * 10) / 10} to{" "}
           <Text style={styles.microProjected}>
             {Math.round(projected * 10) / 10} {unit}
           </Text>{" "}
@@ -189,7 +188,6 @@ export const DailyImpactCard = memo(function DailyImpactCard({
   const addedKcalPct =
     goalKcal > 0 ? Math.min((addedKcal / goalKcal) * 100, Math.max(100 - currentKcalPct, 0)) : 0
 
-  // Check if any sub-macros or micros are present in the item
   const hasMicros = Boolean(
     itemNutrients.fiber ||
     itemNutrients.sugar ||
@@ -205,19 +203,20 @@ export const DailyImpactCard = memo(function DailyImpactCard({
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.headerTitleWrap}>
-          <Ionicons name="analytics-outline" size={18} color={colors.primary} />
+          <View style={styles.headerIconBox}>
+            <Feather name="bar-chart-2" size={14} color={colors.primary} />
+          </View>
           <Text style={styles.cardTitle}>Daily Budget Impact</Text>
         </View>
         <Text style={styles.cardSubtitle}>Where you will be after logging</Text>
       </View>
 
-      {/* Calories Hero Impact Row */}
       <View style={styles.calorieHero}>
         <View style={styles.calorieTopRow}>
           <View>
             <Text style={styles.heroLabel}>Total Calories</Text>
             <Text style={styles.heroTransition}>
-              {currentKcal.toLocaleString()} →{" "}
+              {currentKcal.toLocaleString()} to{" "}
               <Text style={styles.heroProjected}>{projectedKcal.toLocaleString()}</Text>{" "}
               <Text style={styles.heroAdded}>(+{addedKcal.toLocaleString()} kcal)</Text>
             </Text>
@@ -228,7 +227,8 @@ export const DailyImpactCard = memo(function DailyImpactCard({
               style={[
                 styles.calorieBadge,
                 {
-                  backgroundColor: overKcal ? `${colors.danger}18` : `${colors.primary}18`,
+                  backgroundColor: overKcal ? `${colors.danger}14` : `${colors.primary}14`,
+                  borderColor: overKcal ? colors.danger : colors.primary,
                 },
               ]}
             >
@@ -271,7 +271,6 @@ export const DailyImpactCard = memo(function DailyImpactCard({
         ) : null}
       </View>
 
-      {/* Macros Section */}
       <View style={styles.macrosSection}>
         <MacroCompareRow
           label="Protein"
@@ -302,20 +301,19 @@ export const DailyImpactCard = memo(function DailyImpactCard({
         />
       </View>
 
-      {/* Sub-Macros & Micros Impact Accordion */}
       {hasMicros ? (
         <View style={styles.microsAccordion}>
           <Pressable
             onPress={() => setShowMicros((v) => !v)}
-            style={styles.accordionBtn}
+            style={({ pressed }) => [styles.accordionBtn, pressed && styles.accordionPressed]}
             accessibilityRole="button"
             accessibilityLabel="Toggle micronutrient impact"
           >
             <View style={styles.accordionLeft}>
-              <Ionicons name="leaf-outline" size={15} color={colors.textMuted} />
-              <Text style={styles.accordionTitle}>Micronutrient & Sub-Macro Impact</Text>
+              <Feather name="sun" size={14} color={colors.textMuted} />
+              <Text style={styles.accordionTitle}>Micronutrient and Sub-Macro Impact</Text>
             </View>
-            <Ionicons
+            <Feather
               name={showMicros ? "chevron-up" : "chevron-down"}
               size={16}
               color={colors.textMuted}
@@ -424,11 +422,13 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 18,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       borderColor: colors.border,
       padding: spacing.md,
       marginBottom: spacing.sm,
+      boxShadow: "none",
+      elevation: 0,
     },
     cardHeader: {
       marginBottom: spacing.sm,
@@ -438,21 +438,45 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       gap: 6,
     },
+    headerIconBox: {
+      width: 22,
+      height: 22,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: `${colors.primary}14`,
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
+    },
     cardTitle: {
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     cardSubtitle: {
       fontSize: 11,
       color: colors.textMuted,
       marginTop: 2,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     calorieHero: {
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 14,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       padding: spacing.sm,
       marginBottom: spacing.sm,
+      boxShadow: "none",
+      elevation: 0,
     },
     calorieTopRow: {
       flexDirection: "row",
@@ -462,55 +486,74 @@ const createStyles = (colors: ColorPalette) =>
     heroLabel: {
       fontSize: 11,
       color: colors.textMuted,
-      fontWeight: "600",
+      fontWeight: "700",
       textTransform: "uppercase",
-      letterSpacing: 0.5,
+      letterSpacing: 0.4,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     heroTransition: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
       marginTop: 2,
     },
     heroProjected: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: "800",
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     heroAdded: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.primary,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     calorieBadge: {
       paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 8,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      boxShadow: "none",
+      elevation: 0,
     },
     calorieBadgeText: {
       fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     heroBarTrack: {
-      height: 7,
+      height: 6,
       backgroundColor: colors.surface,
-      borderRadius: 999,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
       marginTop: 8,
+      boxShadow: "none",
+      elevation: 0,
     },
     heroBarSegment: {
       height: "100%",
+      borderRadius: 0,
     },
     macrosSection: {
       gap: spacing.sm,
     },
     macroRow: {
       gap: 4,
+      borderRadius: 0,
     },
     macroRowHeader: {
       flexDirection: "row",
@@ -525,11 +568,16 @@ const createStyles = (colors: ColorPalette) =>
     dot: {
       width: 6,
       height: 6,
-      borderRadius: 3,
+      borderRadius: 0,
+      borderWidth: 1,
     },
     macroLabel: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     valueGroup: {
       flexDirection: "row",
@@ -537,48 +585,64 @@ const createStyles = (colors: ColorPalette) =>
       gap: 6,
     },
     transitionText: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     arrowText: {
       color: colors.textMuted,
       fontSize: 11,
+      fontFamily: fonts.mono,
     },
     projectedText: {
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
     },
     addedText: {
       fontSize: 11,
       fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     budgetBadge: {
       paddingHorizontal: 6,
       paddingVertical: 1.5,
-      borderRadius: 6,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      boxShadow: "none",
+      elevation: 0,
     },
     budgetBadgeText: {
       fontSize: 10,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     barTrack: {
       height: 5,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 999,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
+      boxShadow: "none",
+      elevation: 0,
     },
     barSegment: {
       height: "100%",
+      borderRadius: 0,
     },
     microsAccordion: {
       marginTop: spacing.sm,
-      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopWidth: 1.5,
       borderTopColor: colors.border,
       paddingTop: spacing.xs,
     },
@@ -587,6 +651,10 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: spacing.xs,
+      borderRadius: 0,
+    },
+    accordionPressed: {
+      opacity: 0.7,
     },
     accordionLeft: {
       flexDirection: "row",
@@ -594,9 +662,13 @@ const createStyles = (colors: ColorPalette) =>
       gap: 6,
     },
     accordionTitle: {
-      fontSize: 12,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microsList: {
       gap: spacing.sm,
@@ -605,6 +677,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     microRow: {
       gap: 2,
+      borderRadius: 0,
     },
     microHeader: {
       flexDirection: "row",
@@ -614,32 +687,45 @@ const createStyles = (colors: ColorPalette) =>
     microLabel: {
       fontSize: 11,
       color: colors.text,
-      fontWeight: "600",
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microValues: {
       fontSize: 11,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microProjected: {
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
     },
     microAdded: {
       fontWeight: "700",
       color: colors.primary,
+      fontFamily: fonts.mono,
     },
     microBarTrack: {
       height: 4,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 999,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
       marginTop: 2,
+      boxShadow: "none",
+      elevation: 0,
     },
     microBarSegment: {
       height: "100%",
+      borderRadius: 0,
     },
     rdiSub: {
       fontSize: 9,
@@ -647,5 +733,7 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: 1,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
   })

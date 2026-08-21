@@ -1,7 +1,7 @@
 import { memo } from "react"
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View, Text } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { createModalShellStyles } from "@/components/modal-shell"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
@@ -75,7 +75,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
   visible,
   onClose,
   nutrients,
-  title = "Nutrition & Micronutrients",
+  title = "Nutrition and Micronutrients",
   subtitle,
 }: Props) {
   const { colors } = useTheme()
@@ -96,14 +96,12 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
 
   const modalBody = (
     <View style={styles.modalBody}>
-      {/* Top Drag Handle on Phone */}
       {!isWide && (
         <View style={styles.handleContainer}>
           <View style={styles.dragHandle} />
         </View>
       )}
 
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.titleText}>{title}</Text>
@@ -112,11 +110,11 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
         <Pressable
           onPress={onClose}
           hitSlop={8}
-          style={styles.closeBtn}
+          style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
           accessibilityRole="button"
           accessibilityLabel="Close nutrition breakdown"
         >
-          <Ionicons name="close" size={22} color={colors.text} />
+          <Feather name="x" size={18} color={colors.text} />
         </Pressable>
       </View>
 
@@ -128,24 +126,38 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Energy Hero Card */}
         <View style={styles.energyCard}>
           <View>
             <Text style={styles.energyKcal}>{Math.round(nutrients.kcal)}</Text>
             <Text style={styles.energyLabel}>Total Calories (kcal)</Text>
           </View>
           <View style={styles.macroPillRow}>
-            <View style={[styles.macroPill, { backgroundColor: `${colors.breakfast}18` }]}>
+            <View
+              style={[
+                styles.macroPill,
+                { backgroundColor: `${colors.breakfast}14`, borderColor: colors.border },
+              ]}
+            >
               <Text style={[styles.macroPillLabel, { color: colors.breakfast }]}>
                 Protein {Math.round(nutrients.protein)}g ({proteinPct}%)
               </Text>
             </View>
-            <View style={[styles.macroPill, { backgroundColor: `${colors.lunch}18` }]}>
+            <View
+              style={[
+                styles.macroPill,
+                { backgroundColor: `${colors.lunch}14`, borderColor: colors.border },
+              ]}
+            >
               <Text style={[styles.macroPillLabel, { color: colors.lunch }]}>
                 Carbs {Math.round(nutrients.carbs)}g ({carbsPct}%)
               </Text>
             </View>
-            <View style={[styles.macroPill, { backgroundColor: `${colors.dinner}18` }]}>
+            <View
+              style={[
+                styles.macroPill,
+                { backgroundColor: `${colors.dinner}14`, borderColor: colors.border },
+              ]}
+            >
               <Text style={[styles.macroPillLabel, { color: colors.dinner }]}>
                 Fat {Math.round(nutrients.fat)}g ({fatPct}%)
               </Text>
@@ -153,7 +165,6 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           </View>
         </View>
 
-        {/* Section: Macronutrients & Sub-Macros */}
         <Text style={styles.sectionHeading}>Macronutrients</Text>
         <View style={styles.card}>
           <NutrientProgressBar
@@ -227,8 +238,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           ) : null}
         </View>
 
-        {/* Section: Key Minerals & Electrolytes */}
-        <Text style={styles.sectionHeading}>Minerals & Electrolytes</Text>
+        <Text style={styles.sectionHeading}>Minerals and Electrolytes</Text>
         <View style={styles.card}>
           <NutrientProgressBar
             label="Sodium"
@@ -290,7 +300,6 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           ) : null}
         </View>
 
-        {/* Section: Vitamins */}
         <Text style={styles.sectionHeading}>Vitamins</Text>
         <View style={styles.card}>
           <NutrientProgressBar
@@ -352,11 +361,21 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           accessibilityLabel="Dismiss nutrition details"
         />
         {isWide ? (
-          <View style={shell.dialogWrap}>
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as const }]}>
             <View
               style={[
                 shell.dialogBox,
-                { width: "100%", maxWidth: 580, maxHeight: "88%", height: "88%" },
+                {
+                  width: "100%",
+                  maxWidth: 580,
+                  maxHeight: "88%",
+                  height: "88%",
+                  borderRadius: 0,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  boxShadow: "none",
+                  elevation: 0,
+                },
               ]}
             >
               {modalBody}
@@ -382,14 +401,17 @@ const createStyles = (colors: ColorPalette) =>
     },
     phoneSheetBox: {
       backgroundColor: colors.surface,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderBottomWidth: 0,
       height: "85%",
       maxHeight: "88%",
       width: "100%",
       overflow: "hidden",
-      boxShadow: "0px -4px 24px rgba(0, 0, 0, 0.25)",
-      elevation: 16,
+      boxShadow: "none",
+      elevation: 0,
     },
     modalBody: {
       flex: 1,
@@ -401,9 +423,9 @@ const createStyles = (colors: ColorPalette) =>
       paddingBottom: spacing.xs,
     },
     dragHandle: {
-      width: 40,
-      height: 5,
-      borderRadius: 3,
+      width: 34,
+      height: 4,
+      borderRadius: 0,
       backgroundColor: colors.border,
     },
     header: {
@@ -413,7 +435,7 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.xs,
       paddingBottom: spacing.sm,
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: 1.5,
       borderBottomColor: colors.border,
     },
     headerTitleWrap: {
@@ -421,22 +443,37 @@ const createStyles = (colors: ColorPalette) =>
       paddingRight: spacing.sm,
     },
     titleText: {
-      fontSize: 18,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     subtitleText: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
       marginTop: 2,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     closeBtn: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
       justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
+    },
+    closeBtnPressed: {
+      opacity: 0.7,
     },
     scroll: {
       flex: 1,
@@ -447,9 +484,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     energyCard: {
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 20,
+      borderRadius: 0,
       padding: spacing.md,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
       marginBottom: spacing.md,
       flexDirection: "row",
@@ -457,18 +494,26 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       flexWrap: "wrap",
       gap: spacing.sm,
+      boxShadow: "none",
+      elevation: 0,
     },
     energyKcal: {
-      fontSize: 32,
+      fontSize: 30,
       fontWeight: "800",
       color: colors.primary,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     energyLabel: {
-      fontSize: 12,
-      fontWeight: "500",
+      fontSize: 11,
+      fontWeight: "700",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     macroPillRow: {
       flexDirection: "column",
@@ -476,18 +521,23 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "flex-end",
     },
     macroPill: {
-      paddingHorizontal: 10,
+      paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 12,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      boxShadow: "none",
+      elevation: 0,
     },
     macroPillLabel: {
       fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     sectionHeading: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.textMuted,
       textTransform: "uppercase",
@@ -495,20 +545,24 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: spacing.sm,
       marginBottom: spacing.xs,
       marginLeft: spacing.xs,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 18,
+      borderRadius: 0,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.xs,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
       marginBottom: spacing.md,
+      boxShadow: "none",
+      elevation: 0,
     },
     nutrientRow: {
       paddingVertical: 9,
       borderBottomWidth: 1,
-      borderBottomColor: `${colors.border}40`,
+      borderBottomColor: `${colors.border}30`,
     },
     nutrientHeader: {
       flexDirection: "row",
@@ -519,9 +573,13 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
     },
     nutrientLabel: {
-      fontSize: 14,
-      fontWeight: "500",
+      fontSize: 13,
+      fontWeight: "600",
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     valueCol: {
       flexDirection: "row",
@@ -529,38 +587,47 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     nutrientValue: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
     unitText: {
-      fontSize: 12,
-      fontWeight: "400",
+      fontSize: 11,
+      fontWeight: "600",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     rdiPct: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "700",
       minWidth: 54,
       textAlign: "right",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     rdiColor: {
       color: colors.textMuted,
     },
     barTrack: {
       height: 4,
-      borderRadius: 2,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
       marginTop: 6,
       overflow: "hidden",
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
     },
     barFill: {
       height: "100%",
-      borderRadius: 2,
+      borderRadius: 0,
     },
     footnote: {
       fontSize: 11,
@@ -568,5 +635,8 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
       marginTop: spacing.xs,
       marginBottom: spacing.md,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      letterSpacing: 0.2,
     },
   })

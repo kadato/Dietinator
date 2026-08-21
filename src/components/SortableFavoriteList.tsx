@@ -10,7 +10,7 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { displayUnit } from "@/utils/food-display"
 import { formatNumber } from "@/utils/format"
@@ -18,7 +18,7 @@ import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
 import { MacroPills } from "@/components/MacroPills"
-import { spacing } from "@/theme"
+import { spacing, fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -88,7 +88,7 @@ function SortableItem({
         ? `100 ${displayUnit(unit)}`
         : `${formatNumber(item.serving.amount)} ${displayUnit(unit)}`
 
-  const prefix = item.producer?.trim() ? `${item.producer.trim()} · ` : ""
+  const prefix = item.producer?.trim() ? `${item.producer.trim()}, ` : ""
 
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(150)
@@ -127,11 +127,9 @@ function SortableItem({
 
     if (isActive) {
       return {
-        transform: [{ translateY: dragY.value }, { scale: withSpring(1.03, SPRING_CONFIG) }],
+        transform: [{ translateY: dragY.value }, { scale: withSpring(1.02, SPRING_CONFIG) }],
         zIndex: 999,
-        shadowOpacity: withTiming(0.2),
-        elevation: 8,
-        opacity: 0.96,
+        opacity: 0.98,
       }
     }
 
@@ -141,16 +139,23 @@ function SortableItem({
         { scale: withSpring(1, SPRING_CONFIG) },
       ],
       zIndex: 1,
-      shadowOpacity: withTiming(0),
-      elevation: 0,
       opacity: 1,
     }
   })
 
   return (
     <Animated.View style={[styles.itemContainer, animatedStyle]}>
-      <Box className="flex-row items-center rounded-2xl border border-outline-100 bg-background-50 px-3 py-3">
-        {/* Left Drag Handle */}
+      <Box
+        className="flex-row items-center bg-background-50 px-3 py-3"
+        style={{
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          borderRadius: 0,
+          backgroundColor: colors.surface,
+          boxShadow: "none",
+          elevation: 0,
+        }}
+      >
         <GestureDetector gesture={panGesture}>
           <View
             style={styles.dragHandle}
@@ -158,19 +163,26 @@ function SortableItem({
             accessibilityRole="button"
             accessibilityLabel={`Drag handle for ${item.name}`}
           >
-            <Ionicons name="reorder-two-outline" size={24} color={colors.textMuted} />
+            <Feather name="menu" size={18} color={colors.textMuted} />
           </View>
         </GestureDetector>
 
-        {/* Food Details */}
         <Pressable
           className="min-w-0 flex-1 flex-row items-center pr-1 active:opacity-80"
           onPress={() => onOpenFood(item)}
-          // No aria-label: the accessible name is the visible row text — always
-          // satisfies 2.5.3 label-in-name.
           accessibilityRole="button"
         >
-          <Box className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
+          <Box
+            className="mr-3 h-10 w-10 shrink-0 items-center justify-center bg-background-100"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: colors.surfaceAlt,
+              boxShadow: "none",
+              elevation: 0,
+            }}
+          >
             <MaterialCommunityIcons
               name={getFoodIcon(item.name, item.nutrients)}
               size={22}
@@ -183,13 +195,27 @@ function SortableItem({
               bold
               className="text-[15px] leading-5 text-typography-900"
               numberOfLines={1}
+              style={{
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
             >
               {item.name}{" "}
             </Text>
             <View className="mt-0.5 flex-row flex-wrap items-center gap-1.5">
-              <Text size="xs" className="font-tabular text-[12px] text-typography-500">
+              <Text
+                size="xs"
+                className="text-[12px] text-typography-500"
+                style={{
+                  fontFamily: fonts.mono,
+                  fontVariant: ["tabular-nums"],
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
                 {prefix}
-                {portion} · {Math.round(nutrients.kcal)} kcal
+                {portion}, {Math.round(nutrients.kcal)} kcal
               </Text>
               <MacroPills
                 protein={nutrients.protein}
@@ -201,19 +227,23 @@ function SortableItem({
           </Box>
         </Pressable>
 
-        {/* Quick Tap Move Buttons */}
         <View style={styles.quickButtons}>
           <Pressable
             onPress={() => onMoveOne(index, -1)}
             disabled={index === 0}
             hitSlop={6}
-            style={[styles.moveBtn, index === 0 && styles.disabledBtn]}
+            style={({ pressed }) => [
+              styles.moveBtn,
+              { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+              index === 0 && styles.disabledBtn,
+              pressed && index !== 0 && styles.moveBtnPressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Move ${item.name} up`}
           >
-            <Ionicons
+            <Feather
               name="chevron-up"
-              size={17}
+              size={16}
               color={index === 0 ? colors.textMuted : colors.text}
             />
           </Pressable>
@@ -221,13 +251,18 @@ function SortableItem({
             onPress={() => onMoveOne(index, 1)}
             disabled={index === totalItems - 1}
             hitSlop={6}
-            style={[styles.moveBtn, index === totalItems - 1 && styles.disabledBtn]}
+            style={({ pressed }) => [
+              styles.moveBtn,
+              { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+              index === totalItems - 1 && styles.disabledBtn,
+              pressed && index !== totalItems - 1 && styles.moveBtnPressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Move ${item.name} down`}
           >
-            <Ionicons
+            <Feather
               name="chevron-down"
-              size={17}
+              size={16}
               color={index === totalItems - 1 ? colors.textMuted : colors.text}
             />
           </Pressable>
@@ -305,10 +340,15 @@ const styles = StyleSheet.create({
   moveBtn: {
     width: 32,
     height: 32,
-    borderRadius: 9,
-    backgroundColor: "rgba(128, 128, 128, 0.12)",
+    borderRadius: 0,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: "none",
+    elevation: 0,
+  },
+  moveBtnPressed: {
+    opacity: 0.7,
   },
   disabledBtn: {
     opacity: 0.25,

@@ -11,24 +11,25 @@ import { Text } from "@ui/text"
 
 type Props = {
   visible: boolean
-  /** Title line, e.g. `Log "Spaghetti" into…`. */
+  /** Title line, for example `Log "Spaghetti" into…`. */
   title: string
+  initialDateKey?: string
   onSelect: (slot: MealType, dateKey: string) => void
   onClose: () => void
 }
 
 /** Asks which diary slot a meal should land in when logging. */
-export function MealSlotModal({ visible, title, onSelect, onClose }: Props) {
+export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClose }: Props) {
   const { colors } = useTheme()
-  const [dateKey, setDateKey] = useState(toDateKey())
+  const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lastVisible, setLastVisible] = useState(false)
 
-  // Every open resets the target day — "log into today" is the default
-  // (render-adjustment pattern so the reset happens in the same commit).
+  // Every open resets the target day. "Log into today" is the default,
+  // handled as a render-adjustment pattern so the reset happens in one commit.
   if (visible !== lastVisible) {
     setLastVisible(visible)
-    if (visible) setDateKey(toDateKey())
+    if (visible) setDateKey(initialDateKey ?? toDateKey())
   }
 
   return (

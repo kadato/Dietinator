@@ -27,7 +27,7 @@ export type TrendPoint = { date: string; value: number }
 type Props = {
   data: TrendPoint[]
   color: string
-  /** Optional horizontal dashed target line (e.g. the calorie goal). */
+  /** Optional horizontal dashed target line (for examplethe calorie goal). */
   goalValue?: number
   /** "line" draws a connected line; "bars" draws one bar per point. */
   variant?: "line" | "bars"
@@ -53,7 +53,7 @@ function dayIndex(dateKey: string, startKey: string): number {
 }
 
 /**
- * Lightweight SVG trend chart. No chart library — just react-native-svg,
+ * Lightweight SVG trend chart. No chart library, just react-native-svg,
  * which is already a dependency and renders on native and web.
  *
  * The bar variant shades bars over the goal in the danger color, so a glance
@@ -134,7 +134,7 @@ export function TrendChart({
       slot * (Math.min(totalDays - 1, Math.max(0, dayIndex(dateKey, rangeStart))) + 0.5) -
       barWidth / 2
 
-    // X tick labels — evenly spaced dates across the range (deduplicated),
+    // X tick labels: evenly spaced dates across the range (deduplicated),
     // so the axis visibly changes with the selected range without label crowding.
     const targetTicks = 3
     const tickDates: string[] = []
@@ -148,11 +148,11 @@ export function TrendChart({
 
     // Y grid lines at min / mid / max, but labels only at min / max so the
     // mid label never collides with a data dot sitting on the mid value.
-    // Rounded to 2dp — padded domains inherit float noise from subtraction.
+    // Rounded to 2dp, because padded domains inherit float noise from subtraction.
     const gridValues = [max, (min + max) / 2, min].map((value) => Math.round(value * 100) / 100)
     const labelValues = [max, min].map((value) => Math.round(value * 100) / 100)
 
-    // Dots on every point get crowded past ~90 entries — sample them instead.
+    // Dots on every point get crowded past ~90 entries. Sample them instead.
     const dotStep = Math.max(1, Math.ceil(data.length / 90))
 
     return {

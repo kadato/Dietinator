@@ -8,7 +8,7 @@ import { Text } from "@ui/text"
 /**
  * Lightweight markdown renderer for controlled content (release changelogs).
  * Supports headings, bullet/numbered lists, bold, italic, inline code, fenced
- * code, blockquotes, links and horizontal rules — enough for the notes the
+ * code, blockquotes, links and horizontal rules, enough for the notes the
  * release pipeline generates, with full styling control.
  */
 
@@ -76,7 +76,7 @@ function splitRow(line: string): string[] | null {
     .map((cell) => cell.trim())
 }
 
-/** Separator row like `|---|---|` — every cell is dashes with optional colons. */
+/** Separator row like `|---|---|`: every cell is dashes with optional colons. */
 function isSeparatorRow(line: string): boolean {
   const trimmed = line.trim()
   if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return false
@@ -212,10 +212,9 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
               <Text
                 key={index}
                 style={{
-                  fontFamily: "JetBrains Mono, JetBrainsMono Nerd Font, monospace",
+                  fontFamily: "JetBrainsMono NFM, JetBrains Mono, monospace",
                   fontSize: 12.5,
                   backgroundColor: colors.surfaceAlt,
-                  borderRadius: 4,
                   paddingHorizontal: 4,
                   paddingVertical: 1,
                   color: colors.primary,
@@ -268,7 +267,7 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
           {block.items.map((item, index) => (
             <Box key={index} className="flex-row gap-2">
               <Text size="sm" className="w-4 text-right text-typography-500">
-                {block.ordered ? `${index + 1}.` : "•"}
+                {block.ordered ? `${index + 1}.` : "-"}
               </Text>
               <Box className="flex-1">
                 <Text size="sm" className="leading-[20px] text-typography-900">

@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { ActivityIndicator, Pressable, View } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import type { FoodNutrients, Meal } from "@/types"
 import { useTheme } from "@/hooks/useTheme"
 import { MacroPills } from "@/components/MacroPills"
@@ -43,7 +43,7 @@ export const MealListItem = memo(function MealListItem({
         className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
         onPress={onPress}
         disabled={logging}
-        // No aria-label: the accessible name is the visible row text — always
+        // No aria-label: the accessible name is the visible row text, which always
         // satisfies 2.5.3 label-in-name.
         accessibilityRole="button"
       >
@@ -54,7 +54,7 @@ export const MealListItem = memo(function MealListItem({
           {logging ? (
             <ActivityIndicator size="small" color={accent} />
           ) : (
-            <Ionicons name="restaurant-outline" size={21} color={accent} />
+            <Feather name="shopping-bag" size={21} color={accent} />
           )}
         </Box>
         <Box className="min-w-0 flex-1">
@@ -62,13 +62,13 @@ export const MealListItem = memo(function MealListItem({
             size="md"
             bold
             className="text-[15.5px] leading-5 text-typography-900"
-            numberOfLines={1}
+            style={{ flexWrap: "wrap" }}
           >
             {meal.name}{" "}
           </Text>
           <View className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
             <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
-              {foodCount} · {kcal} kcal
+              {foodCount}, {kcal} kcal
             </Text>
             {totals ? <MacroPills protein={protein} carbs={carbs} fat={fat} size="xs" /> : null}
           </View>
@@ -88,7 +88,7 @@ export const MealListItem = memo(function MealListItem({
           {logging ? (
             <ActivityIndicator size="small" color={colors.onPrimary} />
           ) : (
-            <Ionicons name="add" size={20} color={colors.onPrimary} />
+            <Feather name="plus" size={20} color={colors.onPrimary} />
           )}
         </Pressable>
       ) : null}
@@ -101,7 +101,7 @@ export const MealListItem = memo(function MealListItem({
           accessibilityRole="button"
           accessibilityLabel={`Edit ${meal.name}`}
         >
-          <Ionicons name="create-outline" size={16} color={colors.textMuted} />
+          <Feather name="edit-2" size={16} color={colors.textMuted} />
         </Pressable>
       ) : null}
 
@@ -114,7 +114,7 @@ export const MealListItem = memo(function MealListItem({
           accessibilityRole="button"
           accessibilityLabel={`Delete ${meal.name}`}
         >
-          <Ionicons name="trash" size={15} color={colors.danger} />
+          <Feather name="trash-2" size={15} color={colors.danger} />
         </Pressable>
       ) : null}
     </Box>

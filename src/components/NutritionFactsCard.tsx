@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { View, Text, StyleSheet, Pressable } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import type { FoodNutrients } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
@@ -10,14 +10,8 @@ import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   nutrients: FoodNutrients
-  /** e.g. "for 150 g" or "per 100 g" */
   servingLabel: string
-  /**
-   * Reference weight/volume in base units (e.g. grams or ml) that `nutrients` represents.
-   * If provided and > 0, micronutrients will be normalized and displayed per 100g/ml.
-   */
   baseAmount?: number
-  /** Base unit: "g" (default) or "ml" */
   baseUnit?: string
 }
 
@@ -36,7 +30,6 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
     fatPct: fPct,
   } = computeMacroRatios(nutrients.protein, nutrients.carbs, nutrients.fat)
 
-  // Normalize micronutrients per 100g/ml standard basis if a portion size is known
   const per100Scale = baseAmount && baseAmount > 0 ? 100 / baseAmount : 1
   const unitLabel = baseUnit === "ml" ? "100ml" : "100g"
 
@@ -113,7 +106,6 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
 
   return (
     <View style={styles.card}>
-      {/* Top row: Calories on left, serving context on right */}
       <View style={styles.topRow}>
         <View style={styles.calorieBlock}>
           <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={1.4}>
@@ -126,7 +118,6 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
         </Text>
       </View>
 
-      {/* Proportional Macro Bar */}
       <View style={styles.bar}>
         {pPct > 0 ? (
           <View style={[styles.barSegment, { flex: pPct, backgroundColor: colors.breakfast }]} />
@@ -139,7 +130,6 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
         ) : null}
       </View>
 
-      {/* 3-Column Macro Cards with Icons & Pills */}
       <MacroPills
         protein={nutrients.protein}
         carbs={nutrients.carbs}
@@ -147,11 +137,10 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
         variant="card"
       />
 
-      {/* Collapsible Micronutrients per 100g */}
       {micros.length > 0 ? (
         <View style={styles.microSection}>
           <Pressable
-            style={styles.expandToggle}
+            style={({ pressed }) => [styles.expandToggle, pressed && styles.expandTogglePressed]}
             onPress={() => setExpanded(!expanded)}
             accessibilityRole="button"
             accessibilityLabel={
@@ -163,9 +152,9 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
                 ? "Hide Micronutrients"
                 : `Micronutrients per ${unitLabel} (${micros.length})`}
             </Text>
-            <Ionicons
+            <Feather
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={15}
+              size={14}
               color={colors.primary}
             />
           </Pressable>
@@ -200,12 +189,14 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 16,
+      borderRadius: 0,
       paddingHorizontal: spacing.md,
       paddingVertical: 12,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
       marginBottom: spacing.sm,
+      boxShadow: "none",
+      elevation: 0,
     },
     topRow: {
       flexDirection: "row",
@@ -224,25 +215,39 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.primary,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     calorieUnit: {
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     servingNote: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.textMuted,
       maxWidth: "50%",
       textAlign: "right",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     bar: {
-      height: 4,
+      height: 6,
       flexDirection: "row",
       overflow: "hidden",
-      borderRadius: 2,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
       marginBottom: 8,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
     },
     barSegment: {
       height: "100%",
@@ -265,12 +270,17 @@ const createStyles = (colors: ColorPalette) =>
     macroDot: {
       width: 6,
       height: 6,
-      borderRadius: 3,
+      borderRadius: 0,
+      backgroundColor: colors.border,
     },
     macroLabel: {
       fontSize: 11,
       color: colors.textMuted,
-      fontWeight: "500",
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     macroVal: {
       fontSize: 13,
@@ -287,20 +297,33 @@ const createStyles = (colors: ColorPalette) =>
     },
     microSection: {
       marginTop: 8,
-      borderTopWidth: 1,
-      borderTopColor: `${colors.border}60`,
+      borderTopWidth: 1.5,
+      borderTopColor: colors.border,
       paddingTop: 4,
     },
     expandToggle: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 4,
+      paddingVertical: 6,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      borderRadius: 0,
+      paddingHorizontal: 4,
+    },
+    expandTogglePressed: {
+      opacity: 0.7,
+      backgroundColor: colors.surfaceAlt,
+      borderColor: colors.border,
     },
     expandToggleText: {
-      fontSize: 12,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
       color: colors.primary,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microGrid: {
       paddingTop: 4,
@@ -309,14 +332,18 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 4,
+      paddingVertical: 5,
       borderBottomWidth: 1,
       borderBottomColor: `${colors.border}30`,
     },
     microLabel: {
       fontSize: 12,
       color: colors.text,
-      fontWeight: "500",
+      fontWeight: "600",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microValWrap: {
       flexDirection: "row",
@@ -332,12 +359,15 @@ const createStyles = (colors: ColorPalette) =>
     },
     microBasis: {
       fontSize: 10,
-      fontWeight: "normal",
+      fontWeight: "600",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     microRdi: {
       fontSize: 10,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.textMuted,
       minWidth: 42,
       textAlign: "right",

@@ -5,15 +5,15 @@ export const cardStyle = tva({
   base: baseStyle,
   variants: {
     size: {
-      sm: "p-3 rounded",
-      md: "p-4 rounded-md",
-      lg: "p-6 rounded-xl",
+      sm: "p-3 rounded-none border border-outline-200",
+      md: "p-4 rounded-none border border-outline-200",
+      lg: "p-6 rounded-none border border-outline-200",
     },
     variant: {
-      elevated: "bg-background-50 rounded-2xl shadow-soft-2",
-      outline: "border border-outline-200 bg-background-50 rounded-2xl",
-      ghost: "rounded-none",
-      filled: "bg-background-100 rounded-2xl",
+      elevated: "bg-background-50 rounded-none border border-outline-200",
+      outline: "border border-outline-200 bg-background-50 rounded-none",
+      ghost: "rounded-none border-0",
+      filled: "bg-background-100 rounded-none border border-outline-200",
     },
   },
 })

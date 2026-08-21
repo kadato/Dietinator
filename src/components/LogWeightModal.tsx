@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
@@ -24,18 +24,15 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { getWeightEntryForDate, saveWeightEntry } from "@/db/weight"
 import { isImperial, parseWeightInput } from "@/utils/units"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
-  /** Date to log/edit when the modal opens (defaults to today). */
   initialDateKey?: string
-  /** Closing without saving — also called after a successful save. */
   onClose: () => void
-  /** Called after a successful save so the caller can reload its data. */
   onSaved?: () => void
 }
 
@@ -46,11 +43,6 @@ function weightToDisplay(kg: number, units: string): string {
   return String(kg)
 }
 
-/**
- * True overlay modal (React Native `Modal`, not a route — route modals render
- * as plain pages on web). Centered dialog on wide screens, full-bleed sheet
- * on phones; the action FABs float on the backdrop, outside the dialog.
- */
 export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Props) {
   const { settings } = useApp()
   const { showError, showWarning } = useToast()
@@ -65,8 +57,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // An edit request (initialDateKey) retargets the dialog when it opens —
-  // render-adjustment pattern so no effect round-trip is needed.
   const [openSync, setOpenSync] = useState({ visible: false, key: initialDateKey ?? toDateKey() })
   if (visible !== openSync.visible) {
     setOpenSync({ visible, key: initialDateKey ?? toDateKey() })
@@ -74,7 +64,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     setWeightText("")
   }
 
-  // Prefill the existing entry when one is already logged for this date.
   useEffect(() => {
     if (!visible) return
     let cancelled = false
@@ -129,59 +118,107 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     <>
       <View
         testID="log-weight-dialog"
-        style={[shell.dialogBox, { width: "100%", maxWidth: 420, maxHeight: "90%" }]}
+        style={[
+          shell.dialogBox,
+          {
+            width: "100%",
+            maxWidth: 420,
+            maxHeight: "90%",
+            borderRadius: 0,
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            boxShadow: "none",
+            elevation: 0,
+          },
+        ]}
       >
         <Box className="items-center pt-2">
-          <Box className="h-1 w-9 rounded-full bg-outline-200" />
+          <Box
+            className="h-1 w-9 rounded-none border bg-outline-200"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          />
         </Box>
         {isWide ? (
           <Text
             size="2xl"
             bold
             className="px-6 text-center text-typography-900"
-            style={{ paddingTop: insets.top + spacing.sm }}
+            style={{
+              paddingTop: insets.top + spacing.sm,
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+            }}
           >
             Log weight
           </Text>
         ) : (
           <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
-            <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
-              <Ionicons name="scale-outline" size={20} color={colors.primary} />
+            <Box
+              className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: `${colors.primary}14`,
+                boxShadow: "none",
+                elevation: 0,
+              }}
+            >
+              <Feather name="activity" size={18} color={colors.primary} />
             </Box>
-            <Text size="xl" bold className="flex-1 text-typography-900">
+            <Text
+              size="xl"
+              bold
+              className="flex-1 text-typography-900"
+              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+            >
               Log weight
             </Text>
             <Pressable
               onPress={onClose}
               hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+              className="h-9 w-9 items-center justify-center rounded-none border active:opacity-70"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: colors.surfaceAlt,
+                boxShadow: "none",
+                elevation: 0,
+              }}
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+              <Feather name="x" size={18} color={colors.textMuted} />
             </Pressable>
           </Box>
         )}
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-4"
+          contentContainerClassName="px-5 pb-4"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.label}>Date</Text>
           <Pressable
-            style={[styles.dateRow, ...(datePress.pressed ? [{ opacity: 0.8 }] : [])]}
+            style={({ pressed }) => [styles.dateRow, pressed && styles.pressed]}
             onPress={() => setPickerOpen(true)}
             onPressIn={datePress.onPressIn}
             onPressOut={datePress.onPressOut}
             accessibilityRole="button"
             accessibilityLabel="Choose date"
           >
-            <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <Text size="md" bold className="ml-2 flex-1 text-typography-900">
+            <Feather name="calendar" size={16} color={colors.primary} />
+            <Text
+              size="md"
+              bold
+              className="ml-2 flex-1 text-typography-900"
+              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+            >
               {formatDisplayDate(dateKey)}
             </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            <Feather name="chevron-right" size={16} color={colors.textMuted} />
           </Pressable>
 
           <Text style={styles.label}>Weight ({isImperial(settings.units) ? "lb" : "kg"})</Text>
@@ -193,25 +230,68 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               step={isImperial(settings.units) ? 0.5 : 0.1}
               decimals={1}
               accessibilityLabel="Weight"
-              placeholder={isImperial(settings.units) ? "e.g. 165.4" : "e.g. 75.2"}
+              placeholder={isImperial(settings.units) ? "165.4" : "75.2"}
               style={{ flex: 1 }}
             />
-            <Text size="sm" bold className="text-typography-500">
+            <Text
+              size="sm"
+              bold
+              className="text-typography-500"
+              style={{
+                fontFamily: fonts.mono,
+                fontVariant: ["tabular-nums"],
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
               {isImperial(settings.units) ? "lb" : "kg"}
             </Text>
           </Box>
 
           {bmi !== null ? (
-            <Box className="mt-3 flex-row items-center justify-between rounded-2xl bg-primary-500/10 px-4 py-3">
+            <Box
+              className="mt-3 flex-row items-center justify-between rounded-none border bg-primary-500/10 px-4 py-3"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                boxShadow: "none",
+                elevation: 0,
+              }}
+            >
               <Box>
-                <Text size="xs" bold className="font-tabular text-typography-900">
+                <Text
+                  size="xs"
+                  bold
+                  className="font-tabular text-typography-900"
+                  style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+                >
                   BMI {bmi}
                 </Text>
-                <Text size="2xs" className="font-tabular text-typography-500">
+                <Text
+                  size="2xs"
+                  className="font-tabular text-typography-500"
+                  style={{
+                    fontFamily: fonts.mono,
+                    fontVariant: ["tabular-nums"],
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
+                >
                   Height: {settings.height_cm} cm
                 </Text>
               </Box>
-              <Text size="xs" bold style={{ color: colors.primary }}>
+              <Text
+                size="xs"
+                bold
+                style={{
+                  color: colors.primary,
+                  fontFamily: fonts.mono,
+                  fontVariant: ["tabular-nums"],
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
                 {bmi < 18.5
                   ? "Underweight"
                   : bmi < 25
@@ -222,24 +302,58 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               </Text>
             </Box>
           ) : null}
-
-          <Text size="xs" className="mt-1 leading-4 text-typography-500">
-            Stored in kg — switching units later keeps your history intact.
-          </Text>
         </ScrollView>
         {isWide ? null : (
-          <Box className="flex-row items-center gap-3 border-t border-outline-100 px-5 py-4">
+          <Box
+            className="flex-row items-center gap-3 border-t px-5 py-4"
+            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+          >
             <Button
-              size="lg"
+              size="md"
               variant="outline"
               action="secondary"
               className="flex-1"
               onPress={onClose}
+              style={
+                {
+                  borderRadius: 0,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  boxShadow: "none",
+                  elevation: 0,
+                } as any
+              }
             >
-              <ButtonText>Cancel</ButtonText>
+              <ButtonText
+                style={
+                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
+                }
+              >
+                Cancel
+              </ButtonText>
             </Button>
-            <Button size="lg" className="flex-1" onPress={handleSave} isDisabled={saving}>
-              <ButtonText>{saving ? "Saving…" : "Save weight"}</ButtonText>
+            <Button
+              size="md"
+              className="flex-1"
+              onPress={handleSave}
+              isDisabled={saving}
+              style={
+                {
+                  borderRadius: 0,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  boxShadow: "none",
+                  elevation: 0,
+                } as any
+              }
+            >
+              <ButtonText
+                style={
+                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
+                }
+              >
+                {saving ? "Saving…" : "Save"}
+              </ButtonText>
             </Button>
           </Box>
         )}
@@ -270,9 +384,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   )
 
   return (
-    // Web has no native sheet animation — slide would leave the dialog
-    // mid-transition when tests measure it, so native gets the slide and
-    // web renders instantly.
     <Modal
       visible={visible}
       transparent
@@ -290,7 +401,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           accessibilityLabel="Dismiss weight dialog"
         />
         {isWide ? (
-          <View style={shell.dialogWrap}>{form}</View>
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as any }]}>{form}</View>
         ) : (
           <KeyboardAvoidingView
             style={shell.dialogWrap}
@@ -308,8 +419,12 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     label: {
       color: colors.textMuted,
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
       marginBottom: spacing.xs,
       marginTop: spacing.md,
     },
@@ -317,9 +432,14 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 10,
+      borderRadius: 0,
       padding: spacing.md,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    pressed: {
+      opacity: 0.7,
     },
   })

@@ -10,14 +10,14 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { FOOD_DATABASE_COUNTRY_CODES } from "@/constants/food-database-countries"
 import {
   getFoodDatabaseCountryLabel,
   normalizeFoodDatabaseCountry,
 } from "@/utils/food-database-country"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type CountryOption = { code: string; label: string }
 
@@ -61,10 +61,11 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
           <Pressable
             onPress={onClose}
             hitSlop={12}
+            style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={28} color={styles.closeIcon.color} />
+            <Feather name="x" size={22} color={styles.closeIcon.color} />
           </Pressable>
         </View>
         <Text style={styles.hint}>Search uses this country&apos;s YAZIO catalog.</Text>
@@ -89,7 +90,11 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
             const selected = item.code === normalizedSelected
             return (
               <Pressable
-                style={[styles.row, selected && styles.rowSelected]}
+                style={({ pressed }) => [
+                  styles.row,
+                  selected && styles.rowSelected,
+                  pressed && styles.pressed,
+                ]}
                 onPress={() => {
                   onSelect(item.code)
                   setFilter("")
@@ -103,7 +108,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
                   {item.label}
                 </Text>
                 {selected ? (
-                  <Ionicons name="checkmark" size={22} color={styles.checkmark.color} />
+                  <Feather name="check" size={18} color={styles.checkmark.color} />
                 ) : null}
               </Pressable>
             )
@@ -128,27 +133,55 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       marginBottom: spacing.sm,
+      borderRadius: 0,
     },
     title: {
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: "700",
       color: colors.text,
       flex: 1,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    closeBtn: {
+      width: 32,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: 0,
+      backgroundColor: colors.surfaceAlt,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    pressed: {
+      opacity: 0.7,
     },
     closeIcon: { color: colors.text },
     hint: {
-      fontSize: 14,
+      fontSize: 11,
       color: colors.textMuted,
       marginBottom: spacing.md,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     search: {
       backgroundColor: colors.surface,
-      borderRadius: 10,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       padding: spacing.sm,
       marginBottom: spacing.md,
       color: colors.text,
-      borderWidth: 1,
-      borderColor: colors.border,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      boxShadow: "none",
+      elevation: 0,
     },
     searchPlaceholder: { color: colors.textMuted },
     row: {
@@ -157,25 +190,40 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.sm,
-      borderRadius: 8,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      marginBottom: 2,
+      boxShadow: "none",
+      elevation: 0,
     },
     rowSelected: {
-      backgroundColor: colors.surface,
+      backgroundColor: `${colors.primary}10`,
+      borderColor: colors.border,
     },
     rowLabel: {
-      fontSize: 16,
+      fontSize: 13,
       color: colors.text,
       flex: 1,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      letterSpacing: 0.2,
     },
     rowLabelSelected: {
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.primary,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     checkmark: { color: colors.primary },
     empty: {
       textAlign: "center",
       color: colors.textMuted,
       marginTop: spacing.xl,
-      fontSize: 15,
+      fontSize: 13,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
   })

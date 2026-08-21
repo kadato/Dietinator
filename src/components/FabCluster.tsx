@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { StyleSheet, View } from "react-native"
 
 /**
- * `pointerEvents` must live in a registered style, not an inline one —
+ * `pointerEvents` must live in a registered style, not an inline one:
  * react-native-web only compiles it from `StyleSheet.create`, and inline
  * `{ pointerEvents: "box-none" }` is silently dropped on web.
  */

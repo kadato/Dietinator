@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { Pressable, Text, View, StyleSheet } from "react-native"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { DiaryEntry } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
@@ -8,7 +8,7 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { MacroPills } from "@/components/MacroPills"
 import { formatNumber } from "@/utils/format"
 import { getFoodIcon } from "@/utils/food-icon"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   entry: DiaryEntry
@@ -27,9 +27,6 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
-  // Trailing/leading spaces are invisible (flex gaps already separate the
-  // chips) but make the concatenated accessible name read "200g 5g 24g …"
-  // instead of "200g5g24g…" — required for 2.5.3 label-in-name to match.
   const amountLabel =
     entry.unit === "serving" ? "1 serving " : `${formatNumber(entry.amount)}${entry.unit} `
   const mainPress = usePressedState()
@@ -46,25 +43,29 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         onPressOut={mainPress.onPressOut}
         style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
         accessibilityRole="button"
-        // Built from the visible row content so the accessible name contains
-        // all visible text (2.5.3 label-in-name).
         accessibilityLabel={`${entry.food_name}, ${amountLabel.trim()}, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g, ${Math.round(entry.kcal)} kcal`}
         accessibilityHint="Tap to edit, long press to delete"
       >
-        <View style={[styles.iconWrap, { backgroundColor: accentColor + "1a" }]}>
+        <View
+          style={[
+            styles.iconWrap,
+            {
+              backgroundColor: `${accentColor}14`,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <MaterialCommunityIcons
             name={getFoodIcon(entry.food_name, entry)}
             size={20}
             color={accentColor}
           />
-        </View>{" "}
+        </View>
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={1}>
-            {entry.food_name}{" "}
-          </Text>
+          <Text style={styles.name}>{entry.food_name}</Text>
           <View style={styles.macroRow}>
             <Text style={styles.amountLabel}>{amountLabel}</Text>
-            <Text style={styles.macroDot}>·</Text>
+            <Text style={styles.macroDot}>,</Text>
             <MacroPills protein={entry.protein} carbs={entry.carbs} fat={entry.fat} size="xs" />
           </View>
         </View>
@@ -82,13 +83,13 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
             onPressOut={infoPress.onPressOut}
             style={[
               styles.actionBtn,
-              { backgroundColor: `${colors.primary}14` },
+              { backgroundColor: `${colors.primary}14`, borderColor: colors.border },
               ...(infoPress.pressed ? [styles.actionPressed] : []),
             ]}
             accessibilityRole="button"
             accessibilityLabel={`View nutrition facts for ${entry.food_name}`}
           >
-            <Ionicons name="pie-chart-outline" size={15} color={colors.primary} />
+            <Feather name="pie-chart" size={14} color={colors.primary} />
           </Pressable>
         ) : null}
         <Pressable
@@ -98,13 +99,13 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           onPressOut={editPress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${accentColor}14` },
+            { backgroundColor: `${accentColor}14`, borderColor: colors.border },
             ...(editPress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Edit ${entry.food_name}`}
         >
-          <Ionicons name="create-outline" size={16} color={accentColor} />
+          <Feather name="edit-2" size={14} color={accentColor} />
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
@@ -113,13 +114,13 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           onPressOut={deletePress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${colors.danger}14` },
+            { backgroundColor: `${colors.danger}14`, borderColor: colors.border },
             ...(deletePress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Delete ${entry.food_name}`}
         >
-          <Ionicons name="trash-outline" size={16} color={colors.danger} />
+          <Feather name="trash-2" size={14} color={colors.danger} />
         </Pressable>
       </View>
     </View>
@@ -134,7 +135,10 @@ const createStyles = (colors: ColorPalette) =>
       gap: 6,
       paddingVertical: 8,
       paddingHorizontal: 4,
-      borderRadius: 14,
+      borderRadius: 0,
+      borderWidth: 0,
+      boxShadow: "none",
+      elevation: 0,
     },
     main: {
       flex: 1,
@@ -142,23 +146,37 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 10,
-      borderRadius: 10,
+      borderRadius: 0,
       paddingVertical: 3,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      boxShadow: "none",
+      elevation: 0,
     },
-    rowPressed: { backgroundColor: colors.surfaceAlt },
+    rowPressed: {
+      backgroundColor: colors.surfaceAlt,
+      opacity: 0.9,
+    },
     iconWrap: {
       width: 38,
       height: 38,
-      borderRadius: 12,
+      borderRadius: 0,
+      borderWidth: 1.5,
       alignItems: "center",
       justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
     },
     info: { flex: 1, minWidth: 0 },
     name: {
-      fontSize: 15.5,
-      fontWeight: "600",
+      fontSize: 13,
+      fontWeight: "700",
       color: colors.text,
-      lineHeight: 20,
+      lineHeight: 18,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     macroRow: {
       flexDirection: "row",
@@ -168,29 +186,40 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: 2.5,
     },
     amountLabel: {
-      fontSize: 12.5,
+      fontSize: 11,
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     macroDot: {
-      fontSize: 12.5,
+      fontSize: 11,
       color: colors.textMuted,
+      fontFamily: fonts.mono,
     },
     miniChip: {
       paddingHorizontal: 5,
       paddingVertical: 1,
-      borderRadius: 6,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
     },
     miniChipText: {
       fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     macroPill: {
       fontSize: 11,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     kcalBlock: {
       alignItems: "flex-end",
@@ -198,16 +227,22 @@ const createStyles = (colors: ColorPalette) =>
       paddingLeft: 4,
     },
     kcalValue: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     kcalUnit: {
-      fontSize: 10.5,
-      fontWeight: "500",
+      fontSize: 10,
+      fontWeight: "600",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     actions: {
       flexDirection: "row",
@@ -218,11 +253,14 @@ const createStyles = (colors: ColorPalette) =>
     actionBtn: {
       width: 30,
       height: 30,
-      borderRadius: 15,
+      borderRadius: 0,
+      borderWidth: 1.5,
       alignItems: "center",
       justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
     },
     actionPressed: {
-      transform: [{ scale: 0.9 }],
+      opacity: 0.7,
     },
   })

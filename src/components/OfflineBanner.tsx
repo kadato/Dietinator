@@ -1,6 +1,7 @@
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useNetwork } from "@/context/NetworkContext"
 import { useTheme } from "@/hooks/useTheme"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -11,21 +12,40 @@ type Props = {
 
 export function OfflineBanner({
   visible,
-  message = "YAZIO unavailable — using cached foods",
+  message = "YAZIO unavailable, using cached foods",
 }: Props) {
   const { isOnline } = useNetwork()
   const { colors } = useTheme()
 
-  // A real connectivity loss overrides the YAZIO-specific flag so the user
-  // always knows why live features are degraded.
   if (!visible && isOnline) return null
 
-  const text = isOnline ? message : "Offline — diary works, sync resumes later"
+  const text = isOnline ? message : "Offline, diary works, sync resumes later"
 
   return (
-    <Box className="flex-row items-center justify-center gap-2 border-b border-outline-200 bg-background-warning px-4 py-2.5">
-      <Ionicons name="cloud-offline-outline" size={18} color={colors.warning} />
-      <Text size="sm" className="flex-shrink text-typography-800">
+    <Box
+      className="flex-row items-center justify-center gap-2 border-b bg-background-warning px-4 py-2.5"
+      style={{
+        borderWidth: 0,
+        borderBottomWidth: 1.5,
+        borderColor: colors.border,
+        borderRadius: 0,
+        boxShadow: "none",
+        elevation: 0,
+      }}
+    >
+      <Feather name="wifi-off" size={16} color={colors.warning} />
+      <Text
+        size="sm"
+        className="flex-shrink text-typography-800"
+        style={{
+          fontFamily: fonts.mono,
+          fontVariant: ["tabular-nums"],
+          textTransform: "uppercase",
+          letterSpacing: 0.4,
+          fontSize: 12,
+          fontWeight: "700",
+        }}
+      >
         {text}
       </Text>
     </Box>

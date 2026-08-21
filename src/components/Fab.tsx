@@ -1,13 +1,12 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { ComponentProps } from "react"
 import { useState } from "react"
 import { Pressable, StyleSheet } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { Text } from "@ui/text"
 
-type IconComponent = typeof Ionicons | typeof MaterialCommunityIcons
-type IconName =
-  ComponentProps<typeof Ionicons>["name"] | ComponentProps<typeof MaterialCommunityIcons>["name"]
+type IconComponent = typeof Ionicons | typeof MaterialCommunityIcons | typeof Feather
+type IconName = string
 
 type Props = {
   icon: IconName
@@ -22,9 +21,9 @@ type Props = {
    * dismiss actions) or `danger`.
    */
   tone?: "primary" | "surface" | "danger"
-  /** Disables presses and dims the button (e.g. while saving). */
+  /** Disables presses and dims the button (for examplewhile saving). */
   disabled?: boolean
-  /** `md` (default, 56px) or `sm` (44px — secondary buttons in FAB clusters). */
+  /** `md` (default, 56px) or `sm` (44px, secondary buttons in FAB clusters). */
   size?: "md" | "sm"
 }
 
@@ -39,7 +38,24 @@ function FabGlyph({
   size: number
   color: string
 }) {
+  // Explicit component wins
   if (IconComponent === MaterialCommunityIcons) {
+    return (
+      <MaterialCommunityIcons
+        name={icon as keyof typeof MaterialCommunityIcons.glyphMap}
+        size={size}
+        color={color}
+      />
+    )
+  }
+  if (IconComponent === Feather) {
+    return <Feather name={icon as keyof typeof Feather.glyphMap} size={size} color={color} />
+  }
+  // Auto-detect: Feather names like "x", "plus", "maximize" are not in Ionicons
+  if ((Feather.glyphMap as Record<string, unknown>)[icon] !== undefined) {
+    return <Feather name={icon as keyof typeof Feather.glyphMap} size={size} color={color} />
+  }
+  if ((MaterialCommunityIcons.glyphMap as Record<string, unknown>)[icon] !== undefined) {
     return (
       <MaterialCommunityIcons
         name={icon as keyof typeof MaterialCommunityIcons.glyphMap}
@@ -52,10 +68,9 @@ function FabGlyph({
 }
 
 /**
- * Floating action button. Rounded square by default (Material 3 container
- * shape); pass `label` for the extended variant. Elevation and press
- * feedback match Material FABs while staying theme-aware. Screens position
- * it (absolute + safe area).
+ * Floating action button. Square sheet with a 1.5px ink rule (field-terminal
+ * key); pass `label` for the extended variant. No shadow: emphasis comes
+ * from fill and rule weight. Screens position it (absolute + safe area).
  */
 export function Fab({
   icon,
@@ -87,12 +102,6 @@ export function Fab({
         ? styles.extended
         : styles.round
   const iconSize = size === "sm" ? (label ? 18 : 22) : label ? 22 : 26
-  const border =
-    tone === "primary"
-      ? `${colors.primaryStrong}4d`
-      : tone === "danger"
-        ? `${colors.danger}66`
-        : colors.border
 
   return (
     <Pressable
@@ -105,11 +114,10 @@ export function Fab({
       accessibilityState={{ disabled }}
       style={[
         shape,
-        styles.shadow,
         {
           backgroundColor: bg,
-          borderWidth: 1,
-          borderColor: border,
+          borderWidth: 1.5,
+          borderColor: tone === "surface" ? colors.border : bg,
         },
         pressed ? pressedStyle : styles.idle,
       ]}
@@ -128,21 +136,18 @@ const styles = StyleSheet.create({
   round: {
     width: 58,
     height: 58,
-    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
   },
   roundSm: {
     width: 44,
     height: 44,
-    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
   extended: {
     minHeight: 56,
     paddingHorizontal: 24,
-    borderRadius: 28,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -150,14 +155,9 @@ const styles = StyleSheet.create({
   extendedSm: {
     minHeight: 44,
     paddingHorizontal: 18,
-    borderRadius: 22,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-  },
-  shadow: {
-    elevation: 8,
-    boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.22)",
   },
   pressed: {
     transform: [{ scale: 0.92 }],

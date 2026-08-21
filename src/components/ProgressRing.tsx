@@ -11,7 +11,7 @@ type Props = {
 }
 
 /**
- * Simple circular progress (0–1) without extra dependencies.
+ * Simple circular progress (0 to 1) without extra dependencies.
  * Uses quadrant border fills rotated from the top.
  */
 export function ProgressRing({ progress, size, stroke = 3, color, trackColor, children }: Props) {

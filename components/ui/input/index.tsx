@@ -30,25 +30,25 @@ cssInterop(PrimitiveIcon, {
 })
 
 const inputStyle = tva({
-  base: "border-background-300 flex-row overflow-hidden content-center data-[hover=true]:border-outline-400 data-[focus=true]:border-primary-700 data-[focus=true]:hover:border-primary-700 data-[disabled=true]:opacity-40 data-[disabled=true]:hover:border-background-300 items-center",
+  base: "border-background-300 flex-row overflow-hidden content-center data-[hover=true]:border-outline-400 data-[focus=true]:border-primary-500 data-[focus=true]:hover:border-primary-500 data-[disabled=true]:opacity-40 data-[disabled=true]:hover:border-background-300 items-center rounded-none border bg-background-50",
 
   variants: {
     size: {
-      xl: "h-12",
-      lg: "h-11",
-      md: "h-10",
-      sm: "h-9",
+      xl: "h-12 rounded-none",
+      lg: "h-11 rounded-none",
+      md: "h-10 rounded-none",
+      sm: "h-9 rounded-none",
     },
 
     variant: {
       underlined:
-        "rounded-none border-b data-[invalid=true]:border-b-2 data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700",
+        "rounded-none border-0 border-b border-outline-200 data-[invalid=true]:border-b-2 data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700",
 
       outline:
-        "rounded border data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700 data-[focus=true]:web:ring-1 data-[focus=true]:web:ring-inset data-[focus=true]:web:ring-indicator-primary data-[invalid=true]:web:ring-1 data-[invalid=true]:web:ring-inset data-[invalid=true]:web:ring-indicator-error data-[invalid=true]:data-[focus=true]:hover:web:ring-1 data-[invalid=true]:data-[focus=true]:hover:web:ring-inset data-[invalid=true]:data-[focus=true]:hover:web:ring-indicator-error data-[invalid=true]:data-[disabled=true]:hover:web:ring-1 data-[invalid=true]:data-[disabled=true]:hover:web:ring-inset data-[invalid=true]:data-[disabled=true]:hover:web:ring-indicator-error",
+        "rounded-none border data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700 data-[focus=true]:web:ring-0 data-[invalid=true]:web:ring-0",
 
       rounded:
-        "rounded-full border data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700 data-[focus=true]:web:ring-1 data-[focus=true]:web:ring-inset data-[focus=true]:web:ring-indicator-primary data-[invalid=true]:web:ring-1 data-[invalid=true]:web:ring-inset data-[invalid=true]:web:ring-indicator-error data-[invalid=true]:data-[focus=true]:hover:web:ring-1 data-[invalid=true]:data-[focus=true]:hover:web:ring-inset data-[invalid=true]:data-[focus=true]:hover:web:ring-indicator-error data-[invalid=true]:data-[disabled=true]:hover:web:ring-1 data-[invalid=true]:data-[disabled=true]:hover:web:ring-inset data-[invalid=true]:data-[disabled=true]:hover:web:ring-indicator-error",
+        "rounded-none border data-[invalid=true]:border-error-700 data-[invalid=true]:hover:border-error-700 data-[invalid=true]:data-[focus=true]:border-error-700 data-[invalid=true]:data-[focus=true]:hover:border-error-700 data-[invalid=true]:data-[disabled=true]:hover:border-error-700 data-[focus=true]:web:ring-0 data-[invalid=true]:web:ring-0",
     },
   },
 })
@@ -72,7 +72,7 @@ const inputSlotStyle = tva({
 })
 
 const inputFieldStyle = tva({
-  base: "flex-1 text-typography-900 py-0 px-3 placeholder:text-typography-500 h-full ios:leading-[0px] web:cursor-text web:data-[disabled=true]:cursor-not-allowed",
+  base: "flex-1 text-typography-900 py-0 px-3 placeholder:text-typography-500 h-full ios:leading-[0px] web:cursor-text web:data-[disabled=true]:cursor-not-allowed font-mono",
 
   parentVariants: {
     variant: {
@@ -177,18 +177,8 @@ const InputField = React.forwardRef<TextInput, IInputFieldProps>(function InputF
 ) {
   const { variant: parentVariant, size: parentSize } = useStyleContext(SCOPE)
   const hostRef = useRef<TextInput | React.ComponentProps<typeof UIInput.Input> | null>(null)
-  // The gluestack creator reads `aria-label` only (defaulting to "Input
-  // Field") and drops `accessibilityLabel` — forward whichever the caller
-  // provided so e2e selectors and screen readers see the real label.
   const ariaLabel = accessibilityLabel ?? props["aria-label"]
 
-  // Web-only workaround: react-native-web 0.21 sometimes fails to paint the
-  // value of a controlled input when it was set programmatically (not typed)
-  // until the input receives focus — e.g. goal fields appear empty on load.
-  // A focus()+blur() cycle repaints the text. Runs only when the value
-  // changes: without deps it fires on every parent re-render and yanks
-  // focus away from whichever input is being typed in. Skipped while this
-  // input itself is focused so typing is never disturbed.
   useLayoutEffect(() => {
     if (Platform.OS !== "web" || props.value == null) return
     const node = hostRef.current as unknown as HTMLInputElement | null

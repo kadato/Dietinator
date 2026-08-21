@@ -3,8 +3,6 @@ import type { ColorPalette } from "@/theme"
 
 /** Dim level every overlay dialog (water, weight, AI chat) uses. */
 export const MODAL_BACKDROP = "rgba(0, 0, 0, 0.45)"
-/** Elevation shadow for centered dialogs on wide screens. */
-export const MODAL_DIALOG_SHADOW = "0px 8px 40px rgba(0, 0, 0, 0.35)"
 
 /**
  * Top safe-area value for full-bleed dialogs. The provider's insets can be 0
@@ -45,12 +43,9 @@ export function createModalShellStyles(colors: ColorPalette) {
     },
     dialogBox: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
-      borderRadius: 20,
       overflow: "hidden",
-      boxShadow: MODAL_DIALOG_SHADOW,
-      elevation: 12,
     },
   })
 }

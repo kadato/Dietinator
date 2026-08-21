@@ -1,17 +1,19 @@
 "use client"
 import React from "react"
-import { Switch as RNSwitch } from "react-native"
-import { createSwitch } from "@gluestack-ui/core/switch/creator"
-import { tva, withStyleContext } from "@gluestack-ui/utils/nativewind-utils"
+import { Pressable, View } from "react-native"
+import { tva } from "@gluestack-ui/utils/nativewind-utils"
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
 
-const UISwitch = createSwitch({
-  Root: withStyleContext(RNSwitch),
-})
+/**
+ * Field-terminal toggle. The No Pill Rule bans the capsule switch, so this
+ * is a square track with a square thumb that snaps between wells: off reads
+ * as an empty well, on inverts to ink fill with a paper thumb. Keeps the
+ * RN Switch prop contract (`value` / `onValueChange` / `isDisabled`) so
+ * call sites stay unchanged.
+ */
 
 const switchStyle = tva({
-  base: "data-[focus=true]:outline-0 data-[focus=true]:ring-2 data-[focus=true]:ring-indicator-primary web:cursor-pointer disabled:cursor-not-allowed data-[disabled=true]:opacity-40 data-[invalid=true]:border-error-700 data-[invalid=true]:rounded-xl data-[invalid=true]:border-2",
-
+  base: "web:cursor-pointer data-[disabled=true]:opacity-40",
   variants: {
     size: {
       sm: "scale-75",
@@ -21,13 +23,72 @@ const switchStyle = tva({
   },
 })
 
-type ISwitchProps = React.ComponentProps<typeof UISwitch> & VariantProps<typeof switchStyle>
-const Switch = React.forwardRef<React.ComponentRef<typeof UISwitch>, ISwitchProps>(function Switch(
-  { className, size = "md", ...props },
-  ref,
-) {
-  return <UISwitch ref={ref} {...props} className={switchStyle({ size, class: className })} />
-})
+type SquareSwitchProps = {
+  value?: boolean
+  onValueChange?: (value: boolean) => void
+  isDisabled?: boolean
+  disabled?: boolean
+  accessibilityLabel?: string
+  size?: VariantProps<typeof switchStyle>["size"]
+  className?: string
+}
 
-Switch.displayName = "Switch"
-export { Switch }
+const TRACK_W = 46
+const TRACK_H = 26
+const THUMB = 18
+
+function SquareSwitchImpl(
+  {
+    value = false,
+    onValueChange,
+    isDisabled = false,
+    disabled = false,
+    accessibilityLabel,
+    size = "md",
+    className,
+  }: SquareSwitchProps,
+  ref: React.Ref<React.ComponentRef<typeof Pressable>>,
+) {
+  const off = isDisabled || disabled
+  // 1.5px rules each side + centered inset leave the travel distance.
+  const travel = TRACK_W - THUMB - 7
+
+  return (
+    <Pressable
+      ref={ref}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled: off }}
+      accessibilityLabel={accessibilityLabel}
+      disabled={off}
+      onPress={() => onValueChange?.(!value)}
+      className={switchStyle({ size, class: className })}
+    >
+      <View
+        style={{
+          width: TRACK_W,
+          height: TRACK_H,
+          alignItems: "flex-start",
+          justifyContent: "center",
+          borderWidth: 1.5,
+          borderRadius: 0,
+          padding: 2,
+        }}
+        className={
+          value ? "border-primary-500 bg-primary-500" : "border-outline-300 bg-background-100"
+        }
+      >
+        <View
+          style={{
+            width: THUMB,
+            height: THUMB - 1,
+            borderRadius: 0,
+            transform: [{ translateX: value ? travel : 0 }],
+          }}
+          className={value ? "bg-typography-white" : "bg-outline-300"}
+        />
+      </View>
+    </Pressable>
+  )
+}
+
+export const Switch = React.forwardRef(SquareSwitchImpl)

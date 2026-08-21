@@ -14,7 +14,7 @@ type Props = {
   maxWidth?: number
   /**
    * When true the dialog hugs its content height instead of filling the
-   * viewport. Use for short forms (e.g. manual entry, create options).
+   * viewport. Use for short forms (for examplemanual entry, create options).
    */
   hug?: boolean
   /** Give the inner column the app's surface color on phones too (full-bleed). */
@@ -39,7 +39,7 @@ export function ModalContainer({
   const { colors } = useTheme()
 
   // The screen behind a presented modal is marked aria-hidden by the
-  // navigator, but the button that opened the modal keeps focus — the browser
+  // navigator, but the button that opened the modal keeps focus. The browser
   // then blocks the aria-hidden attribute ("Blocked aria-hidden on an element
   // because its descendant retained focus"). Blur before that happens.
   useEffect(() => {

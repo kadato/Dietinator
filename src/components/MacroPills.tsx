@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { View, Text, StyleSheet } from "react-native"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { formatNumber } from "@/utils/format"
 import { fonts } from "@/theme"
@@ -9,13 +9,7 @@ type Props = {
   protein: number
   carbs: number
   fat: number
-  /**
-   * - `compact` (default): Minimal inline chips with icon and grams (e.g. `[🍗 25g] [🍞 40g] [💧 12g]`)
-   * - `detailed`: Inline chips with grams and percentage of macro calories
-   * - `card`: 3-column stats cards with icon badges, labels, grams, and percentage
-   */
   variant?: "compact" | "detailed" | "card"
-  /** Size scaling for inline pills (`xs` for list subtitles, `sm` for normal cards, `md` for hero views) */
   size?: "xs" | "sm" | "md"
 }
 
@@ -44,20 +38,23 @@ export const MacroPills = memo(function MacroPills({
   if (variant === "card") {
     return (
       <View style={styles.cardContainer}>
-        {/* Protein Card */}
         <View
           style={[
             styles.cardItem,
-            { backgroundColor: `${colors.breakfast}15`, borderColor: `${colors.breakfast}40` },
+            {
+              backgroundColor: `${colors.breakfast}14`,
+              borderColor: colors.border,
+            },
           ]}
         >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: `${colors.breakfast}28` }]}>
-              <MaterialCommunityIcons
-                name="food-drumstick-outline"
-                size={13}
-                color={colors.breakfast}
-              />
+            <View
+              style={[
+                styles.cardIconBox,
+                { backgroundColor: `${colors.breakfast}14`, borderColor: colors.border },
+              ]}
+            >
+              <Feather name="zap" size={12} color={colors.breakfast} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.breakfast }]}>Protein</Text>
           </View>
@@ -67,16 +64,23 @@ export const MacroPills = memo(function MacroPills({
           </View>
         </View>
 
-        {/* Carbs Card */}
         <View
           style={[
             styles.cardItem,
-            { backgroundColor: `${colors.lunch}15`, borderColor: `${colors.lunch}40` },
+            {
+              backgroundColor: `${colors.lunch}14`,
+              borderColor: colors.border,
+            },
           ]}
         >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: `${colors.lunch}28` }]}>
-              <MaterialCommunityIcons name="bread-slice-outline" size={13} color={colors.lunch} />
+            <View
+              style={[
+                styles.cardIconBox,
+                { backgroundColor: `${colors.lunch}14`, borderColor: colors.border },
+              ]}
+            >
+              <Feather name="box" size={12} color={colors.lunch} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.lunch }]}>Carbs</Text>
           </View>
@@ -86,16 +90,23 @@ export const MacroPills = memo(function MacroPills({
           </View>
         </View>
 
-        {/* Fat Card */}
         <View
           style={[
             styles.cardItem,
-            { backgroundColor: `${colors.dinner}15`, borderColor: `${colors.dinner}40` },
+            {
+              backgroundColor: `${colors.dinner}14`,
+              borderColor: colors.border,
+            },
           ]}
         >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: `${colors.dinner}28` }]}>
-              <MaterialCommunityIcons name="water-outline" size={13} color={colors.dinner} />
+            <View
+              style={[
+                styles.cardIconBox,
+                { backgroundColor: `${colors.dinner}14`, borderColor: colors.border },
+              ]}
+            >
+              <Feather name="droplet" size={12} color={colors.dinner} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.dinner }]}>Fat</Text>
           </View>
@@ -110,24 +121,18 @@ export const MacroPills = memo(function MacroPills({
 
   const isXs = size === "xs"
   const isDetailed = variant === "detailed"
-  const iconSize = isXs ? 13 : size === "md" ? 16 : 14.5
+  const iconSize = isXs ? 12 : size === "md" ? 14 : 13
 
   return (
     <View style={styles.pillContainer}>
-      {/* Protein Pill */}
       <View
         style={[
           styles.pill,
           isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
-          { backgroundColor: `${colors.breakfast}22`, borderColor: `${colors.breakfast}45` },
+          { backgroundColor: `${colors.breakfast}14`, borderColor: colors.border },
         ]}
       >
-        <MaterialCommunityIcons
-          name="food-drumstick-outline"
-          size={iconSize}
-          color={colors.breakfast}
-          style={styles.pillIcon}
-        />
+        <Feather name="zap" size={iconSize} color={colors.breakfast} style={styles.pillIcon} />
         <Text
           style={[
             styles.pillText,
@@ -140,20 +145,14 @@ export const MacroPills = memo(function MacroPills({
         </Text>
       </View>
 
-      {/* Carbs Pill */}
       <View
         style={[
           styles.pill,
           isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
-          { backgroundColor: `${colors.lunch}22`, borderColor: `${colors.lunch}45` },
+          { backgroundColor: `${colors.lunch}14`, borderColor: colors.border },
         ]}
       >
-        <MaterialCommunityIcons
-          name="bread-slice-outline"
-          size={iconSize}
-          color={colors.lunch}
-          style={styles.pillIcon}
-        />
+        <Feather name="box" size={iconSize} color={colors.lunch} style={styles.pillIcon} />
         <Text
           style={[
             styles.pillText,
@@ -166,20 +165,14 @@ export const MacroPills = memo(function MacroPills({
         </Text>
       </View>
 
-      {/* Fat Pill */}
       <View
         style={[
           styles.pill,
           isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
-          { backgroundColor: `${colors.dinner}22`, borderColor: `${colors.dinner}45` },
+          { backgroundColor: `${colors.dinner}14`, borderColor: colors.border },
         ]}
       >
-        <MaterialCommunityIcons
-          name="water-outline"
-          size={iconSize}
-          color={colors.dinner}
-          style={styles.pillIcon}
-        />
+        <Feather name="droplet" size={iconSize} color={colors.dinner} style={styles.pillIcon} />
         <Text
           style={[
             styles.pillText,
@@ -206,23 +199,26 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 1.5,
     flexShrink: 0,
+    borderRadius: 0,
+    boxShadow: "none",
+    elevation: 0,
   },
   pillXs: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 7,
+    borderRadius: 0,
   },
   pillSm: {
     paddingHorizontal: 9,
     paddingVertical: 4.5,
-    borderRadius: 10,
+    borderRadius: 0,
   },
   pillMd: {
     paddingHorizontal: 11,
     paddingVertical: 5.5,
-    borderRadius: 11,
+    borderRadius: 0,
   },
   pillIcon: {
     marginRight: 3.5,
@@ -231,18 +227,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   pillTextXs: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  pillTextSm: {
     fontSize: 12,
     lineHeight: 15,
   },
-  pillTextSm: {
-    fontSize: 13,
-    lineHeight: 16,
-  },
   pillTextMd: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
   },
   cardContainer: {
     flexDirection: "row",
@@ -255,8 +253,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingHorizontal: 8,
     paddingVertical: 7,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 1.5,
+    boxShadow: "none",
+    elevation: 0,
   },
   cardHeader: {
     flexDirection: "row",
@@ -267,13 +267,20 @@ const styles = StyleSheet.create({
   cardIconBox: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 0,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: "none",
+    elevation: 0,
   },
   cardLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
+    fontFamily: fonts.mono,
+    fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   cardValueRow: {
     flexDirection: "row",
@@ -282,15 +289,20 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   cardGrams: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   cardPct: {
     fontSize: 11,
     fontWeight: "600",
     fontFamily: fonts.mono,
+    fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
     opacity: 0.75,
   },
 })

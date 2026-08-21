@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react"
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, toDateKey } from "@/utils/date"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type Props = {
   visible: boolean
@@ -13,11 +13,6 @@ type Props = {
   onClose: () => void
 }
 
-/**
- * Monday-first short weekday labels from the device locale ("Mo", "Di", ...)
- * instead of hardcoded English — the month label already follows the locale.
- * Jan 8 2024 was a Monday.
- */
 const WEEKDAYS = Array.from({ length: 7 }, (_, index) => {
   const label = new Date(2024, 0, 8 + index).toLocaleDateString(undefined, {
     weekday: "short",
@@ -26,7 +21,6 @@ const WEEKDAYS = Array.from({ length: 7 }, (_, index) => {
 })
 
 function monthGrid(year: number, month: number): (number | null)[] {
-  // Month is 0-indexed here. Monday-first weeks.
   const firstDay = new Date(year, month, 1)
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const lead = (firstDay.getDay() + 6) % 7
@@ -85,21 +79,21 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
               <Pressable
                 onPress={() => shiftMonth(-1)}
                 hitSlop={10}
-                style={styles.navBtn}
+                style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
                 accessibilityRole="button"
                 accessibilityLabel="Previous month"
               >
-                <Ionicons name="chevron-back" size={22} color={colors.text} />
+                <Feather name="chevron-left" size={20} color={colors.text} />
               </Pressable>
               <Text style={styles.monthLabel}>{monthLabel}</Text>
               <Pressable
                 onPress={() => shiftMonth(1)}
                 hitSlop={10}
-                style={styles.navBtn}
+                style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
                 accessibilityRole="button"
                 accessibilityLabel="Next month"
               >
-                <Ionicons name="chevron-forward" size={22} color={colors.text} />
+                <Feather name="chevron-right" size={20} color={colors.text} />
               </Pressable>
             </View>
 
@@ -118,9 +112,13 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
                 const isSelected = key === dateKey
                 const isToday = key === todayKey
                 const cellStyle = isSelected
-                  ? { backgroundColor: colors.primary }
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
                   : isToday
-                    ? { borderWidth: 1, borderColor: colors.primary }
+                    ? {
+                        borderWidth: 1.5,
+                        borderColor: colors.primary,
+                        backgroundColor: "transparent",
+                      }
                     : null
                 const dayTextStyle = isSelected
                   ? { color: colors.onPrimary, fontWeight: "700" as const }
@@ -147,7 +145,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
             </View>
 
             <Pressable
-              style={styles.todayBtn}
+              style={({ pressed }) => [styles.todayBtn, pressed && styles.todayBtnPressed]}
               onPress={() => {
                 onSelect(todayKey)
                 onClose()
@@ -179,32 +177,47 @@ const createStyles = (colors: ColorPalette) =>
     },
     sheet: {
       backgroundColor: colors.surface,
-      borderRadius: 24,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       padding: spacing.md,
       width: "100%",
       maxWidth: 380,
       alignSelf: "center",
-      boxShadow: "0px 6px 12px rgba(0, 0, 0, 0.25)",
-      elevation: 8,
+      boxShadow: "none",
+      elevation: 0,
     },
     monthRow: {
       flexDirection: "row",
       alignItems: "center",
       marginBottom: spacing.sm,
+      borderRadius: 0,
     },
     navBtn: {
       width: 40,
       height: 40,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 20,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    navBtnPressed: {
+      opacity: 0.7,
     },
     monthLabel: {
       flex: 1,
       textAlign: "center",
-      fontSize: 17,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     weekRow: {
       flexDirection: "row",
@@ -213,9 +226,13 @@ const createStyles = (colors: ColorPalette) =>
     weekday: {
       flex: 1,
       textAlign: "center",
-      fontSize: 12,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     grid: {
       flexDirection: "row",
@@ -226,23 +243,42 @@ const createStyles = (colors: ColorPalette) =>
       aspectRatio: 1.05,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 10,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      boxShadow: "none",
+      elevation: 0,
     },
     dayText: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.2,
     },
     todayBtn: {
       alignSelf: "center",
       marginTop: spacing.sm,
       paddingHorizontal: 20,
       paddingVertical: spacing.sm,
-      borderRadius: 20,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       backgroundColor: colors.primary,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    todayBtnPressed: {
+      opacity: 0.85,
     },
     todayText: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: "700",
       color: colors.onPrimary,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
   })

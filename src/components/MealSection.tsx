@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from "react"
 import { Pressable } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather, Ionicons } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
@@ -81,10 +81,15 @@ export const MealSection = memo(function MealSection({
           }`}
         >
           <Box
-            className="h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: `${accent}1f` }}
+            className="h-12 w-12 shrink-0 items-center justify-center rounded-none border"
+            style={{
+              backgroundColor: `${accent}1f`,
+              borderColor: colors.border,
+              borderWidth: 1.5,
+              borderRadius: 0,
+            }}
           >
-            <Ionicons name={MEAL_ICONS[mealType]} size={22} color={accent} />
+            <Feather name={MEAL_ICONS[mealType]} size={22} color={accent} />
           </Box>
 
           <Box className="min-w-0 flex-1">
@@ -117,7 +122,7 @@ export const MealSection = memo(function MealSection({
                   of {Math.round(goal)} kcal goal
                 </Text>
                 <Text size="xs" className="text-typography-400">
-                  ·
+                  ,
                 </Text>
                 <Text
                   size="xs"

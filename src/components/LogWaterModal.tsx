@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { NumberStepper } from "@/components/NumberStepper"
@@ -25,14 +25,13 @@ import { addWaterEntry, deleteWaterEntry, getWaterEntriesForDate } from "@/db/wa
 import type { WaterEntry } from "@/types"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { formatWaterAmount } from "@/utils/units"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
-  /** The date whose water is being logged (usually the dashboard's date). */
   initialDateKey?: string
   onClose: () => void
   onSaved?: () => void
@@ -40,10 +39,6 @@ type Props = {
 
 const QUICK_AMOUNTS = [250, 330, 500, 1000]
 
-/**
- * Water logging: pick a date, tap a quick amount (or use the stepper), and the
- * pour lands instantly. Today's pours are listed with per-pour delete.
- */
 export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Props) {
   const { settings } = useApp()
   const { showError, showUndo } = useToast()
@@ -63,8 +58,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   const goalMl = settings.water_goal_ml > 0 ? settings.water_goal_ml : 0
   const progress = goalMl > 0 ? Math.min(totalMl / goalMl, 1) : 0
 
-  // Retarget to the requested day each time the dialog opens — render-
-  // adjustment pattern (same as LogWeightModal) instead of an effect.
   const [openSync, setOpenSync] = useState({ visible: false, key: initialDateKey ?? toDateKey() })
   if (visible !== openSync.visible) {
     setOpenSync({ visible, key: initialDateKey ?? toDateKey() })
@@ -124,38 +117,76 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
       <View
         style={[
           shell.dialogBox,
-          { width: "100%", maxWidth: 420 },
+          {
+            width: "100%",
+            maxWidth: 420,
+            borderRadius: 0,
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            boxShadow: "none",
+            elevation: 0,
+          },
           isWide ? styles.dialogBodyWide : { maxHeight: "90%" },
         ]}
       >
         <Box className="items-center pt-2">
-          <Box className="h-1 w-9 rounded-full bg-outline-200" />
+          <Box
+            className="h-1 w-9 rounded-none border bg-outline-200"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          />
         </Box>
         {isWide ? (
           <Text
             size="2xl"
             bold
             className="px-6 text-center text-typography-900"
-            style={{ paddingTop: insets.top + spacing.sm }}
+            style={{
+              paddingTop: insets.top + spacing.sm,
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+            }}
           >
             Water
           </Text>
         ) : (
           <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
-            <Box className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
-              <Ionicons name="water-outline" size={20} color={colors.primary} />
+            <Box
+              className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                boxShadow: "none",
+                elevation: 0,
+              }}
+            >
+              <Feather name="droplet" size={18} color={colors.primary} />
             </Box>
-            <Text size="xl" bold className="flex-1 text-typography-900">
+            <Text
+              size="xl"
+              bold
+              className="flex-1 text-typography-900"
+              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+            >
               Water
             </Text>
             <Pressable
               onPress={onClose}
               hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-full active:bg-background-100"
+              className="h-9 w-9 items-center justify-center rounded-none border active:opacity-70"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: colors.surfaceAlt,
+                boxShadow: "none",
+                elevation: 0,
+              }}
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+              <Feather name="x" size={18} color={colors.textMuted} />
             </Pressable>
           </Box>
         )}
@@ -166,25 +197,53 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           keyboardShouldPersistTaps="handled"
         >
           <Pressable
-            style={[styles.dateRow, ...(datePress.pressed ? [{ opacity: 0.8 }] : [])]}
+            style={({ pressed }) => [styles.dateRow, pressed && styles.pressed]}
             onPress={() => setPickerOpen(true)}
             onPressIn={datePress.onPressIn}
             onPressOut={datePress.onPressOut}
             accessibilityRole="button"
             accessibilityLabel="Choose water date"
           >
-            <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-            <Text size="md" bold className="ml-2 flex-1 text-typography-900">
+            <Feather name="calendar" size={16} color={colors.primary} />
+            <Text
+              size="md"
+              bold
+              className="ml-2 flex-1 text-typography-900"
+              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+            >
               {formatDisplayDate(dateKey)}
             </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            <Feather name="chevron-right" size={16} color={colors.textMuted} />
           </Pressable>
 
-          <Box className="my-3 items-center rounded-2xl bg-primary-500/10 px-4 py-3">
-            <Text size="2xl" bold className="font-tabular text-typography-900">
+          <Box
+            className="my-3 items-center rounded-none border bg-primary-500/10 px-4 py-3"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              boxShadow: "none",
+              elevation: 0,
+            }}
+          >
+            <Text
+              size="2xl"
+              bold
+              className="font-tabular text-typography-900"
+              style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+            >
               {formatWaterAmount(totalMl, settings.units)}
             </Text>
-            <Text size="xs" className="font-tabular mt-0.5 text-typography-500">
+            <Text
+              size="xs"
+              className="font-tabular mt-0.5 text-typography-500"
+              style={{
+                fontFamily: fonts.mono,
+                fontVariant: ["tabular-nums"],
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
               {goalMl > 0
                 ? `of ${formatWaterAmount(goalMl, settings.units)} goal`
                 : "logged this day"}
@@ -210,9 +269,28 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 disabled={saving}
                 accessibilityRole="button"
                 accessibilityLabel={`Add ${amount} ml of water`}
-                className="min-w-[76px] flex-1 items-center rounded-full bg-primary-500 px-3 py-2.5 active:opacity-80"
+                className="min-w-[76px] flex-1 items-center rounded-none border bg-primary-500 px-3 py-2.5 active:opacity-80"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  borderRadius: 0,
+                  backgroundColor: colors.primary,
+                  boxShadow: "none",
+                  elevation: 0,
+                }}
               >
-                <Text size="sm" bold className="font-tabular" style={{ color: colors.onPrimary }}>
+                <Text
+                  size="sm"
+                  bold
+                  className="font-tabular"
+                  style={{
+                    color: colors.onPrimary,
+                    fontFamily: fonts.mono,
+                    fontVariant: ["tabular-nums"],
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
+                >
                   +{amount}
                 </Text>
               </Pressable>
@@ -227,7 +305,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               onSubmit={() => void handleAdd(Number(customMl) || 0)}
               step={50}
               accessibilityLabel="Water amount in ml"
-              placeholder="e.g. 200"
+              placeholder="200"
               style={{ flexGrow: 0 }}
             />
             <Pressable
@@ -236,20 +314,46 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Log custom water amount"
-              className="h-10 items-center justify-center rounded-full px-4"
+              className="h-10 items-center justify-center rounded-none border px-4"
               style={{
                 backgroundColor: colors.primary,
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 0,
                 opacity: saving || !(Number(customMl) > 0) ? 0.5 : 1,
+                boxShadow: "none",
+                elevation: 0,
               }}
             >
-              <Ionicons name="add" size={20} color={colors.onPrimary} />
+              <Feather name="plus" size={18} color={colors.onPrimary} />
             </Pressable>
           </Box>
 
           {entries.length === 0 ? (
             <Box className="flex-1 items-center justify-center gap-2 py-10">
-              <Ionicons name="water-outline" size={30} color={colors.textMuted} />
-              <Text size="xs" className="text-center text-typography-500">
+              <Box
+                className="h-10 w-10 items-center justify-center rounded-none border"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                  backgroundColor: colors.surfaceAlt,
+                  boxShadow: "none",
+                  elevation: 0,
+                }}
+              >
+                <Feather name="droplet" size={20} color={colors.textMuted} />
+              </Box>
+              <Text
+                size="xs"
+                className="text-center text-typography-500"
+                style={{
+                  fontFamily: fonts.mono,
+                  fontVariant: ["tabular-nums"],
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
                 Nothing logged for this day yet.
               </Text>
             </Box>
@@ -259,21 +363,41 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               {entries.map((entry) => (
                 <Box
                   key={entry.id}
-                  className="mb-1.5 flex-row items-center rounded-xl border border-outline-100 bg-background-50 px-3 py-2.5"
+                  className="mb-1.5 flex-row items-center rounded-none border bg-background-50 px-3 py-2.5"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                    backgroundColor: colors.surface,
+                    boxShadow: "none",
+                    elevation: 0,
+                  }}
                 >
-                  <Ionicons name="water-outline" size={16} color={colors.primary} />
-                  <Text size="sm" bold className="font-tabular ml-2 flex-1 text-typography-900">
+                  <Feather name="droplet" size={14} color={colors.primary} />
+                  <Text
+                    size="sm"
+                    bold
+                    className="font-tabular ml-2 flex-1 text-typography-900"
+                    style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+                  >
                     {formatWaterAmount(entry.amount_ml, settings.units)}
                   </Text>
                   <Pressable
                     onPress={() => handleDelete(entry)}
                     hitSlop={8}
-                    className="h-8 w-8 items-center justify-center rounded-full"
-                    style={{ backgroundColor: `${colors.danger}14` }}
+                    className="h-8 w-8 items-center justify-center rounded-none border"
+                    style={{
+                      backgroundColor: `${colors.danger}14`,
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: 0,
+                      boxShadow: "none",
+                      elevation: 0,
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={`Delete ${formatWaterAmount(entry.amount_ml, settings.units)} pour`}
                   >
-                    <Ionicons name="trash" size={16} color={colors.danger} />
+                    <Feather name="trash-2" size={14} color={colors.danger} />
                   </Pressable>
                 </Box>
               ))}
@@ -281,9 +405,30 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           )}
         </ScrollView>
         {isWide ? null : (
-          <Box className="border-t border-outline-100 px-5 py-4">
-            <Button size="lg" onPress={onClose}>
-              <ButtonText>Done</ButtonText>
+          <Box
+            className="border-t border-outline-100 px-5 py-4"
+            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+          >
+            <Button
+              size="lg"
+              onPress={onClose}
+              style={
+                {
+                  borderRadius: 0,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  boxShadow: "none",
+                  elevation: 0,
+                } as any
+              }
+            >
+              <ButtonText
+                style={
+                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
+                }
+              >
+                Done
+              </ButtonText>
             </Button>
           </Box>
         )}
@@ -306,9 +451,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   )
 
   return (
-    // Web has no native sheet animation — slide would leave the dialog
-    // mid-transition when tests measure it, so native gets the slide and
-    // web renders instantly.
     <Modal
       visible={visible}
       transparent
@@ -326,7 +468,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityLabel="Dismiss water dialog"
         />
         {isWide ? (
-          <View style={shell.dialogWrap}>{form}</View>
+          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as any }]}>{form}</View>
         ) : (
           <KeyboardAvoidingView
             style={shell.dialogWrap}
@@ -342,10 +484,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    // On wide screens the dialog hugs its content instead of filling the
-    // viewport (the phone sheet keeps flex: 1 to fill the screen). flexBasis
-    // must return to "auto" — flex: 1 sets 0%, which would collapse the
-    // height once flexGrow is disabled.
     dialogBodyWide: {
       flexGrow: 0,
       flexBasis: "auto",
@@ -353,8 +491,12 @@ const createStyles = (colors: ColorPalette) =>
     },
     label: {
       color: colors.textMuted,
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: 11,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
       marginBottom: spacing.xs,
       marginTop: spacing.sm,
     },
@@ -362,21 +504,30 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 10,
+      borderRadius: 0,
       padding: spacing.md,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    pressed: {
+      opacity: 0.7,
     },
     progressBg: {
       marginTop: spacing.sm,
       height: 6,
       width: "80%",
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 999,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       overflow: "hidden",
+      boxShadow: "none",
+      elevation: 0,
     },
     progressFill: {
       height: "100%",
-      borderRadius: 999,
+      borderRadius: 0,
     },
   })

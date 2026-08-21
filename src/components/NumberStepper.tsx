@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { spacing, fonts, type ColorPalette } from "@/theme"
@@ -16,33 +16,22 @@ import { spacing, fonts, type ColorPalette } from "@/theme"
 type NumberStepperProps = {
   value: string
   onChangeText: (text: string) => void
-  /** Amount added or subtracted per tap. Defaults to 1. */
   step?: number
-  /** Decimal places for rounding stepped values. Defaults to 0. */
   decimals?: number
-  /** Floor for the value; the minus button disables at it. Defaults to 0. */
   min?: number
-  /** `sm` is the compact inline variant for rows and goal fields. */
   size?: "md" | "sm"
-  /** Fixed width for the sm value box — widen it in rows with spare room. */
   inputWidth?: number
   accessibilityLabel: string
   placeholder?: string
-  /** Keyboard "done" action — mirrors the screen's primary FAB action. */
   onSubmit?: () => void
   style?: StyleProp<ViewStyle>
 }
 
-/** Round, drop float noise, and strip trailing zeros ("75.0" → "75"). */
 function formatStepValue(value: number, decimals: number): string {
   if (!Number.isFinite(value)) return ""
   return String(Number(value.toFixed(decimals)))
 }
 
-/**
- * Numeric input with − / + buttons for quick value changes. Tap steps once;
- * press and hold to repeat (every 90ms). The value stays fully editable.
- */
 export function NumberStepper({
   value,
   onChangeText,
@@ -91,9 +80,6 @@ export function NumberStepper({
     [decimals, ghost, min, onChangeText, step],
   )
 
-  // Sanitize typed input: digits and one decimal separator only, clamped to
-  // the same `min` the stepper buttons enforce (typed "−5" or "abc" can't
-  // slip past the buttons' guard). Mid-typing fragments like "0." survive.
   const handleTextChange = useCallback(
     (text: string) => {
       const normalized = text.replace(",", ".")
@@ -136,14 +122,19 @@ export function NumberStepper({
         onPressOut={stopRepeat}
         disabled={minusDisabled}
         hitSlop={sm ? 8 : 4}
-        style={[styles.btn, sm && styles.btnSm, minusDisabled && styles.btnDisabled]}
+        style={({ pressed }) => [
+          styles.btn,
+          sm && styles.btnSm,
+          minusDisabled && styles.btnDisabled,
+          pressed && !minusDisabled && styles.btnPressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel="Decrease value"
         accessibilityHint={`Decrease ${accessibilityLabel}`}
       >
-        <Ionicons
-          name="remove"
-          size={sm ? 16 : 20}
+        <Feather
+          name="minus"
+          size={sm ? 16 : 18}
           color={minusDisabled ? colors.textMuted : colors.text}
         />
       </Pressable>
@@ -172,12 +163,12 @@ export function NumberStepper({
         onLongPress={() => startRepeat(1)}
         onPressOut={stopRepeat}
         hitSlop={sm ? 8 : 4}
-        style={[styles.btn, sm && styles.btnSm]}
+        style={({ pressed }) => [styles.btn, sm && styles.btnSm, pressed && styles.btnPressed]}
         accessibilityRole="button"
         accessibilityLabel="Increase value"
         accessibilityHint={`Increase ${accessibilityLabel}`}
       >
-        <Ionicons name="add" size={sm ? 16 : 20} color={colors.text} />
+        <Feather name="plus" size={sm ? 16 : 18} color={colors.text} />
       </Pressable>
     </View>
   )
@@ -189,54 +180,60 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
-      // Centering keeps the − / value / + group compact when the input hits
-      // its maxWidth — without it a capped input leaves a dead space at the
-      // row edge (the "white block" look in modal rows).
       justifyContent: "center",
     },
     rowSm: { gap: 6 },
     btn: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: 0,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.surface,
-      borderWidth: 1,
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1.5,
       borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
     },
-    btnSm: { width: 36, height: 36, borderRadius: 18 },
+    btnSm: { width: 36, height: 36, borderRadius: 0 },
     btnDisabled: { opacity: 0.4 },
+    btnPressed: { opacity: 0.7 },
     input: {
-      // Fixed width so native and web render the compact stepper identically
-      // — a flex-sized input balloons into a large empty box in short rows.
       flexGrow: 0,
       flexShrink: 0,
       width: 120,
       minWidth: 0,
+      height: 44,
       backgroundColor: colors.surface,
-      borderRadius: 12,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       borderColor: colors.border,
-      paddingVertical: spacing.sm + 4,
+      paddingVertical: 0,
       paddingHorizontal: spacing.md,
       color: colors.text,
-      fontSize: 19,
+      fontSize: 17,
       fontWeight: "700",
       textAlign: "center",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      boxShadow: "none",
+      elevation: 0,
     },
     inputSm: {
       flexGrow: 0,
       flexShrink: 0,
       width: 68,
       minWidth: 56,
-      paddingVertical: spacing.xs + 2,
+      height: 36,
+      paddingVertical: 0,
       paddingHorizontal: spacing.xs,
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
   })
