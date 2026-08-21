@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
 import { useToast } from "@/context/ToastContext"
@@ -18,7 +18,7 @@ import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import type { MealType } from "@/types"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -38,7 +38,6 @@ function MacroInput({
   onSubmit?: () => void
   placeholder?: string
   styles: ReturnType<typeof createStyles>
-  /** On very narrow screens the three macro fields stack instead of crowding. */
   stacked?: boolean
 }) {
   return (
@@ -100,7 +99,6 @@ export default function ManualEntryScreen() {
         carbs: Number(carbs) || 0,
         fat: Number(fat) || 0,
       })
-      // Dismiss the whole modal chain (log-meal → create-options) back to the dashboard.
       router.dismissAll()
     } catch (error) {
       showError(error, "Could not save entry.")
@@ -120,21 +118,31 @@ export default function ManualEntryScreen() {
           style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
         >
           <Box>
-            <Text size="2xl" bold className="text-typography-900">
+            <Text
+              size="2xl"
+              bold
+              className="uppercase tracking-widest text-typography-900"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+            >
               {isQuickAdd ? "Quick Add" : "Manual entry"}
             </Text>
-            <Text size="sm" className="mt-0.5 text-typography-500">
+            <Text
+              size="xs"
+              className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
               {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
             </Text>
           </Box>
           <Pressable
             onPress={safeBack}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+            className="h-9 w-9 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={22} color={colors.textMuted} />
+            <Feather name="x" size={18} color={colors.textMuted} />
           </Pressable>
         </Box>
         <ScrollView
@@ -146,15 +154,21 @@ export default function ManualEntryScreen() {
           {!isQuickAdd ? (
             <>
               <Text style={styles.label}>Name</Text>
-              <Input size="md" variant="outline" className="mb-3 bg-background-50">
+              <Input
+                size="md"
+                variant="outline"
+                className="mb-3 rounded-none border bg-background-50"
+                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+              >
                 <InputField
                   value={name}
                   onChangeText={setName}
-                  placeholder="e.g. Homemade soup"
+                  placeholder="Homemade soup"
                   accessibilityLabel="Food name"
                   returnKeyType="done"
                   onSubmitEditing={() => void handleSave()}
                   maxFontSizeMultiplier={1.4}
+                  style={{ fontFamily: fonts.mono }}
                 />
               </Input>
             </>
@@ -229,10 +243,10 @@ export default function ManualEntryScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
           right={
             <Fab
-              icon="checkmark"
+              icon="check"
               onPress={handleSave}
               disabled={saving}
               accessibilityLabel="Add to diary"
@@ -249,8 +263,11 @@ const createStyles = (colors: ColorPalette) =>
     container: { flex: 1, backgroundColor: colors.background },
     label: {
       color: colors.textMuted,
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: 10,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.08,
       marginBottom: spacing.xs,
       marginTop: spacing.md,
     },

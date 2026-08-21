@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from "react-native"
 import { useLocalSearchParams } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
@@ -30,6 +30,7 @@ import { NumberStepper } from "@/components/NumberStepper"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -56,8 +57,6 @@ export default function MealBuilderScreen() {
   const [loadingMeal, setLoadingMeal] = useState(isEditing)
   const [saving, setSaving] = useState(false)
 
-  // With a blank query the builder shows favorites and recently used foods —
-  // local reads, so adding to a meal never has to wait on the network.
   const emptyQuery = useCallback(async () => {
     const [favorites, recent] = await Promise.all([getFavoriteFoods(), getRecentFoods(20)])
     return mergeFoodResults(favorites, recent)
@@ -65,14 +64,9 @@ export default function MealBuilderScreen() {
 
   const { foods: results, loading: searching } = useFoodSearch(debounced, { emptyQuery })
 
-  // Cap rendered results — the builder renders into a ScrollView, so an
-  // unbounded list would stall the UI; refine the query for the rest. The
-  // empty-query list (favorites + recents) is capped tighter so it stays
-  // scannable.
   const isBlank = !debounced.trim()
   const cappedResults = useMemo(() => results.slice(0, isBlank ? 12 : 30), [isBlank, results])
 
-  // Edit mode: load the saved meal.
   useEffect(() => {
     if (!mealId) return
     let cancelled = false
@@ -208,24 +202,31 @@ export default function MealBuilderScreen() {
           <Pressable
             onPress={safeBack}
             hitSlop={8}
-            className="h-10 w-10 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+            className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={22} color={colors.text} />
+            <Feather name="x" size={20} color={colors.text} />
           </Pressable>
-          <Text size="xl" bold className="flex-1 text-center text-typography-900">
+          <Text
+            size="xl"
+            bold
+            className="flex-1 text-center font-mono uppercase tracking-widest text-typography-900"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+          >
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
           {isEditing ? (
             <Pressable
               onPress={handleDelete}
               hitSlop={8}
-              className="h-10 w-10 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+              className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
             >
-              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+              <Feather name="trash-2" size={18} color={colors.danger} />
             </Pressable>
           ) : (
             <Box className="w-10" />
@@ -238,48 +239,81 @@ export default function MealBuilderScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <Text size="sm" className="mb-4 text-typography-500">
+          <Text
+            size="xs"
+            className="mb-4 font-mono uppercase tracking-widest text-typography-500"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+          >
             Ready to log into any meal slot.
           </Text>
 
-          <Text size="xs" bold className="mb-1.5 text-typography-600">
-            MEAL NAME
+          <Text
+            size="xs"
+            bold
+            className="mb-1.5 font-mono uppercase tracking-widest text-typography-600"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+          >
+            Meal name
           </Text>
-          <Input size="md" variant="outline" className="mb-4 bg-background-50">
+          <Input
+            size="md"
+            variant="outline"
+            className="mb-4 rounded-none border bg-background-50"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          >
             <InputField
-              placeholder="e.g. Cornflakes with milk"
+              placeholder="Cornflakes with milk"
               value={name}
               onChangeText={setName}
               autoCorrect={false}
               accessibilityLabel="Meal name"
               returnKeyType="done"
               onSubmitEditing={() => void handleSave()}
+              style={{ fontFamily: fonts.mono }}
             />
           </Input>
 
           {items.length > 0 ? (
             <>
-              <Text size="xs" bold className="mb-1.5 text-typography-600">
-                IN YOUR MEAL · {Math.round(totals.kcal)} KCAL
+              <Text
+                size="xs"
+                bold
+                className="mb-1.5 font-mono uppercase tracking-widest text-typography-600"
+                style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+              >
+                In your meal · {Math.round(totals.kcal)} kcal
               </Text>
               {items.map((item) => {
                 const itemN = itemNutrients(item)
                 return (
                   <Box
                     key={item.product_id}
-                    className="mb-2.5 flex-row items-center gap-2.5 rounded-2xl border border-outline-200 bg-background-50 px-3.5 py-3"
+                    className="mb-2.5 flex-row items-center gap-2.5 border bg-background-50 px-3.5 py-3"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: 0,
+                      backgroundColor: colors.surface,
+                      boxShadow: "none",
+                      elevation: 0,
+                    }}
                   >
                     <Box className="min-w-0 flex-1">
                       <Text
                         size="md"
                         bold
-                        className="text-[15.5px] leading-5 text-typography-900"
+                        className="font-mono uppercase tracking-widest text-typography-900"
+                        style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
                         numberOfLines={1}
                       >
                         {item.name}
                       </Text>
                       <Box className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
-                        <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
+                        <Text
+                          size="xs"
+                          className="font-mono uppercase tabular-nums tracking-widest text-typography-500"
+                          style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                        >
                           {Math.round(itemN.kcal)} kcal
                         </Text>
                         <MacroPills
@@ -299,24 +333,32 @@ export default function MealBuilderScreen() {
                       size="sm"
                       accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
                     />
-                    <Text size="xs" className="w-6 text-typography-500">
+                    <Text
+                      size="xs"
+                      className="w-6 font-mono uppercase text-typography-500"
+                      style={{ fontFamily: fonts.mono }}
+                    >
                       {item.base_unit}
                     </Text>
                     <Pressable
                       onPress={() => removeItem(item.product_id)}
                       hitSlop={6}
-                      className="h-8 w-8 items-center justify-center rounded-full"
-                      style={{ backgroundColor: `${colors.danger}14` }}
+                      className="h-8 w-8 items-center justify-center rounded-none border"
+                      style={{
+                        backgroundColor: `${colors.danger}14`,
+                        borderWidth: 1.5,
+                        borderColor: colors.border,
+                        borderRadius: 0,
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel={`Remove ${item.name}`}
                     >
-                      <Ionicons name="trash" size={17} color={colors.danger} />
+                      <Feather name="trash-2" size={15} color={colors.danger} />
                     </Pressable>
                   </Box>
                 )
               })}
 
-              {/* Nutrition Facts: Macros & Micros Breakdown */}
               <Box className="mb-4 mt-2">
                 <NutritionFactsCard
                   nutrients={totals}
@@ -328,15 +370,29 @@ export default function MealBuilderScreen() {
               </Box>
             </>
           ) : (
-            <Text size="sm" className="mb-5 mt-2 px-6 text-center leading-5 text-typography-500">
-              No foods in this meal yet — use the search below to add them.
+            <Text
+              size="sm"
+              className="mb-5 mt-2 px-6 text-center font-mono leading-5 text-typography-500"
+              style={{ fontFamily: fonts.mono }}
+            >
+              No foods in this meal yet. Use the search below to add them.
             </Text>
           )}
 
-          <Text size="xs" bold className="mb-1.5 mt-4 text-typography-600">
-            ADD FOODS
+          <Text
+            size="xs"
+            bold
+            className="mb-1.5 mt-4 font-mono uppercase tracking-widest text-typography-600"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+          >
+            Add foods
           </Text>
-          <Input size="md" variant="rounded" className="mb-2 bg-background-50">
+          <Input
+            size="md"
+            variant="outline"
+            className="mb-2 rounded-none border bg-background-50"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          >
             <InputField
               placeholder="Search foods..."
               value={query}
@@ -345,11 +401,17 @@ export default function MealBuilderScreen() {
               returnKeyType="search"
               onSubmitEditing={() => Keyboard.dismiss()}
               accessibilityLabel="Search foods to add"
+              style={{ fontFamily: fonts.mono }}
             />
           </Input>
           {isBlank && results.length > 0 ? (
-            <Text size="xs" bold className="mb-2 mt-1 text-typography-600">
-              FAVORITE & RECENT PICKS
+            <Text
+              size="xs"
+              bold
+              className="mb-2 mt-1 font-mono uppercase tracking-widest text-typography-600"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+            >
+              Favorite and recent picks
             </Text>
           ) : null}
           {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
@@ -364,25 +426,39 @@ export default function MealBuilderScreen() {
             />
           ))}
           {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
-            <Text size="xs" className="py-2 text-center text-typography-500">
-              Showing the first 30 results — refine your search for more.
+            <Text
+              size="xs"
+              className="py-2 text-center font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontFamily: fonts.mono }}
+            >
+              Showing the first 30 results. Refine your search for more.
             </Text>
           ) : null}
           {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (
-            <Text size="sm" className="py-3 text-center text-typography-500">
+            <Text
+              size="sm"
+              className="py-3 text-center font-mono text-typography-500"
+              style={{ fontFamily: fonts.mono }}
+            >
               No foods found. Try a different search.
             </Text>
           ) : null}
 
           {isEditing ? (
             <Pressable
-              className="mt-8 items-center rounded-full active:opacity-80"
+              className="mt-8 items-center rounded-none active:opacity-80"
               onPress={handleDelete}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
+              style={{ borderWidth: 1.5, borderColor: "transparent", borderRadius: 0 }}
             >
-              <Text size="md" bold style={{ color: colors.danger }}>
+              <Text
+                size="md"
+                bold
+                className="font-mono uppercase tracking-widest"
+                style={{ color: colors.danger, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              >
                 Delete meal
               </Text>
             </Pressable>
@@ -393,10 +469,10 @@ export default function MealBuilderScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
           right={
             <Fab
-              icon="checkmark"
+              icon="check"
               onPress={() => void handleSave()}
               disabled={saving}
               accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}

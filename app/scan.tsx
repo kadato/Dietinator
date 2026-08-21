@@ -13,7 +13,7 @@ import {
 import { useToast } from "@/context/ToastContext"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import type { MealType, SearchFoodResult } from "@/types"
 import { getFoodByBarcode, searchFoodsRemote } from "@/services/yazio/foods"
 import { FoodListItem } from "@/components/FoodListItem"
@@ -29,7 +29,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
@@ -37,7 +37,6 @@ import { Button, ButtonText } from "@ui/button"
 const MANUAL_SCAN_ON_WEB = Platform.OS === "web"
 const FRAME_SIZE = 260
 
-/** Camera-overlay styles: fixed white-on-dark look, independent of the theme. */
 const cameraStyles = StyleSheet.create({
   viewfinder: {
     position: "absolute",
@@ -52,8 +51,10 @@ const cameraStyles = StyleSheet.create({
   frame: {
     width: FRAME_SIZE,
     height: FRAME_SIZE,
-    borderRadius: 20,
+    borderRadius: 0,
     overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.9)",
   },
   corner: {
     position: "absolute",
@@ -61,21 +62,21 @@ const cameraStyles = StyleSheet.create({
     height: 46,
     borderColor: "rgba(255,255,255,0.9)",
   },
-  cornerTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 16 },
-  cornerTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 16 },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 0 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 0 },
   cornerBL: {
     bottom: 0,
     left: 0,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderBottomLeftRadius: 16,
+    borderBottomLeftRadius: 0,
   },
   cornerBR: {
     bottom: 0,
     right: 0,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderBottomRightRadius: 16,
+    borderBottomRightRadius: 0,
   },
   scanLine: {
     position: "absolute",
@@ -83,11 +84,8 @@ const cameraStyles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    borderRadius: 1,
+    borderRadius: 0,
     opacity: 0.8,
-    // Registered (not inline) so react-native-web compiles it — an inline
-    // pointerEvents is dropped on web and the line would block taps in its
-    // 2px band while sweeping.
     pointerEvents: "none",
   },
   frameHint: {
@@ -96,11 +94,20 @@ const cameraStyles = StyleSheet.create({
     gap: 6,
     marginTop: 16,
     backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 20,
+    borderRadius: 0,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.25)",
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  frameHintText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
+  frameHintText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: fonts.mono,
+    textTransform: "uppercase",
+    letterSpacing: 0.06,
+  },
   headerOverlay: {
     position: "absolute",
     top: 0,
@@ -113,13 +120,16 @@ const cameraStyles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.45)",
     borderColor: "rgba(255,255,255,0.15)",
   },
-  headerTitle: { color: "#ffffff", fontSize: 17, fontWeight: "700" },
+  headerTitle: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: fonts.mono,
+    textTransform: "uppercase",
+    letterSpacing: 0.04,
+  },
 })
 
-/**
- * Animated horizontal line that sweeps the viewfinder while the camera is
- * waiting for a barcode — signals "live" scanning at a glance.
- */
 function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
   const [progress] = useState(() => new Animated.Value(0))
 
@@ -160,7 +170,6 @@ function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
   )
 }
 
-/** Barcode frame with corner brackets + sweeping scan line. */
 function Viewfinder() {
   const { colors } = useTheme()
   return (
@@ -173,7 +182,7 @@ function Viewfinder() {
         <ScanLine color={colors.primary} />
       </View>
       <View style={cameraStyles.frameHint}>
-        <Ionicons name="scan-outline" size={16} color="#ffffff" />
+        <Feather name="maximize" size={14} color="#ffffff" />
         <Text style={cameraStyles.frameHintText}>Align barcode in frame</Text>
       </View>
     </View>
@@ -203,7 +212,7 @@ function BarcodeMatchesList({
       ListHeaderComponent={
         <View style={styles.matchesHeader}>
           <View style={styles.matchesTitleWrap}>
-            <Ionicons name="pricetags-outline" size={18} color={colors.primary} />
+            <Feather name="tag" size={16} color={colors.primary} />
             <Text style={styles.pickerTitle}>
               {results.length} matches for {lastBarcode}
             </Text>
@@ -214,7 +223,7 @@ function BarcodeMatchesList({
             accessibilityRole="button"
             accessibilityLabel="Scan another barcode"
           >
-            <Ionicons name="scan-outline" size={16} color={colors.onPrimary} />
+            <Feather name="maximize" size={14} color={colors.onPrimary} />
             <Text style={styles.scanAgainText}>Scan another</Text>
           </Pressable>
         </View>
@@ -225,7 +234,6 @@ function BarcodeMatchesList({
   )
 }
 
-/** Floating header pill — dark glass over the camera feed, theme surface in the browser. */
 function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?: () => void }) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
@@ -247,7 +255,7 @@ function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?:
         ]}
       >
         <View style={styles.headerTitleWrap}>
-          <Ionicons name="barcode-outline" size={20} color={colors.primary} />
+          <Feather name="maximize" size={18} color={overlay ? "#ffffff" : colors.primary} />
           <Text style={[overlay ? cameraStyles.headerTitle : styles.headerTitle, { color: tint }]}>
             Scan barcode
           </Text>
@@ -256,11 +264,16 @@ function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?:
           <Pressable
             onPress={onClose}
             hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-full active:bg-background-200"
+            className="h-8 w-8 items-center justify-center rounded-none border active:bg-background-200"
+            style={{
+              borderWidth: 1.5,
+              borderColor: overlay ? "rgba(255,255,255,0.25)" : colors.border,
+              borderRadius: 0,
+            }}
             accessibilityRole="button"
             accessibilityLabel="Close camera"
           >
-            <Ionicons name="close" size={20} color={tint} />
+            <Feather name="x" size={18} color={tint} />
           </Pressable>
         ) : null}
       </View>
@@ -371,19 +384,29 @@ export default function ScanScreen() {
           <ScanHeader />
           <Box className="flex-1 justify-center px-6" style={styles.webScanContent}>
             <Box
-              className="mb-5 h-20 w-20 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${colors.primary}1a` }}
+              className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
+              style={{
+                backgroundColor: `${colors.primary}1a`,
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+              }}
             >
-              <Ionicons name="barcode-outline" size={40} color={colors.primary} />
+              <Feather name="maximize" size={36} color={colors.primary} />
             </Box>
             <Text style={styles.webScanTitle}>No camera here</Text>
             <Text style={styles.webScanHint}>
               No camera in the browser. Enter the barcode number from the label instead (EAN-13 /
               UPC).
             </Text>
-            <Input size="lg" variant="rounded" className="mb-4 bg-background-50">
+            <Input
+              size="lg"
+              variant="outline"
+              className="mb-4 rounded-none border bg-background-50"
+              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            >
               <InputField
-                placeholder="e.g. 4000539012345"
+                placeholder="4000539012345"
                 keyboardType="number-pad"
                 value={manualBarcode}
                 onChangeText={(value) => {
@@ -394,24 +417,54 @@ export default function ScanScreen() {
                 onSubmitEditing={handleManualLookup}
                 returnKeyType="search"
                 accessibilityLabel="Barcode number"
+                style={{ fontFamily: fonts.mono }}
               />
             </Input>
-            <Button size="lg" onPress={handleManualLookup} disabled={loading}>
-              <ButtonText>{loading ? "Looking up..." : "Look up"}</ButtonText>
+            <Button
+              size="lg"
+              onPress={handleManualLookup}
+              disabled={loading}
+              className="rounded-none border"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 0,
+                backgroundColor: colors.primary,
+              }}
+            >
+              <ButtonText
+                style={{
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.06,
+                  color: colors.onPrimary,
+                }}
+              >
+                {loading ? "Looking up..." : "Look up"}
+              </ButtonText>
             </Button>
 
             {notFound ? (
               <Box className="mt-10 items-center">
-                <Ionicons name="search-outline" size={44} color={colors.textMuted} />
+                <Feather name="search" size={36} color={colors.textMuted} />
                 <Text style={styles.notFoundText}>No match for {lastBarcode}.</Text>
                 <Button
                   size="md"
                   variant="outline"
                   action="secondary"
-                  className="mt-4"
+                  className="mt-4 rounded-none border"
+                  style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
                   onPress={confirmNotFound}
                 >
-                  <ButtonText>Search foods</ButtonText>
+                  <ButtonText
+                    style={{
+                      fontFamily: fonts.mono,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.04,
+                    }}
+                  >
+                    Search foods
+                  </ButtonText>
                 </Button>
                 <Pressable
                   style={styles.linkBtn}
@@ -444,7 +497,7 @@ export default function ScanScreen() {
 
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
         />
       </View>
     )
@@ -462,8 +515,11 @@ export default function ScanScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
-          <Box className="h-20 w-20 items-center justify-center rounded-full bg-background-50">
-            <Ionicons name="camera-outline" size={36} color={colors.primary} />
+          <Box
+            className="h-20 w-20 items-center justify-center rounded-none border bg-background-50"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          >
+            <Feather name="camera" size={32} color={colors.primary} />
           </Box>
           <Text style={styles.message}>Camera access is needed to scan.</Text>
           {permission.canAskAgain === false ? (
@@ -471,20 +527,58 @@ export default function ScanScreen() {
               <Text style={styles.hint}>
                 Permission denied permanently. Allow the camera in system settings.
               </Text>
-              <Button size="lg" onPress={() => Linking.openSettings()}>
-                <ButtonText>Open settings</ButtonText>
+              <Button
+                size="lg"
+                onPress={() => Linking.openSettings()}
+                className="rounded-none border"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  borderRadius: 0,
+                  backgroundColor: colors.primary,
+                }}
+              >
+                <ButtonText
+                  style={{
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.06,
+                    color: colors.onPrimary,
+                  }}
+                >
+                  Open settings
+                </ButtonText>
               </Button>
             </>
           ) : (
-            <Button size="lg" onPress={requestPermission}>
-              <ButtonText>Grant permission</ButtonText>
+            <Button
+              size="lg"
+              onPress={requestPermission}
+              className="rounded-none border"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 0,
+                backgroundColor: colors.primary,
+              }}
+            >
+              <ButtonText
+                style={{
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.06,
+                  color: colors.onPrimary,
+                }}
+              >
+                Grant permission
+              </ButtonText>
             </Button>
           )}
         </PageContainer>
 
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
         />
       </View>
     )
@@ -515,20 +609,34 @@ export default function ScanScreen() {
           {notFound ? (
             <Box className="flex-1 items-center justify-center px-6">
               <Box
-                className="h-16 w-16 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${colors.warning}22` }}
+                className="h-16 w-16 items-center justify-center rounded-none border"
+                style={{
+                  backgroundColor: `${colors.warning}22`,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
               >
-                <Ionicons name="warning-outline" size={30} color={colors.warning} />
+                <Feather name="alert-triangle" size={28} color={colors.warning} />
               </Box>
               <Text style={styles.notFoundText}>No match for {lastBarcode}.</Text>
               <Button
                 size="md"
                 variant="outline"
                 action="secondary"
-                className="mt-4"
+                className="mt-4 rounded-none border"
+                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
                 onPress={confirmNotFound}
               >
-                <ButtonText>Search foods</ButtonText>
+                <ButtonText
+                  style={{
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.04,
+                  }}
+                >
+                  Search foods
+                </ButtonText>
               </Button>
               <Pressable
                 style={styles.linkBtn}
@@ -567,12 +675,12 @@ export default function ScanScreen() {
 
       <FabCluster
         bottomOffset={insets.bottom + 20}
-        left={<Fab tone="surface" icon="close" onPress={close} accessibilityLabel="Cancel" />}
+        left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
         right={
           cameraActive ? (
             <Fab
               tone={torchOn ? "primary" : "surface"}
-              icon={torchOn ? "flashlight" : "flashlight-outline"}
+              icon={torchOn ? "zap" : "zap-off"}
               onPress={() => setTorchOn((v) => !v)}
               accessibilityLabel={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
             />
@@ -591,26 +699,45 @@ const createStyles = (colors: ColorPalette) =>
     webScanContent: { padding: spacing.lg, paddingTop: spacing.sm },
     webScanTitle: {
       color: colors.text,
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
       marginBottom: spacing.xs,
       textAlign: "center",
     },
     webScanHint: {
       color: colors.textMuted,
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 20,
+      fontFamily: fonts.mono,
       marginBottom: spacing.lg,
       textAlign: "center",
     },
     notFoundText: {
       color: colors.text,
-      fontSize: 15,
+      fontSize: 13,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
       textAlign: "center",
       marginTop: spacing.sm,
     },
-    linkBtn: { marginTop: spacing.md, padding: spacing.sm },
-    linkBtnText: { color: colors.primary, fontWeight: "600", fontSize: 15 },
+    linkBtn: {
+      marginTop: spacing.md,
+      padding: spacing.sm,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+    },
+    linkBtnText: {
+      color: colors.primary,
+      fontWeight: "700",
+      fontSize: 12,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.06,
+    },
     matchesHeader: {
       padding: spacing.md,
       gap: spacing.md,
@@ -622,8 +749,11 @@ const createStyles = (colors: ColorPalette) =>
     },
     pickerTitle: {
       color: colors.text,
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
       flex: 1,
     },
     scanAgainBtn: {
@@ -632,11 +762,20 @@ const createStyles = (colors: ColorPalette) =>
       gap: 6,
       alignSelf: "flex-start",
       paddingHorizontal: spacing.lg,
-      paddingVertical: 12,
-      borderRadius: 20,
+      paddingVertical: 10,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       backgroundColor: colors.primary,
     },
-    scanAgainText: { color: colors.onPrimary, fontWeight: "700" },
+    scanAgainText: {
+      color: colors.onPrimary,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.06,
+      fontSize: 12,
+    },
     headerFlow: {
       paddingHorizontal: spacing.md,
       paddingBottom: spacing.sm,
@@ -645,18 +784,25 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      borderRadius: 20,
+      borderRadius: 0,
       paddingLeft: spacing.md,
       paddingRight: spacing.sm,
       paddingVertical: spacing.sm,
-      borderWidth: 1,
+      borderWidth: 1.5,
     },
     headerTitleWrap: {
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
     },
-    headerTitle: { color: colors.text, fontSize: 17, fontWeight: "700" },
+    headerTitle: {
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
+    },
     center: {
       flex: 1,
       backgroundColor: colors.background,
@@ -671,8 +817,11 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.text,
       textAlign: "center",
       marginTop: spacing.md,
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
     },
     hint: {
       color: colors.textMuted,
@@ -680,6 +829,8 @@ const createStyles = (colors: ColorPalette) =>
       marginBottom: spacing.lg,
       marginTop: spacing.sm,
       maxWidth: 280,
+      fontFamily: fonts.mono,
+      fontSize: 12,
     },
     overlay: {
       ...StyleSheet.absoluteFill,
@@ -690,18 +841,21 @@ const createStyles = (colors: ColorPalette) =>
     overlayCard: {
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 20,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       padding: spacing.lg,
       minWidth: 200,
-      boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.25)",
-      elevation: 8,
+      boxShadow: "none",
+      elevation: 0,
     },
-    // Default text color so the web branch's "Looking up…" label stays
-    // readable in dark mode (the native overlay passes colors.text inline).
     overlayText: {
       marginTop: spacing.md,
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: 12,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.04,
       color: colors.textMuted,
     },
   })

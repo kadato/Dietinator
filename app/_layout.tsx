@@ -6,8 +6,9 @@ import {
 } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native"
+import { Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
 import { AiChatModal } from "@/components/AiChatModal"
 import { AppProvider, useApp } from "@/context/AppContext"
@@ -17,6 +18,7 @@ import { ToastProvider } from "@/context/ToastContext"
 import { UpdateProvider } from "@/context/UpdateContext"
 import { ThemeProvider } from "@/context/ThemeContext"
 import { useTheme } from "@/hooks/useTheme"
+import { useBundledTerminalFont } from "@/utils/web-fonts"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import type { ColorPalette } from "@/theme"
@@ -45,10 +47,34 @@ function RootNavigator() {
         notification: colors.primary,
       },
       fonts: {
-        regular: { fontFamily: "sans-serif", fontWeight: "400" as const },
-        medium: { fontFamily: "sans-serif", fontWeight: "500" as const },
-        bold: { fontFamily: "sans-serif", fontWeight: "700" as const },
-        heavy: { fontFamily: "sans-serif", fontWeight: "800" as const },
+        regular: {
+          fontFamily:
+            Platform.OS === "web"
+              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+              : "JetBrains Mono",
+          fontWeight: "400" as const,
+        },
+        medium: {
+          fontFamily:
+            Platform.OS === "web"
+              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+              : "JetBrains Mono",
+          fontWeight: "500" as const,
+        },
+        bold: {
+          fontFamily:
+            Platform.OS === "web"
+              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+              : "JetBrains Mono",
+          fontWeight: "700" as const,
+        },
+        heavy: {
+          fontFamily:
+            Platform.OS === "web"
+              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+              : "JetBrains Mono",
+          fontWeight: "800" as const,
+        },
       },
     }),
     [colors, isDark],
@@ -68,12 +94,7 @@ function RootNavigator() {
   if (!ready) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator
-          size="large"
-          color={colors.primary}
-          accessibilityLabel="Loading Dietinator"
-        />
-        <Text style={styles.loadingText}>Loading…</Text>
+        <LoadingSpinner size={32} />
       </View>
     )
   }
@@ -98,6 +119,10 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  // Register the bundled JetBrainsMono NFM faces on web before first paint
+  // settles; native resolves the family from the Android assets folder.
+  useBundledTerminalFont()
+
   useEffect(() => {
     // Once React has painted, swap the inlined pre-JS shell for the real app
     // and register the service worker for offline + instant repeat loads.
@@ -124,7 +149,7 @@ export default function RootLayout() {
   return (
     <>
       <Head>
-        <title>Dietinator — Calorie & macro tracker</title>
+        <title>Dietinator: calorie and macro tracker</title>
         <meta
           name="description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
@@ -174,10 +199,5 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.background,
       alignItems: "center",
       justifyContent: "center",
-      gap: 12,
-    },
-    loadingText: {
-      fontSize: 14,
-      color: colors.textMuted,
     },
   })

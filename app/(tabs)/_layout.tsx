@@ -1,20 +1,19 @@
 import type React from "react"
 import { Tabs } from "expo-router"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Pressable, View } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useApp } from "@/context/AppContext"
 import { withAlpha } from "@/utils/color"
-import { layout } from "@/theme"
 import { Text } from "@ui/text"
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>["tabBar"]>>[0]
 
 function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, width } = useLayout()
   const insets = useSafeAreaInsets()
 
   const visibleRoutes = state.routes.filter((route: (typeof state.routes)[number]) => {
@@ -45,19 +44,21 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           gap: 10,
         }}
       >
-        {/* Brand Icon */}
+        {/* Brand Icon, square terminal */}
         <View
           style={{
             width: 44,
             height: 44,
-            borderRadius: 14,
+            borderRadius: 0,
+            borderWidth: 1.5,
+            borderColor: colors.border,
             backgroundColor: withAlpha(colors.primary, 0.12),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 16,
           }}
         >
-          <Ionicons name="nutrition" size={24} color={colors.primary} />
+          <Feather name="package" size={24} color={colors.primary} />
         </View>
 
         {/* Tab Items */}
@@ -90,7 +91,6 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             })
           }
 
-          const activeColor = colors.primary
           const inactiveColor = colors.textMuted
 
           return (
@@ -105,34 +105,42 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               onLongPress={onLongPress}
               style={({ pressed }) => [
                 {
-                  width: 80,
+                  width: 88,
                   paddingVertical: 10,
-                  paddingHorizontal: 4,
-                  borderRadius: 14,
+                  paddingHorizontal: 6,
+                  borderRadius: 0,
+                  borderWidth: isFocused ? 1.5 : 1,
+                  borderColor: isFocused ? colors.primary : colors.border,
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  gap: 2,
                   backgroundColor: isFocused
-                    ? withAlpha(colors.primary, 0.14)
+                    ? colors.primary
                     : pressed
-                      ? withAlpha(colors.text, 0.05)
-                      : "transparent",
+                      ? colors.surfaceAlt
+                      : colors.surface,
                   cursor: "pointer",
                 },
               ]}
             >
               {options.tabBarIcon?.({
                 focused: isFocused,
-                color: isFocused ? activeColor : inactiveColor,
-                size: 24,
+                color: isFocused ? colors.onPrimary : inactiveColor,
+                size: 22,
               })}
               <Text
                 size="xs"
                 bold={isFocused}
                 style={{
-                  color: isFocused ? activeColor : inactiveColor,
-                  marginTop: 4,
-                  fontSize: 11,
+                  color: isFocused ? colors.onPrimary : inactiveColor,
+                  marginTop: 2,
+                  fontSize: 10,
+                  letterSpacing: 0.04,
                   textAlign: "center",
+                  textTransform: "uppercase",
+                  alignSelf: "center",
+                  width: "100%",
                 }}
                 numberOfLines={1}
               >
@@ -145,20 +153,21 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
     )
   }
 
-  // Mobile Bottom Tab Bar
+  // Mobile Bottom Tab Bar, a tight terminal dock. Below 480 the labels drop
+  // entirely: icons carry the destinations, no loose text at small sizes.
+  const showLabels = width >= 480
+  const tabBarHeight = 48
   return (
     <View
       accessibilityRole="tablist"
       style={{
         flexDirection: "row",
         backgroundColor: colors.surface,
-        borderTopWidth: 1,
+        borderTopWidth: 1.5,
         borderTopColor: colors.border,
-        height: layout.tabBarHeight + insets.bottom,
-        paddingTop: 6,
-        paddingBottom: insets.bottom + 8,
-        alignItems: "center",
-        justifyContent: "space-around",
+        minHeight: tabBarHeight + insets.bottom,
+        paddingBottom: insets.bottom,
+        alignItems: "stretch",
       }}
     >
       {visibleRoutes.map((route: (typeof state.routes)[number]) => {
@@ -190,7 +199,6 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           })
         }
 
-        const activeColor = colors.primary
         const inactiveColor = colors.textMuted
 
         return (
@@ -203,18 +211,55 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             }
             onPress={onPress}
             onLongPress={onLongPress}
-            style={{
+            style={({ pressed }) => ({
               flex: 1,
+              minHeight: tabBarHeight,
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              paddingVertical: 8,
-            }}
-          >
-            {options.tabBarIcon?.({
-              focused: isFocused,
-              color: isFocused ? activeColor : inactiveColor,
-              size: 24,
+              gap: 2,
+              paddingVertical: 3,
+              backgroundColor: isFocused
+                ? colors.primary
+                : pressed
+                  ? colors.surfaceAlt
+                  : "transparent",
+              borderWidth: 0,
+              borderRadius: 0,
             })}
+          >
+            <View
+              style={{
+                width: 24,
+                height: 24,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {options.tabBarIcon?.({
+                focused: isFocused,
+                color: isFocused ? colors.onPrimary : inactiveColor,
+                size: 18,
+              })}
+            </View>
+            {showLabels ? (
+              <Text
+                size="2xs"
+                bold={isFocused}
+                style={{
+                  color: isFocused ? colors.onPrimary : inactiveColor,
+                  fontSize: 8,
+                  lineHeight: 9,
+                  letterSpacing: 0.08,
+                  textTransform: "uppercase",
+                  textAlign: "center",
+                  width: "100%",
+                }}
+                numberOfLines={1}
+              >
+                {typeof label === "string" ? label : route.name}
+              </Text>
+            ) : null}
           </Pressable>
         )
       })}
@@ -243,9 +288,7 @@ export default function TabLayout() {
           title: "Today",
           headerShown: false,
           tabBarAccessibilityLabel: "Today",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "today" : "today-outline"} size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -255,13 +298,7 @@ export default function TabLayout() {
           href: settings.ai_enabled === 1 ? "/(tabs)/ai" : null,
           headerShown: false,
           tabBarAccessibilityLabel: "AI Assistant",
-          tabBarIcon: ({ color, size, focused }) => (
-            <MaterialCommunityIcons
-              name={focused ? "robot" : "robot-outline"}
-              size={size}
-              color={color}
-            />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -270,13 +307,7 @@ export default function TabLayout() {
           title: "Stats",
           headerShown: false,
           tabBarAccessibilityLabel: "Stats",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "stats-chart" : "stats-chart-outline"}
-              size={size}
-              color={color}
-            />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -285,9 +316,7 @@ export default function TabLayout() {
           title: "Settings",
           headerShown: false,
           tabBarAccessibilityLabel: "Settings",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "settings" : "settings-outline"} size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="settings" size={size} color={color} />,
         }}
       />
     </Tabs>

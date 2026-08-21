@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react"
-import { ActivityIndicator, ScrollView, View } from "react-native"
+import { ScrollView, View } from "react-native"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { PageContainer } from "@/components/PageContainer"
 import { SegmentedControl } from "@/components/SegmentedControl"
@@ -226,7 +227,7 @@ export default function StatsScreen() {
   )
 
   const rawDelta = latest && previous ? latest.weight_kg - previous.weight_kg : null
-  // Float subtraction (75.5 − 74.8) can produce 0.7000000000000028 — round to
+  // Float subtraction (75.5 - 74.8) can produce 0.7000000000000028. Round to
   // the display precision before formatting.
   const weightDelta = rawDelta !== null ? Math.round(rawDelta * 10) / 10 : null
 
@@ -237,7 +238,7 @@ export default function StatsScreen() {
         )
       : null
 
-  // Body metrics — BMI needs a height, goal progress needs a target weight.
+  // Body metrics. BMI needs a height, goal progress needs a target weight.
   const heightCm = settings.height_cm > 0 ? settings.height_cm : 0
   const targetKg = settings.target_weight_kg > 0 ? settings.target_weight_kg : 0
   const bmi =
@@ -254,7 +255,7 @@ export default function StatsScreen() {
 
   const weightEmptyState = (
     <EmptyState
-      icon="scale-outline"
+      icon="activity"
       iconColor={colors.primary}
       title={`No weight logged ${range === "1w" ? "this week" : "in this range"} yet.`}
       variant="compact"
@@ -268,7 +269,7 @@ export default function StatsScreen() {
 
   const caloriesEmptyState = (
     <EmptyState
-      icon="flame-outline"
+      icon="zap"
       iconColor={colors.primary}
       title={`No diary entries ${range === "1w" ? "this week" : "in this range"} yet.`}
       variant="compact"
@@ -297,14 +298,21 @@ export default function StatsScreen() {
           />
 
           {loading ? (
-            <Box className="items-center justify-center py-20">
-              <ActivityIndicator size="large" color={colors.primary} />
-            </Box>
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 320,
+                paddingVertical: 48,
+              }}
+            >
+              <LoadingSpinner size={32} />
+            </View>
           ) : loadError ? (
             <Card variant="elevated" className="mt-4 p-4">
               <Box className="flex-row items-center gap-2.5">
                 <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                  <Ionicons name="cloud-offline-outline" size={18} color={colors.danger} />
+                  <Feather name="cloud-off" size={18} color={colors.danger} />
                 </Box>
                 <Box className="min-w-0 flex-1">
                   <Text size="md" bold className="text-typography-900">
@@ -322,7 +330,7 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
                   <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                    <Ionicons name="pulse-outline" size={18} color={colors.primary} />
+                    <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
                     <Text size="md" bold className="text-typography-900">
@@ -337,7 +345,7 @@ export default function StatsScreen() {
                 <Box className="mt-3 flex-row gap-3">
                   <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
                     <Box className="flex-row items-center gap-1">
-                      <Ionicons name="flame" size={14} color={colors.warning} />
+                      <Feather name="zap" size={14} color={colors.warning} />
                       <Text size="lg" bold className="font-tabular text-typography-900">
                         {logStreak}
                       </Text>
@@ -356,7 +364,7 @@ export default function StatsScreen() {
                   </Box>
                   <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
                     <Text size="lg" bold className="font-tabular text-typography-900">
-                      {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "—"}
+                      {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "No data"}
                     </Text>
                     <Text size="xs" className="mt-0.5 text-typography-500">
                       On target
@@ -369,7 +377,7 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
                   <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                    <Ionicons name="scale-outline" size={18} color={colors.primary} />
+                    <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
                     <Text size="md" bold className="text-typography-900">
@@ -382,8 +390,8 @@ export default function StatsScreen() {
                         </Text>
                         {weightDelta !== null && weightDelta !== 0 ? (
                           <Box className="flex-row items-center gap-0.5">
-                            <Ionicons
-                              name={weightDelta < 0 ? "arrow-down-outline" : "arrow-up-outline"}
+                            <Feather
+                              name={weightDelta < 0 ? "arrow-down" : "arrow-up"}
                               size={11}
                               color={weightDelta < 0 ? colors.primary : colors.danger}
                             />
@@ -405,7 +413,7 @@ export default function StatsScreen() {
                     )}
                   </Box>
                   <Text size="lg" bold className="font-tabular text-typography-900">
-                    {latest ? formatWeight(latest.weight_kg, settings.units) : "—"}
+                    {latest ? formatWeight(latest.weight_kg, settings.units) : "Not set"}
                   </Text>
                 </Box>
 
@@ -413,7 +421,7 @@ export default function StatsScreen() {
                   <Box className="mt-2 flex-row flex-wrap gap-x-4 gap-y-1">
                     {bmi !== null ? (
                       <Box className="flex-row items-center gap-1">
-                        <Ionicons name="body-outline" size={13} color={colors.textMuted} />
+                        <Feather name="user" size={13} color={colors.textMuted} />
                         <Text size="xs" bold className="font-tabular text-typography-600">
                           BMI {bmi}
                         </Text>
@@ -482,7 +490,7 @@ export default function StatsScreen() {
 
                 {selectedWeight ? (
                   <Box className="mt-3 flex-row flex-wrap items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2.5">
-                    <Ionicons name="location-outline" size={15} color={colors.primary} />
+                    <Feather name="map-pin" size={15} color={colors.primary} />
                     <Box className="min-w-[120px] flex-1">
                       <Text size="xs" bold className="text-typography-900">
                         {formatDisplayDate(selectedWeight.date)}
@@ -549,14 +557,14 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
                     <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                      <Ionicons name="flame-outline" size={18} color={colors.primary} />
+                      <Feather name="zap" size={18} color={colors.primary} />
                     </Box>
                     <Box>
                       <Text size="md" bold className="text-typography-900">
                         Calories
                       </Text>
                       <Text size="xs" className="font-tabular text-typography-500">
-                        Daily average {avgKcal !== null ? `${avgKcal} kcal` : "—"}
+                        Daily average {avgKcal !== null ? `${avgKcal} kcal` : "No data"}
                         {settings.calorie_goal > 0
                           ? ` · goal ${Math.round(settings.calorie_goal)}`
                           : ""}
@@ -587,7 +595,7 @@ export default function StatsScreen() {
 
                 {selectedKcal ? (
                   <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
-                    {formatDisplayDate(selectedKcal.date)} — {Math.round(selectedKcal.value)} kcal
+                    {formatDisplayDate(selectedKcal.date)}, {Math.round(selectedKcal.value)} kcal
                     {settings.calorie_goal > 0
                       ? selectedKcal.value > settings.calorie_goal
                         ? ` · +${Math.round(selectedKcal.value - settings.calorie_goal)} over`
@@ -602,7 +610,7 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
                     <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                      <Ionicons name="pie-chart-outline" size={18} color={colors.primary} />
+                      <Feather name="pie-chart" size={18} color={colors.primary} />
                     </Box>
                     <Box>
                       <Text size="md" bold className="text-typography-900">
@@ -654,7 +662,7 @@ export default function StatsScreen() {
                     />
                   ) : (
                     <EmptyState
-                      icon="nutrition-outline"
+                      icon="package"
                       iconColor={colors.primary}
                       title={`No macros logged ${range === "1w" ? "this week" : "in this range"} yet.`}
                       variant="compact"
@@ -664,7 +672,7 @@ export default function StatsScreen() {
 
                 {selectedMacro ? (
                   <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
-                    {formatDisplayDate(selectedMacro.date)} — {Math.round(selectedMacro.value)}g{" "}
+                    {formatDisplayDate(selectedMacro.date)}, {Math.round(selectedMacro.value)}g{" "}
                     {macroMetric}
                   </Text>
                 ) : null}
@@ -726,7 +734,7 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
                   <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
-                    <Ionicons name="water-outline" size={18} color={colors.primary} />
+                    <Feather name="droplet" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
                     <Text size="md" bold className="text-typography-900">
@@ -758,7 +766,7 @@ export default function StatsScreen() {
                     />
                   ) : (
                     <EmptyState
-                      icon="water-outline"
+                      icon="droplet"
                       iconColor={colors.primary}
                       title={`No water logged ${range === "1w" ? "this week" : "in this range"} yet.`}
                       variant="compact"
@@ -768,7 +776,7 @@ export default function StatsScreen() {
 
                 {selectedWater ? (
                   <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
-                    {formatDisplayDate(selectedWater.date)} —{" "}
+                    {formatDisplayDate(selectedWater.date)},{" "}
                     {formatWaterAmount(selectedWater.value, settings.units)}
                     {settings.water_goal_ml > 0
                       ? selectedWater.value > settings.water_goal_ml

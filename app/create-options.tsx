@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, View } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { ModalContainer } from "@/components/ModalContainer"
 import { useTheme } from "@/hooks/useTheme"
@@ -10,6 +10,7 @@ import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -18,7 +19,7 @@ type CreateOption = {
   id: string
   title: string
   description: string
-  icon: keyof typeof Ionicons.glyphMap
+  icon: keyof typeof Feather.glyphMap
 }
 
 const OPTIONS: CreateOption[] = [
@@ -26,23 +27,22 @@ const OPTIONS: CreateOption[] = [
     id: "quick-add",
     title: "Quick Add",
     description: "Log calories, no item saved",
-    icon: "flash",
+    icon: "zap",
   },
   {
     id: "manual-food",
     title: "New food",
     description: "Single item without barcode",
-    icon: "nutrition",
+    icon: "plus-circle",
   },
   {
     id: "meal",
     title: "New meal",
     description: "Foods you eat together",
-    icon: "restaurant",
+    icon: "shopping-bag",
   },
 ]
 
-/** Each create option carries its own accent color from the app's palette. */
 function optionColor(id: CreateOption["id"], colors: ColorPalette): string {
   switch (id) {
     case "quick-add":
@@ -89,21 +89,31 @@ export default function CreateOptionsScreen() {
           style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
         >
           <Box>
-            <Text size="2xl" bold className="text-typography-900">
+            <Text
+              size="2xl"
+              bold
+              className="uppercase tracking-widest text-typography-900"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+            >
               Create
             </Text>
-            <Text size="sm" className="mt-0.5 text-typography-500">
+            <Text
+              size="xs"
+              className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
               What would you like to log or create?
             </Text>
           </Box>
           <Pressable
             onPress={safeBack}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
+            className="h-9 w-9 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={22} color={colors.textMuted} />
+            <Feather name="x" size={18} color={colors.textMuted} />
           </Pressable>
         </Box>
 
@@ -119,23 +129,45 @@ export default function CreateOptionsScreen() {
               >
                 <Card
                   variant="outline"
-                  className="flex-row items-center gap-4 rounded-2xl p-4 active:opacity-80"
+                  className="flex-row items-center gap-4 p-4 active:opacity-80"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                    backgroundColor: colors.surface,
+                    boxShadow: "none",
+                    elevation: 0,
+                  }}
                 >
                   <Box
-                    className="h-12 w-12 items-center justify-center rounded-2xl"
-                    style={{ backgroundColor: withAlpha(tint, 0.13) }}
+                    className="h-12 w-12 items-center justify-center rounded-none border"
+                    style={{
+                      backgroundColor: withAlpha(tint, 0.13),
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: 0,
+                    }}
                   >
-                    <Ionicons name={option.icon} size={24} color={tint} />
+                    <Feather name={option.icon} size={22} color={tint} />
                   </Box>
                   <Box className="flex-1">
-                    <Text size="md" bold className="text-typography-900">
+                    <Text
+                      size="md"
+                      bold
+                      className="font-mono uppercase tracking-widest text-typography-900"
+                      style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                    >
                       {option.title}
                     </Text>
-                    <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
+                    <Text
+                      size="xs"
+                      className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
+                      style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                    >
                       {option.description}
                     </Text>
                   </Box>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  <Feather name="chevron-right" size={18} color={colors.textMuted} />
                 </Card>
               </Pressable>
             )

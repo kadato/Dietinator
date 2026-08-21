@@ -17,7 +17,7 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useUpdates } from "@/context/UpdateContext"
@@ -44,6 +44,8 @@ import { SettingsSection } from "@/components/SettingsSection"
 import { NumberStepper } from "@/components/NumberStepper"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
 import { SegmentedControl } from "@/components/SegmentedControl"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import {
   getFoodDatabaseCountryLabel,
   resolveFoodDatabaseCountry,
@@ -53,7 +55,7 @@ import { useLayout } from "@/hooks/useLayout"
 import { confirmAction } from "@/utils/confirm"
 import { formatNumber } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
-import { spacing } from "@/theme"
+import { spacing, fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -61,7 +63,7 @@ import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
 import { Switch } from "@ui/switch"
 
-type IconName = ComponentProps<typeof Ionicons>["name"]
+type IconName = ComponentProps<typeof Feather>["name"]
 
 function SettingsRow({
   icon,
@@ -91,8 +93,11 @@ function SettingsRow({
   const stacked = stackOnNarrow && width < 480
 
   const iconBox = (
-    <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
-      <Ionicons name={icon} size={20} color={tint} />
+    <Box
+      className="h-10 w-10 shrink-0 items-center justify-center rounded-none border bg-background-100"
+      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+    >
+      <Feather name={icon} size={20} color={tint} />
     </Box>
   )
   const titleBox = (
@@ -175,8 +180,11 @@ function GoalInput({
     <View className={`px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}>
       <View className="flex-row items-center justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row items-center gap-3">
-          <Box className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-100">
-            <Ionicons name={icon} size={20} color={colors.primary} />
+          <Box
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border bg-background-100"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          >
+            <Feather name={icon} size={20} color={colors.primary} />
           </Box>
           <View className="min-w-0 flex-1">
             <Text size="sm" bold className="text-typography-900">
@@ -215,43 +223,43 @@ function GoalInput({
 const SETTINGS_SECTIONS = [
   {
     id: "goals",
-    label: "Goals & Nutrition",
-    icon: "flag-outline" as const,
+    label: "Goals and Nutrition",
+    icon: "flag" as const,
     getSubtitle: (s: AppSettings) =>
       `${formatNumber(s.calorie_goal)} kcal · ${s.protein_goal}g P · ${s.carbs_goal}g C · ${s.fat_goal}g F`,
   },
   {
     id: "general",
-    label: "General & Preferences",
-    icon: "options-outline" as const,
+    label: "General and Preferences",
+    icon: "sliders" as const,
     getSubtitle: (s: AppSettings, country: string) =>
       `Database: ${getFoodDatabaseCountryLabel(country)} · ${s.units === "imperial" ? "Imperial" : "Metric"} · Theme: ${s.theme_preference ?? "system"}`,
   },
   {
     id: "ai",
     label: "AI Assistant",
-    icon: "sparkles-outline" as const,
+    icon: "cpu" as const,
     getSubtitle: (s: AppSettings) =>
       s.ai_enabled === 1 ? `Active (${s.ai_provider})` : "Disabled · Chat with diary",
   },
   {
     id: "sync",
     label: "YAZIO Sync",
-    icon: "sync-outline" as const,
+    icon: "repeat" as const,
     getSubtitle: (s: AppSettings) =>
       s.yazio_sync_enabled === 1 ? "Syncing enabled (best-effort)" : "Sync disabled (local only)",
   },
   {
     id: "data",
-    label: "Data & Backup",
-    icon: "folder-open-outline" as const,
-    getSubtitle: () => "Export diary (JSON/CSV) · Full backup & restore",
+    label: "Data and Backup",
+    icon: "folder" as const,
+    getSubtitle: () => "Export diary (JSON/CSV) · Full backup and restore",
   },
   {
     id: "about",
-    label: "About & Account",
-    icon: "information-circle-outline" as const,
-    getSubtitle: () => `Version ${getCurrentVersion()} · Agent API & Sign out`,
+    label: "About and Account",
+    icon: "info" as const,
+    getSubtitle: () => `Version ${getCurrentVersion()} · Agent API and Sign out`,
   },
 ] as const
 
@@ -349,7 +357,6 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const c = Number(carbsGoal) || 0
   const f = Number(fatGoal) || 0
   const ratios = computeMacroRatios(p, c, f)
-  const macroKcal = ratios.macroKcal
   const pPct = ratios.proteinPct
   const cPct = ratios.carbsPct
   const fPct = ratios.fatPct
@@ -358,7 +365,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     <>
       <SettingsSection title="Daily nutrition goals">
         <GoalInput
-          icon="flame-outline"
+          icon="zap"
           label="Calories"
           value={calorieGoal}
           onChange={setCalorieGoal}
@@ -368,7 +375,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="kcal"
         />
         <GoalInput
-          icon="barbell-outline"
+          icon="activity"
           label="Protein"
           value={proteinGoal}
           onChange={setProteinGoal}
@@ -378,7 +385,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="g"
         />
         <GoalInput
-          icon="leaf-outline"
+          icon="layers"
           label="Carbohydrates"
           value={carbsGoal}
           onChange={setCarbsGoal}
@@ -388,7 +395,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="g"
         />
         <GoalInput
-          icon="water-outline"
+          icon="droplet"
           label="Fat"
           value={fatGoal}
           onChange={setFatGoal}
@@ -402,40 +409,52 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
         <View className="border-t border-outline-100 p-4">
           <View className="mb-2 flex-row items-center justify-between">
             <Text size="xs" className="text-typography-500">
-              Macro ratio ({macroKcal} kcal from macros)
+              Macro ratio
             </Text>
           </View>
-          <View className="h-3 flex-row overflow-hidden rounded-full bg-background-100">
-            {pPct > 0 ? <View style={{ flex: pPct, backgroundColor: "#3b82f6" }} /> : null}
-            {cPct > 0 ? <View style={{ flex: cPct, backgroundColor: "#f59e0b" }} /> : null}
-            {fPct > 0 ? <View style={{ flex: fPct, backgroundColor: "#ef4444" }} /> : null}
+          <View
+            className="h-3 flex-row overflow-hidden rounded-none border bg-background-100"
+            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
+          >
+            {pPct > 0 ? <View style={{ flex: pPct, backgroundColor: colors.breakfast }} /> : null}
+            {cPct > 0 ? <View style={{ flex: cPct, backgroundColor: colors.lunch }} /> : null}
+            {fPct > 0 ? <View style={{ flex: fPct, backgroundColor: colors.dinner }} /> : null}
           </View>
-          <View className="mt-2 flex-row items-center justify-between">
+          <View className="mt-2 flex-row flex-wrap items-center gap-x-4 gap-y-1">
             <View className="flex-row items-center gap-1.5">
-              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#3b82f6" }} />
+              <View
+                className="h-2 w-2 rounded-none"
+                style={{ backgroundColor: colors.breakfast, borderRadius: 0 }}
+              />
               <Text size="xs" className="text-typography-600">
-                P: {pPct}% ({p * 4} kcal)
+                P {pPct}%
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
-              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
+              <View
+                className="h-2 w-2 rounded-none"
+                style={{ backgroundColor: colors.lunch, borderRadius: 0 }}
+              />
               <Text size="xs" className="text-typography-600">
-                C: {cPct}% ({c * 4} kcal)
+                C {cPct}%
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
-              <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#ef4444" }} />
+              <View
+                className="h-2 w-2 rounded-none"
+                style={{ backgroundColor: colors.dinner, borderRadius: 0 }}
+              />
               <Text size="xs" className="text-typography-600">
-                F: {fPct}% ({f * 9} kcal)
+                F {fPct}%
               </Text>
             </View>
           </View>
         </View>
       </SettingsSection>
 
-      <SettingsSection title="Water & body goals">
+      <SettingsSection title="Water and body goals">
         <GoalInput
-          icon="water-outline"
+          icon="droplet"
           label="Daily water goal"
           value={waterGoal}
           onChange={setWaterGoal}
@@ -445,7 +464,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="ml"
         />
         <GoalInput
-          icon="body-outline"
+          icon="user"
           label="Height"
           value={heightCm}
           onChange={setHeightCm}
@@ -455,7 +474,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="cm"
         />
         <GoalInput
-          icon="scale-outline"
+          icon="activity"
           label="Target weight"
           value={targetWeight}
           onChange={setTargetWeight}
@@ -471,18 +490,14 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
               {goalError}
             </Text>
           ) : null}
-          <Text size="xs" className="leading-4 text-typography-500">
-            Height and target weight are optional (set to 0 to disable). BMI shows on Stats once
-            height and weight are logged.
-          </Text>
-
           <Button
-            size="lg"
-            className="mt-2 rounded-2xl bg-primary-500 py-3.5 active:bg-primary-600"
+            size="md"
+            className="rounded-none border bg-primary-500 active:bg-primary-600"
+            style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
             onPress={saveGoals}
             disabled={saving}
           >
-            <ButtonText>{saving ? "Saving goals…" : "Save goals"}</ButtonText>
+            <ButtonText>{saving ? "Saving…" : "Save"}</ButtonText>
           </Button>
         </View>
       </SettingsSection>
@@ -501,7 +516,7 @@ function SettingsField({ label, children }: { label: string; children: ReactNode
   )
 }
 
-/** AI form — isolated state so typing an API key or model never re-renders other parts. */
+/** AI form, isolated state, so typing an API key or model never re-renders other parts. */
 function AiSettingsForm({ settings }: { settings: AppSettings }) {
   const router = useRouter()
   const { updateSettings } = useApp()
@@ -569,7 +584,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
       const models = await fetchAvailableModels(aiSettingsForTest())
       setFetchedModels(models)
       if (models.length === 0) {
-        setAiError("No models returned — the endpoint may not expose a model list.")
+        setAiError("No models returned. The endpoint may not expose a model list.")
       }
     } catch {
       setAiError("Could not fetch models from this endpoint.")
@@ -591,11 +606,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
   const saveAiSettings = useCallback(async () => {
     if (!aiBaseUrl.trim()) {
-      setAiError("Base URL is required (e.g. https://api.openai.com/v1).")
+      setAiError("Base URL is required (for example https://api.openai.com/v1).")
       return
     }
     if (!aiModel.trim()) {
-      setAiError("Model name is required (e.g. gpt-4o-mini).")
+      setAiError("Model name is required (for example gpt-4o-mini).")
       return
     }
     setAiError(null)
@@ -649,7 +664,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
                 accessibilityRole="button"
                 accessibilityLabel={`AI provider ${provider}`}
                 accessibilityState={{ selected }}
-                className={`rounded-full border px-3 py-1.5 active:opacity-80 ${
+                className={`rounded-none border px-3 py-1.5 active:opacity-80 ${
                   selected
                     ? "border-primary-500 bg-primary-500/10"
                     : "border-outline-200 bg-background-50"
@@ -738,7 +753,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
               <Pressable
                 key={model}
                 onPress={() => setAiModel(model)}
-                className={`rounded-full border px-2.5 py-1 ${
+                className={`rounded-none border px-2.5 py-1 ${
                   aiModel === model
                     ? "border-primary-500 bg-primary-500/15"
                     : "border-outline-200 bg-background-50"
@@ -760,7 +775,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           <InputField
             value={aiSystemPrompt}
             onChangeText={setAiSystemPrompt}
-            placeholder="Custom assistant instructions, e.g. dietary preferences or tone"
+            placeholder="Custom assistant instructions"
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -834,7 +849,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
         <Button
           size="lg"
-          className="mt-2 rounded-2xl bg-primary-500 py-3.5 active:bg-primary-600"
+          className="mt-2 rounded-none border bg-primary-500 py-3.5 active:bg-primary-600"
+          style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
           onPress={saveAiSettings}
           disabled={aiSaving}
         >
@@ -905,7 +921,7 @@ export default function SettingsScreen() {
     try {
       const payload = await createBackup()
       await saveBackupFile(payload)
-      showSuccess("Backup saved — keep it somewhere safe.", "Backup created")
+      showSuccess("Backup saved. Keep it somewhere safe.", "Backup created")
     } catch (error) {
       showError(error, "Could not create backup.")
     }
@@ -958,15 +974,38 @@ export default function SettingsScreen() {
             /* ========================================================== */
             <>
               <Box className="mb-5">
-                <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
+                <Text
+                  size="2xl"
+                  bold
+                  className="uppercase tracking-widest text-typography-900"
+                  style={{
+                    color: colors.textOnBackground,
+                    fontFamily: fonts.mono,
+                    letterSpacing: 0.04,
+                  }}
+                >
                   Settings
                 </Text>
-                <Text size="xs" className="mt-1 text-typography-500">
-                  Goals, preferences, data & account
+                <Text
+                  size="xs"
+                  className="mt-1 font-mono uppercase tracking-widest text-typography-500"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                >
+                  Goals, preferences, data and account
                 </Text>
               </Box>
 
-              <Card variant="elevated" className="overflow-hidden rounded-3xl p-0 shadow-soft-1">
+              <Card
+                variant="elevated"
+                className="overflow-hidden rounded-none border p-0"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                  boxShadow: "none",
+                  elevation: 0,
+                }}
+              >
                 {SETTINGS_SECTIONS.map((section, index) => {
                   const isLast = index === SETTINGS_SECTIONS.length - 1
                   return (
@@ -982,8 +1021,11 @@ export default function SettingsScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`${section.label} settings`}
                     >
-                      <Box className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10">
-                        <Ionicons name={section.icon} size={22} color={colors.primary} />
+                      <Box
+                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"
+                        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                      >
+                        <Feather name={section.icon} size={22} color={colors.primary} />
                       </Box>
                       <Box className="min-w-0 flex-1">
                         <Text size="md" bold className="text-typography-900">
@@ -993,7 +1035,7 @@ export default function SettingsScreen() {
                           {section.getSubtitle(settings, effectiveCountry)}
                         </Text>
                       </Box>
-                      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                      <Feather name="chevron-right" size={18} color={colors.textMuted} />
                     </Pressable>
                   )
                 })}
@@ -1010,7 +1052,7 @@ export default function SettingsScreen() {
             /* 2. SECTION DRILLDOWN VIEW                                  */
             /* ========================================================== */
             <>
-              {/* Back Button & Section Title */}
+              {/* Back Button and Section Title */}
               <Box className="mb-4">
                 <Pressable
                   onPress={() => {
@@ -1022,7 +1064,7 @@ export default function SettingsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Back to all settings"
                 >
-                  <Ionicons name="chevron-back" size={20} color={colors.primary} />
+                  <Feather name="chevron-left" size={20} color={colors.primary} />
                   <Text size="sm" bold style={{ color: colors.primary }}>
                     All Settings
                   </Text>
@@ -1034,15 +1076,15 @@ export default function SettingsScreen() {
                 </Box>
               </Box>
 
-              {/* Goals & Nutrition */}
+              {/* Goals and Nutrition */}
               {activeSection === "goals" ? <GoalsSettings settings={settings} /> : null}
 
-              {/* General & Preferences */}
+              {/* General and Preferences */}
               {activeSection === "general" ? (
                 <>
                   <SettingsSection title="Preferences">
                     <SettingsRow
-                      icon="globe-outline"
+                      icon="globe"
                       title="Food database country"
                       subtitle={
                         countryUsesProfileDefault && profileCountry
@@ -1051,10 +1093,10 @@ export default function SettingsScreen() {
                       }
                       onPress={() => setCountryPickerOpen(true)}
                       accessibilityLabel="Change food database country"
-                      right={<Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
+                      right={<Feather name="chevron-right" size={20} color={colors.textMuted} />}
                     />
                     <SettingsRow
-                      icon="speedometer-outline"
+                      icon="activity"
                       title="Units"
                       subtitle={
                         settings.units === "imperial"
@@ -1080,7 +1122,7 @@ export default function SettingsScreen() {
                       }
                     />
                     <SettingsRow
-                      icon="contrast-outline"
+                      icon="sun"
                       title="Theme"
                       subtitle={
                         settings.theme_preference === "light"
@@ -1113,7 +1155,7 @@ export default function SettingsScreen() {
 
                   <SettingsSection title="Updates">
                     <SettingsRow
-                      icon="arrow-down-circle-outline"
+                      icon="download-cloud"
                       title="Check for updates"
                       subtitle="Look for new versions on GitHub when the app starts"
                       right={
@@ -1131,7 +1173,7 @@ export default function SettingsScreen() {
                       }
                     />
                     <SettingsRow
-                      icon="refresh-outline"
+                      icon="refresh-cw"
                       title={checking ? "Checking…" : "Check now"}
                       subtitle={`Version ${getCurrentVersion()} · releases on GitHub`}
                       last
@@ -1146,7 +1188,7 @@ export default function SettingsScreen() {
               {activeSection === "ai" ? (
                 <SettingsSection title="AI Assistant">
                   <SettingsRow
-                    icon="sparkles-outline"
+                    icon="cpu"
                     title="Enable AI Assistant"
                     subtitle="Chat with your diary on device. Your API key never leaves the app"
                     right={
@@ -1173,7 +1215,7 @@ export default function SettingsScreen() {
               {activeSection === "sync" ? (
                 <SettingsSection title="YAZIO Sync">
                   <SettingsRow
-                    icon="sync-outline"
+                    icon="repeat"
                     title="Sync diary to YAZIO"
                     subtitle="Upload new entries as you log them (best-effort)"
                     right={
@@ -1191,7 +1233,7 @@ export default function SettingsScreen() {
                     }
                   />
                   <SettingsRow
-                    icon="cloud-upload-outline"
+                    icon="upload-cloud"
                     title="Sync pending entries now"
                     subtitle="Send unsynced diary entries to YAZIO"
                     onPress={async () => {
@@ -1207,7 +1249,7 @@ export default function SettingsScreen() {
                     }}
                   />
                   <SettingsRow
-                    icon="cloud-download-outline"
+                    icon="download-cloud"
                     title="Import today from YAZIO"
                     subtitle="Pull today's foods and refresh your goals"
                     last
@@ -1237,29 +1279,29 @@ export default function SettingsScreen() {
                 </SettingsSection>
               ) : null}
 
-              {/* Data & Backup */}
+              {/* Data and Backup */}
               {activeSection === "data" ? (
-                <SettingsSection title="Data & Storage">
+                <SettingsSection title="Data and Storage">
                   <SettingsRow
-                    icon="download-outline"
+                    icon="download"
                     title="Export diary (JSON)"
                     subtitle="All entries as a JSON file"
                     onPress={() => void handleExport("json")}
                   />
                   <SettingsRow
-                    icon="document-text-outline"
+                    icon="file-text"
                     title="Export diary (CSV)"
                     subtitle="All entries as a spreadsheet file"
                     onPress={() => void handleExport("csv")}
                   />
                   <SettingsRow
-                    icon="archive-outline"
+                    icon="archive"
                     title="Back up all data"
                     subtitle="Diary, cached foods and meals in one file"
                     onPress={handleBackup}
                   />
                   <SettingsRow
-                    icon="file-tray-full-outline"
+                    icon="inbox"
                     title="Restore from backup"
                     subtitle="Replace local data with a backup file"
                     onPress={() =>
@@ -1273,7 +1315,7 @@ export default function SettingsScreen() {
                     }
                   />
                   <SettingsRow
-                    icon="trash-outline"
+                    icon="trash-2"
                     title="Clear food cache"
                     subtitle="Remove cached YAZIO foods"
                     danger
@@ -1297,13 +1339,13 @@ export default function SettingsScreen() {
                 </SettingsSection>
               ) : null}
 
-              {/* About & Account */}
+              {/* About and Account */}
               {activeSection === "about" ? (
                 <>
                   {Platform.OS === "web" ? (
                     <SettingsSection title="Agent API (MCP)">
                       <SettingsRow
-                        icon="terminal-outline"
+                        icon="terminal"
                         title="Agent API (MCP)"
                         subtitle="Let AI agents read and log to your diary"
                         last={!mcpExpanded}
@@ -1312,8 +1354,8 @@ export default function SettingsScreen() {
                           mcpExpanded ? "Hide Agent API details" : "Show Agent API details"
                         }
                         right={
-                          <Ionicons
-                            name={mcpExpanded ? "chevron-down" : "chevron-forward"}
+                          <Feather
+                            name={mcpExpanded ? "chevron-down" : "chevron-right"}
                             size={20}
                             color={colors.textMuted}
                           />
@@ -1361,7 +1403,7 @@ export default function SettingsScreen() {
                             ].map((tool) => (
                               <Box
                                 key={tool}
-                                className="rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
+                                className="rounded-none border border-outline-100 bg-background-50 px-2 py-0.5"
                               >
                                 <Text size="xs" className="font-mono text-typography-600">
                                   {tool}
@@ -1376,7 +1418,7 @@ export default function SettingsScreen() {
 
                   <SettingsSection title="Account">
                     <SettingsRow
-                      icon="information-circle-outline"
+                      icon="info"
                       title="Dietinator"
                       subtitle={`Version ${getCurrentVersion()} · Local-first tracker`}
                       last
@@ -1390,24 +1432,6 @@ export default function SettingsScreen() {
                   </Box>
                 </>
               ) : null}
-
-              {/* Bottom Quick Return to Overview */}
-              <Box className="mt-8 flex-row items-center justify-center">
-                <Pressable
-                  onPress={() => {
-                    setActiveSection(null)
-                    scrollRef.current?.scrollTo({ y: 0, animated: false })
-                  }}
-                  className="flex-row items-center gap-1.5 rounded-full bg-background-100 px-4 py-2 active:bg-background-200"
-                  accessibilityRole="button"
-                  accessibilityLabel="Return to Settings overview"
-                >
-                  <Ionicons name="arrow-back" size={16} color={colors.text} />
-                  <Text size="sm" bold style={{ color: colors.text }}>
-                    All Settings
-                  </Text>
-                </Pressable>
-              </Box>
             </>
           )}
 
@@ -1426,6 +1450,22 @@ export default function SettingsScreen() {
           />
         </PageContainer>
       </ScrollView>
+      {activeSection !== null ? (
+        <FabCluster
+          bottomOffset={isWide ? 32 : 14}
+          left={
+            <Fab
+              tone="surface"
+              icon="arrow-left"
+              onPress={() => {
+                setActiveSection(null)
+                scrollRef.current?.scrollTo({ y: 0, animated: false })
+              }}
+              accessibilityLabel="Back to all settings"
+            />
+          }
+        />
+      ) : null}
     </KeyboardAvoidingView>
   )
 }
@@ -1434,5 +1474,5 @@ function getMcpOrigin(): string {
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin
   }
-  return "http://localhost:8082"
+  return "http://localhost:9082"
 }

@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Markdown } from "@/components/Markdown"
 import { useAiChat } from "@/hooks/useAiChat"
@@ -23,6 +23,7 @@ import { confirmAction } from "@/utils/confirm"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -61,10 +62,15 @@ function ToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_calls"] }) {
       {toolCalls.map((call, index) => (
         <Box
           key={`${call.id}-${index}`}
-          className="flex-row items-center gap-1 rounded-full border border-outline-100 bg-background-50 px-2 py-0.5"
+          className="flex-row items-center gap-1 rounded-none border bg-background-50 px-2 py-0.5"
+          style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
         >
-          <Ionicons name="construct-outline" size={11} color={colors.textMuted} />
-          <Text size="xs" style={{ color: colors.textMuted }}>
+          <Feather name="tool" size={11} color={colors.textMuted} />
+          <Text
+            size="xs"
+            className="font-mono uppercase tracking-widest"
+            style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+          >
             {call.name}
           </Text>
         </Box>
@@ -123,21 +129,28 @@ export default function AiScreen() {
         return (
           <Box className={`mb-3 w-full flex-row justify-end ${compact ? "pl-6" : "pl-12"}`}>
             <Box
-              className="max-w-full rounded-2xl rounded-br-md px-3.5 py-2.5"
+              className="max-w-full rounded-none border px-3.5 py-2.5"
               style={{
                 backgroundColor: colors.primary,
-                boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.18)",
-                elevation: 2,
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 0,
+                boxShadow: "none",
+                elevation: 0,
               }}
             >
-              <Text size="sm" className="leading-5" style={{ color: colors.onPrimary }}>
+              <Text
+                size="sm"
+                className="leading-5"
+                style={{ color: colors.onPrimary, fontFamily: fonts.mono }}
+              >
                 {item.content}
               </Text>
               {item.created_at ? (
                 <Text
                   size="xs"
-                  className="mt-0.5 text-right"
-                  style={{ color: colors.onPrimaryMuted }}
+                  className="mt-0.5 text-right font-mono tabular-nums"
+                  style={{ color: colors.onPrimaryMuted, fontFamily: fonts.mono }}
                 >
                   {formatTime(item.created_at)}
                 </Text>
@@ -152,32 +165,42 @@ export default function AiScreen() {
       return (
         <Box className={`mb-3 w-full flex-row gap-2.5 ${compact ? "pr-6" : "pr-12"}`}>
           <Box
-            className="h-8 w-8 items-center justify-center rounded-full"
+            className="h-8 w-8 items-center justify-center rounded-none border"
             style={{
               backgroundColor: colors.primaryMuted,
-              borderWidth: 2,
-              borderColor: `${colors.primaryMuted}55`,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
             }}
           >
-            <MaterialCommunityIcons name="robot" size={15} color={colors.onPrimary} />
+            <Feather name="cpu" size={14} color={colors.onPrimary} />
           </Box>
           <Box
-            className={`max-w-full flex-1 rounded-2xl rounded-bl-md border px-3.5 py-2.5 ${
-              item.is_error ? "" : "border-outline-100 bg-background-50"
-            }`}
-            style={
-              item.is_error
+            className="max-w-full flex-1 rounded-none border px-3.5 py-2.5"
+            style={{
+              borderWidth: 1.5,
+              borderRadius: 0,
+              boxShadow: "none",
+              elevation: 0,
+              ...(item.is_error
                 ? {
                     borderColor: withAlpha(colors.danger, 0.35),
                     backgroundColor: withAlpha(colors.danger, 0.08),
                   }
-                : undefined
-            }
+                : {
+                    borderColor: colors.border,
+                    backgroundColor: colors.surface,
+                  }),
+            }}
           >
             {thinking ? (
               <Box className="flex-row items-center gap-2 py-0.5">
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text size="sm" className="text-typography-500">
+                <Text
+                  size="sm"
+                  className="font-mono text-typography-500"
+                  style={{ fontFamily: fonts.mono }}
+                >
                   Thinking…
                 </Text>
               </Box>
@@ -188,7 +211,11 @@ export default function AiScreen() {
                 />
                 <ToolChips toolCalls={item.tool_calls} />
                 {item.created_at ? (
-                  <Text size="xs" className="mt-1.5 text-typography-400">
+                  <Text
+                    size="xs"
+                    className="mt-1.5 font-mono tabular-nums text-typography-400"
+                    style={{ fontFamily: fonts.mono }}
+                  >
                     {formatTime(item.created_at)}
                   </Text>
                 ) : null}
@@ -203,39 +230,62 @@ export default function AiScreen() {
 
   const emptyState = (
     <Box className="items-center px-5 pb-24 pt-8">
-      <Box className="h-20 w-20 items-center justify-center rounded-full bg-primary-500/10">
-        <Box className="h-14 w-14 items-center justify-center rounded-full bg-primary-500/15">
-          <MaterialCommunityIcons name="robot-outline" size={30} color={colors.primary} />
+      <Box
+        className="h-20 w-20 items-center justify-center rounded-none border"
+        style={{
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          borderRadius: 0,
+          backgroundColor: withAlpha(colors.primary, 0.08),
+        }}
+      >
+        <Box
+          className="h-14 w-14 items-center justify-center rounded-none border"
+          style={{
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            borderRadius: 0,
+            backgroundColor: withAlpha(colors.primary, 0.12),
+          }}
+        >
+          <Feather name="cpu" size={28} color={colors.primary} />
         </Box>
       </Box>
-      <Text size="xl" bold className="mt-4 text-center text-typography-900">
+      <Text
+        size="xl"
+        bold
+        className="mt-4 text-center font-mono uppercase tracking-widest text-typography-900"
+        style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+      >
         How can I help you eat well?
       </Text>
       <Text
         size="sm"
-        className="mt-2 text-center leading-5 text-typography-500"
-        style={{ maxWidth: 380 }}
+        className="mt-2 text-center font-mono leading-5 text-typography-500"
+        style={{ maxWidth: 380, fontFamily: fonts.mono }}
       >
         Ask about your diary, log foods, or adjust goals. All on device.
       </Text>
 
       <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
         {[
-          { icon: "calendar-outline", label: "Review my day" },
-          { icon: "barbell-outline", label: "Check protein" },
-          { icon: "restaurant-outline", label: "Plan dinner" },
-          { icon: "flag-outline", label: "Update goals" },
+          { icon: "calendar" as const, label: "Review my day" },
+          { icon: "activity" as const, label: "Check protein" },
+          { icon: "shopping-bag" as const, label: "Plan dinner" },
+          { icon: "flag" as const, label: "Update goals" },
         ].map((chip) => (
           <Box
             key={chip.label}
-            className="flex-row items-center gap-1.5 rounded-full border border-outline-100 bg-background-50 px-3 py-1.5"
+            className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
           >
-            <Ionicons
-              name={chip.icon as keyof typeof Ionicons.glyphMap}
-              size={13}
-              color={colors.primary}
-            />
-            <Text size="xs" bold className="text-typography-700">
+            <Feather name={chip.icon} size={12} color={colors.primary} />
+            <Text
+              size="xs"
+              bold
+              className="font-mono uppercase tracking-widest text-typography-700"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
               {chip.label}
             </Text>
           </Box>
@@ -243,8 +293,13 @@ export default function AiScreen() {
       </Box>
 
       <Box className="mt-7 w-full">
-        <Text size="xs" bold className="mb-2.5 text-center text-typography-400">
-          TRY ONE OF THESE
+        <Text
+          size="xs"
+          bold
+          className="mb-2.5 text-center font-mono uppercase tracking-widest text-typography-400"
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+        >
+          Try one of these
         </Text>
         <Box className="w-full flex-row flex-wrap justify-center gap-2">
           {suggestionPrompts.map((preset) => (
@@ -253,18 +308,46 @@ export default function AiScreen() {
               onPress={() => runPreset(preset)}
               accessibilityRole="button"
               accessibilityLabel={`Preset: ${preset.title}`}
-              className="w-[calc(50%-4px)] max-w-[240px] rounded-2xl border border-outline-100 bg-background-50 p-3 active:opacity-80"
-              style={{ boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)", elevation: 1 }}
+              className="w-[calc(50%-4px)] max-w-[240px] rounded-none border bg-background-50 p-3 active:opacity-80"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: colors.surface,
+                boxShadow: "none",
+                elevation: 0,
+              }}
             >
               <Box className="flex-row items-center gap-2">
-                <Box className="h-8 w-8 items-center justify-center rounded-full bg-primary-500/15">
-                  <Ionicons name={preset.icon} size={16} color={colors.primary} />
+                <Box
+                  className="h-8 w-8 items-center justify-center rounded-none border"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                    backgroundColor: withAlpha(colors.primary, 0.12),
+                  }}
+                >
+                  <Feather
+                    name={preset.icon as keyof typeof Feather.glyphMap}
+                    size={14}
+                    color={colors.primary}
+                  />
                 </Box>
-                <Text size="sm" bold className="flex-1 text-typography-900">
+                <Text
+                  size="sm"
+                  bold
+                  className="flex-1 font-mono uppercase tracking-widest text-typography-900"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                >
                   {preset.title}
                 </Text>
               </Box>
-              <Text size="xs" className="mt-1.5 leading-4 text-typography-500">
+              <Text
+                size="xs"
+                className="mt-1.5 font-mono leading-4 text-typography-500"
+                style={{ fontFamily: fonts.mono }}
+              >
                 {preset.subtitle}
               </Text>
             </Pressable>
@@ -276,18 +359,29 @@ export default function AiScreen() {
 
   const configBanner = (
     <Box
-      className="mx-4 mt-3 flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
+      className="mx-4 mt-3 flex-row items-center gap-3 rounded-none border px-3.5 py-3"
       style={{
+        borderWidth: 1.5,
         borderColor: withAlpha(colors.warning, 0.35),
         backgroundColor: withAlpha(colors.warning, 0.08),
+        borderRadius: 0,
       }}
     >
-      <Ionicons name="key-outline" size={18} color={colors.warning} />
+      <Feather name="key" size={18} color={colors.warning} />
       <Box className="flex-1">
-        <Text size="sm" bold className="text-typography-900">
+        <Text
+          size="sm"
+          bold
+          className="font-mono uppercase tracking-widest text-typography-900"
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+        >
           AI Assistant needs setup
         </Text>
-        <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
+        <Text
+          size="xs"
+          className="mt-0.5 font-mono leading-4 text-typography-500"
+          style={{ fontFamily: fonts.mono }}
+        >
           Enable it and add an API key in Settings.
         </Text>
       </Box>
@@ -297,9 +391,20 @@ export default function AiScreen() {
         }}
         accessibilityRole="button"
         accessibilityLabel="Open AI settings"
-        className="rounded-full bg-warning-500 px-3 py-1.5 active:opacity-80"
+        className="rounded-none border bg-warning-500 px-3 py-1.5 active:opacity-80"
+        style={{
+          borderWidth: 1.5,
+          borderColor: colors.warning,
+          borderRadius: 0,
+          backgroundColor: colors.warning,
+        }}
       >
-        <Text size="xs" bold style={{ color: colors.onWarning }}>
+        <Text
+          size="xs"
+          bold
+          className="font-mono uppercase tracking-widest"
+          style={{ color: colors.onWarning, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+        >
           Setup
         </Text>
       </Pressable>
@@ -308,14 +413,31 @@ export default function AiScreen() {
 
   const confirmationCard =
     pending.length > 0 ? (
-      <Box className="mx-4 mb-3 rounded-2xl border border-outline-200 bg-background-50 p-4">
+      <Box
+        className="mx-4 mb-3 rounded-none border bg-background-50 p-4"
+        style={{
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          borderRadius: 0,
+          backgroundColor: colors.surface,
+        }}
+      >
         <Box className="flex-row items-center gap-2">
-          <Ionicons name="hand-left-outline" size={18} color={colors.warning} />
-          <Text size="sm" bold className="flex-1 text-typography-900">
+          <Feather name="alert-circle" size={18} color={colors.warning} />
+          <Text
+            size="sm"
+            bold
+            className="flex-1 font-mono uppercase tracking-widest text-typography-900"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+          >
             Approve changes?
           </Text>
         </Box>
-        <Text size="sm" className="mt-2 leading-5 text-typography-500">
+        <Text
+          size="sm"
+          className="mt-2 font-mono leading-5 text-typography-500"
+          style={{ fontFamily: fonts.mono }}
+        >
           {summaryOf(pending)}
         </Text>
         <Box className="mt-3 flex-row gap-2">
@@ -323,9 +445,20 @@ export default function AiScreen() {
             onPress={() => void confirm(true)}
             accessibilityRole="button"
             accessibilityLabel="Approve assistant changes"
-            className="flex-1 items-center rounded-full bg-primary-500 py-2.5 active:opacity-80"
+            className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.primary,
+              borderRadius: 0,
+              backgroundColor: colors.primary,
+            }}
           >
-            <Text size="sm" bold style={{ color: colors.onPrimary }}>
+            <Text
+              size="sm"
+              bold
+              className="font-mono uppercase tracking-widest"
+              style={{ color: colors.onPrimary, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
               Approve
             </Text>
           </Pressable>
@@ -333,9 +466,20 @@ export default function AiScreen() {
             onPress={() => void confirm(false)}
             accessibilityRole="button"
             accessibilityLabel="Decline assistant changes"
-            className="flex-1 items-center rounded-full border border-outline-200 py-2.5 active:opacity-80"
+            className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: colors.surface,
+            }}
           >
-            <Text size="sm" bold className="text-typography-700">
+            <Text
+              size="sm"
+              bold
+              className="font-mono uppercase tracking-widest text-typography-700"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
               Decline
             </Text>
           </Pressable>
@@ -355,7 +499,6 @@ export default function AiScreen() {
           alignSelf: "center",
         }}
       >
-        {/* Header */}
         <Box
           style={{
             backgroundColor: colors.primary,
@@ -366,31 +509,59 @@ export default function AiScreen() {
           <Box className="flex-row items-center justify-between">
             <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">
               <Box
-                className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: colors.primaryOverlay }}
+                className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
+                style={{
+                  backgroundColor: colors.primaryOverlay,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
               >
-                <MaterialCommunityIcons name="robot" size={20} color={colors.onPrimary} />
+                <Feather name="cpu" size={20} color={colors.onPrimary} />
               </Box>
               <Box className="min-w-0">
-                <Text size="md" bold style={{ color: colors.onPrimary }}>
+                <Text
+                  size="md"
+                  bold
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.onPrimary, fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                >
                   Dietinator AI
                 </Text>
-                <Text size="xs" style={{ color: colors.onPrimaryMuted }}>
+                <Text
+                  size="xs"
+                  className="font-mono uppercase tracking-widest"
+                  style={{
+                    color: colors.onPrimaryMuted,
+                    fontFamily: fonts.mono,
+                    letterSpacing: 0.06,
+                  }}
+                >
                   Your nutrition assistant
                 </Text>
               </Box>
             </Box>
             <Box className="ml-2 flex-row items-center gap-1">
               <Box
-                className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
-                style={{ backgroundColor: colors.primaryOverlay }}
+                className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1"
+                style={{
+                  backgroundColor: colors.primaryOverlay,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
               >
                 <Box
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: colors.onPrimary }}
+                  className="h-1.5 w-1.5 rounded-none"
+                  style={{ backgroundColor: colors.onPrimary, borderRadius: 0 }}
                 />
-                <Text size="2xs" bold style={{ color: colors.onPrimary }}>
-                  ON DEVICE
+                <Text
+                  size="2xs"
+                  bold
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.onPrimary, fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                >
+                  On device
                 </Text>
               </Box>
               <Pressable
@@ -400,13 +571,18 @@ export default function AiScreen() {
                 onPressOut={headerPress.onPressOut}
                 accessibilityRole="button"
                 accessibilityLabel="Clear chat history"
-                className="ml-1 h-9 w-9 items-center justify-center rounded-full"
+                className="ml-1 h-9 w-9 items-center justify-center rounded-none border"
                 style={[
-                  { backgroundColor: colors.primaryOverlay },
+                  {
+                    backgroundColor: colors.primaryOverlay,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                  },
                   ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
                 ]}
               >
-                <Ionicons name="trash-outline" size={19} color={colors.onPrimary} />
+                <Feather name="trash-2" size={16} color={colors.onPrimary} />
               </Pressable>
             </Box>
           </Box>
@@ -442,15 +618,21 @@ export default function AiScreen() {
 
           {confirmationCard}
 
-          {/* Composer */}
-          <Box className="border-t border-outline-100 bg-background-0 px-3 pb-3 pt-2">
+          <Box
+            className="border-t bg-background-0 px-3 pb-3 pt-2"
+            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+          >
             <Box className="flex-row items-end gap-2">
               <Box
-                className="min-w-0 flex-1 justify-center rounded-[22px] border border-outline-200 bg-background-100 px-4"
+                className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
                 style={{
                   minHeight: 44,
-                  boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.06)",
-                  elevation: 1,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                  backgroundColor: colors.surface,
+                  boxShadow: "none",
+                  elevation: 0,
                 }}
               >
                 <TextInput
@@ -462,7 +644,7 @@ export default function AiScreen() {
                   placeholderTextColor={colors.textMuted}
                   editable={configured}
                   multiline={Platform.OS !== "web"}
-                  style={[styles.input, { color: colors.text }]}
+                  style={[styles.input, { color: colors.text, fontFamily: fonts.mono }]}
                   selectionColor={colors.primary}
                   accessibilityLabel="Message the AI assistant"
                   returnKeyType="send"
@@ -475,9 +657,15 @@ export default function AiScreen() {
                   onPress={stop}
                   accessibilityRole="button"
                   accessibilityLabel="Stop generating"
-                  className="h-11 w-11 shrink-0 items-center justify-center rounded-full border border-outline-200 bg-background-100 active:opacity-80"
+                  className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                    backgroundColor: colors.surface,
+                  }}
                 >
-                  <Ionicons name="stop" size={20} color={colors.danger} />
+                  <Feather name="x" size={20} color={colors.danger} />
                 </Pressable>
               ) : (
                 <Pressable
@@ -487,21 +675,22 @@ export default function AiScreen() {
                   onPressOut={sendPress.onPressOut}
                   accessibilityRole="button"
                   accessibilityLabel="Send message"
-                  className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                  className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
                   style={[
                     {
                       backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                      borderWidth: 1,
+                      borderWidth: 1.5,
                       borderColor: canSend ? colors.primary : colors.border,
-                      boxShadow: canSend ? "0px 3px 12px rgba(0, 0, 0, 0.25)" : undefined,
-                      elevation: canSend ? 4 : 0,
+                      borderRadius: 0,
+                      boxShadow: "none",
+                      elevation: 0,
                     },
-                    ...(sendPress.pressed && canSend ? [{ transform: [{ scale: 0.92 }] }] : []),
+                    ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
                   ]}
                 >
-                  <Ionicons
+                  <Feather
                     name="arrow-up"
-                    size={22}
+                    size={20}
                     color={canSend ? colors.onPrimary : colors.textMuted}
                   />
                 </Pressable>
@@ -516,10 +705,11 @@ export default function AiScreen() {
 
 const styles = StyleSheet.create({
   input: {
-    fontSize: 16,
+    fontSize: 13,
     lineHeight: 20,
     maxHeight: 110,
     paddingTop: 12,
     paddingBottom: 12,
+    fontFamily: fonts.mono,
   },
 })

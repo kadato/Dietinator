@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
 import { SortableFavoriteList } from "@/components/SortableFavoriteList"
@@ -52,6 +52,7 @@ import { MacroPills } from "@/components/MacroPills"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { spacing, fonts, type ColorPalette } from "@/theme"
+import { useLayout } from "@/hooks/useLayout"
 
 type FoodCategory = "foods" | "meals"
 type ListMode = "frequent" | "recent" | "favorites"
@@ -60,15 +61,15 @@ export type ActiveTab = "frequent" | "recent" | "favorites" | "meals"
 interface TabOption {
   id: ActiveTab
   label: string
-  icon: keyof typeof Ionicons.glyphMap
-  activeIcon: keyof typeof Ionicons.glyphMap
+  icon: keyof typeof Feather.glyphMap
+  activeIcon: keyof typeof Feather.glyphMap
 }
 
 const TABS: TabOption[] = [
-  { id: "frequent", label: "Frequent", icon: "sparkles-outline", activeIcon: "sparkles" },
-  { id: "recent", label: "Recent", icon: "time-outline", activeIcon: "time" },
-  { id: "favorites", label: "Favorites", icon: "star-outline", activeIcon: "star" },
-  { id: "meals", label: "Meals", icon: "restaurant-outline", activeIcon: "restaurant" },
+  { id: "frequent", label: "Frequent", icon: "star", activeIcon: "star" },
+  { id: "recent", label: "Recent", icon: "clock", activeIcon: "clock" },
+  { id: "favorites", label: "Favorites", icon: "star", activeIcon: "star" },
+  { id: "meals", label: "Meals", icon: "shopping-bag", activeIcon: "shopping-bag" },
 ]
 
 const ZERO_TOTALS: FoodNutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
@@ -105,6 +106,8 @@ export default function LogMealScreen() {
   const { showError, showWarning, showSuccess } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+  const { width } = useLayout()
+  const compact = width < 380
   const insets = useSafeAreaInsets()
 
   const accent = colors[mealType]
@@ -144,7 +147,7 @@ export default function LogMealScreen() {
     [setCategory, setListMode],
   )
   // YAZIO's suggestions for this meal slot arrive async and patch into the
-  // "Frequent" list — the local favorites/recents render instantly instead of
+  // "Frequent" list, so the local favorites/recents render instantly instead of
   // waiting on the network.
   const [suggestions, setSuggestions] = useState<SearchFoodResult[]>([])
   const [dayEntries, setDayEntries] = useState<DiaryEntry[]>([])
@@ -440,7 +443,7 @@ export default function LogMealScreen() {
     return map
   }, [meals])
 
-  // Meals are stored locally — the query filters them by name so the search
+  // Meals are stored locally. The query filters them by name so the search
   // box stays useful when browsing the "Meals" category.
   const filteredMeals = useMemo(() => {
     const q = debounced.trim().toLowerCase()
@@ -518,9 +521,7 @@ export default function LogMealScreen() {
                 />
               </View>
               <View style={styles.loggedInfo}>
-                <Text style={styles.loggedName} numberOfLines={2}>
-                  {entry.food_name}{" "}
-                </Text>
+                <Text style={styles.loggedName}>{entry.food_name}</Text>
                 <View style={styles.loggedSubRow}>
                   <Text style={styles.loggedSub}>
                     {formatNumber(entry.amount)} {displayUnit(entry.unit)} ·{" "}
@@ -542,7 +543,7 @@ export default function LogMealScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Edit ${entry.food_name}, ${Math.round(entry.kcal)} kcal`}
             >
-              <Ionicons name="create-outline" size={16} color={accent} />
+              <Feather name="edit-2" size={16} color={accent} />
             </Pressable>
             <Pressable
               style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
@@ -551,7 +552,7 @@ export default function LogMealScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Delete ${entry.food_name}`}
             >
-              <Ionicons name="trash" size={16} color={colors.danger} />
+              <Feather name="trash-2" size={16} color={colors.danger} />
             </Pressable>
           </View>
         ))}
@@ -573,8 +574,8 @@ export default function LogMealScreen() {
           accessibilityRole="button"
           accessibilityLabel={reorderFavorites ? "Done reordering" : "Reorder favorites"}
         >
-          <Ionicons
-            name={reorderFavorites ? "checkmark-circle" : "swap-vertical"}
+          <Feather
+            name={reorderFavorites ? "check-circle" : "repeat"}
             size={15}
             color={reorderFavorites ? colors.onPrimary : colors.text}
           />
@@ -600,7 +601,7 @@ export default function LogMealScreen() {
         >
           <View style={styles.headerLeft}>
             <View style={[styles.mealIconBox, { backgroundColor: `${accent}20` }]}>
-              <Ionicons name={MEAL_ICONS[mealType]} size={18} color={accent} />
+              <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />
             </View>
             <Text style={styles.title}>{MEAL_LABELS[mealType]}</Text>
             <Text style={styles.headerKcal}>
@@ -615,11 +616,11 @@ export default function LogMealScreen() {
             accessibilityRole="button"
             accessibilityLabel="More options"
           >
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+            <Feather name="more-horizontal" size={20} color={colors.text} />
           </Pressable>
         </View>
 
-        {/* Macros Left to Fill & Day Budget Bar */}
+        {/* Macros Left to Fill and Day Budget Bar */}
         <View style={styles.budgetBar}>
           <View style={styles.budgetTopRow}>
             <Text style={styles.budgetSectionLabel}>Left to fill today</Text>
@@ -684,7 +685,7 @@ export default function LogMealScreen() {
                 accessibilityState={{ selected: isActive }}
                 accessibilityLabel={tab.label}
               >
-                <Ionicons
+                <Feather
                   name={isActive ? tab.activeIcon : tab.icon}
                   size={14.5}
                   color={isActive ? accent : colors.textMuted}
@@ -704,10 +705,12 @@ export default function LogMealScreen() {
           })}
         </View>
 
-        {/* Search Bar (Expandable / Focusable via Search FAB) */}
+        {/* Search Bar with squared out search icon */}
         {searchOpen || query.length > 0 ? (
           <View style={styles.searchWrap}>
-            <Ionicons name="search" size={17} color={colors.textMuted} style={styles.searchIcon} />
+            <View style={styles.searchIconBox}>
+              <Feather name="search" size={14} color={colors.text} />
+            </View>
             <TextInput
               ref={searchInputRef}
               style={[styles.searchInput, { borderColor: accent }]}
@@ -727,7 +730,7 @@ export default function LogMealScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
               >
-                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                <Feather name="x-circle" size={20} color={colors.textMuted} />
               </Pressable>
             ) : (
               <Pressable
@@ -736,7 +739,7 @@ export default function LogMealScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Collapse search"
               >
-                <Ionicons name="chevron-up-circle-outline" size={20} color={colors.textMuted} />
+                <Feather name="chevron-up" size={20} color={colors.textMuted} />
               </Pressable>
             )}
           </View>
@@ -788,7 +791,7 @@ export default function LogMealScreen() {
               ListEmptyComponent={
                 !loading ? (
                   <EmptyState
-                    icon="fast-food-outline"
+                    icon="shopping-bag"
                     iconColor={accent}
                     title={emptyMessage}
                     variant="compact"
@@ -851,7 +854,7 @@ export default function LogMealScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Create a new meal"
               >
-                <Ionicons name="restaurant" size={20} color={colors.onPrimary} />
+                <Feather name="shopping-bag" size={20} color={colors.onPrimary} />
                 <Text style={styles.newMealText}>New meal</Text>
               </Pressable>
             }
@@ -859,7 +862,7 @@ export default function LogMealScreen() {
             ListEmptyComponent={
               !loading ? (
                 <EmptyState
-                  icon="restaurant-outline"
+                  icon="shopping-bag"
                   iconColor={accent}
                   title={emptyMessage}
                   variant="compact"
@@ -871,18 +874,30 @@ export default function LogMealScreen() {
       </ModalContainer>
 
       <FabCluster
-        bottomOffset={insets.bottom + 20}
-        left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+        bottomOffset={insets.bottom + (compact ? 12 : 16)}
+        gap={compact ? 8 : 12}
+        insetX={compact ? 12 : 20}
+        left={
+          <Fab
+            size={compact ? "sm" : "md"}
+            tone="surface"
+            icon="x"
+            onPress={safeBack}
+            accessibilityLabel="Cancel"
+          />
+        }
         right={
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: compact ? 8 : 10 }}>
             <Fab
+              size={compact ? "sm" : "md"}
               tone={searchOpen ? "primary" : "surface"}
               icon="search"
               onPress={handleToggleSearch}
               accessibilityLabel="Search"
             />
             <Fab
-              icon="barcode-outline"
+              size={compact ? "sm" : "md"}
+              icon="maximize"
               onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
               accessibilityLabel="Scan barcode"
             />
@@ -920,7 +935,7 @@ const createStyles = (colors: ColorPalette) =>
     mealIconBox: {
       width: 28,
       height: 28,
-      borderRadius: 9,
+      borderRadius: 0,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -945,7 +960,7 @@ const createStyles = (colors: ColorPalette) =>
     moreBtn: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
       justifyContent: "center",
@@ -953,19 +968,20 @@ const createStyles = (colors: ColorPalette) =>
     tabBar: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-      marginHorizontal: spacing.md,
+      gap: 4,
+      marginHorizontal: spacing.sm + 4,
       marginBottom: spacing.xs,
     },
     tabItem: {
       flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 4.5,
-      paddingVertical: 7,
+      gap: 3,
+      paddingVertical: 6,
       paddingHorizontal: 2,
-      borderRadius: 12,
+      borderRadius: 0,
       borderWidth: 1,
     },
     tabItemActive: {},
@@ -974,8 +990,9 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     tabLabel: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "600",
+      letterSpacing: 0.01,
     },
     tabLabelActive: {
       fontWeight: "700",
@@ -985,15 +1002,28 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       marginHorizontal: spacing.md,
       marginBottom: spacing.xs,
+      gap: 6,
     },
-    searchIcon: { position: "absolute", left: spacing.md, zIndex: 1 },
+    searchIconBox: {
+      position: "absolute",
+      left: 6,
+      width: 28,
+      height: 28,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      borderRadius: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1,
+    },
     searchInput: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderRadius: 14,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       paddingVertical: spacing.sm,
-      paddingLeft: spacing.xl + 6,
+      paddingLeft: 40,
       paddingRight: spacing.xl,
       fontSize: 15,
       color: colors.text,
@@ -1007,7 +1037,7 @@ const createStyles = (colors: ColorPalette) =>
       height: 28,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 14,
+      borderRadius: 0,
     },
     loader: { marginVertical: spacing.sm },
     list: { flex: 1 },
@@ -1019,7 +1049,7 @@ const createStyles = (colors: ColorPalette) =>
       marginHorizontal: spacing.md,
       marginBottom: spacing.md,
       paddingVertical: spacing.md,
-      borderRadius: 14,
+      borderRadius: 0,
       backgroundColor: colors.primary,
     },
     newMealText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
@@ -1027,9 +1057,9 @@ const createStyles = (colors: ColorPalette) =>
       marginHorizontal: spacing.md,
       marginBottom: spacing.md,
       padding: spacing.md,
-      borderRadius: 16,
+      borderRadius: 0,
       backgroundColor: colors.surface,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     loggedHeader: {
@@ -1073,12 +1103,19 @@ const createStyles = (colors: ColorPalette) =>
     loggedIconWrap: {
       width: 40,
       height: 40,
-      borderRadius: 12,
+      borderRadius: 0,
       alignItems: "center",
       justifyContent: "center",
     },
     loggedInfo: { flex: 1, minWidth: 0 },
-    loggedName: { fontSize: 15.5, color: colors.text, fontWeight: "600", lineHeight: 20 },
+    loggedName: {
+      fontSize: 15.5,
+      color: colors.text,
+      fontWeight: "600",
+      lineHeight: 20,
+      flexWrap: "wrap",
+      flexShrink: 1,
+    },
     loggedSubRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -1090,7 +1127,7 @@ const createStyles = (colors: ColorPalette) =>
     miniChip: {
       paddingHorizontal: 5,
       paddingVertical: 1,
-      borderRadius: 6,
+      borderRadius: 0,
     },
     miniChipText: {
       fontSize: 11,
@@ -1104,8 +1141,8 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 16,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       borderColor: colors.border,
       gap: 6,
     },
@@ -1129,7 +1166,7 @@ const createStyles = (colors: ColorPalette) =>
     dayBudgetBadge: {
       paddingHorizontal: 7,
       paddingVertical: 2,
-      borderRadius: 7,
+      borderRadius: 0,
     },
     dayBudgetBadgeText: {
       fontSize: 11,
@@ -1145,7 +1182,7 @@ const createStyles = (colors: ColorPalette) =>
     loggedIconBtn: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: 0,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1180,9 +1217,9 @@ const createStyles = (colors: ColorPalette) =>
       gap: 4,
       paddingHorizontal: 10,
       paddingVertical: 5,
-      borderRadius: 10,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     reorderBtnText: {

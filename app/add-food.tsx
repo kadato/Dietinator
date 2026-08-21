@@ -5,12 +5,12 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useLocalSearchParams } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { getDiaryEntriesForDate, logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
 import {
@@ -56,7 +56,7 @@ import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
  * `nutrients` refer to (the nutrient reference amount). For per-100 g/ml
  * products that is 100; for countable products (each, cup, serving, whole)
  * it is 1 base unit (or the product's default portion). Scaling from this
- * reference keeps calories correct for every named serving — picking
+ * reference keeps calories correct for every named serving, so picking
  * "2 each" on a per-piece product must double, not match, the base energy.
  */
 function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServing {
@@ -71,7 +71,7 @@ function resolveServing(food: SearchFoodResult, option: FoodServing): FoodServin
 
 /**
  * Resolve a product for the add-food screen. Renders instantly from any
- * cached row — per-gram search rows are normalized for display — and patches
+ * cached row, with per-gram search rows normalized for display, and patches
  * in the real product detail when the network answers, so the nutrition
  * preview never waits for YAZIO when the food has been seen before.
  *
@@ -158,7 +158,7 @@ export default function AddFoodScreen() {
   const [favoriteToggling, setFavoriteToggling] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<MealType>(mealType)
   const [dayEntries, setDayEntries] = useState<DiaryEntry[]>([])
-  // True once the user edits the amount — background detail patches must not
+  // True once the user edits the amount. Background detail patches must not
   // clobber a typed or history-prefilled portion.
   const amountTouched = useRef(false)
 
@@ -184,7 +184,7 @@ export default function AddFoodScreen() {
     }
   }, [productId, entryId, safeBack])
 
-  // Edit mode: load the existing entry and resolve its food (cache → remote).
+  // Edit mode: load the existing entry and resolve its food (cache, then remote).
   useEffect(() => {
     if (!entryId) return
     let cancelled = false
@@ -200,7 +200,7 @@ export default function AddFoodScreen() {
         setSelectedMeal(entry.meal_type)
         setAmount(String(entry.amount))
         if (!entry.food_id) {
-          // Manual entries have no product — treat stored totals as the base.
+          // Manual entries have no product, so treat stored totals as the base.
           const nutrients = {
             kcal: entry.kcal,
             protein: entry.protein,
@@ -287,8 +287,8 @@ export default function AddFoodScreen() {
   const servingOptions = useMemo((): FoodServing[] => {
     if (!food) return []
     const options = food.servings?.length ? food.servings : [food.serving]
-    // Some products ship duplicate serving entries (same name + amount) —
-    // keep the first occurrence so every chip maps to a distinct amount.
+    // Some products ship duplicate serving entries (same name + amount).
+    // Keep the first occurrence so every chip maps to a distinct amount.
     const seen = new Set<string>()
     return options.filter((option) => {
       const key = `${option.serving}-${option.amount}`
@@ -359,8 +359,7 @@ export default function AddFoodScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Loading food details…</Text>
+          <LoadingSpinner size={32} />
         </PageContainer>
       </View>
     )
@@ -370,7 +369,7 @@ export default function AddFoodScreen() {
     return (
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
-          <Ionicons name="cloud-offline-outline" size={44} color={colors.danger} />
+          <Feather name="cloud-off" size={44} color={colors.danger} />
           <Text style={styles.loadingText}>Could not load this food.</Text>
           {productId || entryId ? (
             <Pressable
@@ -429,11 +428,7 @@ export default function AddFoodScreen() {
                     accessibilityState={{ disabled: favoriteToggling }}
                     style={{ opacity: favoriteToggling ? 0.5 : 1 }}
                   >
-                    <Ionicons
-                      name={isFavorite ? "star" : "star-outline"}
-                      size={26}
-                      color={colors.warning}
-                    />
+                    <Feather name={isFavorite ? "star" : "star"} size={26} color={colors.warning} />
                   </Pressable>
                 ) : null}
               </View>
@@ -468,7 +463,7 @@ export default function AddFoodScreen() {
               </View>
             ) : null}
 
-            {/* Nutrition Facts & Daily Budget Impact Cards (Top) */}
+            {/* Nutrition Facts and Daily Budget Impact Cards (Top) */}
             {preview && (
               <View style={styles.nutritionSection}>
                 <NutritionFactsCard
@@ -485,10 +480,10 @@ export default function AddFoodScreen() {
               </View>
             )}
 
-            {/* Compact Portion & Serving Controls (Bottom) */}
+            {/* Compact Portion and Serving Controls (Bottom) */}
             <View style={styles.portionCard}>
               <View style={styles.portionHeaderRow}>
-                <Text style={styles.portionTitle}>Portion & Serving</Text>
+                <Text style={styles.portionTitle}>Portion and Serving</Text>
                 <Text style={styles.unitBadge}>Base unit: {displayUnit(unit)}</Text>
               </View>
 
@@ -565,10 +560,10 @@ export default function AddFoodScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
           right={
             <Fab
-              icon="checkmark"
+              icon="check"
               onPress={handleSave}
               disabled={saving}
               accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
@@ -638,9 +633,9 @@ const createStyles = (colors: ColorPalette) =>
     mealChip: {
       paddingHorizontal: spacing.md,
       paddingVertical: 7,
-      borderRadius: 14,
+      borderRadius: 0,
       backgroundColor: colors.surface,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     mealChipSelected: {
@@ -660,8 +655,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     portionCard: {
       backgroundColor: colors.surface,
-      borderRadius: 18,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       borderColor: colors.border,
       padding: spacing.md,
       gap: spacing.sm,
@@ -694,9 +689,9 @@ const createStyles = (colors: ColorPalette) =>
     chip: {
       paddingHorizontal: spacing.sm + 4,
       paddingVertical: 7,
-      borderRadius: 12,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     chipSelected: {
@@ -729,9 +724,9 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: 7,
-      borderRadius: 10,
+      borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.border,
     },
     multiplierText: {
