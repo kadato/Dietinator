@@ -1,28 +1,37 @@
-/* Google Fonts are linked in app/+html.tsx — importing them here too would
- * duplicate the request from the runtime-injected stylesheet. */
+/*
+ * Terminal face: JetBrainsMono Nerd Font Mono (NFM build — no ligatures by
+ * Nerd Fonts policy). Registered at runtime by src/utils/web-fonts.ts, which
+ * requires the TTFs through Metro so dev and exported builds both serve them.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
- * Base font & mobile touch optimization
+ * Terminal field computer — mono, sharp, fast. Paper grid on light, void on dark.
  */
 html,
 body {
-  font-family:
-    "Plus Jakarta Sans",
-    "Geist",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
   touch-action: manipulation;
+  background: #e1e2e7;
+  letter-spacing: -0.01em;
+}
+html.dark,
+html.dark body {
+  background: #1a1b26;
+}
+@media (min-resolution: 1.5dppx) {
+  html,
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
 input,
@@ -48,13 +57,19 @@ textarea::placeholder {
 }
 
 /*
- * gluestack-ui's dark palette alignment with darkColors in src/theme.ts
+ * gluestack-ui Tokyo Night alignment
  */
 html.dark {
-  --color-background-50: 28 28 31;
-  --color-background-100: 42 42 47;
-  --color-background-200: 55 55 61;
-  --color-background-300: 70 70 78;
+  --color-background-50: 36 40 59;
+  --color-background-100: 41 46 66;
+  --color-background-200: 65 72 104;
+  --color-background-300: 73 82 120;
+}
+html:not(.dark) {
+  --color-background-50: 255 255 255;
+  --color-background-100: 213 214 219;
+  --color-background-200: 169 177 214;
+  --color-background-300: 120 128 160;
 }
 
 /*
@@ -63,15 +78,15 @@ html.dark {
 .font-tabular,
 .font-mono,
 .font-jetbrains {
-  font-family:
-    "JetBrains Mono", "JetBrainsMono Nerd Font", "JetBrainsMono NF", "Geist Mono", monospace !important;
+  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
 .font-heading {
-  font-family: "Plus Jakarta Sans", "Geist", sans-serif;
-  letter-spacing: -0.02em;
+  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
 }
 
 /*
@@ -92,7 +107,7 @@ p,
 }
 
 /*
- * Clean scrollbars: hidden by default on mobile containers, thin on overflow
+ * Scrollbars: hidden on thumb-driven phones, thin ledger line from 600
  */
 *::-webkit-scrollbar {
   display: none;
@@ -101,9 +116,184 @@ p,
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+@media (min-width: 600px) {
+  *::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #34548a;
+    border-radius: 0;
+  }
+  html.dark *::-webkit-scrollbar-thumb {
+    background: #7aa2f7;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #34548a transparent;
+  }
+  html.dark * {
+    scrollbar-color: #7aa2f7 transparent;
+  }
+}
 
-/* Accessible focus rings for keyboard users */
+/* Browser surfaces — Tokyo Night ink */
+::selection {
+  background: #34548a;
+  color: #ffffff;
+}
+html.dark ::selection {
+  background: #7aa2f7;
+  color: #1a1b26;
+}
+::placeholder {
+  color: inherit;
+  opacity: 0.5;
+}
+input {
+  caret-color: #34548a;
+}
+html.dark input {
+  caret-color: #7aa2f7;
+}
+
+/* Sharp focus — 1.5px solid Tokyo Night ink, square */
 :focus-visible {
-  outline: 2px solid #0d9488;
-  outline-offset: 2px;
+  outline: 1.5px solid #34548a;
+  outline-offset: 1px;
+  border-radius: 0 !important;
+}
+html.dark :focus-visible {
+  outline-color: #7aa2f7;
+}
+
+/* ── Terminal world — square, sharp, no soft shadows ── */
+.rounded-3xl,
+.rounded-2xl,
+.rounded-xl,
+.rounded-lg,
+.rounded-md,
+.rounded {
+  border-radius: 0 !important;
+}
+.rounded-full {
+  border-radius: 0 !important;
+}
+/* cards lose soft shadow, gain 1.5px ink rule */
+.shadow-soft-1,
+.shadow-soft-2,
+.shadow-soft-3,
+.shadow-soft-4,
+[class*="shadow-"] {
+  box-shadow: none !important;
+}
+/* elevated cards -> sharp Tokyo Night border */
+.bg-background-50 {
+  border: 1.5px solid #a9b1d6;
+}
+html.dark .bg-background-50 {
+  border-color: #414868;
+}
+/* primary buttons square */
+.bg-primary-500 {
+  border: 1.5px solid #34548a;
+  border-radius: 0 !important;
+}
+html.dark .bg-primary-500 {
+  border-color: #7aa2f7;
+}
+/* paper grid — Tokyo Night graph — tokenized via CSS variables */
+:root {
+  --paper-grid: rgba(52, 84, 138, 0.08);
+  --paper-grid-dark: rgba(192, 202, 245, 0.06);
+  --scrim: rgba(26, 27, 38, 0.65);
+}
+html:not(.dark) body {
+  background-image:
+    linear-gradient(to right, var(--paper-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--paper-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+html.dark body {
+  background-image:
+    linear-gradient(to right, var(--paper-grid-dark) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--paper-grid-dark) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+/* tabular numbers forced everywhere for ledger speed */
+.font-tabular,
+.font-mono,
+.font-jetbrains,
+[class*="font-tabular"] {
+  font-variant-numeric: tabular-nums !important;
+}
+/* Tokyo Night rule color for outline */
+[class*="border-outline"] {
+  border-color: #a9b1d6 !important;
+}
+html.dark [class*="border-outline"] {
+  border-color: #414868 !important;
+}
+/* scrollbar Tokyo Night square */
+@media (min-width: 600px) {
+  *::-webkit-scrollbar-thumb {
+    background: #34548a;
+    border-radius: 0;
+  }
+  html.dark *::-webkit-scrollbar-thumb {
+    background: #7aa2f7;
+  }
+}
+
+/* reduce motion — preserve feedback without scale */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* pressed states fall back to opacity and invert not scale */
+  [style*="scale"] {
+    transform: none !important;
+  }
+  .active\:opacity-80:active,
+  .active\:bg-background-100:active,
+  .active\:bg-background-200:active {
+    opacity: 0.85 !important;
+  }
+}
+
+/* ledger skeleton — ruled placeholder while SQLite hydrates */
+@keyframes ledger-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+.ledger-skeleton {
+  background: #d5d6db;
+  background-image: linear-gradient(to right, #d5d6db 0%, #e1e2e7 50%, #d5d6db 100%);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  animation: ledger-shimmer 1.2s ease-in-out infinite;
+  border: 1px solid #a9b1d6;
+}
+html.dark .ledger-skeleton {
+  background: #292e42;
+  background-image: linear-gradient(to right, #292e42 0%, #414868 50%, #292e42 100%);
+  border-color: #414868;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ledger-skeleton {
+    animation: none;
+    background-image: none;
+  }
 }

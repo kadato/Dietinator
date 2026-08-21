@@ -1,3 +1,5 @@
+import { Platform } from "react-native"
+
 export type ColorPalette = {
   background: string
   surface: string
@@ -7,7 +9,7 @@ export type ColorPalette = {
   primaryStrong: string
   primaryMuted: string
   onPrimary: string
-  /** Secondary text on primary surfaces (headers, bubbles) — clears 4.5:1 in both themes. */
+  /** Secondary text on primary surfaces (headers, bubbles), clears 4.5:1 in both themes. */
   onPrimaryMuted: string
   /** Translucent chip/avatar surface laid on top of primary backgrounds. */
   primaryOverlay: string
@@ -26,60 +28,49 @@ export type ColorPalette = {
 }
 
 export const darkColors: ColorPalette = {
-  background: "#121215",
-  surface: "#1a1a1e",
-  surfaceAlt: "#26262c",
-  primary: "#2dd4bf",
-  primaryStrong: "#5eead4",
-  primaryMuted: "#14b8a6",
-  onPrimary: "#042f2e",
-  onPrimaryMuted: "#0b4f49",
-  primaryOverlay: "rgba(255, 255, 255, 0.18)",
-  text: "#fafafa",
-  textMuted: "#9d9da7",
-  textOnBackground: "#f4f4f5",
-  danger: "#f87171",
-  warning: "#fbbf24",
-  onWarning: "#1a1a1a",
-  border: "#2c2c33",
-  breakfast: "#2dd4bf",
-  lunch: "#fb923c",
-  dinner: "#f472b6",
-  snack: "#facc15",
+  background: "#1a1b26",
+  surface: "#24283b",
+  surfaceAlt: "#292e42",
+  primary: "#7aa2f7",
+  primaryStrong: "#7dcfff",
+  primaryMuted: "#bb9af7",
+  onPrimary: "#1a1b26",
+  onPrimaryMuted: "#c0caf5",
+  primaryOverlay: "rgba(122,162,247,0.14)",
+  text: "#c0caf5",
+  textMuted: "#a9b1d6",
+  textOnBackground: "#c0caf5",
+  danger: "#f7768e",
+  warning: "#e0af68",
+  onWarning: "#1a1b26",
+  border: "#414868",
+  breakfast: "#8ab4f8",
+  lunch: "#bb9af7",
+  dinner: "#f7768e",
+  snack: "#e0af68",
 }
 
 export const lightColors: ColorPalette = {
-  background: "#f4f5f7",
+  background: "#e1e2e7",
   surface: "#ffffff",
-  surfaceAlt: "#e8eaee",
-  // teal-700 (#0f766e) fails as bold 11px text on the tinted budget badge
-  // (4.05 on surfaceAlt) — teal-800 (#115e59) clears 4.5:1 there and on white
-  // while keeping white button text at 7.7:1.
-  primary: "#115e59",
-  primaryStrong: "#0f766e",
-  // teal-500 keeps the icon/avatar above 3:1 non-text contrast with white.
-  primaryMuted: "#0d9488",
+  surfaceAlt: "#d5d6db",
+  primary: "#34548a",
+  primaryStrong: "#0f4b6e",
+  primaryMuted: "#5a3e8e",
   onPrimary: "#ffffff",
-  // Light teal text on the teal header/bubbles — 4.7:1 on primary (#115e59)
-  // and 6+:1 on the darkened header chips.
-  onPrimaryMuted: "#e0f1ef",
-  // Darker than the dark theme's white overlay: white text/ON DEVICE chip on a
-  // light teal header needs a darker chip to clear 4.5:1.
-  primaryOverlay: "rgba(0, 0, 0, 0.16)",
-  text: "#0f172a",
-  textMuted: "#55606f",
-  textOnBackground: "#111827",
-  danger: "#dc2626",
-  warning: "#d97706",
-  onWarning: "#1a1a1a",
-  border: "#d9dde3",
-  // Meal accents at 700/800 level: bold 11-13px labels on white cards and on
-  // their own ~13% tinted chips need ≥4.5:1, which the 700s barely miss on the
-  // tints (3.6-4.3) — the 800s clear 5.5:1 everywhere.
-  breakfast: "#115e59",
-  lunch: "#9a3412",
-  dinner: "#9d174d",
-  snack: "#854d0e",
+  onPrimaryMuted: "#d5d6db",
+  primaryOverlay: "rgba(52,84,138,0.10)",
+  text: "#343b58",
+  textMuted: "#565a6e",
+  textOnBackground: "#1a1b26",
+  danger: "#8c4351",
+  warning: "#8f5e15",
+  onWarning: "#ffffff",
+  border: "#a9b1d6",
+  breakfast: "#214a7a",
+  lunch: "#5a3e8e",
+  dinner: "#8c4351",
+  snack: "#8f5e15",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {
@@ -90,10 +81,10 @@ export const spacing = {
   "2xs": 2,
   xs: 4,
   sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  "2xl": 40,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  "2xl": 32,
 }
 
 /** Breakpoints and max widths for tablet / desktop / web layouts. */
@@ -108,7 +99,16 @@ export const layout = {
   tabBarHeight: 64,
 }
 
+/**
+ * Terminal face: JetBrainsMono Nerd Font Mono (no ligatures).
+ * Web: registered from assets/fonts by src/utils/web-fonts.ts.
+ * Native: resolved verbatim from android/app/src/main/assets/fonts
+ * (JetBrains Mono.ttf + JetBrains Mono_bold.ttf per RN font manager rules).
+ */
+const MONO_WEB = "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+const MONO_NATIVE = "JetBrains Mono"
+
 export const fonts = {
-  mono: "'JetBrains Mono', 'JetBrainsMono Nerd Font', 'Geist Mono', monospace",
-  sans: "'Plus Jakarta Sans', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  mono: Platform.OS === "web" ? MONO_WEB : MONO_NATIVE,
+  sans: Platform.OS === "web" ? MONO_WEB : MONO_NATIVE,
 }

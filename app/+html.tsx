@@ -7,7 +7,7 @@ import type { PropsWithChildren } from "react"
  * Adds global head elements: title, meta description, theme color, and a
  * `<main>` landmark so every route satisfies the basic document checks.
  *
- * NOTE: do not add a `public/index.html` — with static output the dev server
+ * NOTE: do not add a `public/index.html`. With static output the dev server
  * serves that file raw (no bundle script, no placeholder substitution), which
  * leaves the app shell spinning forever.
  */
@@ -21,23 +21,17 @@ export default function Root({ children }: PropsWithChildren) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
-        />
-        <title>Dietinator — Calorie & macro tracker</title>
+        <title>Dietinator: calorie and macro tracker</title>
         <meta
           name="description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta name="theme-color" content="#0f766e" />
+        <meta name="theme-color" content="#34548a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
         <ScrollViewStyleReset />
         {/*
-          The app's height chain is html/body → main → #root. `main` has no
+          The app's height chain is html/body, then main, then #root. `main` has no
           default height, so `#root { height: 100% }` (set by the reset) would
           resolve against an auto-height parent and collapse the app to zero.
         */}
@@ -50,24 +44,74 @@ export default function Root({ children }: PropsWithChildren) {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f1f5f9;
+            background: #e1e2e7;
           }
           @media (prefers-color-scheme: dark) {
             #app-shell {
-              background: #141416;
+              background: #1a1b26;
             }
           }
           .app-shell-spinner {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 3px solid rgba(13, 148, 136, 0.25);
-            border-top-color: #0d9488;
-            animation: app-shell-spin 0.8s linear infinite;
+            position: relative;
+            width: 32px;
+            height: 32px;
+            border-radius: 0;
+            border: 2px solid #d5d6db;
           }
-          @keyframes app-shell-spin {
-            to {
-              transform: rotate(360deg);
+          .app-shell-spinner::after {
+            content: "";
+            position: absolute;
+            background: #34548a;
+            animation: edge-march 0.64s steps(1, end) infinite;
+          }
+          @keyframes edge-march {
+            0% {
+              top: -2px;
+              left: -2px;
+              right: -2px;
+              height: 2px;
+              bottom: auto;
+              width: auto;
+            }
+            25% {
+              top: -2px;
+              bottom: -2px;
+              right: -2px;
+              width: 2px;
+              left: auto;
+              height: auto;
+            }
+            50% {
+              bottom: -2px;
+              left: -2px;
+              right: -2px;
+              height: 2px;
+              top: auto;
+              width: auto;
+            }
+            75% {
+              top: -2px;
+              bottom: -2px;
+              left: -2px;
+              width: 2px;
+              right: auto;
+              height: auto;
+            }
+            100% {
+              top: -2px;
+              left: -2px;
+              right: -2px;
+              height: 2px;
+              bottom: auto;
+              width: auto;
+            }
+          }
+          @media (prefers-color-scheme: dark) {
+            .app-shell-spinner {
+              border-color: #292e42;
+            }
+            .app-shell-spinner::after {
+              background: #7aa2f7;
             }
           }
           html[data-shell-hide] #app-shell {
@@ -76,6 +120,13 @@ export default function Root({ children }: PropsWithChildren) {
         `}</style>
       </head>
       <body>
+        <span
+          dangerouslySetInnerHTML={{
+            __html:
+              "<!-- THESIS: Field terminal replaces soft ledger with square ink and grid, refusing pill and shadow, owning one-hand fast logging. OWN-WORLD: Paper #e1e2e7 grid 24 on ink #34548a rule 1.5, void #1a1b26 on #7aa2f7, mono JetBrains everywhere, 0 radius, flat invert, thumb dock 52 squares. STORY: Solo tracker sees graph paper, ring, square meal sheets, taps BRKF dock to log without corridor, quick H2O, reads budget instantly. FIRST VIEWPORT: Grid fills viewport, date chrome square with flame, ring centered in square sheet, four meal squares below, bottom dock thumb arc above tab bar. FORM: Operate field terminal, pinned brief sharp beats roll b9619c3c, Storm #1a1b26 #7aa2f7 #bb9af7 #f7768e #e0af68. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance -->",
+          }}
+          style={{ display: "none" }}
+        />
         <div id="app-shell" aria-hidden="true">
           <div className="app-shell-spinner" />
         </div>

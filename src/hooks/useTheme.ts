@@ -5,7 +5,7 @@ import { ThemeContext, type AppColorScheme } from "@/context/ThemeContext"
 
 /**
  * Theme colors for the current render. Inside ThemeProvider this follows the
- * user's explicit preference (Settings → Theme); without a provider (e.g.
+ * user's explicit preference (Settings, then Theme); without a provider (for example
  * unit tests) it falls back to the OS scheme.
  */
 export function useTheme() {
