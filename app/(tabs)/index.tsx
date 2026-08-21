@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react"
-import { Pressable, RefreshControl, ScrollView, View } from "react-native"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Keyboard, Platform, Pressable, RefreshControl, ScrollView, View } from "react-native"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect, useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
@@ -39,7 +40,7 @@ import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing } from "@/theme"
+import { spacing, layout } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -49,7 +50,11 @@ export default function TodayScreen() {
   const { settings, yazioAvailable, authenticated } = useApp()
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, width } = useLayout()
+  // Phone metrics below the medium breakpoint: the date chrome, quick-adds
+  // and dock are thumb-first. At 390 (standard phone) the non-compact header
+  // overflows and clips the streak badge against the viewport edge.
+  const compact = width < layout.breakpointMedium
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -63,6 +68,8 @@ export default function TodayScreen() {
   const [logWaterOpen, setLogWaterOpen] = useState(false)
   const [logSlotOpen, setLogSlotOpen] = useState(false)
   const [localWaterMl, setLocalWaterMl] = useState(0)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [nutritionModal, setNutritionModal] = useState<{
     visible: boolean
     nutrients: FoodNutrients
@@ -105,14 +112,14 @@ export default function TodayScreen() {
       setNutritionModal({
         visible: true,
         nutrients: nut,
-        title: "Daily Nutrition & Micros",
+        title: "Daily Nutrition and Micros",
         subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
       })
     } catch {
       setNutritionModal({
         visible: true,
         nutrients: totals,
-        title: "Daily Nutrition & Micros",
+        title: "Daily Nutrition and Micros",
         subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
       })
     }
@@ -134,11 +141,11 @@ export default function TodayScreen() {
   const load = useCallback(
     async (options?: { quiet?: boolean; force?: boolean }) => {
       // 0. Agent bridge (web only): apply any changes external AI agents made
-      //    through the /mcp endpoint before rendering the diary.
+      //  through the /mcp endpoint before rendering the diary.
       await pullAgentChanges().catch(() => undefined)
 
-      // 1. Local first — the diary renders from SQLite before any network is
-      //    touched. Stale nutrient values are refined in the background below.
+      // 1. Local first. The diary renders from SQLite before any network is
+      //  touched. Stale nutrient values are refined in the background below.
       let list: DiaryEntry[]
       try {
         const [diaryEntries, weight, water, calHistory] = await Promise.all([
@@ -155,10 +162,12 @@ export default function TodayScreen() {
       } catch (error) {
         showError(error, "Could not load diary for this day.")
         return
+      } finally {
+        setIsInitialLoading(false)
       }
 
-      // 2. Background — refine stale nutrients, then import. Never blocks the
-      //    render; the import is throttled so tab switches don't re-hit YAZIO.
+      // 2. Background. Refine stale nutrients, then import. Never blocks the
+      //  render; the import is throttled so tab switches don't re-hit YAZIO.
       if (!authenticated) return
       setImporting(true)
       try {
@@ -167,7 +176,7 @@ export default function TodayScreen() {
         const result = await importDiaryFromYazio(dateKey, { force: options?.force })
         setMealGoals(result.mealGoals)
         setSummary(result.summary)
-        // Imports wrote to SQLite — a final local read (no network) is the
+        // Imports wrote to SQLite. A final local read (no network) is the
         // source of truth and also covers entries added while importing.
         if (result.imported > 0 || result.failed > 0 || result.error) {
           const updated = await getDiaryEntriesForDate(dateKey, { remote: false })
@@ -195,6 +204,21 @@ export default function TodayScreen() {
       load({ quiet: true })
     }, [load]),
   )
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setKeyboardVisible(true),
+    )
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardVisible(false),
+    )
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
 
   const openAdd = useCallback(
     (mealType: MealType) => {
@@ -290,7 +314,7 @@ export default function TodayScreen() {
         />
       )
       return grid ? (
-        <View key={meal} className="min-w-[280px] grow basis-[48%]">
+        <View key={meal} className="min-w-[320px] grow basis-[48%]">
           {section}
         </View>
       ) : (
@@ -315,217 +339,311 @@ export default function TodayScreen() {
     }
   }
 
-  const summaryCard = (
-    <Card variant="elevated" className="mb-5 overflow-hidden rounded-3xl p-0">
-      {/* Integrated Header: Date Navigation, Sync Status, and Copy Action */}
-      <Box className="border-b border-outline-100 bg-background-50/60 p-3">
-        <Box className="flex-row items-center justify-between">
-          {/* Date Selector: Previous Day, Interactive Date (Opens Calendar Modal), Next Day */}
-          <Box className="flex-row items-center gap-1">
-            <Pressable
-              onPress={() => setDateKey((d) => shiftDateKey(d, -1))}
-              hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
-              accessibilityRole="button"
-              accessibilityLabel="Previous day"
+  const dateChrome = (
+    <Box
+      className="mb-3 border bg-background-50 px-3 py-3"
+      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+    >
+      {/* Shrink-safe instrument row: the date pill is the only flexible item
+          and truncates under pressure, so the streak and sync badges always
+          fit inside the border instead of clipping out. */}
+      <Box
+        className={`min-w-0 flex-row items-center justify-between ${compact ? "gap-1.5" : "gap-2"}`}
+      >
+        <Box className={`min-w-0 shrink flex-row items-center ${compact ? "gap-0.5" : "gap-1"}`}>
+          <Pressable
+            onPress={() => setDateKey((d) => shiftDateKey(d, -1))}
+            hitSlop={8}
+            className={`shrink-0 items-center justify-center rounded-none border bg-background-100 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
+            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
+            accessibilityRole="button"
+            accessibilityLabel="Previous day"
+          >
+            <Feather name="chevron-left" size={compact ? 16 : 18} color={colors.text} />
+          </Pressable>
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            hitSlop={6}
+            className={`min-w-0 shrink flex-row items-center rounded-none border bg-background-100 active:bg-background-200 ${compact ? "h-9 gap-1.5 px-3" : "h-11 gap-2 px-4"}`}
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            accessibilityRole="button"
+            accessibilityLabel={`Selected date: ${formatHeaderDate(dateKey)}. Tap to open calendar.`}
+          >
+            <Feather name="calendar" size={compact ? 14 : 17} color={colors.primary} />
+            <Text
+              size={compact ? "xs" : "sm"}
+              bold
+              numberOfLines={1}
+              className="text-typography-900"
+              style={{ fontSize: compact ? 13 : 16, flexShrink: 1 }}
             >
-              <Ionicons name="chevron-back" size={18} color={colors.text} />
-            </Pressable>
-
-            <Pressable
-              onPress={() => setPickerOpen(true)}
-              hitSlop={6}
-              className="flex-row items-center gap-1.5 rounded-full bg-background-100 px-3 py-1.5 active:bg-background-200"
-              accessibilityRole="button"
-              accessibilityLabel={`Selected date: ${formatHeaderDate(dateKey)}. Tap to open calendar.`}
+              {/* Compact phones get the short label: the full weekday string
+                  cannot share one row with the streak and sync badges. */}
+              {compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setDateKey((d) => shiftDateKey(d, 1))}
+            hitSlop={8}
+            className={`shrink-0 items-center justify-center rounded-none border bg-background-100 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
+            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
+            accessibilityRole="button"
+            accessibilityLabel="Next day"
+          >
+            <Feather name="chevron-right" size={compact ? 16 : 18} color={colors.text} />
+          </Pressable>
+          {/* Streak sits in the same instrument row, with a clear gap before it. */}
+          <Box
+            className={`shrink-0 flex-row items-center gap-1 rounded-none border px-2.5 ${compact ? "ml-2.5 h-9" : "ml-4 h-11"}`}
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: streak > 0 ? `${colors.lunch}14` : `${colors.textMuted}12`,
+            }}
+            accessibilityRole="text"
+            accessibilityLabel={`${streak} day logging streak`}
+          >
+            <Feather
+              name="zap"
+              size={compact ? 14 : 16}
+              color={streak > 0 ? colors.lunch : colors.textMuted}
+            />
+            <Text
+              size={compact ? "xs" : "sm"}
+              bold
+              className="font-tabular leading-none"
+              style={{ color: streak > 0 ? colors.lunch : colors.textMuted }}
             >
-              <Ionicons name="calendar-outline" size={15} color={colors.primary} />
-              <Text size="sm" bold className="text-typography-900">
-                {formatHeaderDate(dateKey)}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setDateKey((d) => shiftDateKey(d, 1))}
-              hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
-              accessibilityRole="button"
-              accessibilityLabel="Next day"
-            >
-              <Ionicons name="chevron-forward" size={18} color={colors.text} />
-            </Pressable>
-          </Box>
-
-          {/* Streak & Sync status */}
-          <Box className="flex-row items-center gap-1.5">
-            <Box
-              className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-              style={{ backgroundColor: `${colors.lunch}18` }}
-              accessibilityRole="text"
-              accessibilityLabel={`${streak} day logging streak`}
-            >
-              <Ionicons name="flame" size={15} color={colors.lunch} />
-              <Text
-                size="xs"
-                bold
-                className="font-tabular leading-none"
-                style={{ color: colors.lunch }}
-              >
-                {streak}
-              </Text>
-            </Box>
-
-            {authenticated ? (
-              <Pressable
-                onPress={() => load({ force: true })}
-                disabled={importing || refreshing}
-                hitSlop={8}
-                className="h-8 w-8 items-center justify-center rounded-full bg-background-100 active:bg-background-200"
-                accessibilityRole="button"
-                accessibilityLabel="Refresh from YAZIO"
-              >
-                <Ionicons
-                  name="cloud-download-outline"
-                  size={18}
-                  color={importing ? colors.textMuted : colors.primary}
-                />
-              </Pressable>
-            ) : null}
+              {streak}
+            </Text>
           </Box>
         </Box>
-
-        {/* Copy Action: Duplicate previous day's logged meals */}
-        <Pressable
-          onPress={onCopyPrevious}
-          hitSlop={6}
-          className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-primary-500/10 px-3 py-2 active:opacity-80"
-          accessibilityRole="button"
-          accessibilityLabel="Copy previous day's meals"
-        >
-          <Ionicons name="copy-outline" size={14} color={colors.primary} />
-          <Text size="xs" bold className="leading-none" style={{ color: colors.primary }}>
-            Copy previous day
-          </Text>
-        </Pressable>
+        {authenticated ? (
+          <Pressable
+            onPress={() => load({ force: true })}
+            disabled={importing || refreshing}
+            hitSlop={8}
+            className={`shrink-0 items-center justify-center rounded-none bg-background-100 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh from YAZIO"
+          >
+            <Feather
+              name="download-cloud"
+              size={compact ? 16 : 18}
+              color={importing ? colors.textMuted : colors.primary}
+            />
+          </Pressable>
+        ) : null}
       </Box>
+      <Pressable
+        onPress={onCopyPrevious}
+        hitSlop={8}
+        className={`mt-2 h-9 flex-row items-center gap-1.5 self-end rounded-none border bg-background-100 px-3 active:bg-background-200`}
+        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+        accessibilityRole="button"
+        accessibilityLabel="Copy previous day's meals"
+      >
+        <Feather name="copy" size={12} color={colors.text} />
+        <Text size="2xs" bold className="font-mono uppercase tracking-widest text-typography-900">
+          Copy previous day
+        </Text>
+      </Pressable>
+    </Box>
+  )
 
-      <Box className="items-center pt-3">
+  const summaryCard = (
+    <Card
+      variant="elevated"
+      className="mb-3 overflow-hidden border p-0"
+      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+    >
+      <Box className="items-center pt-4">
         <CalorieRing
           consumed={totals.kcal}
           goal={settings.calorie_goal}
           protein={totals.protein}
           carbs={totals.carbs}
           fat={totals.fat}
-          size={isWide ? 150 : 136}
+          size={isWide ? 150 : width < 380 ? 118 : 136}
         />
       </Box>
-      <MacroBar
-        protein={totals.protein}
-        carbs={totals.carbs}
-        fat={totals.fat}
-        proteinGoal={settings.protein_goal}
-        carbsGoal={settings.carbs_goal}
-        fatGoal={settings.fat_goal}
-      />
+      <Box className="px-4 pb-3 pt-1">
+        <MacroBar
+          protein={totals.protein}
+          carbs={totals.carbs}
+          fat={totals.fat}
+          proteinGoal={settings.protein_goal}
+          carbsGoal={settings.carbs_goal}
+          fatGoal={settings.fat_goal}
+        />
+      </Box>
       <Pressable
         onPress={() => void handleShowDayNutrition()}
-        className="mx-3 mb-2 flex-row items-center justify-center gap-2 rounded-2xl bg-background-100 py-2.5 active:opacity-80"
+        className="mx-3 mb-3 flex-row items-center justify-center gap-2 border bg-background-100 py-2.5 active:bg-background-200"
+        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 } as any}
         accessibilityRole="button"
-        // Starts with the visible label text so the name contains it (2.5.3).
-        accessibilityLabel="View Nutrition & Micros, full nutrition and micronutrient breakdown"
+        accessibilityLabel="View Nutrition and Micros, full nutrition and micronutrient breakdown"
       >
-        <Ionicons name="pie-chart-outline" size={15} color={colors.primary} />
-        <Text size="xs" bold style={{ color: colors.primary }}>
-          View Nutrition & Micros
+        <Feather name="pie-chart" size={12} color={colors.primary} />
+        <Text
+          size="2xs"
+          bold
+          className="font-mono uppercase tracking-widest"
+          style={{ color: colors.primary, letterSpacing: 0.06 }}
+        >
+          View Nutrition and Micros
         </Text>
       </Pressable>
-      <Box className="flex-row items-center gap-2.5 border-t border-outline-100 p-3">
-        <Box className="min-w-0 flex-1 flex-row items-center rounded-2xl bg-primary-500/10 p-2.5">
-          <Pressable
-            onPress={() => setLogWaterOpen(true)}
-            className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-80"
-            accessibilityRole="button"
-            // Mirrors the visible amount + goal text (2.5.3 label-in-name).
-            accessibilityLabel={`Log water, ${formatWaterAmount(waterIntake, settings.units)} / ${
-              waterGoal > 0 ? formatWaterAmount(waterGoal, settings.units) : "Water"
-            }`}
-          >
-            <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
-              <Ionicons name="water-outline" size={18} color={colors.primary} />
-            </Box>
-            <Box className="min-w-0 flex-1">
-              {/* Trailing space keeps the concatenated name "1.75 L / 2.5 L". */}
-              <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
-                {formatWaterAmount(waterIntake, settings.units)}{" "}
-              </Text>
-              <Text size="2xs" className="font-tabular text-typography-500">
-                {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
-              </Text>
-            </Box>
-          </Pressable>
-          <Pressable
-            onPress={() => void handleQuickWater(250)}
-            hitSlop={4}
-            className="h-8 items-center justify-center rounded-full bg-primary-500 px-2.5 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel="Quick add 250ml water"
-          >
-            <Text size="2xs" bold className="font-tabular" style={{ color: colors.onPrimary }}>
-              +250ml
-            </Text>
-          </Pressable>
-        </Box>
-
-        <Pressable
-          onPress={() => setLogWeightOpen(true)}
-          className="min-w-0 flex-1 flex-row items-center gap-2.5 rounded-2xl bg-primary-500/10 p-2.5 active:opacity-80"
-          accessibilityRole="button"
-          // Contains the visible value + "Weight" caption text (2.5.3).
-          accessibilityLabel={`Log weight, ${
-            displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} weight` : ""
-          }`}
-        >
-          <Box className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15">
-            <Ionicons name="scale-outline" size={18} color={colors.primary} />
-          </Box>
-          <Box className="min-w-0 flex-1">
-            {/* Trailing space keeps the concatenated name "75.2 kg Weight". */}
-            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
-              {displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} ` : "— "}
-            </Text>
-            <Text size="2xs" className="text-typography-500">
-              {displayedWeight != null ? "Weight" : "Log weight"}
-            </Text>
-          </Box>
-        </Pressable>
-      </Box>
       {summary && summary.steps > 0 ? (
-        <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-100 pb-3 pt-2">
-          <Ionicons name="footsteps-outline" size={15} color={colors.primary} />
-          <Text size="xs" className="font-tabular text-typography-900">
+        <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5">
+          <Feather name="activity" size={12} color={colors.textMuted} />
+          <Text
+            size="2xs"
+            bold
+            className="font-mono uppercase tracking-widest text-typography-600"
+            style={{ letterSpacing: 0.06 }}
+          >
             {summary.steps.toLocaleString()} steps
+          </Text>
+          <Text size="2xs" className="font-mono uppercase tracking-widest text-typography-400">
+            · today
           </Text>
         </Box>
       ) : null}
     </Card>
   )
 
+  const hydrationRow = (
+    <Box className={`mb-4 flex-row ${compact ? "gap-2" : "gap-2.5"}`}>
+      <Box
+        className={`min-w-0 flex-1 flex-row items-center rounded-none border bg-background-50 ${compact ? "p-2" : "p-2.5"}`}
+        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+      >
+        <Pressable
+          onPress={() => setLogWaterOpen(true)}
+          className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-80"
+          accessibilityRole="button"
+          accessibilityLabel={`Log water, ${formatWaterAmount(waterIntake, settings.units)} / ${
+            waterGoal > 0 ? formatWaterAmount(waterGoal, settings.units) : "Water"
+          }`}
+        >
+          <Box
+            className="shrink-0 items-center justify-center rounded-none"
+            style={{
+              width: 44,
+              height: 44,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: `${colors.primary}12`,
+            }}
+          >
+            <Feather name="droplet" size={compact ? 16 : 18} color={colors.primary} />
+          </Box>
+          <Box className="min-w-0 flex-1">
+            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+              {formatWaterAmount(waterIntake, settings.units)}{" "}
+            </Text>
+            <Text
+              size="2xs"
+              numberOfLines={1}
+              className="font-mono uppercase tracking-widest text-typography-500"
+            >
+              {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
+            </Text>
+          </Box>
+        </Pressable>
+        <Pressable
+          onPress={() => void handleQuickWater(250)}
+          hitSlop={8}
+          className={`items-center justify-center rounded-none border bg-primary-500 active:bg-primary-600 ${compact ? "min-w-[52px] px-2" : "min-w-[56px] px-3"}`}
+          style={{
+            minHeight: 44,
+            height: 44,
+            borderWidth: 1.5,
+            borderColor: colors.primary,
+            borderRadius: 0,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Quick add 250ml water"
+        >
+          <Text
+            size="2xs"
+            bold
+            className="font-mono uppercase leading-none tracking-widest"
+            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
+          >
+            +250
+          </Text>
+          <Text
+            size="2xs"
+            className="font-mono uppercase leading-none tracking-widest"
+            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
+          >
+            ml
+          </Text>
+        </Pressable>
+      </Box>
+      <Pressable
+        onPress={() => setLogWeightOpen(true)}
+        className={`min-w-0 flex-1 flex-row items-center rounded-none border bg-background-50 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
+        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+        accessibilityRole="button"
+        accessibilityLabel={`Log weight, ${
+          displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} weight` : ""
+        }`}
+      >
+        <Box
+          className="shrink-0 items-center justify-center rounded-none"
+          style={{
+            width: 44,
+            height: 44,
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            borderRadius: 0,
+            backgroundColor: `${colors.primary}12`,
+          }}
+        >
+          <Feather name="activity" size={compact ? 16 : 18} color={colors.primary} />
+        </Box>
+        <Box className="min-w-0 flex-1">
+          <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+            {displayedWeight != null
+              ? `${formatWeight(displayedWeight, settings.units)} `
+              : "Not set"}
+          </Text>
+          <Text
+            size="2xs"
+            numberOfLines={1}
+            className="font-mono uppercase tracking-widest text-typography-500"
+          >
+            {displayedWeight != null ? "Weight · tap to log" : "Log weight"}
+          </Text>
+        </Box>
+      </Pressable>
+    </Box>
+  )
+
   const nutritionHeader = (
     <Box className="mb-3 flex-row items-center justify-between px-1">
       <Text size="xl" bold style={{ color: colors.textOnBackground }}>
-        Meals
+        MEALS
       </Text>
-      <Pressable
-        onPress={() => setLogSlotOpen(true)}
-        className="flex-row items-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-1.5 active:opacity-80"
-        accessibilityRole="button"
-        accessibilityLabel="Log food"
-      >
-        <Ionicons name="add" size={16} color={colors.onPrimary} />
-        <Text size="sm" bold style={{ color: colors.onPrimary }}>
-          Log food
-        </Text>
-      </Pressable>
+      {isWide ? (
+        <Pressable
+          onPress={() => setLogSlotOpen(true)}
+          className="bg-primary flex-row items-center gap-1.5 rounded-none border px-3.5 py-1.5 active:opacity-80"
+          style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
+          accessibilityRole="button"
+          accessibilityLabel="Log food"
+        >
+          <Feather name="plus" size={16} color={colors.onPrimary} />
+          <Text size="sm" bold style={{ color: colors.onPrimary }}>
+            LOG FOOD
+          </Text>
+        </Pressable>
+      ) : null}
     </Box>
   )
 
@@ -541,12 +659,28 @@ export default function TodayScreen() {
               tintColor={colors.primary}
             />
           }
-          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-36"}`}
+          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-48"}`}
           style={{ paddingTop: insets.top + spacing.xs }}
         >
-          {isWide ? (
-            <Box className="w-full flex-row items-start gap-6">
-              <Box className="min-w-[340px] max-w-[460px] flex-[0.95]">{summaryCard}</Box>
+          {isInitialLoading ? (
+            <View
+              style={{
+                flex: 1,
+                minHeight: 320,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingVertical: 48,
+              }}
+            >
+              <LoadingSpinner size={32} />
+            </View>
+          ) : isWide ? (
+            <Box className="w-full flex-row items-start gap-4">
+              <Box className="min-w-[340px] max-w-[460px] flex-[0.95] gap-0">
+                {dateChrome}
+                {summaryCard}
+                {hydrationRow}
+              </Box>
               <Box className="min-w-0 flex-[1.05]">
                 {nutritionHeader}
                 <Box className="flex-row flex-wrap gap-2">{renderMealSections(true)}</Box>
@@ -554,7 +688,9 @@ export default function TodayScreen() {
             </Box>
           ) : (
             <>
+              {dateChrome}
               {summaryCard}
+              {hydrationRow}
               {nutritionHeader}
               {renderMealSections()}
             </>
@@ -593,6 +729,7 @@ export default function TodayScreen() {
       <MealSlotModal
         visible={logSlotOpen}
         title="Log food into…"
+        initialDateKey={dateKey}
         onSelect={(slot, targetDate) => {
           setLogSlotOpen(false)
           router.push({
@@ -603,16 +740,20 @@ export default function TodayScreen() {
         onClose={() => setLogSlotOpen(false)}
       />
 
-      <FabCluster
-        bottomOffset={24}
-        right={
-          <Fab
-            icon="add"
-            onPress={() => setLogSlotOpen(true)}
-            accessibilityLabel="Log food into diary"
-          />
-        }
-      />
+      {!keyboardVisible ? (
+        <FabCluster
+          // The cluster anchors above the tab bar, so this is pure clearance.
+          bottomOffset={isWide ? 32 : 14}
+          right={
+            <Fab
+              size="md"
+              icon="plus"
+              onPress={() => setLogSlotOpen(true)}
+              accessibilityLabel="Log food into diary"
+            />
+          }
+        />
+      ) : null}
     </Box>
   )
 }
