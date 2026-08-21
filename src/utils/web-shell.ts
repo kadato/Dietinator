@@ -18,7 +18,7 @@ export function registerWebServiceWorker(): void {
   }
   if (__DEV__) {
     // The dev server never registers a service worker, but a previous static
-    // build on this origin may have left one behind — it serves the old
+    // build on this origin may have left one behind. It serves the old
     // cached bundle and masks every code change. Unregister it and clear its
     // caches so dev always shows the current code.
     navigator.serviceWorker

@@ -113,7 +113,7 @@ export async function logMealToDiary(params: {
     })
     logged += 1
 
-    // Cache writes must never fail the log — the entry is already saved.
+    // Cache writes must never fail the log because the entry is already saved.
     foodCacheDb.saveFoodToCache(food).catch(() => undefined)
     foodCacheDb.touchFoodUsed(food.product_id, amount).catch(() => undefined)
     syncEntryToYazio(entry).catch(() => undefined)

@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { toDateKey } from "@/utils/date"
 
 /**
@@ -9,7 +9,7 @@ export type AiPreset = {
   id: string
   title: string
   subtitle: string
-  icon: keyof typeof Ionicons.glyphMap
+  icon: string
   prompt: string
 }
 
@@ -18,7 +18,7 @@ export const AI_PRESETS: AiPreset[] = [
     id: "daily-review",
     title: "Daily review",
     subtitle: "Summary of today + one suggestion",
-    icon: "analytics-outline",
+    icon: "bar-chart-2",
     prompt:
       "Review my diary for {date}. Give me a short summary of calories and macros compared to my goals, and suggest one small improvement.",
   },
@@ -26,7 +26,7 @@ export const AI_PRESETS: AiPreset[] = [
     id: "protein-check",
     title: "Protein check",
     subtitle: "How am I doing on protein today?",
-    icon: "barbell-outline",
+    icon: "activity",
     prompt:
       "How is my protein intake looking today ({date})? Which meals were lowest in protein, and what could I add to reach my goal?",
   },
@@ -34,7 +34,7 @@ export const AI_PRESETS: AiPreset[] = [
     id: "plan-dinner",
     title: "Plan dinner",
     subtitle: "Search + log after I approve",
-    icon: "restaurant-outline",
+    icon: "shopping-bag",
     prompt:
       "Suggest a balanced dinner of about 600 kcal and 40 g protein using search_foods for real nutrition. Then log it for me after I approve.",
   },
@@ -42,28 +42,28 @@ export const AI_PRESETS: AiPreset[] = [
     id: "week-review",
     title: "Week in review",
     subtitle: "Last 7 days of eating",
-    icon: "calendar-outline",
+    icon: "calendar",
     prompt:
       "Summarize my last 7 days of eating: average calories and protein, days I logged, and any patterns worth noticing.",
   },
   {
     id: "log-snack",
     title: "Log a snack",
-    subtitle: "I ate something — log it",
-    icon: "fast-food-outline",
+    subtitle: "I ate something, log it",
+    icon: "coffee",
     prompt:
       "I had a snack worth about 250 kcal. Use search_foods to find a realistic option, then log it for today ({date}) after I approve.",
   },
   {
     id: "reset-goals",
     title: "Reset my goals",
-    subtitle: "1800 kcal · 140 g protein",
-    icon: "flag-outline",
+    subtitle: "1800 kcal, 140 g protein",
+    icon: "flag",
     prompt: "Update my daily goals to 1800 kcal, 140 g protein, 180 g carbs and 60 g fat.",
   },
 ]
 
-/** Fill dynamic slots (e.g. {date}) and return the final prompt. */
+/** Fill dynamic slots (for example{date}) and return the final prompt. */
 export function presetPrompt(preset: AiPreset): string {
   return preset.prompt.replaceAll("{date}", toDateKey())
 }

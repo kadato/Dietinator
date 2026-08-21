@@ -46,7 +46,7 @@ export function isAiProviderId(value: unknown): value is AiProviderId {
 }
 
 /**
- * URL-normalized base endpoint — keeps callers free of trailing-slash bugs.
+ * URL-normalized base endpoint, which keeps callers free of trailing-slash bugs.
  * OpenCode's gateway accepts the full URL (already ending in /chat/completions),
  * which the client detects when composing requests.
  */

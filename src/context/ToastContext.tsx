@@ -9,12 +9,12 @@ import React, {
 } from "react"
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons"
 import { Fab } from "@/components/Fab"
 import { useTheme } from "@/hooks/useTheme"
 import { getErrorMessage } from "@/utils/error-message"
 import { mixColors } from "@/utils/color"
-import { spacing, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette } from "@/theme"
 
 export type ToastType = "success" | "error" | "info" | "warning"
 
@@ -27,7 +27,6 @@ export type ToastOptions = {
 
 type ToastState = ToastOptions & { id: number }
 
-/** Undo offered as a floating button, not inside the toast. */
 type UndoState = { id: number; message: string; onUndo: () => void }
 
 type ToastContextValue = {
@@ -36,7 +35,6 @@ type ToastContextValue = {
   showError: (error: unknown, fallback?: string, title?: string) => void
   showInfo: (message: string, title?: string) => void
   showWarning: (message: string, title?: string) => void
-  /** Confirmation toast + an "Undo" FAB that auto-disappears after a while. */
   showUndo: (message: string, onUndo: () => void) => void
 }
 
@@ -76,7 +74,6 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
     })
   }, [opacity, onDismiss])
 
-  // Created once; the callbacks only touch stable state setters.
   const [panResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gesture) =>
@@ -123,7 +120,6 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
 
     const type = toast.type ?? "info"
     const duration = toast.duration ?? DEFAULT_DURATION[type]
-    // Countdown bar under the card mirrors the auto-dismiss timer.
     Animated.timing(progress, {
       toValue: 0,
       duration,
@@ -152,6 +148,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
       style={[
         styles.host,
         { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
+        { pointerEvents: "box-none" as const },
       ]}
     >
       <Animated.View
@@ -168,14 +165,16 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
           accessibilityRole="button"
           accessibilityLabel="Dismiss notification"
         >
-          <View style={[styles.iconChip, { backgroundColor: palette.chip }]}>
-            <Ionicons name={icon} size={20} color={palette.tint} />
+          <View
+            style={[styles.iconChip, { backgroundColor: palette.chip, borderColor: colors.border }]}
+          >
+            <Feather name={icon} size={18} color={palette.tint} />
           </View>
           <View style={styles.textWrap}>
             {toast.title ? <Text style={styles.title}>{toast.title}</Text> : null}
             <Text style={styles.message}>{toast.message}</Text>
           </View>
-          <Ionicons name="close" size={16} color={colors.textMuted} style={styles.closeIcon} />
+          <Feather name="x" size={14} color={colors.textMuted} style={styles.closeIcon as any} />
         </Pressable>
         <View style={styles.progressTrack}>
           <Animated.View
@@ -187,10 +186,6 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
   )
 }
 
-/**
- * Floating "Undo" button — auto-disappears after UNDO_TTL_MS. Icon-only
- * danger FAB that hovers above the screen's FAB cluster.
- */
 function UndoFab({
   undo,
   onUndo,
@@ -219,7 +214,6 @@ function UndoFab({
     })
   }, [opacity, onDismiss])
 
-  // Runs once per undo instance — the FAB is keyed by undo id and remounts.
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: NATIVE_DRIVER }),
@@ -245,13 +239,12 @@ function UndoFab({
     <View
       style={[
         undoStyles.layer,
-        // Bottom-left, just above the tab bar. Sits clear of any left-side
-        // FAB (e.g. the water modal's Cancel button at insets.bottom + 20).
         { bottom: insets.bottom + 88 },
+        { pointerEvents: "box-none" as const },
       ]}
     >
       <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-        <Fab icon="refresh-outline" tone="danger" onPress={handleUndo} accessibilityLabel="Undo" />
+        <Fab icon="rotate-ccw" tone="danger" onPress={handleUndo} accessibilityLabel="Undo" />
       </Animated.View>
     </View>
   )
@@ -325,24 +318,19 @@ export function useToast(): ToastContextValue {
   return ctx
 }
 
-function toastIcon(type: ToastType): keyof typeof Ionicons.glyphMap {
+function toastIcon(type: ToastType): keyof typeof Feather.glyphMap {
   switch (type) {
     case "success":
-      return "checkmark-circle"
+      return "check-circle"
     case "error":
       return "alert-circle"
     case "warning":
-      return "warning"
+      return "alert-triangle"
     default:
-      return "information-circle"
+      return "info"
   }
 }
 
-/**
- * Theme-aware per-type palette. The card background is a solid blend of the
- * surface color and the type tint — an alpha-tinted background would let
- * content behind the toast bleed through on web.
- */
 function toastPalette(type: ToastType, colors: ColorPalette) {
   const tint =
     type === "success"
@@ -354,9 +342,9 @@ function toastPalette(type: ToastType, colors: ColorPalette) {
           : colors.primaryMuted
   return {
     tint,
-    chip: `${tint}26`,
-    border: `${tint}3D`,
-    bg: mixColors(colors.surface, tint, 0.1),
+    chip: `${tint}14`,
+    border: colors.border,
+    bg: mixColors(colors.surface, tint, 0.08),
   }
 }
 
@@ -366,8 +354,6 @@ const undoStyles = StyleSheet.create({
     left: 20,
     alignItems: "flex-start",
     zIndex: 9999,
-    // Registered (not inline) so react-native-web compiles it — an inline
-    // box-none is dropped on web and the layer would block taps beneath it.
     pointerEvents: "box-none",
   },
 })
@@ -382,19 +368,16 @@ const createToastStyles = (colors: ColorPalette) =>
       zIndex: 9999,
       alignItems: "center",
       paddingHorizontal: spacing.md,
-      // Registered (not inline) so react-native-web compiles it — an inline
-      // box-none is dropped on web and this full-width layer would block
-      // taps on the header row while a toast is up.
       pointerEvents: "box-none",
     },
     toast: {
       width: "100%",
       maxWidth: 420,
-      borderRadius: 16,
-      borderWidth: 1,
+      borderRadius: 0,
+      borderWidth: 1.5,
       overflow: "hidden",
-      boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.18)",
-      elevation: 8,
+      boxShadow: "none",
+      elevation: 0,
     },
     row: {
       flexDirection: "row",
@@ -404,27 +387,39 @@ const createToastStyles = (colors: ColorPalette) =>
       gap: spacing.sm + 2,
     },
     iconChip: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 34,
+      height: 34,
+      borderRadius: 0,
+      borderWidth: 1.5,
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
+      boxShadow: "none",
+      elevation: 0,
     },
     closeIcon: { flexShrink: 0 },
     textWrap: { flex: 1, gap: 2 },
     title: {
       color: colors.text,
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     message: {
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
+      fontSize: 13,
+      lineHeight: 18,
+      fontFamily: fonts.mono,
+      letterSpacing: 0.2,
     },
     progressTrack: {
       height: 3,
+      backgroundColor: colors.surfaceAlt,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
     },
     progressFill: {
       height: "100%",

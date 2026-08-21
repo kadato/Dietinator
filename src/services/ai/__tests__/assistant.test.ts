@@ -174,7 +174,7 @@ describe("AiAssistant", () => {
     const callbacks = makeCallbacks()
     await assistant.sendMessage("summary", callbacks)
 
-    // tool call → tool result (from the mocked diary DB) → final answer
+    // tool call, then tool result (from the mocked diary DB), then final answer
     expect(mockAddMessage).toHaveBeenCalledWith(
       expect.objectContaining({ role: "tool", tool_call_id: "call-1" }),
     )

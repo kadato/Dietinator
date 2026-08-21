@@ -11,10 +11,10 @@ export const MEAL_LABELS: Record<MealType, string> = {
 
 export const MEAL_ICONS: Record<
   MealType,
-  keyof typeof import("@expo/vector-icons").Ionicons.glyphMap
+  keyof typeof import("@expo/vector-icons").Feather.glyphMap
 > = {
-  breakfast: "sunny-outline",
-  lunch: "restaurant-outline",
-  dinner: "moon-outline",
-  snack: "cafe-outline",
+  breakfast: "sunrise",
+  lunch: "sun",
+  dinner: "moon",
+  snack: "coffee",
 }

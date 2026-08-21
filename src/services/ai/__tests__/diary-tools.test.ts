@@ -393,7 +393,7 @@ describe("weight tools", () => {
   })
 })
 
-describe("search_foods & favorites / recents", () => {
+describe("search_foods and favorites / recents", () => {
   beforeEach(() => jest.clearAllMocks())
 
   it("merges remote + cached results", async () => {

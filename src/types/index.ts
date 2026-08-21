@@ -37,8 +37,8 @@ export interface CachedFood {
    */
   servings_json: string | null
   /**
-   * Where the row came from: 'search' (per-gram nutrients — stale by design,
-   * never served cache-first) or 'detail' (normalized per 100 g/ml — safe to
+   * Where the row came from: 'search' (per-gram nutrients, stale by design,
+   * never served cache-first) or 'detail' (normalized per 100 g/ml, safe to
    * serve locally). Null for rows written before this column existed.
    */
   source: string | null
@@ -54,27 +54,27 @@ export interface AppSettings {
   fat_goal: number
   units: string
   yazio_sync_enabled: number
-  /** YAZIO profile `food_database_country` — used for product search. */
+  /** YAZIO profile `food_database_country`, used for product search. */
   food_database_country: string
   /** Auto-check GitHub releases for a newer app version on startup. */
   update_check_enabled: number
   /** In-app AI assistant master switch. */
   ai_enabled: number
-  /** Provider preset — fills base URL + default model (see src/db/ai-settings.ts). */
+  /** Provider preset. Fills base URL + default model (see src/db/ai-settings.ts). */
   ai_provider: AiProviderId
-  /** OpenAI-compatible endpoint, e.g. https://api.openai.com/v1 (OpenAI, OpenRouter, Ollama...). */
+  /** OpenAI-compatible endpoint, for example https://api.openai.com/v1 (OpenAI, OpenRouter, Ollama...). */
   ai_base_url: string
-  /** Model name, e.g. gpt-4o-mini. */
+  /** Model name, for example gpt-4o-mini. */
   ai_model: string
   /** Optional extra instructions appended to the assistant's system prompt. */
   ai_system_prompt: string
-  /** Last-applied agent (MCP) change revision — web snapshot bridge only. */
+  /** Last-applied agent (MCP) change revision. Web snapshot bridge only. */
   agent_bridge_rev: number
   /** Explicit app theme: follow the system, or force light/dark. */
   theme_preference: "system" | "light" | "dark"
   /** Daily hydration target in milliliters (0 = unset, falls back to YAZIO). */
   water_goal_ml: number
-  /** Body height in centimeters (0 = unset — no BMI shown). */
+  /** Body height in centimeters (0 = unset, so no BMI shown). */
   height_cm: number
   /** Goal bodyweight in kilograms (0 = unset). */
   target_weight_kg: number
@@ -193,7 +193,7 @@ export interface WaterEntry {
   created_at: string
 }
 
-// ── AI assistant ────────────────────────────────────────────────────────────
+// AI assistant
 
 type AiMessageRole = "system" | "user" | "assistant" | "tool"
 
@@ -209,7 +209,7 @@ export interface AiChatMessage {
   content: string
   reasoning?: string
   tool_calls?: AiToolCallInfo[]
-  /** Set on tool messages — the id of the assistant tool call this answers. */
+  /** Set on tool messages: the id of the assistant tool call this answers. */
   tool_call_id?: string
   tool_name?: string
   is_error?: number

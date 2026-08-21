@@ -4,7 +4,7 @@ import { withRetry } from "@/utils/retry"
 /** GitHub repository that publishes Dietinator releases (APK + changelog). */
 export const GITHUB_REPO = "kadato/Dietinator"
 
-/** GitHub web URL of the repository — used by the quota-free redirect fallback. */
+/** GitHub web URL of the repository, used by the quota-free redirect fallback. */
 export const RELEASE_PAGE_URL = `https://github.com/${GITHUB_REPO}`
 
 /** Release asset name published by `.github/workflows/release.yml`. */
@@ -88,7 +88,7 @@ export async function fetchLatestRelease(): Promise<GitHubRelease | null> {
 
 /**
  * Extract the release tag (vX.Y.Z) from a "latest" redirect target URL,
- * e.g. …/releases/latest → …/releases/tag/v1.2.3.
+ * for example …/releases/latest becomes …/releases/tag/v1.2.3.
  */
 export function parseTagFromRedirectUrl(url: string): string | null {
   const match = /\/releases\/tag\/(v\d+\.\d+\.\d+)/.exec(url)

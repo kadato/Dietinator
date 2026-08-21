@@ -98,7 +98,7 @@ export async function getCachedFoodById(productId: string): Promise<CachedFood |
   return row ? rowToCached(row) : null
 }
 
-/** Batch cache lookup — avoids N+1 reads when resolving a list of entries. */
+/** Batch cache lookup. Avoids N+1 reads when resolving a list of entries. */
 export async function getFoodsByIds(productIds: string[]): Promise<Map<string, SearchFoodResult>> {
   const unique = [...new Set(productIds.filter(Boolean))]
   const map = new Map<string, SearchFoodResult>()
@@ -146,7 +146,7 @@ export async function getRecentFoods(limit = 10): Promise<SearchFoodResult[]> {
 /**
  * Recent usage rows for the recents list: one entry per distinct
  * (food, amount) pair ever logged, newest log first. The same food shows up
- * multiple times — once per past amount — so repeat logging is one tap away.
+ * multiple times, once per past amount, so repeat logging is one tap away.
  * Pairs whose food is no longer cached are skipped.
  */
 export async function getRecentFoodUsages(limit = 20): Promise<RecentFoodUsage[]> {
@@ -185,7 +185,7 @@ export async function getFavoriteFoods(): Promise<SearchFoodResult[]> {
  *
  * `preserveLastUsedAt` keeps recent-usage markers untouched: fresh rows are
  * stored with no usage date and existing rows keep theirs. Use it for silent
- * cache warm-ups (e.g. saving a meal) where the food was not consumed.
+ * cache warm-ups (for examplesaving a meal) where the food was not consumed.
  *
  * `source` records whether the row holds per-gram search data ('search') or
  * normalized product details ('detail'). When omitted it is inferred from the
@@ -238,7 +238,7 @@ export async function saveFoodToCache(
 /**
  * Warm the cache from a search response. Search rows hold per-gram nutrients
  * and would otherwise clobber the normalized 'detail' row a user already
- * opened — which forces a redundant refetch on the next visit. Search only
+ * opened, which forces a redundant refetch on the next visit. Search only
  * fills gaps: existing 'detail' rows are left untouched.
  */
 export async function saveSearchResultToCache(food: SearchFoodResult): Promise<void> {
@@ -276,7 +276,7 @@ export async function saveSearchResultToCache(food: SearchFoodResult): Promise<v
 
 /**
  * Mark a food as recently consumed. When `amount` (base units) is given it is
- * remembered as the portion used the last time — the add-food screen prefills
+ * remembered as the portion used the last time, and the add-food screen prefills
  * it so repeat logging keeps the previous amount.
  */
 export async function touchFoodUsed(productId: string, amount?: number): Promise<void> {
@@ -299,7 +299,7 @@ export async function getIsFavorite(productId: string): Promise<boolean> {
 }
 
 /**
- * Flip a food's favorite flag. When the food is not cached yet (e.g. a fresh
+ * Flip a food's favorite flag. When the food is not cached yet (for examplea fresh
  * search result) it is upserted first so the star change actually sticks.
  * Returns the new favorite state.
  */

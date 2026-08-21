@@ -104,10 +104,10 @@ export async function loginWithCredentials(username: string, password: string): 
     },
   })
 
-  // Validate credentials BEFORE persisting them — a failed login must not
+  // Validate credentials BEFORE persisting them, because a failed login must not
   // leave stale credentials behind that poison every later session. The
   // oauth/token handshake is a flaky unofficial endpoint: transient network
-  // failures (e.g. a dev-server proxy 502) are retried, hard auth errors
+  // failures (for examplea dev-server proxy 502) are retried, hard auth errors
   // (401 wrong password) are not.
   await withRetry(() => yazio.user.get())
   clearYazioProfileCache()

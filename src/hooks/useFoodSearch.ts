@@ -6,11 +6,11 @@ import { useApp } from "@/context/AppContext"
 import type { SearchFoodResult } from "@/types"
 
 type Options<T> = {
-  /** When false the hook clears its list and stops fetching (e.g. a category toggle). */
+  /** When false the hook clears its list and stops fetching (for example, a category toggle). */
   enabled?: boolean
   /** Loads the list when the query is empty (favorites, recents, suggestions...). */
   emptyQuery?: () => Promise<T[]>
-  /** Local (SQLite) failures — remote failures just flip `yazioAvailable`. */
+  /** Local (SQLite) failures. Remote failures just flip `yazioAvailable`. */
   onError?: (error: unknown) => void
 }
 
@@ -44,7 +44,7 @@ export function useFoodSearch<T = SearchFoodResult>(
   }
 
   // Without an `emptyQuery` provider there is nothing to show for a blank
-  // query — present an empty list rather than stale rows.
+  // query, so present an empty list rather than stale rows.
   const showResults = enabled && !(debounced.trim() === "" && !emptyQuery)
 
   useEffect(() => {

@@ -11,7 +11,7 @@ type ConfirmOptions = {
 /**
  * Cross-platform confirmation.
  * React Native Web's `Alert.alert` is a no-op, so on web we fall back to
- * `window.confirm` — without this, destructive actions were silently
+ * `window.confirm`. Without this, destructive actions were silently
  * impossible in the browser.
  */
 export function confirmAction({

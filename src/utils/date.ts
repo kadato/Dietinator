@@ -54,7 +54,7 @@ export function formatDisplayDate(dateKey: string): string {
  */
 export function formatHeaderDate(dateKey: string): string {
   const today = toDateKey()
-  if (dateKey === today) return `Today · ${shortDisplayDate(dateKey)}`
-  if (dateKey === shiftDateKey(today, -1)) return `Yesterday · ${shortDisplayDate(dateKey)}`
+  if (dateKey === today) return `Today, ${shortDisplayDate(dateKey)}`
+  if (dateKey === shiftDateKey(today, -1)) return `Yesterday, ${shortDisplayDate(dateKey)}`
   return formatDisplayDate(dateKey)
 }

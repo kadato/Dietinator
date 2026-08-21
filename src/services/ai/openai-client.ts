@@ -212,7 +212,7 @@ function parseErrorBody(raw: string): string {
     const parsed = JSON.parse(raw) as { error?: { message?: string } }
     if (parsed.error?.message) return parsed.error.message
   } catch {
-    // Not JSON — fall through to the raw body.
+    // Not JSON, so fall through to the raw body.
   }
   return raw.slice(0, 300)
 }

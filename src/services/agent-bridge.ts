@@ -163,7 +163,7 @@ export async function pullAgentChanges(): Promise<void> {
   try {
     response = await fetch(`${AGENT_PREFIX}/changes?since=${settings.agent_bridge_rev}`)
   } catch {
-    return // unreachable host — local-first diary keeps working
+    return // unreachable host, and the local-first diary keeps working
   }
   if (!response.ok) return
 

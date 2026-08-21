@@ -10,7 +10,7 @@ const AiChatModalContext = createContext<AiChatModalValue | null>(null)
 
 /**
  * Global open/close state for the AI chat overlay. The chat is a true modal
- * (React Native `Modal`), not a route — stack modals do not dim the screen
+ * (React Native `Modal`), not a route, because stack modals do not dim the screen
  * behind on web, so a route-based chat reads as a full page there.
  */
 export function AiChatModalProvider({ children }: { children: React.ReactNode }) {

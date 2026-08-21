@@ -98,7 +98,7 @@ export async function syncPendingEntries(): Promise<number> {
   const settings = await getSettings()
   if (!settings.yazio_sync_enabled) return 0
 
-  // Oldest-first, bounded batch — syncing years of history at once is not useful.
+  // Oldest-first, bounded batch. Syncing years of history at once is not useful.
   const pending = await diaryDb.getUnsyncedEntries(20)
   let synced = 0
   let consecutiveFailures = 0
@@ -362,7 +362,7 @@ export async function importDiaryFromYazio(
     let failed = 0
     const productCache = new Map<string, Awaited<ReturnType<typeof getFoodRemote>>>()
 
-    // Bounded concurrency for remote product fetches — a full day imports
+    // Bounded concurrency for remote product fetches: a full day imports
     // quickly without firing dozens of simultaneous HTTP requests.
     const productResults = await mapPool(consumed.products as YazioConsumedProduct[], 4, (item) =>
       importConsumedProduct(item, date, existingIds, deletedIds, unitEnergy, productCache),

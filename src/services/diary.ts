@@ -103,7 +103,7 @@ export async function logFood(params: {
     created_at: new Date().toISOString(),
   })
 
-  // Cache writes must never fail the log — the entry is already saved.
+  // Cache writes must never fail the log because the entry is already saved.
   foodCacheDb.saveFoodToCache(food).catch(() => undefined)
   foodCacheDb.touchFoodUsed(food.product_id, amount).catch(() => undefined)
 
@@ -116,7 +116,7 @@ export async function logFood(params: {
 
 /**
  * Quick-add a food straight from a list row, skipping the add-food dialog.
- * Resolves the best available data (cache → remote → the passed row) and
+ * Resolves the best available data (cache, then remote, then the passed row) and
  * defaults the amount to the last logged amount, falling back to the default
  * serving. Returns the entry plus the amount actually logged (for toasts).
  */
@@ -201,7 +201,7 @@ export async function updateDiaryEntry(params: {
       nutrients = scaleFromStored(current, amount)
     }
   } else {
-    // Manual/simple/recipe entries have no product lookup — scale stored totals linearly.
+    // Manual/simple/recipe entries have no product lookup, so scale stored totals linearly.
     nutrients = scaleFromStored(current, amount)
   }
 

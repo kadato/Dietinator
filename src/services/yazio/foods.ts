@@ -61,8 +61,8 @@ function withoutLegacyPerGramCache(cached: SearchFoodResult | null): SearchFoodR
 
 /**
  * True when a cache row can be served without touching the network.
- * - 'detail' rows: normalized per 100 g/ml — always safe.
- * - 'search' rows: per-gram by design — never served as normalized data.
+ * - 'detail' rows: normalized per 100 g/ml, always safe.
+ * - 'search' rows: per-gram by design, never served as normalized data.
  * - Legacy rows (no marker, written before this column existed): clearly
  *   normalized rows (kcal >= 10, or non-g/ml units) are safe; anything
  *   per-gram or ambiguous (low kcal in g/ml) must refetch once and gets
@@ -77,7 +77,7 @@ export function isUsableCacheRow(row: CachedFood, cached: SearchFoodResult | nul
 }
 
 /**
- * Known foods (anything cached with normalized nutrients, e.g. everything the
+ * Known foods (anything cached with normalized nutrients, for example everything the
  * user has ever searched or logged) are served from SQLite instantly. The
  * cache refreshes silently in the background, at most once per product per
  * window, so the UI never waits on the network for nutrition facts it has
@@ -132,8 +132,8 @@ async function fetchFoodDetail(
       serving: s.serving,
       amount: s.amount,
       // g/ml products: the option amount is the nutrient reference (matches
-      // per-100 g normalization). Countable units (each, cup, whole): amounts
-      // are piece counts, nutrients are per base unit — always 1.
+      // per-100 g normalization). Countable units (each, cup, whole) have
+      // piece-count amounts and nutrients per base unit, so always 1.
       serving_quantity: baseUnit === "g" || baseUnit === "ml" ? s.amount : 1,
     })),
     base_unit: product.base_unit,
@@ -141,7 +141,7 @@ async function fetchFoodDetail(
   }
 
   const barcode = product.eans?.[0] ?? null
-  // Viewing a product is not consuming it — don't touch its "recently used" marker.
+  // Viewing a product is not consuming it, so don't touch its "recently used" marker.
   await foodCacheDb.saveFoodToCache(food, barcode, true, "detail")
   return food
 }
@@ -173,7 +173,7 @@ export async function getFoodRemote(
   const cached = row ? foodCacheDb.cachedToSearchResult(row) : null
 
   if (row && cached && isUsableCacheRow(row, cached)) {
-    // Known food — serve the cache instantly and refresh in the background.
+    // Known food. Serve the cache instantly and refresh in the background.
     refreshFoodDetail(productId, unitEnergy)
     return cached
   }
@@ -232,7 +232,7 @@ export async function searchFoodsRemote(
   // Cache writes run in parallel; a slow write must not stall the search UI.
   // Searching or browsing is not consuming: preserve last_used_at so the
   // "Recent" list only ever shows foods that were actually logged, and never
-  // clobber a normalized 'detail' row the user has already opened — otherwise
+  // clobber a normalized 'detail' row the user has already opened. Otherwise
   // the next visit to that food would refetch it from the network.
   await Promise.all(mapped.map((food) => foodCacheDb.saveSearchResultToCache(food)))
   return mapped

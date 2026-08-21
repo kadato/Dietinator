@@ -10,7 +10,7 @@ export type AiToolDefinition = {
   name: string
   description: string
   schema: AiToolSchema
-  /** Tools that permanently modify data — the chat UI asks before running. */
+  /** Tools that permanently modify data. The chat UI asks before running. */
   destructive?: boolean
   /** Tools that never modify data (hint for agents / MCP annotations). */
   readOnly?: boolean

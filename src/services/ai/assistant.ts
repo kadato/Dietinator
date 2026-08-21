@@ -57,11 +57,11 @@ async function buildSystemPrompt(): Promise<string> {
     "Capabilities:",
     "- Diary: Read and summarize diary entries (get_diary_summary), get multi-day diary stats (get_diary_stats), log food (log_food), edit amount/slot (update_food_entry), delete entries (delete_food_entry).",
     "- Water: View hydration intake and goals (get_water), log water (log_water), delete water logs (delete_water_entry).",
-    "- Weight & BMI: View weight logs, BMI, and trends (get_weight), record weight (log_weight), delete weight entries (delete_weight_entry).",
+    "- Weight and BMI: View weight logs, BMI, and trends (get_weight), record weight (log_weight), delete weight entries (delete_weight_entry).",
     "- Saved Meals: View meals and itemized ingredients (get_meals), log full meals to diary (log_meal), create/save meal templates (save_meal), delete meals (delete_meal).",
-    "- Food Database & Favorites: Search database (search_foods), view favorites (get_favorite_foods), star/unstar foods (toggle_favorite_food), view recent food portions (get_recent_foods).",
-    "- Profile & Goals: Read and update goals (get_goals, set_goals), read settings (get_settings), set display units (set_units), update profile (set_profile).",
-    "- Analytics: Multi-day comprehensive nutrition, hydration, and weight progress summary (get_health_summary).",
+    "- Food Database and Favorites: Search database (search_foods), view favorites (get_favorite_foods), star/unstar foods (toggle_favorite_food), view recent food portions (get_recent_foods).",
+    "- Profile and Goals: Read and update goals (get_goals, set_goals), read settings (get_settings), set display units (set_units), update profile (set_profile).",
+    "- Analytics: Multi-day aggregated nutrition, hydration, and weight progress summary (get_health_summary).",
     "",
     "Guidelines:",
     "- Be concise, clear, encouraging and informative.",
@@ -111,7 +111,7 @@ export class AiAssistant {
   }
 
   cancel(): void {
-    // Abort only — the aborter itself stays set until the turn unwinds so
+    // Abort only. The aborter itself stays set until the turn unwinds so
     // runLoop can observe signal.aborted and clean up the placeholder.
     this.aborter?.abort()
     this.paused = false
@@ -267,7 +267,7 @@ export class AiAssistant {
       callbacks.onMessages()
     }
 
-    // Loop budget exhausted — report it and give the model one final turn.
+    // Loop budget exhausted. Report it and give the model one final turn.
     const finalId = await this.appendThinkingMessage()
     callbacks.onMessages()
     await this.appendToolResult(

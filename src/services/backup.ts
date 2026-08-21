@@ -89,7 +89,7 @@ export type RestoreResult = {
 
 /**
  * Replace all local data with a backup's contents, atomically. Returns counts
- * for the summary toast. Throws on invalid payloads or DB failures — the
+ * for the summary toast. Throws on invalid payloads or DB failures, so the
  * caller should surface the error and never partially apply a backup.
  */
 export async function restoreBackup(payload: unknown): Promise<RestoreResult> {

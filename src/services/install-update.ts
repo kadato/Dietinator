@@ -12,7 +12,7 @@ export const APK_FILE_NAME = "Dietinator-Android.apk"
 /** Intent action that hands the APK to the system package installer. */
 export const INSTALL_PACKAGE_ACTION = "android.intent.action.INSTALL_PACKAGE"
 
-/** `Intent.FLAG_GRANT_READ_URI_PERMISSION` — lets the installer read our FileProvider URI. */
+/** `Intent.FLAG_GRANT_READ_URI_PERMISSION`, which lets the installer read our FileProvider URI. */
 export const FLAG_GRANT_READ_URI_PERMISSION = 0x1
 
 /**

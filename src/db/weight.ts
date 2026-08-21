@@ -20,7 +20,7 @@ export async function getLatestWeightEntry(): Promise<WeightEntry | null> {
   return latest ?? null
 }
 
-/** The most recent `limit` weight entries, newest first — for change deltas. */
+/** The most recent `limit` weight entries, newest first, for change deltas. */
 export async function getRecentWeightEntries(limit = 2): Promise<WeightEntry[]> {
   const db = await getDatabase()
   return db.getAllAsync<WeightEntry>(
@@ -38,7 +38,7 @@ export async function getWeightEntryForDate(date: string): Promise<WeightEntry |
   return row ?? null
 }
 
-/** Upsert per date — re-weighing the same day updates the existing entry. */
+/** Upsert per date. Re-weighing the same day updates the existing entry. */
 export async function saveWeightEntry(input: {
   date: string
   weightKg: number

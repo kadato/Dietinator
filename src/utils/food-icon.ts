@@ -28,7 +28,7 @@ const CATEGORY_RULES: {
   icon: MaterialIconName
   keywords: string[]
 }[] = [
-  // 1. Drinks & Beverages (prioritized so "Orange Juice" or "Apple Cider" -> drink)
+  // 1. Drinks and Beverages (prioritized so "Orange Juice" or "Apple Cider" -> drink)
   {
     category: "drink",
     icon: "cup-water",
@@ -74,7 +74,7 @@ const CATEGORY_RULES: {
       "cocktail",
     ],
   },
-  // 2. Fish & Seafood (prioritized so "Tuna salad" -> fish)
+  // 2. Fish and Seafood (prioritized so "Tuna salad" -> fish)
   {
     category: "fish",
     icon: "fish",
@@ -193,7 +193,7 @@ const CATEGORY_RULES: {
       "hotdog",
     ],
   },
-  // 7. Sweets, Desserts & Chocolate
+  // 7. Sweets, Desserts and Chocolate
   {
     category: "sweet",
     icon: "cookie",
@@ -231,7 +231,7 @@ const CATEGORY_RULES: {
       "fank",
     ],
   },
-  // 8. Bakery & Bread
+  // 8. Bakery and Bread
   {
     category: "bakery",
     icon: "bread-slice",
@@ -307,7 +307,7 @@ const CATEGORY_RULES: {
       "gyumolcs",
     ],
   },
-  // 10. Vegetables & Greens
+  // 10. Vegetables and Greens
   {
     category: "vegetable",
     icon: "carrot",
@@ -360,7 +360,7 @@ const CATEGORY_RULES: {
       "rukkola",
     ],
   },
-  // 11. Dairy & Cheeses
+  // 11. Dairy and Cheeses
   {
     category: "dairy",
     icon: "cheese",
@@ -423,7 +423,7 @@ const CATEGORY_RULES: {
       "quinoa",
     ],
   },
-  // 13. Nuts & Seeds
+  // 13. Nuts and Seeds
   {
     category: "nut",
     icon: "peanut",
@@ -475,7 +475,7 @@ export function getFoodIconDescriptor(
           return { name: rule.icon, category: rule.category }
         }
       } else if (normKw.length <= 3) {
-        // Short words: match exact token or compound prefixes/suffixes (e.g. dio -> diobel, rak -> garnelarak)
+        // Short words: match exact token or compound prefixes/suffixes (for exampledio -> diobel, rak -> garnelarak)
         if (
           tokens.some(
             (t) => t === normKw || (t.length <= 8 && (t.startsWith(normKw) || t.endsWith(normKw))),

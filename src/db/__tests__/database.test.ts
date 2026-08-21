@@ -4,7 +4,7 @@ import type { SQLiteDatabase } from "expo-sqlite"
 /**
  * Migration tests run against a recording mock database. They pin the schema
  * contract: every CREATE/ALTER statement the app ships, in order, plus the
- * one-time user_version 0 → 1 cache cleanup.
+ * one-time user_version 0 to 1 cache cleanup.
  */
 type MockDb = {
   execAsync: jest.Mock

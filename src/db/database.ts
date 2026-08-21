@@ -39,7 +39,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
           window.location.reload()
         }
       } catch {
-        // sessionStorage can throw in some embedded webviews — degrade to the
+        // sessionStorage can throw in some embedded webviews, so degrade to the
         // existing behavior (boot continues, screens show their error states).
       }
     }
@@ -254,7 +254,7 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN servings_json TEXT`)
   }
   if (!foodCacheColumns.some((column) => column.name === "last_amount")) {
-    // Base-unit amount used the last time the food was logged — prefills the
+    // Base-unit amount used the last time the food was logged. It prefills the
     // add-food screen so repeat logging remembers the previous portion.
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN last_amount REAL`)
   }
@@ -267,9 +267,9 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_food_favorite_order ON food_cache(is_favorite, favorite_order ASC)`,
   )
 
-  // One-time cleanup (user_version 0 → 1): drop cached foods whose stored
+  // One-time cleanup (user_version 0 to 1): drop cached foods whose stored
   // nutrients look per-gram (kcal < 10). They are either legacy raw per-gram
-  // rows or rare normalized low-cal rows — both are ambiguous to read back, so
+  // rows or rare normalized low-cal rows. Both are ambiguous to read back, so
   // they get refetched and re-normalized from the API instead.
   const versionRow = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version")
   if ((versionRow?.user_version ?? 0) < 1) {

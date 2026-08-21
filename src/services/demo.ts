@@ -834,7 +834,7 @@ export async function seedDemoSession(): Promise<void> {
 
   await saveMeal({
     id: "demo-meal-chickenrice",
-    name: "Post-Workout Chicken & Rice",
+    name: "Post-Workout Chicken and Rice",
     created_at: `${yesterday}T13:00:00.000Z`,
     updated_at: `${yesterday}T13:00:00.000Z`,
     items: [

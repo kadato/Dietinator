@@ -105,7 +105,7 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
     try {
       await updateSettings({ update_check_enabled: 0 })
     } catch {
-      // Best-effort — the dialog is closed either way.
+      // Best-effort. The dialog is closed either way.
     }
   }, [updateSettings])
 
@@ -117,10 +117,10 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Outside Android we cannot install the APK in-app — open the browser.
+    // Outside Android we cannot install the APK in-app, so open the browser.
     if (!supportsInAppInstall()) {
       Linking.openURL(asset.downloadUrl).catch(() => undefined)
-      showInfo("The download starts in your browser — install the APK when it finishes.", "Update")
+      showInfo("The download starts in your browser. Install the APK when it finishes.", "Update")
       return
     }
 
@@ -142,7 +142,7 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
     setDownloading(false)
     setDownloadProgress(null)
     setDialogOpen(false)
-    showInfo("Update downloaded — confirm the install to finish.", "Update")
+    showInfo("Update downloaded. Confirm the install to finish.", "Update")
     installApk(file).catch((error) => showError(error, "Could not open the installer."))
   }, [release, showError, showInfo, showWarning])
 

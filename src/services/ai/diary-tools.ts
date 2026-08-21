@@ -83,7 +83,7 @@ function toPositiveNumber(value: unknown, fallback: number): number {
   return Number.isFinite(num) && num > 0 ? num : fallback
 }
 
-// ── Diary Tools ─────────────────────────────────────────────────────────────
+// Diary tools
 
 async function getDiarySummaryTool(args: Record<string, unknown>): Promise<unknown> {
   const date = typeof args.date === "string" && args.date ? args.date : toDateKey()
@@ -200,7 +200,7 @@ async function getDiaryStatsTool(args: Record<string, unknown>): Promise<unknown
   return { success: true, days_count: days, days_logged: daysLogged, days: rows }
 }
 
-// ── Water Tools ─────────────────────────────────────────────────────────────
+// Water tools
 
 async function getWaterTool(args: Record<string, unknown>): Promise<unknown> {
   const date = typeof args.date === "string" && args.date ? args.date : toDateKey()
@@ -250,7 +250,7 @@ async function deleteWaterEntryTool(args: Record<string, unknown>): Promise<unkn
   return { success: true, deleted: { id } }
 }
 
-// ── Weight & Body Metrics Tools ─────────────────────────────────────────────
+// Weight and body metrics tools
 
 async function getWeightTool(args: Record<string, unknown>): Promise<unknown> {
   const limit = Math.min(Math.max(Number(args.limit) || 10, 1), 30)
@@ -326,7 +326,7 @@ async function deleteWeightEntryTool(args: Record<string, unknown>): Promise<unk
   return { success: true, deleted: { id } }
 }
 
-// ── Saved Meals Tools ───────────────────────────────────────────────────────
+// Saved meals tools
 
 async function getMealsTool(): Promise<unknown> {
   const meals = await listMeals()
@@ -461,7 +461,7 @@ async function deleteMealTool(args: Record<string, unknown>): Promise<unknown> {
   return { success: true, deleted: { id } }
 }
 
-// ── Food Database, Favorites & Recents ──────────────────────────────────────
+// Food database, favorites, and recents
 
 async function searchFoodsTool(args: Record<string, unknown>): Promise<unknown> {
   const query = typeof args.query === "string" ? args.query.trim() : ""
@@ -475,7 +475,7 @@ async function searchFoodsTool(args: Record<string, unknown>): Promise<unknown> 
   try {
     remote = await searchFoodsRemote(query)
   } catch {
-    // Offline or no YAZIO session — cached results still answer.
+    // Offline or no YAZIO session, so cached results still answer.
   }
   const seen = new Set<string>()
   const merged = [...remote, ...cached].filter((food) => {
@@ -570,7 +570,7 @@ async function getRecentFoodsTool(args: Record<string, unknown>): Promise<unknow
   }
 }
 
-// ── Profile, Settings & Goals Tools ─────────────────────────────────────────
+// Profile, settings, and goals tools
 
 async function getGoalsTool(): Promise<unknown> {
   const settings = await getSettings()
@@ -692,7 +692,7 @@ async function setProfileTool(args: Record<string, unknown>): Promise<unknown> {
   }
 }
 
-// ── Comprehensive Analytics & Health Summary Tool ───────────────────────────
+// Multi-day health summary and analytics tool
 
 async function getHealthSummaryTool(args: Record<string, unknown>): Promise<unknown> {
   const days = Math.min(Math.max(Number(args.days) || 7, 1), 30)
@@ -799,7 +799,7 @@ async function getHealthSummaryTool(args: Record<string, unknown>): Promise<unkn
   }
 }
 
-// ── Tool Registry Factory ───────────────────────────────────────────────────
+// Tool registry factory
 
 export function createDiaryTools(): AiToolDefinition[] {
   return [
@@ -839,7 +839,7 @@ export function createDiaryTools(): AiToolDefinition[] {
         properties: {
           date: stringSchema("Optional date as YYYY-MM-DD. Defaults to today."),
           meal_type: stringSchema("One of breakfast, lunch, dinner, snack. Defaults to snack."),
-          name: stringSchema("Food name, e.g. 'Chicken breast, grilled'."),
+          name: stringSchema("Food name, for example 'Chicken breast, grilled'."),
           kcal: numberSchema("Calories for one serving."),
           protein: numberSchema("Protein in grams for one serving."),
           carbs: numberSchema("Carbs in grams for one serving."),
@@ -902,7 +902,7 @@ export function createDiaryTools(): AiToolDefinition[] {
       schema: {
         type: "object",
         properties: {
-          amount_ml: numberSchema("Amount of water in milliliters (e.g. 250, 500, 750)."),
+          amount_ml: numberSchema("Amount of water in milliliters (for example250, 500, 750)."),
           date: stringSchema("Optional date as YYYY-MM-DD. Defaults to today."),
         },
         required: ["amount_ml"],
@@ -924,7 +924,7 @@ export function createDiaryTools(): AiToolDefinition[] {
       execute: deleteWaterEntryTool,
     },
 
-    // 3. Weight Tracking & Body Metrics
+    // 3. Weight Tracking and Body Metrics
     {
       name: "get_weight",
       description:
@@ -945,9 +945,9 @@ export function createDiaryTools(): AiToolDefinition[] {
       schema: {
         type: "object",
         properties: {
-          weight_kg: numberSchema("Bodyweight in kilograms (e.g. 75.5)."),
+          weight_kg: numberSchema("Bodyweight in kilograms (for example75.5)."),
           date: stringSchema("Optional date as YYYY-MM-DD. Defaults to today."),
-          note: stringSchema("Optional note (e.g. 'Morning fasted', 'Post-workout')."),
+          note: stringSchema("Optional note (for example'Morning fasted', 'Post-workout')."),
         },
         required: ["weight_kg"],
       },
@@ -1000,14 +1000,14 @@ export function createDiaryTools(): AiToolDefinition[] {
       schema: {
         type: "object",
         properties: {
-          name: stringSchema("Meal name, e.g. 'Post-Workout Oatmeal'."),
+          name: stringSchema("Meal name, for example 'Post-Workout Oatmeal'."),
           items: {
             type: "array",
             description: "List of food items in the meal.",
             items: {
               type: "object",
               properties: {
-                name: stringSchema("Item food name, e.g. 'Rolled Oats'."),
+                name: stringSchema("Item food name, for example 'Rolled Oats'."),
                 amount: numberSchema("Amount in base units (grams or ml)."),
                 base_unit: stringSchema("Base unit ('g' or 'ml', default 'g')."),
                 kcal: numberSchema("Calories for this item amount."),
@@ -1041,7 +1041,7 @@ export function createDiaryTools(): AiToolDefinition[] {
       execute: deleteMealTool,
     },
 
-    // 5. Food Search, Favorites & Recents
+    // 5. Food Search, Favorites, and Recents
     {
       name: "search_foods",
       description:
@@ -1049,7 +1049,7 @@ export function createDiaryTools(): AiToolDefinition[] {
       schema: {
         type: "object",
         properties: {
-          query: stringSchema("Food name to search for, e.g. 'chicken breast'."),
+          query: stringSchema("Food name to search for, for example 'chicken breast'."),
           limit: numberSchema("Optional max results (default 8, max 15)."),
         },
         required: ["query"],
@@ -1095,7 +1095,7 @@ export function createDiaryTools(): AiToolDefinition[] {
       execute: getRecentFoodsTool,
     },
 
-    // 6. Goals, Profile & Settings
+    // 6. Goals, Profile, and Settings
     {
       name: "get_goals",
       description:
@@ -1107,7 +1107,7 @@ export function createDiaryTools(): AiToolDefinition[] {
     {
       name: "set_goals",
       description:
-        "Updates daily nutrition & hydration goals. Provide only the goals to change (calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal_ml, target_weight_kg).",
+        "Updates daily nutrition and hydration goals. Provide only the goals to change (calorie_goal, protein_goal, carbs_goal, fat_goal, water_goal_ml, target_weight_kg).",
       schema: {
         type: "object",
         properties: {
@@ -1150,12 +1150,12 @@ export function createDiaryTools(): AiToolDefinition[] {
       schema: {
         type: "object",
         properties: {
-          height_cm: numberSchema("Body height in centimeters (e.g. 180)."),
-          target_weight_kg: numberSchema("Target bodyweight in kilograms (e.g. 72)."),
-          water_goal_ml: numberSchema("Daily water intake goal in milliliters (e.g. 2500)."),
+          height_cm: numberSchema("Body height in centimeters (for example180)."),
+          target_weight_kg: numberSchema("Target bodyweight in kilograms (for example72)."),
+          water_goal_ml: numberSchema("Daily water intake goal in milliliters (for example2500)."),
           units: stringSchema("Unit system: 'metric' or 'imperial'."),
           food_database_country: stringSchema(
-            "Country code for food searches (e.g. 'US', 'DE', 'GB').",
+            "Country code for food searches (for example'US', 'DE', 'GB').",
           ),
           theme_preference: stringSchema("Theme: 'system', 'light', or 'dark'."),
         },
@@ -1164,11 +1164,11 @@ export function createDiaryTools(): AiToolDefinition[] {
       execute: setProfileTool,
     },
 
-    // 7. Comprehensive Health & Analytics
+    // 7. Multi-Day Health Summary and Analytics
     {
       name: "get_health_summary",
       description:
-        "Returns a comprehensive multi-day health summary: average daily calories and macros, hydration compliance, weight trend delta, and day-by-day history.",
+        "Returns an aggregated multi-day health summary: average daily calories and macros, hydration compliance, weight trend delta, and day-by-day history.",
       schema: {
         type: "object",
         properties: {
