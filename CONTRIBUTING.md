@@ -1,7 +1,7 @@
 # Contributing
 
 Dietinator is a personal, local-first calorie tracker. Pull requests and issues
-are welcome — a few ground rules keep the project healthy:
+are welcome. A few ground rules keep the project healthy:
 
 ## Ground rules
 
@@ -12,7 +12,7 @@ are welcome — a few ground rules keep the project healthy:
   must be opt-in and privacy-preserving.
 - **Respect the unofficial API.** The `yazio` npm package is a reverse-engineered
   client of an API we do not own. Do not productize, redistribute, or abuse it.
-  Changes to the integration must keep the local paths intact — the API can
+  Changes to the integration must keep the local paths intact, because the API can
   break without notice.
 - **No secrets in the repo.** Credentials, tokens and `.env` files never get
   committed. CI runs a gitleaks secret scan on every push.
@@ -45,14 +45,14 @@ Pre-commit, `husky` runs `lint-staged` (eslint --fix + prettier) on staged files
 - SQLite booleans are `INTEGER` 0/1; dates are `YYYY-MM-DD` keys
   (`toDateKey`).
 - Screens live in `app/`, UI in `src/components/`, logic in `src/services/`
-  and `src/db/` — no SQL or YAZIO calls in route files.
+  and `src/db/`. No SQL or YAZIO calls in route files.
 - Styling via gluestack-ui components + NativeWind classes; design tokens in
   `src/theme.ts`.
-- Prettier + ESLint keep the style; no semicolons, double quotes.
+- Prettier + ESLint enforce the style: no semicolons, double quotes.
 
 ## Commits
 
-Conventional Commits with a scope, e.g. `feat(diary): ...`, `fix(sync): ...`,
+Conventional Commits with a scope, for example `feat(diary): ...`, `fix(sync): ...`,
 `ci(workflows): ...`. Keep changes focused and reviewable.
 
 ## Tests

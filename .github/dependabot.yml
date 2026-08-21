@@ -5,7 +5,7 @@ version: 2
 
 updates:
   # ---------------------------------------------------------------------------
-  # npm — Application dependencies and build tools
+  # npm: application dependencies and build tools
   # ---------------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/"
@@ -83,7 +83,7 @@ updates:
       - update-types: ["version-update:semver-major"]
 
   # ---------------------------------------------------------------------------
-  # GitHub Actions — CI/CD workflows and automation
+  # GitHub Actions: CI/CD workflows and automation
   # ---------------------------------------------------------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -111,7 +111,7 @@ updates:
           - "gitleaks/*"
 
   # ---------------------------------------------------------------------------
-  # Docker — Web / Metro container image
+  # Docker: web / Metro container image
   # ---------------------------------------------------------------------------
   - package-ecosystem: "docker"
     directory: "/"
@@ -129,7 +129,7 @@ updates:
       - "docker"
 
   # ---------------------------------------------------------------------------
-  # Dev Containers — VS Code / GitHub Codespaces environment
+  # Dev Containers: VS Code / GitHub Codespaces environment
   # ---------------------------------------------------------------------------
   - package-ecosystem: "devcontainers"
     directory: "/.devcontainer"

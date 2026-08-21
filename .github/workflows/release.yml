@@ -86,7 +86,7 @@ jobs:
           : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret is not set}"
           : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret is not set}"
           : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret is not set}"
-          [ -s "$STORE" ] || { echo "::error::ANDROID_KEYSTORE_BASE64 decoded to an empty file — check the secret"; exit 1; }
+          [ -s "$STORE" ] || { echo "::error::ANDROID_KEYSTORE_BASE64 decoded to an empty file, check the secret"; exit 1; }
           keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null 2>&1 \
             || { echo "::error::ANDROID_KEYSTORE_PASSWORD does not match the keystore store password"; exit 1; }
           keytool -list -keystore "$STORE" -storepass "$ANDROID_KEYSTORE_PASSWORD" \

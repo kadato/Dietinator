@@ -10,17 +10,14 @@ builds the signed APK and posts the changelog to the GitHub release.
 
 ### Added
 
-- Weight logging right from the dashboard weight row, with locally logged
-  weigh-ins shown ahead of the YAZIO profile value
-- Named serving sizes, cup, whole, each and more, with correct calorie
-  scaling for countable units
-- Remembered amounts, the portion logged last time prefills when a food is
-  reopened
-- Minus and plus steppers on every numeric input, with press and hold repeat
-- A clear button on food search, plus recents and favorites that stay
-  visible while typing
-- The logging screen lists what is already logged for the day with edit and
-  delete right there
+- Weight logging directly from the dashboard weight row, prioritizing locally logged
+  weigh-ins over the remote YAZIO profile value
+- Named serving sizes (cup, whole, piece) with proportional calorie scaling
+  for countable units
+- Remembered amounts: prefill previously logged portion sizes when reopening food details
+- Numeric steppers: increment and decrement buttons with press-and-hold repeat on numeric fields
+- Food search: clear button, with persistent recent and favorite items during search queries
+- Meal logging screen: list existing daily entries with inline edit and delete actions
 
 ### Performance
 
@@ -44,7 +41,7 @@ First public release.
 - Optional best-effort sync to a YAZIO account; offline-friendly
 - Backup/restore of all local data as a single JSON file
 - Export diary as JSON or CSV (formula-safe cells)
-- Demo mode — explore the full UI without an account
+- Demo mode: explore the full UI without an account
 - In-app update dialog with changelog (Android, via GitHub releases)
 - Web build with service worker, app shell, and long-lived cache headers
 - Responsive UI: phone modals, desktop dialog layout, wide-screen tabs

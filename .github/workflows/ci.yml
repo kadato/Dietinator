@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 
-# Newer commits on the same branch cancel the superseded run — push a fix,
+# Newer commits on the same branch cancel the superseded run, so push a fix,
 # don't wait out the previous CI.
 concurrency:
   group: ci-${{ github.ref }}
