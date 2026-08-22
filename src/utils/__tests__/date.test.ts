@@ -76,7 +76,7 @@ describe("formatDisplayDate", () => {
   })
 
   it("formats other dates with a short weekday", () => {
-    // Locale-aware (may be "Sat, Aug 1" or "aug. 1., Szo") — just prove it is
+    // Locale-aware (may be "Sat, Aug 1" or "aug. 1., Szo"), so just prove it is
     // a real short date and not the Today/Yesterday label.
     expect(formatDisplayDate("2026-08-01")).not.toBe("Today")
     expect(formatDisplayDate("2026-08-01")).not.toBe("Yesterday")
@@ -87,8 +87,8 @@ describe("formatDisplayDate", () => {
 describe("formatHeaderDate", () => {
   it("keeps the full date next to Today and Yesterday", () => {
     const today = toDateKey()
-    expect(formatHeaderDate(today)).toMatch(/^Today · /)
-    expect(formatHeaderDate(shiftDateKey(today, -1))).toMatch(/^Yesterday · /)
+    expect(formatHeaderDate(today)).toMatch(/^Today, /)
+    expect(formatHeaderDate(shiftDateKey(today, -1))).toMatch(/^Yesterday, /)
   })
 
   it("falls back to the short display date for other days", () => {

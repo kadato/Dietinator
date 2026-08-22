@@ -38,7 +38,7 @@ describe("computeLogStreak", () => {
   ]
 
   it("counts consecutive logged days ending today", () => {
-    // Gap on the 10th — only the 11th counts when today is the 11th.
+    // Gap on the 10th: only the 11th counts when today is the 11th.
     expect(computeLogStreak(history, "2026-08-11")).toBe(1)
   })
 

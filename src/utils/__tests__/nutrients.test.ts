@@ -77,7 +77,7 @@ describe("nutrientsFromYazio", () => {
     expect(result).toEqual({ kcal: 89, protein: 1.2, carbs: 20, fat: 0.3 })
   })
 
-  it("applies a multiplier before rounding (per-gram → per-100g normalization)", () => {
+  it("applies a multiplier before rounding (per-gram to per-100g normalization)", () => {
     const result = nutrientsFromYazio(
       {
         "energy.energy": 0.89,
@@ -146,7 +146,7 @@ describe("scaleNutrients", () => {
 
 describe("nutrientsForAmount", () => {
   it("scales per-gram nutrients by the requested grams", () => {
-    // Banana: 0.89 kcal/g raw → normalized 89 kcal/100 g → 150 g = ~134 kcal
+    // Banana: 0.89 kcal/g raw becomes normalized 89 kcal/100 g, and 150 g = ~134 kcal
     const perGram: FoodNutrients = { kcal: 0.89, protein: 0.011, carbs: 0.23, fat: 0.003 }
     const result = nutrientsForAmount(
       perGram,
@@ -215,7 +215,7 @@ describe("normalizePerGramFood", () => {
 
 describe("named serving sizes (cup, each, serving, whole)", () => {
   it("scales a per-100 ml product to 1 cup (240 ml)", () => {
-    // Milk: 46 kcal per 100 ml → 1 cup (240 ml) ≈ 110 kcal.
+    // Milk: 46 kcal per 100 ml, so 1 cup (240 ml) is about 110 kcal.
     const milk: FoodNutrients = { kcal: 46, protein: 3.3, carbs: 4.8, fat: 1.5 }
     const cup = { serving: "cup", amount: 240, serving_quantity: 100 }
     expect(nutrientsForAmount(milk, cup, 240, "ml").kcal).toBe(110)
@@ -223,7 +223,7 @@ describe("named serving sizes (cup, each, serving, whole)", () => {
   })
 
   it("scales a per-100 g product to 1 each (60 g)", () => {
-    // Bread roll: 260 kcal per 100 g → 1 each (60 g) ≈ 156 kcal.
+    // Bread roll: 260 kcal per 100 g, so 1 each (60 g) is about 156 kcal.
     const roll: FoodNutrients = { kcal: 260, protein: 9, carbs: 48, fat: 2.5 }
     const each = { serving: "each", amount: 60, serving_quantity: 100 }
     expect(nutrientsForAmount(roll, each, 60, "g").kcal).toBe(156)
@@ -236,14 +236,14 @@ describe("named serving sizes (cup, each, serving, whole)", () => {
   })
 
   it("scales a per-100 g product to 1 whole (150 g)", () => {
-    // Banana: 89 kcal per 100 g → 1 whole (150 g) ≈ 134 kcal.
+    // Banana: 89 kcal per 100 g, so 1 whole (150 g) is about 134 kcal.
     const banana: FoodNutrients = { kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3 }
     const whole = { serving: "whole.regular", amount: 150, serving_quantity: 100 }
     expect(nutrientsForAmount(banana, whole, 150, "g").kcal).toBe(134)
   })
 
   it("doubles per-piece nutrients for a 2-each countable serving", () => {
-    // Egg: 78 kcal per piece (base unit stück) → 2 each = 156 kcal.
+    // Egg: 78 kcal per piece (base unit stück), so 2 each = 156 kcal.
     const egg: FoodNutrients = { kcal: 78, protein: 6.3, carbs: 0.6, fat: 5.3 }
     const twoEach = { serving: "each", amount: 2, serving_quantity: 1 }
     expect(nutrientsForAmount(egg, twoEach, 2, "stück").kcal).toBe(156)
