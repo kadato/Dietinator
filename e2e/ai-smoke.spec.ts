@@ -45,7 +45,7 @@ test.describe("AI assistant + FABs (offline)", () => {
 
     // Agent API section lists the MCP tools on the About section (expand the row first).
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "About & Account settings" }).click()
+    await page.getByRole("button", { name: "About and Account settings" }).click()
     await expect(page.getByText("Agent API (MCP)", { exact: true }).first()).toBeVisible()
     await page.getByRole("button", { name: "Show Agent API details" }).click()
     await expect(page.getByText("get_diary", { exact: true })).toBeVisible()

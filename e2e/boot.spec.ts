@@ -18,7 +18,7 @@ test.describe("app boot", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
-    // Fully usable without YAZIO — local-first. (No banner on boot: nothing has failed yet.)
+    // Fully usable without YAZIO, so local-first works. (No banner on boot: nothing has failed yet.)
     await expect(page.getByText("Breakfast", { exact: true })).toBeVisible()
     await expect(page.getByText("Lunch", { exact: true })).toBeVisible()
     await expect(page.getByText("Dinner", { exact: true })).toBeVisible()

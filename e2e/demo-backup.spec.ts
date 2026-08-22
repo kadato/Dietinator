@@ -7,7 +7,7 @@ import { expect, test, bootAuthenticated, openSettingsSection } from "./helpers"
 
 /** Simulate a long-press on an element (RN long-press affordance). */
 async function longPress(page: import("@playwright/test").Page, selector: string) {
-  // Meal rows sit below the fold on the phone viewport — scrolling is
+  // Meal rows sit below the fold on the phone viewport. Scrolling is
   // required for the synthetic mouse events to reach the element.
   const target = page.locator(selector)
   await target.scrollIntoViewIfNeeded()
@@ -29,7 +29,7 @@ test.describe("demo mode", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
-    // Meal sections start collapsed — expand Breakfast and Snacks to reveal
+    // Meal sections start collapsed. Expand Breakfast and Snacks to reveal
     // the seeded entries.
     await page.getByRole("button", { name: /^Breakfast, / }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
@@ -44,7 +44,7 @@ test.describe("demo mode", () => {
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 30_000,
     })
-    // Sections start collapsed — expand Breakfast to reveal the oatmeal entry.
+    // Sections start collapsed. Expand Breakfast to reveal the oatmeal entry.
     await page.getByRole("button", { name: /^Breakfast, / }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
@@ -63,15 +63,15 @@ test.describe("backup and restore (offline)", () => {
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
     await page.getByRole("textbox", { name: "Calories" }).fill("777")
     await page.getByRole("button", { name: "Add to diary" }).click()
-    // The section stays collapsed — the header total proves the entry landed.
+    // The section stays collapsed. The header total proves the entry landed.
     await expect(page.getByRole("button", { name: /^Snacks, 777/ })).toBeVisible({
       timeout: 15_000,
     })
 
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await expect(page.getByRole("button", { name: "Goals & Nutrition settings" })).toBeVisible()
-    await page.getByRole("button", { name: "Data & Backup settings" }).click()
+    await expect(page.getByRole("button", { name: "Goals and Nutrition settings" })).toBeVisible()
+    await page.getByRole("button", { name: "Data and Backup settings" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Back up all data" }).click(),
@@ -89,9 +89,9 @@ test.describe("backup and restore (offline)", () => {
     await expect(row).toHaveCount(0, { timeout: 15_000 })
 
     // Restore from the downloaded file: confirm dialog, then file picker.
-    // (Tab screens stay mounted, so the drilldown may still be open — the
+    // (Tab screens stay mounted, so the drilldown may still be open. The
     // helper returns to the hub first.)
-    await openSettingsSection(page, "Data & Backup settings")
+    await openSettingsSection(page, "Data and Backup settings")
     page.once("dialog", (dialog) => void dialog.accept())
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser"),

@@ -4,8 +4,8 @@ import { defineConfig, devices } from "@playwright/test"
  * E2E for the web target.
  *
  * Two modes:
- * - Default: `npm run test:e2e`  — builds `dist/` and serves it statically (deterministic).
- * - Dev loop: `npm run test:e2e:dev` — reuses a running `npm run dev:web` Metro server (fast iteration).
+ * - Default: `npm run test:e2e` builds `dist/` and serves it statically (deterministic).
+ * - Dev loop: `npm run test:e2e:dev` reuses a running `npm run dev:web` Metro server (fast iteration).
  */
 const DEV = process.env.PW_E2E_DEV === "1"
 const PORT = 8082
@@ -14,7 +14,7 @@ const PORT = 8082
 try {
   process.loadEnvFile(".env.local")
 } catch {
-  // No .env.local — YAZIO account specs will skip.
+  // No .env.local, so YAZIO account specs will skip.
 }
 
 export default defineConfig({
@@ -33,7 +33,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
     // Phone-first: this is a mobile app; tests run at phone dimensions.
-    // (Must come AFTER the device spread AND stay out of `projects` — project-level
+    // (Must come AFTER the device spread AND stay out of `projects`, because project-level
     // `use` would re-apply the device defaults and override this.)
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,

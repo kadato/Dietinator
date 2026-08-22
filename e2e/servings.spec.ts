@@ -40,7 +40,7 @@ test.describe("serving sizes (real account)", () => {
     await page.getByPlaceholder("Search foods…").fill(query)
     const row = page.locator(`[aria-label^="${productName}, "]`).first()
     // Local cache rows can push remote results below the fold and FlatList
-    // only renders visible rows — scroll until the target row exists in DOM.
+    // only renders visible rows, so scroll until the target row exists in DOM.
     await expect(row)
       .toHaveCount(1, { timeout: 30_000 })
       .catch(async () => {
@@ -99,7 +99,7 @@ test.describe("serving sizes (real account)", () => {
     await expect(sliced).toBeVisible({ timeout: 30_000 })
     expect(await previewKcal(page)).toBe(134)
 
-    // Close and reopen the same food — chips must come straight from the cache
+    // Close and reopen the same food. Chips must come straight from the cache
     // (servings_json), not from a second network round-trip.
     await page.getByRole("button", { name: "Cancel" }).click()
     await openFood(page, "banane", "Banán")

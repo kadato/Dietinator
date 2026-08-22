@@ -1,6 +1,6 @@
 import { expect, test, bootAuthenticated } from "./helpers"
 
-test.describe("stats — weight & calorie trends (offline, local-first)", () => {
+test.describe("stats: weight and calorie trends (offline, local-first)", () => {
   test("log a weight, see it charted, switch ranges, then delete it", async ({ page }) => {
     await bootAuthenticated(page)
 
@@ -16,7 +16,7 @@ test.describe("stats — weight & calorie trends (offline, local-first)", () => 
     await page.getByRole("textbox", { name: "Weight" }).fill("75.5")
     await page.getByRole("button", { name: "Save weight" }).click()
 
-    // Back on Stats — header shows the latest entry and the chart is drawn.
+    // Back on Stats. The header shows the latest entry and the chart is drawn.
     await expect(page.getByText("75.5 kg", { exact: true }).first()).toBeVisible({
       timeout: 15_000,
     })
@@ -25,7 +25,7 @@ test.describe("stats — weight & calorie trends (offline, local-first)", () => 
     // The calorie card renders its empty state (no diary entries seeded).
     await expect(page.getByText("No diary entries in this range yet.")).toBeVisible()
 
-    // Changing the range keeps the data (the default range is 1M — try 1Y).
+    // Changing the range keeps the data (the default range is 1M, so try 1Y).
     await page.getByRole("button", { name: "1Y" }).click()
     await expect(page.getByText("75.5 kg", { exact: true }).first()).toBeVisible()
     await expect(page.getByLabel(/Body weight trend/)).toBeVisible()

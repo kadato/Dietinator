@@ -5,7 +5,7 @@ import { expect, test } from "./helpers"
  * the product API is per-gram (banana 0.89 kcal/g, oil 8.84, lettuce 0.15),
  * so 100 g of banana must record ~89 kcal, never 0.89 or 8,900.
  *
- * All assertions read the add-food preview card — nothing is written to the
+ * All assertions read the add-food preview card. Nothing is written to the
  * diary, so the real account stays untouched.
  */
 const EMAIL = process.env.YAZIO_EMAIL
@@ -26,7 +26,7 @@ async function openFoodPreview(
   const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ kcal, / }).first()
   const suggestionLabel = namePattern ? null : await firstRow.getAttribute("aria-label")
   await searchBox.fill(query)
-  // The modal shows live suggestions before the query results arrive — wait
+  // The modal shows live suggestions before the query results arrive, so wait
   // until the list actually swaps so the click never lands on a suggestion.
   // Pattern-matched lookups skip this: a matching row is the right product
   // whether it came from the search results or the frequent picks footer.
@@ -123,11 +123,11 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     const kcal100 = await previewKcalAt(page, amount, kcal, "100")
     await amount.fill("120")
     await page.getByRole("button", { name: "Add to diary" }).click()
-    // Back in the log-meal modal — close it via the cancel FAB.
+    // Back in the log-meal modal, close it via the cancel FAB.
     await page.getByRole("button", { name: "Cancel" }).click()
 
     // Tomorrow's dashboard shows the entry; recorded kcal matches the preview
-    // math (preview at 100 g × 1.2), i.e. no conversion drift through the pipeline.
+    // math (preview at 100 g × 1.2), so no conversion drift through the pipeline.
     await page.getByRole("button", { name: /^Lunch, / }).click()
     const entry = page.getByRole("button", { name: /, \d+ kcal, / }).first()
     await expect(entry).toBeVisible({ timeout: 15_000 })

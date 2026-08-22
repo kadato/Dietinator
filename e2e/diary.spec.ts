@@ -2,7 +2,7 @@ import { expect, test, bootAuthenticated } from "./helpers"
 
 /** Simulate a long-press on an element (RN long-press affordance). */
 async function longPress(page: import("@playwright/test").Page, selector: string) {
-  // Meal rows sit below the fold on the phone viewport — scrolling is
+  // Meal rows sit below the fold on the phone viewport. Scrolling is
   // required for the synthetic mouse events to reach the element.
   const target = page.locator(selector)
   await target.scrollIntoViewIfNeeded()
@@ -28,7 +28,7 @@ test.describe("diary flows (offline, local-first)", () => {
 
     await openCreateOptions(page, "Snacks")
     await page.getByRole("button", { name: "Quick Add" }).click()
-    // The create-options card behind the modal also says "Quick Add" — assert the form instead.
+    // The create-options card behind the modal also says "Quick Add", so assert the form instead.
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
 
     await page.getByRole("textbox", { name: "Calories" }).fill("320")
@@ -76,12 +76,12 @@ test.describe("diary flows (offline, local-first)", () => {
     const row = page.getByRole("button", { name: /^Quick add, / })
     await expect(row).toHaveCount(1)
 
-    // Reject first — nothing should change.
+    // Reject first. Nothing should change.
     page.once("dialog", (dialog) => void dialog.dismiss())
     await longPress(page, '[aria-label^="Quick add,"]')
     await expect(row).toBeVisible()
 
-    // Accept — entry disappears.
+    // Accept. The entry disappears.
     page.once("dialog", (dialog) => void dialog.accept())
     await longPress(page, '[aria-label^="Quick add,"]')
     await expect(row).toHaveCount(0, { timeout: 15_000 })

@@ -32,7 +32,7 @@ test.describe("YAZIO (real account)", () => {
     await page.getByPlaceholder("YAZIO email").fill(EMAIL!)
     await page.getByPlaceholder("Password").fill(PASSWORD!)
     await page.getByRole("button", { name: /Sign in/i }).click()
-    // Login imports today's diary from YAZIO — wait for the dashboard to settle.
+    // Login imports today's diary from YAZIO, so wait for the dashboard to settle.
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
       timeout: 60_000,
     })
@@ -92,7 +92,7 @@ test.describe("YAZIO (real account)", () => {
     await logFoodViaSearch(page, "Lunch", "banane", "Banán")
 
     // Back on the dashboard, the lunch card lists the entry. Wait for the
-    // focus-reload to land before clicking — an empty section header navigates
+    // focus-reload to land before clicking. An empty section header navigates
     // to log-meal instead of expanding.
     await expect(page.getByRole("button", { name: /^Lunch, [1-9]\d* kcal/ })).toBeVisible({
       timeout: 15_000,
@@ -124,8 +124,8 @@ test.describe("YAZIO (real account)", () => {
 
     // Accept the confirmation dialog BEFORE the long-press fires it.
     page.once("dialog", (dialog) => void dialog.accept())
-    // Live YAZIO data (weight card, meal goals) shifts the layout between runs —
-    // make sure the row is actually reachable before pressing it.
+    // Live YAZIO data (weight card, meal goals) shifts the layout between runs,
+    // so make sure the row is actually reachable before pressing it.
     await entry.scrollIntoViewIfNeeded()
     const box = await entry.boundingBox()
     if (!box) throw new Error("entry not measurable")

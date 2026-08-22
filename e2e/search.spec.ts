@@ -23,7 +23,7 @@ test.describe("food search (offline)", () => {
     await bootAuthenticated(page)
 
     await page.getByRole("button", { name: "Add food to Breakfast" }).click()
-    // The modal title (the dashboard card behind it also says "Breakfast" — scope to the modal).
+    // The modal title (the dashboard card behind it also says "Breakfast", so scope to the modal).
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
 
@@ -39,8 +39,8 @@ test.describe("food search (offline)", () => {
     await page.getByRole("tab", { name: "Settings" }).click()
 
     // The hub lists sections; the Goals row opens the goal form.
-    await page.getByRole("button", { name: "Goals & Nutrition settings" }).click()
-    await expect(page.getByText("Goals & Nutrition", { exact: true })).toBeVisible()
+    await page.getByRole("button", { name: "Goals and Nutrition settings" }).click()
+    await expect(page.getByText("Goals and Nutrition", { exact: true })).toBeVisible()
     await expect(page.getByText("Calories", { exact: true })).toBeVisible()
 
     // Sync section.
@@ -51,7 +51,7 @@ test.describe("food search (offline)", () => {
 
     // About section hosts the sign-out button.
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "About & Account settings" }).click()
+    await page.getByRole("button", { name: "About and Account settings" }).click()
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible()
   })
 })
