@@ -43,7 +43,7 @@ const INSTRUCTIONS =
   "Changes are applied back to the user's device the next time the app synchronizes. " +
   "Tools that modify data should only be used when the user asked for it."
 
-// ── Snapshot store ─────────────────────────────────────────────────────────
+// Snapshot store
 
 function createSnapshotStore() {
   return {
@@ -169,7 +169,7 @@ function snapshotRevision(store) {
   return store.nextSeq - 1
 }
 
-// ── Agent bridge handlers ──────────────────────────────────────────────────
+// Agent bridge handlers
 
 function handleSnapshot(store, body) {
   if (!body || typeof body !== "object") {
@@ -200,7 +200,7 @@ function handleChanges(store, since) {
   return { changes, revision: snapshotRevision(store) }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Helpers
 
 function toDiaryRow(entry) {
   return {
@@ -256,7 +256,7 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10)
 }
 
-// ── MCP tools ──────────────────────────────────────────────────────────────
+// MCP tools
 
 const TOOLS = [
   // 1. Diary
@@ -371,7 +371,7 @@ const TOOLS = [
           type: "string",
           description: "One of breakfast, lunch, dinner, snack. Defaults to snack.",
         },
-        name: { type: "string", description: "Food name, e.g. 'Chicken breast, grilled'." },
+        name: { type: "string", description: "Food name, for example 'Chicken breast, grilled'." },
         kcal: { type: "number", description: "Calories for one serving." },
         protein: { type: "number", description: "Protein in grams for one serving." },
         carbs: { type: "number", description: "Carbs in grams for one serving." },
@@ -602,7 +602,7 @@ const TOOLS = [
       properties: {
         weight_kg: { type: "number", description: "Bodyweight in kilograms." },
         date: { type: "string", description: "Optional date as YYYY-MM-DD. Defaults to today." },
-        note: { type: "string", description: "Optional note (e.g. 'Morning fasted')." },
+        note: { type: "string", description: "Optional note (for example 'Morning fasted')." },
       },
       required: ["weight_kg"],
     },
@@ -700,7 +700,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string", description: "Meal name, e.g. 'Post-Workout Oatmeal'." },
+        name: { type: "string", description: "Meal name, for example 'Post-Workout Oatmeal'." },
         items: {
           type: "array",
           description: "List of food items in the meal.",
@@ -965,7 +965,7 @@ const TOOLS = [
     },
   },
 
-  // 7. Comprehensive Health & Analytics
+  // 7. Multi-Day Health Summary & Analytics
   {
     name: "get_health_summary",
     description:
@@ -1083,7 +1083,7 @@ function listTools() {
   }))
 }
 
-// ── JSON-RPC ───────────────────────────────────────────────────────────────
+// JSON-RPC
 
 function jsonError(id, code, message) {
   return { jsonrpc: "2.0", id: id === undefined ? null : id, error: { code, message } }
@@ -1165,7 +1165,7 @@ function callTool(store, params) {
   }
 }
 
-// ── HTTP middleware ────────────────────────────────────────────────────────
+// HTTP middleware
 
 function isSameOrigin(req) {
   const origin = req.headers.origin

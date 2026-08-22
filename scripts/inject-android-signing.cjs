@@ -18,7 +18,7 @@ const fs = require("fs")
 const GRADLE_PATH = "android/app/build.gradle"
 
 if (!fs.existsSync(GRADLE_PATH)) {
-  console.error(`Missing ${GRADLE_PATH} — run \`npx expo prebuild --platform android\` first.`)
+  console.error(`Missing ${GRADLE_PATH}. Run \`npx expo prebuild --platform android\` first.`)
   process.exit(1)
 }
 

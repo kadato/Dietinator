@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate the Dietinator app icon set — a teal "D" built from a rounded bar
+ * Generate the Dietinator app icon set, a teal "D" built from a rounded bar
  * and a calorie-ring arc (echoing the CalorieRing dashboard component).
  *
  * Zero dependencies: renders signed-distance shapes with supersampling and
@@ -9,7 +9,7 @@
  * Geometry: the ring arc is cut at +-90 degrees; its end face coincides
  * exactly with the bar's right face (x = -0.13s), so the union is flush:
  * the outer curve is tangent to the bar's top edge, the inner counter meets
- * the face at a crisp right angle — like a real "D".
+ * the face at a crisp right angle, like a real "D".
  *
  * Usage: node scripts/generate-icons.cjs
  */
@@ -96,7 +96,7 @@ function sdArc(px, py, cx, cy, R, t, a0, a1) {
 //
 // Junction math: the ring's outer circle (center x=-0.13s, radius 0.435s) and
 // the bar's top-right corner circle (center x=-0.13s, y=-(hh-r), radius r)
-// are internally tangent when cx + hw - r = -0.13s — which is what makes the
+// are internally tangent when cx + hw - r = -0.13s, which is what makes the
 // top/bottom seams disappear. The ring's end plane (x=-0.13s) sits exactly on
 // the bar face, and the inner arc emerges from the face nearly vertically.
 function markSDF(px, py, N, scale) {

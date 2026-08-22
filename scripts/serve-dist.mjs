@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Static server for the web export (`npm run build:web` → `dist/`).
+ * Static server for the web export (`npm run build:web` writes `dist/`).
  *
  * - Serves `dist/` with the COEP/COOP headers wa-sqlite needs (SharedArrayBuffer)
  * - Proxies `/api/yazio/*` to the YAZIO API exactly like the Metro dev middleware,
@@ -67,8 +67,8 @@ async function proxyYazioRequest(req, res) {
   const hasBody = req.method !== "GET" && req.method !== "HEAD"
   const body = hasBody ? await readRequestBody(req) : undefined
 
-  // A hung upstream must fail fast as a 502, not leave the browser spinning —
-  // the app wraps YAZIO calls in withRetry and will retry a 502.
+  // A hung upstream must fail fast as a 502, not leave the browser spinning.
+  // The app wraps YAZIO calls in withRetry and will retry a 502.
   const upstream = await fetch(targetUrl, {
     method: req.method,
     headers,
@@ -115,7 +115,7 @@ function serveStatic(req, res, urlPath) {
   const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase()
   res.setHeader("Content-Type", MIME[ext] ?? "application/octet-stream")
 
-  // Hashed build assets never change → cache forever. The HTML shell (including
+  // Hashed build assets never change, so cache them forever. The HTML shell (including
   // extension-less SPA routes that resolve to index.html) and the service
   // worker must always revalidate so app updates ship immediately.
   const servesHtml = ext === ".html" || urlPath.endsWith("/")
@@ -146,7 +146,7 @@ function serveStatic(req, res, urlPath) {
       const gz = acceptEncoding.includes("gzip") ? gzipSync(raw) : null
       cached = { br, gz, raw }
       compressCache.set(cacheKey, cached)
-      // Keep the cache bounded — a handful of assets is all a build produces.
+      // Keep the cache bounded, a handful of assets is all a build produces.
       if (compressCache.size > 64) {
         compressCache.delete(compressCache.keys().next().value)
       }
@@ -179,7 +179,7 @@ if (!existsSync(ROOT)) {
 }
 
 // The wa-sqlite WASM is fetched by expo-sqlite only after the JS bundle boots.
-// Preload it from the HTML shell so it downloads in parallel with the bundle —
+// Preload it from the HTML shell so it downloads in parallel with the bundle;
 // this trims the boot critical path by one full asset download.
 function findWasmUrl() {
   const assetsDir = join(ROOT, "assets")
@@ -203,7 +203,7 @@ if (WASM_PRELOAD_URL) {
 // The expo-sqlite worker chunk is fetched when the database opens (after the
 // bundle boots); preloading it warms the HTTP cache during the bundle download.
 // A/B tested against no preload: adds ~1pt of perf variance on mobile
-// (throttled) while reducing cold mid-boot latency on fast connections — kept
+// (throttled) while reducing cold mid-boot latency on fast connections. Kept
 // on by default, disable with PRELOAD_WORKER=0.
 const PRELOAD_WORKER = process.env.PRELOAD_WORKER !== "0"
 function findWorkerUrl() {

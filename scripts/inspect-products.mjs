@@ -3,7 +3,7 @@
  * Diagnostic: inspect real YAZIO product payloads to validate the app's
  * per-gram vs per-100 g nutrient-scaling heuristics.
  *
- * Reads credentials from .env.local. Prints raw API values only — nothing is
+ * Reads credentials from .env.local. Prints raw API values only, nothing is
  * written, logged to your account, or committed.
  */
 import { Yazio } from "yazio"
@@ -17,7 +17,7 @@ try {
     if (m) env[m[1]] = m[2]
   }
 } catch {
-  console.error("No .env.local — put YAZIO_EMAIL/YAZIO_PASSWORD there.")
+  console.error("No .env.local. Put YAZIO_EMAIL/YAZIO_PASSWORD there.")
   process.exit(1)
 }
 
@@ -58,9 +58,9 @@ for (const q of queries) {
       continue
     }
     const kcal = detail.nutrients["energy.energy"]
-    console.log(`\n== ${q} → "${detail.name}" (${detail.base_unit})`)
+    console.log(`\n== ${q}: "${detail.name}" (${detail.base_unit})`)
     console.log(
-      `   raw energy: ${kcal}  (per-gram semantics ⇒ ${(kcal * 100).toFixed(1)} kcal/100${detail.base_unit})`,
+      `   raw energy: ${kcal}  (per-gram semantics, ${(kcal * 100).toFixed(1)} kcal/100${detail.base_unit})`,
     )
     console.log(
       `   servings: ${detail.servings.map((s) => `${s.serving} @${s.amount}`).join(" | ")}`,

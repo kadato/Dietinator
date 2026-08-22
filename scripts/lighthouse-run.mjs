@@ -10,7 +10,7 @@
  *
  * - Launches Chrome with a fresh per-audit profile
  * - Runs a Lighthouse audit per route in light AND dark color schemes
- *   (dark is driven via CDP Emulation.setEmulatedMedia — the
+ *   (dark is driven via CDP Emulation.setEmulatedMedia, since the
  *   `--force-prefers-color-scheme` flag is ignored by modern headless Chrome)
  * - Optionally (REAL_LOGIN=1) logs in with the real YAZIO credentials from
  *   .env.local as a smoke check that the login flow works
@@ -21,7 +21,7 @@
  *   node scripts/lighthouse-run.mjs [/search /settings ...]
  *
  * Env:
- *   BASE_URL    (default http://localhost:9082 — 8082 is excluded by Hyper-V
+ *   BASE_URL    (default http://localhost:9082, because 8082 is excluded by Hyper-V
  *                on Windows, so 9082 works out of the box; point at a running
  *                `npm run serve:web` or let this script start one)
  *   PRESET      mobile (default) | desktop
@@ -50,7 +50,7 @@ try {
     if (match && process.env[match[1]] === undefined) process.env[match[1]] = match[2]
   }
 } catch {
-  // .env.local may be absent — rely on process env
+  // .env.local may be absent, rely on process env
 }
 
 // 8082 is the historical default but Windows Hyper-V excludes 8081-8180.
@@ -143,7 +143,7 @@ async function smokeCheckRealLogin() {
     await page.getByPlaceholder("Password").fill(PASSWORD)
     await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
     await page.getByText("Meals", { exact: true }).waitFor({ timeout: 120_000 })
-    console.log("Real YAZIO login OK — dashboard visible.")
+    console.log("Real YAZIO login OK, dashboard visible.")
   } finally {
     await page.close()
     await browser.close()
@@ -165,7 +165,7 @@ function killChromeForProfile(dir) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)
 }
 
-// Kill the whole Chrome process tree by browser PID (taskkill /T) — much more
+// Kill the whole Chrome process tree by browser PID (taskkill /T), much more
 // reliable than chrome-launcher's kill(), which can leave orphaned children.
 function killChromeTree(pid) {
   if (!pid) return
@@ -269,7 +269,7 @@ async function runAuditOnce(scheme, route) {
 
     // Seed demo DB + auth in a warm-up navigation on its own page, then CLOSE
     // that page. Closing it terminates its SQLite worker and releases its OPFS
-    // access handles before the audited navigation starts — the audited load's
+    // access handles before the audited navigation starts. The audited load's
     // fresh worker would otherwise occasionally fail its one-time VFS init by
     // racing the old worker's teardown ("Invalid VFS state").
     const warmupPage = await browser.newPage()

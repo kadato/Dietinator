@@ -54,5 +54,5 @@ execSync(`git tag v${version}`, { stdio: "inherit" })
 
 console.log(`
 Released v${version} (versionCode ${versionCode}).
-Next: git push && git push origin v${version} — release.yml builds the signed APK.
+Next: git push && git push origin v${version}, and release.yml builds the signed APK.
 `)

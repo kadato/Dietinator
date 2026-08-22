@@ -5,7 +5,7 @@
  * tool using a real provider (default: the OpenCode gateway with
  * deepseek-v4-flash).
  *
- * The API key is read from the OPENCODE_API_KEY env var only — never
+ * The API key is read from the OPENCODE_API_KEY env var only, never
  * hardcoded or printed. Exit code 0 when every tool was exercised.
  *
  * Usage:
@@ -162,7 +162,7 @@ function seedSnapshot(store) {
   if (!ok) throw new Error("Seeding the snapshot failed")
 }
 
-// ── Minimal MCP client over the real HTTP server ───────────────────────────
+// Minimal MCP client over the real HTTP server
 
 async function startMcpServer() {
   const store = createSnapshotStore()
@@ -202,7 +202,7 @@ async function mcpCallTool(name, args) {
   return { text, result }
 }
 
-// ── OpenAI-compatible provider loop ─────────────────────────────────────────
+// OpenAI-compatible provider loop
 
 function toOpenAiTools(tools) {
   return tools.map((t) => ({
@@ -240,7 +240,7 @@ const SYSTEM_PROMPT =
   "You are a test agent exercising the Dietinator MCP server. Use the provided tools to " +
   "fulfill the user's request. Follow instructions exactly: create entries, then update and " +
   "delete them when asked. Reply with a short confirmation after each tool run. Do not " +
-  "invent ids — reuse ids returned by tools."
+  "invent ids, reuse ids returned by tools."
 
 async function runScenario(name, prompt, requiredTools) {
   const tools = await mcpTools()
@@ -283,7 +283,7 @@ async function runScenario(name, prompt, requiredTools) {
   return { name, status, used: [...used].sort(), missing, replyPreview }
 }
 
-// ── Main ────────────────────────────────────────────────────────────────────
+// Main
 
 if (!API_KEY) {
   console.error("Set OPENCODE_API_KEY to run the live MCP agent check.")
@@ -291,7 +291,7 @@ if (!API_KEY) {
 }
 
 const { store, close } = await startMcpServer()
-console.log(`MCP server on :${PORT} · provider ${MODEL}\n`)
+console.log(`MCP server on :${PORT}, provider ${MODEL}\n`)
 
 const results = []
 for (const scenario of SCENARIOS) {
@@ -325,14 +325,14 @@ const expectedOps = [
 ]
 const missingOps = expectedOps.filter((op) => !feedOps.includes(op))
 
-console.log("\n" + "─".repeat(72))
+console.log("\n" + "-".repeat(72))
 console.log("Scenario".padEnd(20) + "Status".padEnd(8) + "Tools used")
 for (const r of results) {
   console.log(r.name.padEnd(20) + r.status.padEnd(8) + r.used.join(", ") || r.name)
   if (r.missing.length > 0) console.log("  missing: " + r.missing.join(", "))
   console.log(`  reply: ${r.replyPreview}`)
 }
-console.log("─".repeat(72))
+console.log("-".repeat(72))
 console.log("Change feed ops:", feedOps.join(", "))
 console.log("Missing change ops:", missingOps.length === 0 ? "none" : missingOps.join(", "))
 
