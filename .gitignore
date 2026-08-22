@@ -59,3 +59,9 @@ lighthouse-reports/
 
 # Android release signing key and credentials
 keystore/
+
+# One-off manual verification screenshots (canonical shots live in docs/screenshots/)
+docs/screenshots/verification-*/
+
+# Local AI design-review tooling state
+.impeccable/
