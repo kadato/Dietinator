@@ -5,37 +5,37 @@
 name: Dietinator
 description: Field terminal for solo nutrition - sharp, square, mono, one-thumb ledger - provenance seed b9619c3c pinned brief beats roll
 colors:
-primary: "#34548a"
+primary: "#9a3412"
 primary-dark: "#7aa2f7"
-primary-strong: "#0f4b6e"
+primary-strong: "#7c2d12"
 primary-strong-dark: "#7dcfff"
-background: "#e1e2e7"
+background: "#ffedd5"
 background-dark: "#1a1b26"
 surface: "#ffffff"
 surface-dark: "#24283b"
-surface-alt: "#d5d6db"
+surface-alt: "#fed7aa"
 surface-alt-dark: "#292e42"
-text: "#343b58"
+text: "#431407"
 text-dark: "#c0caf5"
-text-muted: "#565a6e"
+text-muted: "#7c2d12"
 text-muted-dark: "#a9b1d6"
-text-on-background: "#1a1b26"
+text-on-background: "#431407"
 text-on-background-dark: "#c0caf5"
-border: "#a9b1d6"
-border-dark: "#414868"
-breakfast: "#214a7a"
-breakfast-dark: "#8ab4f8"
-lunch: "#5a3e8e"
-lunch-dark: "#bb9af7"
-dinner: "#8c4351"
-dinner-dark: "#f7768e"
-snack: "#8f5e15"
-snack-dark: "#e0af68"
-danger: "#8c4351"
-danger-dark: "#f7768e"
-warning: "#8f5e15"
+border: "#c2410c"
+border-dark: "#6b739c"
+breakfast: "#0072B2"
+breakfast-dark: "#6aa8ff"
+lunch: "#E69F00"
+lunch-dark: "#FFB020"
+dinner: "#D55E00"
+dinner-dark: "#ff7a92"
+snack: "#009E73"
+snack-dark: "#2EC4B6"
+danger: "#9f1239"
+danger-dark: "#ff7a8e"
+warning: "#92400e"
 warning-dark: "#e0af68"
-ink-grid: "rgba(52,84,138,0.08)"
+ink-grid: "rgba(154,52,18,0.08)"
 ink-grid-dark: "rgba(192,202,245,0.06)"
 typography:
 display:
@@ -135,7 +135,8 @@ This replacement world keeps product truth, content, function, and constraints, 
 
 - Square strict. Every card, button, input, bar, and tab is `0` radius with a 1.5px ink rule. Tinted chips use 1px interior rules not glows.
 - Mono ledger. JetBrains Mono everywhere. Tabular-nums forced. Headings uppercase at 0.04 to 0.08 tracking.
-- Paper grid system. 24px graph on `#e1e2e7` light and 24px dotted void on `#1a1b26` dark. No gradients, no blur.
+- Paper grid system. 24px graph on `#ffedd5` light and 24px dotted void on `#1a1b26` dark. No gradients, no blur.
+- Harvest deep. Light is now deep amber paper #ffedd5, wells #fed7aa, ink #9a3412 burnt orange. Wong meals #0072B2 #E69F00 #D55E00 #009E73 carry macros colorblind-safe and very vibrant. Dark stays Tokyo Night.
 - Thumb-first density. Tight 4 to 12 rhythm. Generous separation between groups. Bottom dock of 52 square keys for one-hand logging.
 - Flat authority. No shadows. Elevation is border weight and invert. Pressed is `scale 0.98` not lift.
 
@@ -145,12 +146,12 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ### Primary
 
-- **Ink. The only chrome fill uses #34548a on light and #7aa2f7 on dark. Square primary buttons, active tab invert, and ledger rules use it. Light uses white `onPrimary` at 15.9:1. Dark uses `#1a1b26` on off-white at 16.2:1.**
-- **Ink strong. Uses #1a1a1a on light and #ffffff on dark. It gives hover and pressed depth. No mid tint, only ink or paper.**
+- **Ink. The only chrome fill uses #9a3412 on light and #7aa2f7 on dark. Square primary buttons, active tab invert, and ledger rules use it. Light uses white `onPrimary` at 7.31:1. Dark uses `#1a1b26` on off-white at 16.2:1. Deep burnt orange, darker and more orange than before.**
+- **Ink strong. Uses #7c2d12 on light and #ffffff on dark. It gives hover and pressed depth. No mid tint, only ink or paper.**
 
 ### Secondary
 
-- **Paper grid. Uses #e1e2e7 on light and #1a1b26 on dark. It is the ground that shows the 24px graph. It is not decoration, it is the ledger ruling.**
+- **Paper grid. Uses #ffedd5 on light and #1a1b26 on dark. Deep amber paper #ffedd5 with wells #fed7aa replaces pale cream, grid at rgba(154,52,18,0.08) more orange and darker. It is the ground that shows the 24px graph. It is not decoration, it is the ledger ruling.**
 
 ### Tertiary
 
@@ -158,13 +159,13 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ### Neutral
 
-- **Surface. Uses #ffffff on light and #141616 on dark. Sheets, cards, and modals use it. Each sheet carries a 1.5px `#34548a` rule on light and `#414868` on dark.**
-- **Surface alt. Uses #eceae4 on light and #1e2122 on dark. Wells, tracks, and chip grounds use it. Bar track background uses it.**
-- **Ink. Uses #34548a on light and #c0caf5 on dark. Body and numerals use it.**
-- **Ink muted. Uses #565a6e on light and #a9b1d6 on dark. Secondary labels and helper use it.**
-- **Ink on background. Uses #34548a on light and #e1e2e7 on dark. Section titles on the grid ground use it.**
-- **Line. Uses #34548a on light and #414868 on dark. Every hairline and card edge is 1.5px on light and 1px on dark. Never hairline 1px on light because it disappears on the paper grid.**
-- **Alert. Danger uses #dc2626 on light and #f7768e on dark and is square. Warning uses #b45309 on light and #e0af68 on dark and is square. Progress over budget flips to danger ink plus 12 percent tint. It never glows.**
+- **Surface. Uses #ffffff on light and #141616 on dark. Sheets, cards, and modals use it. Each sheet carries a 1.5px `#9a3412` rule on light and `#414868` on dark.**
+- **Surface alt. Uses #fed7aa on light and #1e2122 on dark. Deeper amber well #fed7aa replaces peach. Wells, tracks, and chip grounds use it. Bar track background uses it.**
+- **Ink. Uses #431407 on light and #c0caf5 on dark. Body and numerals use it. Burnt umber 13.6:1 on #ffedd5, darker paper still holds.**
+- **Ink muted. Uses #7c2d12 on light and #a9b1d6 on dark. Darker terracotta, deeper and more orange. Secondary labels and helper use it.**
+- **Ink on background. Uses #431407 on light and #c0caf5 on dark. Section titles on the grid ground use it. Holds 13:1 on deeper amber.**
+- **Line. Uses #c2410c on light and #414868 on dark. Deeper burnt orange, more saturated than #ea580c. Every hairline and card edge is 1.5px on light and 1px on dark. Never hairline 1px on light because it disappears on the paper grid.**
+- **Alert. Danger uses #9f1239 on light and #f7768e on dark and is square. Warning uses #92400e on light and #e0af68 on dark and is square. Progress over budget flips to danger ink plus 12 percent tint. It never glows.**
 
 ### Named rules
 
@@ -231,7 +232,7 @@ Sharp and square. All radii are `0`. Cards, buttons, inputs, tabs, pills, bars, 
 ### Buttons
 
 - **Shape. Square `0` with `1.5px` rule. Padding `12 16` at md, `10 12` at sm. No radius.**
-- **Primary. Ink fill `#34548a` on light with white mono label, invert `#7aa2f7` on dark with `#1a1b26` label. Hover to `#1a1a1a` on light and `#ffffff` on dark. Active `scale 0.98`.**
+- **Primary. Ink fill `#9a3412` on light with white mono label, invert `#7aa2f7` on dark with `#1a1b26` label. Hover to `#7c2d12` on light and `#ffffff` on dark. Active `scale 0.98`. Deep harvest orange, darker and more orange.**
 - **Ghost. Surface fill with `1.5px` ink rule, ink label.**
 - **Icon. Ionicons at 18 to 22, stroke square, not round.**
 

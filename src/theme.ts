@@ -1,3 +1,16 @@
+/**
+ * Single source of truth for the field-terminal visual world.
+ *
+ * Change the palette, spacing, borders or mono stack here and the whole
+ * app follows - native via `useTheme()` / `getColors()` and web via
+ * `global.css` CSS variables that mirror these values. Keep `DESIGN.md`,
+ * `tailwind.config.js` meal tokens and `app/+html.tsx` shell in sync;
+ * they are derived, not independent.
+ *
+ * To retune contrast, edit `lightColors` / `darkColors` only. Chip tints
+ * use `tints.chip` (0.14) via `chipTint()` in `src/theme.helpers.ts`.
+ * To change chrome weight, edit `borders.width` once.
+ */
 import { Platform } from "react-native"
 
 export type ColorPalette = {
@@ -35,46 +48,46 @@ export const darkColors: ColorPalette = {
   primaryStrong: "#7dcfff",
   primaryMuted: "#bb9af7",
   onPrimary: "#1a1b26",
-  onPrimaryMuted: "#c0caf5",
+  onPrimaryMuted: "#24283b",
   primaryOverlay: "rgba(122,162,247,0.14)",
   text: "#c0caf5",
   textMuted: "#a9b1d6",
   textOnBackground: "#c0caf5",
-  danger: "#f7768e",
+  danger: "#ff7a8e",
   warning: "#e0af68",
   onWarning: "#1a1b26",
-  border: "#414868",
+  border: "#6b739c",
   // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito.
   // Blue for protein and breakfast, amber for carbs and lunch, vermillion for fat and dinner
   // remain distinct under deuteranopia, protanopia, or tritanopia. Snack keeps
   // a teal that is luminance-separated from the three.
-  breakfast: "#3A86FF",
+  breakfast: "#6aa8ff",
   lunch: "#FFB020",
-  dinner: "#FF4D6A",
+  dinner: "#ff7a92",
   snack: "#2EC4B6",
 }
 
 export const lightColors: ColorPalette = {
-  background: "#e1e2e7",
+  background: "#ffedd5",
   surface: "#ffffff",
-  surfaceAlt: "#d5d6db",
-  primary: "#34548a",
-  primaryStrong: "#0f4b6e",
-  primaryMuted: "#5a3e8e",
+  surfaceAlt: "#fed7aa",
+  primary: "#9a3412",
+  primaryStrong: "#7c2d12",
+  primaryMuted: "#431407",
   onPrimary: "#ffffff",
-  onPrimaryMuted: "#d5d6db",
-  primaryOverlay: "rgba(52,84,138,0.10)",
-  text: "#343b58",
-  textMuted: "#565a6e",
-  textOnBackground: "#1a1b26",
-  danger: "#8c4351",
-  warning: "#8f5e15",
+  onPrimaryMuted: "#ffedd5",
+  primaryOverlay: "rgba(154,52,18,0.14)",
+  text: "#431407",
+  textMuted: "#7c2d12",
+  textOnBackground: "#431407",
+  danger: "#9f1239",
+  warning: "#92400e",
   onWarning: "#ffffff",
-  border: "#a9b1d6",
-  breakfast: "#0F5BA6",
-  lunch: "#8A5A00",
-  dinner: "#B91C3A",
-  snack: "#137A6B",
+  border: "#c2410c",
+  breakfast: "#0072B2",
+  lunch: "#E69F00",
+  dinner: "#D55E00",
+  snack: "#009E73",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {
@@ -90,6 +103,26 @@ export const spacing = {
   xl: 24,
   "2xl": 32,
 }
+
+export const borders = {
+  width: 1.5,
+  widthThin: 1,
+  radius: 0,
+} as const
+
+export const radii = {
+  none: 0,
+} as const
+
+/**
+ * Chip tint alpha - centralizes the 14% rule so contrast can be tuned once.
+ * Update here and every meal pill, budget badge and icon well follows.
+ */
+export const tints = {
+  chip: 0.14,
+  chipStrong: 0.2,
+  overlay: 0.14,
+} as const
 
 /** Breakpoints and max widths for tablet / desktop / web layouts. */
 export const layout = {

@@ -20,12 +20,12 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
   touch-action: manipulation;
-  background: #e1e2e7;
+  background: var(--app-background);
   letter-spacing: -0.01em;
 }
 html.dark,
 html.dark body {
-  background: #1a1b26;
+  background: var(--app-background);
 }
 @media (min-resolution: 1.5dppx) {
   html,
@@ -57,19 +57,40 @@ textarea::placeholder {
 }
 
 /*
- * gluestack-ui Tokyo Night alignment
+ * Single source: src/theme.ts is the palette. These CSS variables mirror
+ * lightColors / darkColors so NativeWind and plain CSS stay in sync.
+ * Update theme.ts, then mirror the hex here.
+ */
+:root {
+  --app-background: #ffedd5;
+  --app-surface: #ffffff;
+  --app-surface-alt: #fed7aa;
+  --app-primary: #9a3412;
+  --app-border: #c2410c;
+  --app-text: #431407;
+}
+html.dark {
+  --app-background: #1a1b26;
+  --app-surface: #24283b;
+  --app-surface-alt: #292e42;
+  --app-primary: #7aa2f7;
+  --app-border: #6b739c;
+  --app-text: #c0caf5;
+}
+/*
+ * gluestack-ui Tokyo Night alignment - derived from theme surfaceAlt / border
  */
 html.dark {
   --color-background-50: 36 40 59;
   --color-background-100: 41 46 66;
-  --color-background-200: 65 72 104;
+  --color-background-200: 107 115 156;
   --color-background-300: 73 82 120;
 }
 html:not(.dark) {
   --color-background-50: 255 255 255;
-  --color-background-100: 213 214 219;
-  --color-background-200: 169 177 214;
-  --color-background-300: 120 128 160;
+  --color-background-100: 254 215 170;
+  --color-background-200: 194 65 12;
+  --color-background-300: 124 45 18;
 }
 
 /*
@@ -123,52 +144,52 @@ p,
     height: 6px;
   }
   *::-webkit-scrollbar-thumb {
-    background: #34548a;
+    background: var(--app-primary);
     border-radius: 0;
   }
   html.dark *::-webkit-scrollbar-thumb {
-    background: #7aa2f7;
+    background: var(--app-primary);
   }
   *::-webkit-scrollbar-track {
     background: transparent;
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: #34548a transparent;
+    scrollbar-color: var(--app-primary) transparent;
   }
   html.dark * {
-    scrollbar-color: #7aa2f7 transparent;
+    scrollbar-color: var(--app-primary) transparent;
   }
 }
 
 /* Browser surfaces. Tokyo Night ink */
 ::selection {
-  background: #34548a;
+  background: var(--app-primary);
   color: #ffffff;
 }
 html.dark ::selection {
-  background: #7aa2f7;
-  color: #1a1b26;
+  background: var(--app-primary);
+  color: var(--app-background);
 }
 ::placeholder {
   color: inherit;
-  opacity: 0.5;
+  opacity: 0.85;
 }
 input {
-  caret-color: #34548a;
+  caret-color: var(--app-primary);
 }
 html.dark input {
-  caret-color: #7aa2f7;
+  caret-color: var(--app-primary);
 }
 
 /* Sharp focus. 1.5px solid Tokyo Night ink, square */
 :focus-visible {
-  outline: 1.5px solid #34548a;
+  outline: 1.5px solid var(--app-primary);
   outline-offset: 1px;
   border-radius: 0 !important;
 }
 html.dark :focus-visible {
-  outline-color: #7aa2f7;
+  outline-color: var(--app-primary);
 }
 
 /* Terminal world - square, sharp, no soft shadows */
@@ -193,22 +214,22 @@ html.dark :focus-visible {
 }
 /* elevated cards -> sharp Tokyo Night border */
 .bg-background-50 {
-  border: 1.5px solid #a9b1d6;
+  border: 1.5px solid var(--app-border);
 }
 html.dark .bg-background-50 {
-  border-color: #414868;
+  border-color: var(--app-border);
 }
 /* primary buttons square */
 .bg-primary-500 {
-  border: 1.5px solid #34548a;
+  border: 1.5px solid var(--app-primary);
   border-radius: 0 !important;
 }
 html.dark .bg-primary-500 {
-  border-color: #7aa2f7;
+  border-color: var(--app-primary);
 }
 /* paper grid. Tokyo Night graph. Tokenized via CSS variables */
 :root {
-  --paper-grid: rgba(52, 84, 138, 0.08);
+  --paper-grid: rgba(154, 52, 18, 0.08);
   --paper-grid-dark: rgba(192, 202, 245, 0.06);
   --scrim: rgba(26, 27, 38, 0.65);
 }
@@ -234,19 +255,19 @@ html.dark body {
 }
 /* Tokyo Night rule color for outline */
 [class*="border-outline"] {
-  border-color: #a9b1d6 !important;
+  border-color: var(--app-border) !important;
 }
 html.dark [class*="border-outline"] {
-  border-color: #414868 !important;
+  border-color: var(--app-border) !important;
 }
 /* scrollbar Tokyo Night square */
 @media (min-width: 600px) {
   *::-webkit-scrollbar-thumb {
-    background: #34548a;
+    background: var(--app-primary);
     border-radius: 0;
   }
   html.dark *::-webkit-scrollbar-thumb {
-    background: #7aa2f7;
+    background: var(--app-primary);
   }
 }
 
@@ -279,17 +300,27 @@ html.dark [class*="border-outline"] {
   }
 }
 .ledger-skeleton {
-  background: #d5d6db;
-  background-image: linear-gradient(to right, #d5d6db 0%, #e1e2e7 50%, #d5d6db 100%);
+  background: var(--app-surface-alt);
+  background-image: linear-gradient(
+    to right,
+    var(--app-surface-alt) 0%,
+    var(--app-background) 50%,
+    var(--app-surface-alt) 100%
+  );
   background-size: 200px 100%;
   background-repeat: no-repeat;
   animation: ledger-shimmer 1.2s ease-in-out infinite;
-  border: 1px solid #a9b1d6;
+  border: 1px solid var(--app-border);
 }
 html.dark .ledger-skeleton {
-  background: #292e42;
-  background-image: linear-gradient(to right, #292e42 0%, #414868 50%, #292e42 100%);
-  border-color: #414868;
+  background: var(--app-surface-alt);
+  background-image: linear-gradient(
+    to right,
+    var(--app-surface-alt) 0%,
+    var(--app-border) 50%,
+    var(--app-surface-alt) 100%
+  );
+  border-color: var(--app-border);
 }
 @media (prefers-reduced-motion: reduce) {
   .ledger-skeleton {

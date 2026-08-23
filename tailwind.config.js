@@ -174,13 +174,14 @@ module.exports = {
           error: "rgb(var(--color-indicator-error)/<alpha-value>)",
         },
         meal: {
-          breakfast: "#8ab4f8",
-          lunch: "#bb9af7",
-          dinner: "#f7768e",
-          snack: "#e0af68",
+          // Single source: src/theme.ts light+dark - keep in sync when palette changes
+          breakfast: "#0072B2",
+          lunch: "#E69F00",
+          dinner: "#D55E00",
+          snack: "#009E73",
         },
         app: {
-          chrome: "#e1e2e7",
+          chrome: "#ffedd5",
         },
       },
       fontFamily: {

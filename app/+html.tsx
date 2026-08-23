@@ -26,7 +26,7 @@ export default function Root({ children }: PropsWithChildren) {
           name="description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta name="theme-color" content="#34548a" />
+        <meta name="theme-color" content="#9a3412" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
         <ScrollViewStyleReset />
@@ -44,7 +44,7 @@ export default function Root({ children }: PropsWithChildren) {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #e1e2e7;
+            background: #ffedd5;
           }
           @media (prefers-color-scheme: dark) {
             #app-shell {
@@ -56,12 +56,12 @@ export default function Root({ children }: PropsWithChildren) {
             width: 32px;
             height: 32px;
             border-radius: 0;
-            border: 2px solid #d5d6db;
+            border: 2px solid #fed7aa;
           }
           .app-shell-spinner::after {
             content: "";
             position: absolute;
-            background: #34548a;
+            background: #9a3412;
             animation: edge-march 0.64s steps(1, end) infinite;
           }
           @keyframes edge-march {
@@ -123,7 +123,7 @@ export default function Root({ children }: PropsWithChildren) {
         <span
           dangerouslySetInnerHTML={{
             __html:
-              "<!-- THESIS: Field terminal replaces soft ledger with square ink and grid, refusing pill and shadow, owning one-hand fast logging. OWN-WORLD: Paper #e1e2e7 grid 24 on ink #34548a rule 1.5, void #1a1b26 on #7aa2f7, mono JetBrains everywhere, 0 radius, flat invert, thumb dock 52 squares. STORY: Solo tracker sees graph paper, ring, square meal sheets, taps BRKF dock to log without corridor, quick H2O, reads budget instantly. FIRST VIEWPORT: Grid fills viewport, date chrome square with flame, ring centered in square sheet, four meal squares below, bottom dock thumb arc above tab bar. FORM: Operate field terminal, pinned brief sharp beats roll b9619c3c, Storm #1a1b26 #7aa2f7 #bb9af7 #f7768e #e0af68. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance -->",
+              "<!-- THESIS: Field terminal replaces soft ledger with square ink and grid, refusing pill and shadow, owning one-hand fast logging. OWN-WORLD: Paper #ffedd5 grid 24 on ink #9a3412 rule 1.5, void #1a1b26 on #7aa2f7, mono JetBrains everywhere, 0 radius, flat invert, thumb dock 52 squares. Harvest deep: #9a3412 ink, #ffedd5 paper, #fed7aa wells, Wong meals #0072B2 #E69F00 #D55E00 #009E73. STORY: Solo tracker sees graph paper, ring, square meal sheets, taps BRKF dock to log without corridor, quick H2O, reads budget instantly. FIRST VIEWPORT: Grid fills viewport, date chrome square with flame, ring centered in square sheet, four meal squares below, bottom dock thumb arc above tab bar. FORM: Operate field terminal, pinned brief sharp beats roll b9619c3c, Storm #1a1b26 #7aa2f7 #bb9af7 #f7768e #e0af68. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance -->",
           }}
           style={{ display: "none" }}
         />
