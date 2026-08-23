@@ -324,6 +324,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
   const [saving, setSaving] = useState(false)
   const [calorieGoal, setCalorieGoal] = useState(formatNumber(settings.calorie_goal))
   const [proteinGoal, setProteinGoal] = useState(formatNumber(settings.protein_goal))
@@ -412,6 +413,29 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const cPct = ratios.carbsPct
   const fPct = ratios.fatPct
 
+  const isDirty =
+    formatNumber(settings.calorie_goal) !== calorieGoal ||
+    formatNumber(settings.protein_goal) !== proteinGoal ||
+    formatNumber(settings.carbs_goal) !== carbsGoal ||
+    formatNumber(settings.fat_goal) !== fatGoal ||
+    formatNumber(settings.water_goal_ml) !== waterGoal ||
+    formatNumber(settings.height_cm) !== heightCm ||
+    formatNumber(settings.target_weight_kg) !== targetWeight
+
+  const fieldErrors: Record<string, string> = {}
+  if (goalError) {
+    if (goalError.includes("Calories, protein")) {
+      fieldErrors.calories = goalError
+      fieldErrors.protein = goalError
+      fieldErrors.carbs = goalError
+      fieldErrors.fat = goalError
+    } else if (goalError.includes("Height")) {
+      fieldErrors.height = goalError
+      fieldErrors.water = goalError
+      fieldErrors.weight = goalError
+    }
+  }
+
   return (
     <>
       <SettingsSection title="Daily nutrition goals">
@@ -425,6 +449,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           step={50}
           min={500}
           unit="kcal"
+          error={fieldErrors.calories}
         />
         <GoalInput
           icon="zap"
@@ -436,6 +461,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           step={5}
           min={10}
           unit="g"
+          error={fieldErrors.protein}
         />
         <GoalInput
           icon="box"
@@ -447,6 +473,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           step={5}
           min={10}
           unit="g"
+          error={fieldErrors.carbs}
         />
         <GoalInput
           icon="droplet"
@@ -459,6 +486,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           min={5}
           unit="g"
           last
+          error={fieldErrors.fat}
         />
 
         <View className="border-t border-outline-100 p-4">
@@ -556,6 +584,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           step={250}
           min={0}
           unit="ml"
+          error={fieldErrors.water}
         />
         <GoalInput
           icon="user"
@@ -566,6 +595,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           step={1}
           min={0}
           unit="cm"
+          error={fieldErrors.height}
         />
         <GoalInput
           icon="activity"
@@ -577,21 +607,58 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           min={0}
           unit="kg"
           last
+          error={fieldErrors.weight}
         />
-        <View className="gap-3 border-t border-outline-100 p-4">
+        <View
+          className="gap-3 border-t border-outline-100 p-4"
+          style={
+            Platform.OS === "web"
+              ? ({
+                  position: "sticky" as any,
+                  bottom: 0,
+                  zIndex: 10,
+                  backgroundColor: colors.surface,
+                  marginHorizontal: -16,
+                  marginBottom: -16,
+                  paddingBottom: insets.bottom ? insets.bottom + 16 : 16,
+                  borderTopWidth: 1.5,
+                  borderTopColor: colors.border,
+                } as any)
+              : {
+                  backgroundColor: colors.surface,
+                  borderTopWidth: 1.5,
+                  borderTopColor: colors.border,
+                }
+          }
+        >
           {goalError ? (
             <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
               {goalError}
             </Text>
           ) : null}
+          {!isDirty && !goalError ? (
+            <Text
+              size="xs"
+              className="text-center font-mono uppercase tracking-widest text-typography-400"
+            >
+              No changes
+            </Text>
+          ) : null}
           <Button
             size="md"
             className="rounded-none border bg-primary-500 active:bg-primary-600"
-            style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
+            style={{
+              borderWidth: 1.5,
+              borderColor: isDirty ? colors.primary : colors.border,
+              borderRadius: 0,
+              opacity: isDirty ? 1 : 0.6,
+            }}
             onPress={saveGoals}
-            disabled={saving}
+            disabled={saving || !isDirty}
           >
-            <ButtonText>{saving ? "Saving…" : "Save"}</ButtonText>
+            <ButtonText style={{ color: isDirty ? colors.onPrimary : colors.textMuted }}>
+              {saving ? "Saving…" : isDirty ? "Save" : "Saved"}
+            </ButtonText>
           </Button>
         </View>
       </SettingsSection>
