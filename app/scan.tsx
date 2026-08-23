@@ -135,17 +135,18 @@ function ScanLine({ color = "rgba(255,255,255,0.85)" }: { color?: string }) {
   const [progress] = useState(() => new Animated.Value(0))
 
   useEffect(() => {
+    const useNativeDriver = Platform.OS !== "web"
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(progress, {
           toValue: 1,
           duration: 2200,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(progress, {
           toValue: 0,
           duration: 2200,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     )
