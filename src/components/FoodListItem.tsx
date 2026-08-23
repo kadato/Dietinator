@@ -106,7 +106,7 @@ export const FoodListItem = memo(function FoodListItem({
 
   return (
     <Box
-      className="mx-4 mb-2.5 flex-row items-center rounded-none bg-background-50 px-4 py-3.5"
+      className="mx-3 mb-2 flex-row items-center rounded-none bg-background-50 px-3 py-2.5"
       style={{
         borderWidth: 1.5,
         borderColor: colors.border,
@@ -123,7 +123,7 @@ export const FoodListItem = memo(function FoodListItem({
         accessibilityLabel={`${food.name}, ${prefix.trim()} ${portion}, ${Math.round(nutrients.kcal)} kcal, ${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g, ${Math.round(nutrients.kcal)} Cal`}
       >
         <Box
-          className="mr-3.5 h-11 w-11 shrink-0 items-center justify-center rounded-none bg-background-100"
+          className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-none bg-background-100"
           style={{
             borderWidth: 1.5,
             borderColor: colors.border,
@@ -139,7 +139,7 @@ export const FoodListItem = memo(function FoodListItem({
             color={accent}
           />
         </Box>
-        <Box className="min-w-0 flex-1">
+        <Box className="min-w-0 flex-1 gap-1">
           <Text
             size="md"
             bold
@@ -156,7 +156,7 @@ export const FoodListItem = memo(function FoodListItem({
           {subtitle ? (
             <Text
               size="xs"
-              className="mt-0.5 text-[12.5px] text-typography-500"
+              className="text-[12.5px] leading-4 text-typography-500"
               style={{
                 fontFamily: fonts.mono,
                 textTransform: "uppercase",
@@ -167,10 +167,10 @@ export const FoodListItem = memo(function FoodListItem({
               {subtitle}
             </Text>
           ) : (
-            <View className="mt-1 flex-row flex-wrap items-center gap-1.5">
+            <View className="flex-row flex-wrap items-center gap-1">
               <Text
                 size="xs"
-                className="text-[12.5px] text-typography-500"
+                className="text-[12.5px] leading-4 text-typography-500"
                 style={{
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],
