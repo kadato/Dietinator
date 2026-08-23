@@ -6,6 +6,7 @@ import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useSafeBack } from "@/hooks/useSafeBack"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 type Props = {
   children: ReactNode
@@ -46,6 +47,7 @@ export function ModalContainer({
 }: Props) {
   const { isWide } = useLayout()
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
   const safeBack = useSafeBack()
   const handleDismiss = onDismiss ?? safeBack
 
@@ -65,7 +67,15 @@ export function ModalContainer({
     return (
       <Box
         className={`w-full ${hug ? "" : "flex-1"} ${outerClassName ?? ""}`}
-        style={surface ? { backgroundColor: colors.surface } : undefined}
+        style={[
+          surface ? { backgroundColor: colors.surface } : undefined,
+          {
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          },
+        ]}
       >
         {children}
       </Box>

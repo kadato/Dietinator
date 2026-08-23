@@ -152,6 +152,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
         Platform.OS === "android"
           ? { bottom: 0, paddingBottom: insets.bottom + spacing.md }
           : { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
+        { paddingLeft: insets.left + spacing.md, paddingRight: insets.right + spacing.md },
         { pointerEvents: "box-none" as const },
       ]}
     >

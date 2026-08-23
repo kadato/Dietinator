@@ -45,6 +45,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           borderRightColor: colors.border,
           paddingTop: insets.top > 0 ? insets.top + 16 : 24,
           paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24,
+          paddingLeft: insets.left,
+          paddingRight: insets.right > 0 ? 4 : 0,
           alignItems: "center",
           justifyContent: "flex-start",
           gap: 10,
@@ -180,6 +182,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
         borderTopColor: colors.border,
         minHeight: tabBarHeight + insets.bottom,
         paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
         alignItems: "stretch",
       }}
     >

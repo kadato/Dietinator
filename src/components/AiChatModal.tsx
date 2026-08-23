@@ -567,8 +567,13 @@ function AiChatModalContent() {
   const chat = (
     <Box className="flex-1">
       <Box
-        style={{ backgroundColor: colors.primary, paddingTop: insets.top + 12 }}
-        className="px-4 pb-3.5"
+        style={{
+          backgroundColor: colors.primary,
+          paddingTop: insets.top + 12,
+          paddingLeft: insets.left + 16,
+          paddingRight: insets.right + 16,
+        }}
+        className="pb-3.5"
       >
         <Box className="flex-row items-center justify-between">
           <Box className="min-w-0 flex-1 flex-row items-center gap-2.5">

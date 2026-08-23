@@ -38,6 +38,8 @@ export function OfflineBanner({
         // On headerless screens the banner is the topmost element, so it
         // clears the status bar and camera cutout itself.
         paddingTop: insets.top > 0 ? insets.top + 10 : undefined,
+        paddingLeft: insets.left + 16,
+        paddingRight: insets.right + 16,
       }}
     >
       <Feather name="wifi-off" size={16} color={colors.warning} />

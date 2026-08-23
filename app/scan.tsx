@@ -244,7 +244,11 @@ function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?:
     <View
       style={[
         overlay ? cameraStyles.headerOverlay : styles.headerFlow,
-        { paddingTop: overlay ? insets.top + spacing.sm : insets.top + 16 },
+        {
+          paddingTop: overlay ? insets.top + spacing.sm : insets.top + 16,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
       ]}
     >
       <View
