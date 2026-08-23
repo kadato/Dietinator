@@ -1,9 +1,11 @@
 import { useEffect } from "react"
 import type { ReactNode } from "react"
-import { Platform } from "react-native"
+import { Platform, Pressable } from "react-native"
 import { Box } from "@ui/box"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { useSafeBack } from "@/hooks/useSafeBack"
 
 type Props = {
   children: ReactNode
@@ -21,12 +23,17 @@ type Props = {
   surface?: boolean
   /** Extra classes for the phone (full-width) wrapper. */
   outerClassName?: string
+  /** Called when backdrop or Escape is pressed. Defaults to safeBack. */
+  onDismiss?: () => void
+  /** Set false to disable backdrop/Escape dismiss. */
+  dismissable?: boolean
 }
 
 /**
  * Full-screen modal shell. On phones it is plain full width; on wide
- * (desktop / big screen) viewports the content becomes a centered,
- * floating dialog column with rounded corners and elevation.
+ * (desktop / big screen) viewports the content becomes a centered dialog
+ * column: square sheet, 1.5px ink rule, no shadow (Field Terminal depth is
+ * rule weight and invert, never lift).
  */
 export function ModalContainer({
   children,
@@ -34,9 +41,13 @@ export function ModalContainer({
   hug = false,
   surface = false,
   outerClassName,
+  onDismiss,
+  dismissable = true,
 }: Props) {
   const { isWide } = useLayout()
   const { colors } = useTheme()
+  const safeBack = useSafeBack()
+  const handleDismiss = onDismiss ?? safeBack
 
   // The screen behind a presented modal is marked aria-hidden by the
   // navigator, but the button that opened the modal keeps focus. The browser
@@ -47,6 +58,8 @@ export function ModalContainer({
     const active = document.activeElement as HTMLElement | null
     active?.blur?.()
   }, [])
+
+  useEscapeToClose(dismissable, handleDismiss)
 
   if (!isWide) {
     return (
@@ -61,14 +74,29 @@ export function ModalContainer({
 
   return (
     <Box className="w-full flex-1 items-center justify-center px-6 py-10">
+      {dismissable ? (
+        <Pressable
+          onPress={handleDismiss}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+        />
+      ) : null}
       <Box
-        className={`w-full ${hug ? "" : "flex-1"} overflow-hidden rounded-2xl`}
+        className={`w-full ${hug ? "" : "flex-1"} overflow-hidden rounded-none`}
         style={{
           maxWidth,
           backgroundColor: colors.surface,
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderColor: colors.border,
-          boxShadow: "0px 4px 24px rgba(0, 0, 0, 0.08)",
+          boxShadow: "none",
+          elevation: 0,
         }}
       >
         {children}

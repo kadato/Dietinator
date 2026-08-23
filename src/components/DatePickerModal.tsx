@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, toDateKey } from "@/utils/date"
 import { spacing, fonts, type ColorPalette } from "@/theme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 type Props = {
   visible: boolean
@@ -31,6 +32,7 @@ function monthGrid(year: number, month: number): (number | null)[] {
 }
 
 export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) {
+  useEscapeToClose(visible, onClose)
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const selected = parseDateKey(dateKey)
@@ -73,7 +75,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
           accessibilityRole="button"
           accessibilityLabel="Dismiss date picker"
         />
-        <View style={styles.centerWrap}>
+        <View accessibilityViewIsModal={true} style={styles.centerWrap}>
           <View style={styles.sheet}>
             <View style={styles.monthRow}>
               <Pressable

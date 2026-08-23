@@ -38,7 +38,7 @@ export const MealListItem = memo(function MealListItem({
   const foodCount = meal.items.length === 1 ? "1 food" : `${meal.items.length} foods`
 
   return (
-    <Box className="mb-2.5 flex-row items-center gap-2 rounded-2xl border border-outline-100 bg-background-50 px-4 py-3.5">
+    <Box className="mb-2.5 flex-row items-center gap-2 rounded-none border border-outline-100 bg-background-50 px-4 py-3.5">
       <Pressable
         className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
         onPress={onPress}
@@ -48,7 +48,7 @@ export const MealListItem = memo(function MealListItem({
         accessibilityRole="button"
       >
         <Box
-          className="h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+          className="h-11 w-11 shrink-0 items-center justify-center rounded-none"
           style={{ backgroundColor: `${accent}1f` }}
         >
           {logging ? (
@@ -80,7 +80,7 @@ export const MealListItem = memo(function MealListItem({
           onPress={onLog}
           disabled={logging}
           hitSlop={8}
-          className="h-9 w-9 items-center justify-center rounded-full"
+          className="h-9 w-9 items-center justify-center rounded-none"
           style={{ backgroundColor: accent }}
           accessibilityRole="button"
           accessibilityLabel={`Log ${meal.name}`}
@@ -97,7 +97,7 @@ export const MealListItem = memo(function MealListItem({
         <Pressable
           onPress={onEdit}
           hitSlop={8}
-          className="h-9 w-9 items-center justify-center rounded-xl bg-background-100 active:bg-background-200"
+          className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
           accessibilityRole="button"
           accessibilityLabel={`Edit ${meal.name}`}
         >
@@ -109,7 +109,7 @@ export const MealListItem = memo(function MealListItem({
         <Pressable
           onPress={onDelete}
           hitSlop={6}
-          className="h-8 w-8 items-center justify-center rounded-full"
+          className="h-8 w-8 items-center justify-center rounded-none"
           style={{ backgroundColor: `${colors.danger}14` }}
           accessibilityRole="button"
           accessibilityLabel={`Delete ${meal.name}`}

@@ -205,7 +205,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     barBg: {
-      height: 6,
+      height: 10,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 0,
       overflow: "hidden",
@@ -217,5 +217,9 @@ const createStyles = (colors: ColorPalette) =>
     barFill: {
       height: "100%",
       borderRadius: 0,
+      // Vibrant fill with a subtle top highlight for luminance separation
+      // beyond hue alone (helps deuteranopia/protanopia).
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
     },
   })

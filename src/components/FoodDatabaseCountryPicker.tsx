@@ -79,6 +79,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
           autoCorrect={false}
           clearButtonMode="while-editing"
           returnKeyType="search"
+          enterKeyHint="search"
           onSubmitEditing={() => Keyboard.dismiss()}
         />
         <FlatList

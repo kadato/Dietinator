@@ -6,7 +6,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
   type SharedValue,
 } from "react-native-reanimated"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"

@@ -111,7 +111,9 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
 
     translateX.setValue(0)
     opacity.setValue(0)
-    translateY.setValue(-24)
+    // Android hosts feedback at the bottom (Material convention), so it
+    // rises into place. Other platforms drop from the top.
+    translateY.setValue(Platform.OS === "android" ? 24 : -24)
     progress.setValue(1)
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 160, useNativeDriver: NATIVE_DRIVER }),
@@ -147,7 +149,9 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
     <View
       style={[
         styles.host,
-        { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
+        Platform.OS === "android"
+          ? { bottom: 0, paddingBottom: insets.bottom + spacing.md }
+          : { paddingTop: Platform.OS !== "web" ? insets.top + spacing.md : spacing.md },
         { pointerEvents: "box-none" as const },
       ]}
     >
@@ -244,7 +248,16 @@ function UndoFab({
       ]}
     >
       <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-        <Fab icon="rotate-ccw" tone="danger" onPress={handleUndo} accessibilityLabel="Undo" />
+        {/* Recovery is constructive: ink fill with a labeled action, never
+            the destructive danger tone. The message lives in the toast
+            above; this chip is the action itself. */}
+        <Fab
+          icon="rotate-ccw"
+          label="Undo"
+          size="sm"
+          onPress={handleUndo}
+          accessibilityLabel="Undo last change"
+        />
       </Animated.View>
     </View>
   )
@@ -339,7 +352,7 @@ function toastPalette(type: ToastType, colors: ColorPalette) {
         ? colors.danger
         : type === "warning"
           ? colors.warning
-          : colors.primaryMuted
+          : colors.primary
   return {
     tint,
     chip: `${tint}14`,
@@ -362,7 +375,6 @@ const createToastStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     host: {
       position: "absolute",
-      top: 0,
       left: 0,
       right: 0,
       zIndex: 9999,

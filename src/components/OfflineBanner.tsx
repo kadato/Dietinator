@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useNetwork } from "@/context/NetworkContext"
 import { useTheme } from "@/hooks/useTheme"
 import { fonts } from "@/theme"
@@ -16,6 +17,7 @@ export function OfflineBanner({
 }: Props) {
   const { isOnline } = useNetwork()
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
 
   if (!visible && isOnline) return null
 
@@ -24,6 +26,8 @@ export function OfflineBanner({
   return (
     <Box
       className="flex-row items-center justify-center gap-2 border-b bg-background-warning px-4 py-2.5"
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
       style={{
         borderWidth: 0,
         borderBottomWidth: 1.5,
@@ -31,6 +35,9 @@ export function OfflineBanner({
         borderRadius: 0,
         boxShadow: "none",
         elevation: 0,
+        // On headerless screens the banner is the topmost element, so it
+        // clears the status bar and camera cutout itself.
+        paddingTop: insets.top > 0 ? insets.top + 10 : undefined,
       }}
     >
       <Feather name="wifi-off" size={16} color={colors.warning} />

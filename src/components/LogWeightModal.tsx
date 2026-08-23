@@ -25,6 +25,7 @@ import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { getWeightEntryForDate, saveWeightEntry } from "@/db/weight"
 import { isImperial, parseWeightInput } from "@/utils/units"
 import { spacing, fonts, type ColorPalette } from "@/theme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonText } from "@ui/button"
@@ -44,12 +45,13 @@ function weightToDisplay(kg: number, units: string): string {
 }
 
 export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Props) {
+  useEscapeToClose(visible, onClose)
   const { settings } = useApp()
   const { showError, showWarning } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const shell = createModalShellStyles(colors)
-  const { isWide } = useLayout()
+  const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const datePress = usePressedState()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
@@ -138,7 +140,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
           />
         </Box>
-        {isWide ? (
+        {isMedium ? (
           <Text
             size="2xl"
             bold
@@ -303,7 +305,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             </Box>
           ) : null}
         </ScrollView>
-        {isWide ? null : (
+        {isMedium ? null : (
           <Box
             className="flex-row items-center gap-3 border-t px-5 py-4"
             style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
@@ -337,6 +339,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               className="flex-1"
               onPress={handleSave}
               isDisabled={saving}
+              // Specific action name on mobile, matching the wide-layout
+              // FAB: generic "Save" says nothing about what gets saved.
+              accessibilityLabel="Save weight"
               style={
                 {
                   borderRadius: 0,
@@ -359,10 +364,10 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         )}
       </View>
 
-      {isWide ? (
+      {isMedium ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
           right={
             <Fab
               icon="checkmark"
@@ -400,10 +405,19 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           accessibilityRole="button"
           accessibilityLabel="Dismiss weight dialog"
         />
-        {isWide ? (
-          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as any }]}>{form}</View>
+        {isMedium ? (
+          // Prop form, not style. react-native-web drops `pointerEvents`
+          // from both inline styles and css-interop-processed StyleSheet
+          // output (computed stays `auto`), so the full-screen wrapper
+          // swallowed backdrop taps and desktop could not dismiss the
+          // dialog. RN 0.85 deprecation-warns on the prop; that noise is
+          // accepted because the style form is functionally broken here.
+          <View accessibilityViewIsModal={true} pointerEvents="box-none" style={shell.dialogWrap}>
+            {form}
+          </View>
         ) : (
           <KeyboardAvoidingView
+            accessibilityViewIsModal={true}
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

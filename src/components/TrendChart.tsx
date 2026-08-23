@@ -7,16 +7,7 @@ import {
   type LayoutChangeEvent,
   type GestureResponderEvent,
 } from "react-native"
-import Svg, {
-  Circle,
-  Defs,
-  Line,
-  LinearGradient,
-  Path,
-  Rect,
-  Stop,
-  Text as SvgText,
-} from "react-native-svg"
+import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, shiftDateKey } from "@/utils/date"
@@ -80,13 +71,30 @@ export function TrendChart({
     setWidth(event.nativeEvent.layout.width)
   }
 
+  // One Rect per day turns a 1Y view into ~365 SVG nodes. Past 180 days,
+  // collapse bar mode to weekly worst-day buckets: the over-budget signal
+  // survives, the node count drops by an order of magnitude.
+  const chartData = useMemo(() => {
+    if (variant !== "bars" || data.length <= 180) return data
+    const bucketSize = Math.ceil(data.length / 120)
+    const out: typeof data = []
+    for (let i = 0; i < data.length; i += bucketSize) {
+      let heaviest = data[i]
+      for (let j = i + 1; j < Math.min(i + bucketSize, data.length); j++) {
+        if (data[j].value > heaviest.value) heaviest = data[j]
+      }
+      out.push(heaviest)
+    }
+    return out
+  }, [data, variant])
+
   const geometry = useMemo(() => {
-    if (data.length === 0 || width === 0) return null
+    if (chartData.length === 0 || width === 0) return null
     const innerW = width - PAD.left - PAD.right
     const innerH = height - PAD.top - PAD.bottom
     const totalDays = Math.max(dayIndex(rangeEnd, rangeStart) + 1, 1)
 
-    const values = data.map((point) => point.value)
+    const values = chartData.map((point) => point.value)
     let min = Math.min(...values)
     let max = Math.max(...values)
     if (goalValue !== undefined) {
@@ -113,15 +121,15 @@ export function TrendChart({
     }
     const xFor = (dateKey: string) => PAD.left + innerW * tFor(dateKey)
 
-    const linePath = data
+    const linePath = chartData
       .map(
         (point, index) =>
           `${index === 0 ? "M" : "L"} ${xFor(point.date).toFixed(1)} ${yFor(point.value).toFixed(1)}`,
       )
       .join(" ")
     const areaPath =
-      data.length > 1
-        ? `${linePath} L ${xFor(data[data.length - 1].date).toFixed(1)} ${PAD.top + innerH} L ${xFor(data[0].date).toFixed(1)} ${PAD.top + innerH} Z`
+      chartData.length > 1
+        ? `${linePath} L ${xFor(chartData[chartData.length - 1].date).toFixed(1)} ${PAD.top + innerH} L ${xFor(chartData[0].date).toFixed(1)} ${PAD.top + innerH} Z`
         : null
 
     // Bars: each day owns a slot; bars fill ~70% of it (full slot below ~3px
@@ -153,7 +161,7 @@ export function TrendChart({
     const labelValues = [max, min].map((value) => Math.round(value * 100) / 100)
 
     // Dots on every point get crowded past ~90 entries. Sample them instead.
-    const dotStep = Math.max(1, Math.ceil(data.length / 90))
+    const dotStep = Math.max(1, Math.ceil(chartData.length / 90))
 
     return {
       xFor,
@@ -169,24 +177,24 @@ export function TrendChart({
       innerW,
       innerH,
     }
-  }, [data, goalValue, height, rangeEnd, rangeStart, width])
+  }, [chartData, goalValue, height, rangeEnd, rangeStart, width])
 
   const goalY = geometry && goalValue !== undefined ? geometry.yFor(goalValue) : null
 
   const handlePress = (event: GestureResponderEvent) => {
-    if (!geometry || data.length === 0) return
+    if (!geometry || chartData.length === 0) return
     const native = event.nativeEvent as { locationX?: number; offsetX?: number }
     const x = native.locationX ?? native.offsetX ?? 0
     let best = 0
     let bestDistance = Infinity
-    for (let index = 0; index < data.length; index += 1) {
-      const distance = Math.abs(geometry.xFor(data[index].date) - x)
+    for (let index = 0; index < chartData.length; index += 1) {
+      const distance = Math.abs(geometry.xFor(chartData[index].date) - x)
       if (distance < bestDistance) {
         bestDistance = distance
         best = index
       }
     }
-    onPointPress?.(data[best])
+    onPointPress?.(chartData[best])
   }
 
   return (
@@ -205,15 +213,8 @@ export function TrendChart({
           accessibilityLabel="Inspect chart point"
         />
       ) : null}
-      {width > 0 && data.length > 0 && geometry ? (
+      {width > 0 && chartData.length > 0 && geometry ? (
         <Svg width={width} height={height}>
-          <Defs>
-            <LinearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={color} stopOpacity={0.28} />
-              <Stop offset="1" stopColor={color} stopOpacity={0.02} />
-            </LinearGradient>
-          </Defs>
-
           {geometry.gridValues.map((value) => {
             const y = geometry.yFor(value)
             return (
@@ -235,7 +236,7 @@ export function TrendChart({
               key={`label-${value}`}
               x={PAD.left - 6}
               y={geometry.yFor(value) + 3.5}
-              fontSize={10}
+              fontSize={11}
               fontFamily={fonts.mono}
               fill={colors.textMuted}
               textAnchor="end"
@@ -249,7 +250,7 @@ export function TrendChart({
               key={`tick-${dateKey}`}
               x={geometry.xFor(dateKey)}
               y={height - 6}
-              fontSize={10}
+              fontSize={11}
               fontFamily={fonts.mono}
               fill={colors.textMuted}
               textAnchor={
@@ -274,7 +275,7 @@ export function TrendChart({
               <SvgText
                 x={PAD.left + geometry.innerW}
                 y={goalY - 5}
-                fontSize={10}
+                fontSize={11}
                 fontFamily={fonts.mono}
                 fill={colors.warning}
                 textAnchor="end"
@@ -285,7 +286,7 @@ export function TrendChart({
           ) : null}
 
           {variant === "bars" ? (
-            data.map((point) => {
+            chartData.map((point) => {
               const x = geometry.barX(point.date)
               const y = geometry.yFor(point.value)
               const overGoal = goalValue !== undefined && point.value > goalValue
@@ -303,10 +304,13 @@ export function TrendChart({
             })
           ) : (
             <>
-              {geometry.areaPath ? <Path d={geometry.areaPath} fill="url(#trendFill)" /> : null}
+              {/* Flat tint fill. The Field Terminal bans gradients. */}
+              {geometry.areaPath ? (
+                <Path d={geometry.areaPath} fill={color} fillOpacity={0.1} />
+              ) : null}
               <Path d={geometry.linePath} fill="none" stroke={color} strokeWidth={2.5} />
-              {data.map((point, index) => {
-                if (index % geometry.dotStep !== 0 && index !== data.length - 1) return null
+              {chartData.map((point, index) => {
+                if (index % geometry.dotStep !== 0 && index !== chartData.length - 1) return null
                 return (
                   <Circle
                     key={`dot-${point.date}`}

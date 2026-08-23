@@ -42,8 +42,8 @@ export const MacroPills = memo(function MacroPills({
           style={[
             styles.cardItem,
             {
-              backgroundColor: `${colors.breakfast}14`,
-              borderColor: colors.border,
+              backgroundColor: `${colors.breakfast}20`,
+              borderColor: `${colors.breakfast}55`,
             },
           ]}
         >
@@ -51,16 +51,16 @@ export const MacroPills = memo(function MacroPills({
             <View
               style={[
                 styles.cardIconBox,
-                { backgroundColor: `${colors.breakfast}14`, borderColor: colors.border },
+                { backgroundColor: `${colors.breakfast}26`, borderColor: `${colors.breakfast}55` },
               ]}
             >
-              <Feather name="zap" size={12} color={colors.breakfast} />
+              <Feather name="zap" size={13} color={colors.breakfast} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.breakfast }]}>Protein</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(p)}g</Text>
-            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({pPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.breakfast }]}>{formatNumber(p)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.breakfast }]}>({pPct}%)</Text>
           </View>
         </View>
 
@@ -68,8 +68,8 @@ export const MacroPills = memo(function MacroPills({
           style={[
             styles.cardItem,
             {
-              backgroundColor: `${colors.lunch}14`,
-              borderColor: colors.border,
+              backgroundColor: `${colors.lunch}20`,
+              borderColor: `${colors.lunch}55`,
             },
           ]}
         >
@@ -77,16 +77,16 @@ export const MacroPills = memo(function MacroPills({
             <View
               style={[
                 styles.cardIconBox,
-                { backgroundColor: `${colors.lunch}14`, borderColor: colors.border },
+                { backgroundColor: `${colors.lunch}26`, borderColor: `${colors.lunch}55` },
               ]}
             >
-              <Feather name="box" size={12} color={colors.lunch} />
+              <Feather name="box" size={13} color={colors.lunch} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.lunch }]}>Carbs</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(c)}g</Text>
-            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({cPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.lunch }]}>{formatNumber(c)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.lunch }]}>({cPct}%)</Text>
           </View>
         </View>
 
@@ -94,8 +94,8 @@ export const MacroPills = memo(function MacroPills({
           style={[
             styles.cardItem,
             {
-              backgroundColor: `${colors.dinner}14`,
-              borderColor: colors.border,
+              backgroundColor: `${colors.dinner}20`,
+              borderColor: `${colors.dinner}55`,
             },
           ]}
         >
@@ -103,16 +103,16 @@ export const MacroPills = memo(function MacroPills({
             <View
               style={[
                 styles.cardIconBox,
-                { backgroundColor: `${colors.dinner}14`, borderColor: colors.border },
+                { backgroundColor: `${colors.dinner}26`, borderColor: `${colors.dinner}55` },
               ]}
             >
-              <Feather name="droplet" size={12} color={colors.dinner} />
+              <Feather name="droplet" size={13} color={colors.dinner} />
             </View>
             <Text style={[styles.cardLabel, { color: colors.dinner }]}>Fat</Text>
           </View>
           <View style={styles.cardValueRow}>
-            <Text style={[styles.cardGrams, { color: colors.text }]}>{formatNumber(f)}g</Text>
-            <Text style={[styles.cardPct, { color: colors.textMuted }]}>({fPct}%)</Text>
+            <Text style={[styles.cardGrams, { color: colors.dinner }]}>{formatNumber(f)}g</Text>
+            <Text style={[styles.cardPct, { color: colors.dinner }]}>({fPct}%)</Text>
           </View>
         </View>
       </View>
@@ -121,7 +121,7 @@ export const MacroPills = memo(function MacroPills({
 
   const isXs = size === "xs"
   const isDetailed = variant === "detailed"
-  const iconSize = isXs ? 12 : size === "md" ? 14 : 13
+  const iconSize = isXs ? 11 : size === "md" ? 14 : 13
 
   return (
     <View style={styles.pillContainer}>
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    rowGap: 4,
     flexWrap: "wrap",
     maxWidth: "100%",
   },
@@ -247,12 +248,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     width: "100%",
+    flexWrap: "wrap",
   },
   cardItem: {
-    flex: 1,
-    minWidth: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 7,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 88,
+    minWidth: 88,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     borderRadius: 0,
     borderWidth: 1.5,
     boxShadow: "none",
@@ -289,7 +293,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   cardGrams: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "800",
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
@@ -303,6 +307,6 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     textTransform: "uppercase",
     letterSpacing: 0.4,
-    opacity: 0.75,
+    opacity: 0.8,
   },
 })

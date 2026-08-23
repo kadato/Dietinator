@@ -1,4 +1,4 @@
-import { memo } from "react"
+import { memo, useEffect, useRef, useState } from "react"
 import { ActivityIndicator, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
@@ -61,6 +61,21 @@ export const FoodListItem = memo(function FoodListItem({
   const { colors } = useTheme()
   const accent = accentColor ?? colors.primary
   const unit = food.base_unit || "g"
+
+  // Receipt flash: when this row's quick-add resolves, the pill shows a
+  // check for a beat so the commit is confirmed at the finger, not only in
+  // the header arithmetic. Self-contained; no parent wiring needed.
+  const [justAdded, setJustAdded] = useState(false)
+  const prevAddingRef = useRef(quickAdding ?? false)
+  useEffect(() => {
+    const wasAdding = prevAddingRef.current
+    prevAddingRef.current = quickAdding ?? false
+    if (wasAdding && !quickAdding) {
+      setJustAdded(true)
+      const timer = setTimeout(() => setJustAdded(false), 900)
+      return () => clearTimeout(timer)
+    }
+  }, [quickAdding])
 
   const perGram = isPerGramNutrients(food.nutrients, unit, food.serving.serving_quantity)
   const effectiveAmount =
@@ -261,6 +276,24 @@ export const FoodListItem = memo(function FoodListItem({
           >
             {quickAdding ? (
               <ActivityIndicator size="small" color={colors.onPrimary} />
+            ) : justAdded ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                <Feather name="check" size={16} color={colors.onPrimary} />
+                <Text
+                  size="xs"
+                  bold
+                  className="text-[12px] leading-4"
+                  style={{
+                    color: colors.onPrimary,
+                    fontFamily: fonts.mono,
+                    fontVariant: ["tabular-nums"],
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
+                >
+                  {portion}
+                </Text>
+              </View>
             ) : (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
                 <Feather name="plus" size={16} color={colors.onPrimary} />

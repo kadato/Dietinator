@@ -12,15 +12,15 @@ type Props = {
   iconColor?: string
   title: string
   message?: string
-  /** Extra content below the message (for examplea primary action button). */
+  /** Extra content below the message, for example a primary action button. */
   action?: ReactNode
   /**
-   * `large` (default): 64px soft icon circle with a bold title,
-   * used for whole-list empty states. `compact`: 44px circle icon with an
-   * `sm` muted line, used inside cards.
+   * Large is default. 64px soft icon circle with a bold title,
+   * used for whole-list empty states. Compact is 44px circle icon with an
+   * sm muted line, used inside cards.
    */
   variant?: "large" | "compact"
-  /** Extra classes for the wrapper (for example"mt-12", "pt-14"). */
+  /** Extra classes for the wrapper, for example mt-12 or pt-14. */
   className?: string
 }
 

@@ -26,6 +26,7 @@ import type { WaterEntry } from "@/types"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { formatWaterAmount } from "@/utils/units"
 import { spacing, fonts, type ColorPalette } from "@/theme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonText } from "@ui/button"
@@ -40,12 +41,16 @@ type Props = {
 const QUICK_AMOUNTS = [250, 330, 500, 1000]
 
 export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Props) {
+  useEscapeToClose(visible, onClose)
   const { settings } = useApp()
   const { showError, showUndo } = useToast()
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const shell = createModalShellStyles(colors)
-  const { isWide } = useLayout()
+  // Dialog presentation starts at the medium breakpoint: 600-899px windows
+  // (portrait tablets, Split View) get a centered dialog instead of a
+  // stretched full-height phone sheet.
+  const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const datePress = usePressedState()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
@@ -126,7 +131,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             boxShadow: "none",
             elevation: 0,
           },
-          isWide ? styles.dialogBodyWide : { maxHeight: "90%" },
+          isMedium ? styles.dialogBodyWide : { maxHeight: "90%" },
         ]}
       >
         <Box className="items-center pt-2">
@@ -135,7 +140,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
           />
         </Box>
-        {isWide ? (
+        {isMedium ? (
           <Text
             size="2xl"
             bold
@@ -192,7 +197,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
         )}
         <ScrollView
           className="flex-1"
-          contentContainerClassName={`${isWide ? "" : "grow"} px-4 pb-4`}
+          contentContainerClassName={`${isMedium ? "" : "grow"} px-4 pb-4`}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -404,7 +409,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             </Box>
           )}
         </ScrollView>
-        {isWide ? null : (
+        {isMedium ? null : (
           <Box
             className="border-t border-outline-100 px-5 py-4"
             style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
@@ -434,10 +439,10 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
         )}
       </View>
 
-      {isWide ? (
+      {isMedium ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="close" onPress={onClose} accessibilityLabel="Cancel" />}
+          left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
         />
       ) : null}
 
@@ -467,10 +472,13 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           accessibilityRole="button"
           accessibilityLabel="Dismiss water dialog"
         />
-        {isWide ? (
-          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as any }]}>{form}</View>
+        {isMedium ? (
+          <View accessibilityViewIsModal={true} pointerEvents="box-none" style={shell.dialogWrap}>
+            {form}
+          </View>
         ) : (
           <KeyboardAvoidingView
+            accessibilityViewIsModal={true}
             style={shell.dialogWrap}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >

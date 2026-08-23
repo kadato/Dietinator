@@ -108,7 +108,7 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.calorieBlock}>
-          <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={1.4}>
+          <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={2}>
             {nutrients.kcal}
           </Text>
           <Text style={styles.calorieUnit}>kcal</Text>
@@ -238,12 +238,12 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     bar: {
-      height: 6,
+      height: 8,
       flexDirection: "row",
       overflow: "hidden",
       borderRadius: 0,
       backgroundColor: colors.surfaceAlt,
-      marginBottom: 8,
+      marginBottom: 10,
       borderWidth: 1.5,
       borderColor: colors.border,
       boxShadow: "none",
@@ -251,6 +251,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     barSegment: {
       height: "100%",
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
     },
     macroGrid: {
       flexDirection: "row",
@@ -358,7 +360,7 @@ const createStyles = (colors: ColorPalette) =>
       fontVariant: ["tabular-nums"],
     },
     microBasis: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -366,7 +368,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     microRdi: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.textMuted,
       minWidth: 42,

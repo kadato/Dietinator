@@ -38,13 +38,13 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
     <View style={styles.row}>
       <Pressable
         onPress={() => onEdit(entry.id)}
-        onLongPress={() => onDelete(entry.id)}
         onPressIn={mainPress.onPressIn}
         onPressOut={mainPress.onPressOut}
         style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
+        className="cursor-pointer hover:opacity-90"
         accessibilityRole="button"
         accessibilityLabel={`${entry.food_name}, ${amountLabel.trim()}, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g, ${Math.round(entry.kcal)} kcal`}
-        accessibilityHint="Tap to edit, long press to delete"
+        accessibilityHint="Tap to edit"
       >
         <View
           style={[
@@ -57,7 +57,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         >
           <MaterialCommunityIcons
             name={getFoodIcon(entry.food_name, entry)}
-            size={20}
+            size={22}
             color={accentColor}
           />
         </View>
@@ -78,7 +78,8 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         {onShowNutrition ? (
           <Pressable
             onPress={() => onShowNutrition(entry)}
-            hitSlop={8}
+            hitSlop={4}
+            className="cursor-pointer hover:opacity-70"
             onPressIn={infoPress.onPressIn}
             onPressOut={infoPress.onPressOut}
             style={[
@@ -94,7 +95,8 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         ) : null}
         <Pressable
           onPress={() => onEdit(entry.id)}
-          hitSlop={8}
+          hitSlop={4}
+          className="cursor-pointer hover:opacity-70"
           onPressIn={editPress.onPressIn}
           onPressOut={editPress.onPressOut}
           style={[
@@ -105,11 +107,12 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Edit ${entry.food_name}`}
         >
-          <Feather name="edit-2" size={14} color={accentColor} />
+          <Feather name="edit-2" size={16} color={accentColor} />
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
-          hitSlop={8}
+          hitSlop={4}
+          className="cursor-pointer hover:opacity-70"
           onPressIn={deletePress.onPressIn}
           onPressOut={deletePress.onPressOut}
           style={[
@@ -120,7 +123,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           accessibilityRole="button"
           accessibilityLabel={`Delete ${entry.food_name}`}
         >
-          <Feather name="trash-2" size={14} color={colors.danger} />
+          <Feather name="trash-2" size={16} color={colors.danger} />
         </Pressable>
       </View>
     </View>
@@ -133,25 +136,30 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      paddingVertical: 8,
+      paddingVertical: 6,
       paddingHorizontal: 4,
       borderRadius: 0,
       borderWidth: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: `${colors.border}10`,
       boxShadow: "none",
       elevation: 0,
+      overflow: "hidden",
     },
     main: {
       flex: 1,
       minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: 10,
+      gap: 8,
       borderRadius: 0,
-      paddingVertical: 3,
+      paddingVertical: 2,
+      paddingHorizontal: 2,
       borderWidth: 1.5,
       borderColor: "transparent",
       boxShadow: "none",
       elevation: 0,
+      overflow: "hidden",
     },
     rowPressed: {
       backgroundColor: colors.surfaceAlt,
@@ -167,12 +175,12 @@ const createStyles = (colors: ColorPalette) =>
       boxShadow: "none",
       elevation: 0,
     },
-    info: { flex: 1, minWidth: 0 },
+    info: { flex: 1, minWidth: 0, gap: 2, overflow: "hidden" },
     name: {
       fontSize: 13,
       fontWeight: "700",
       color: colors.text,
-      lineHeight: 18,
+      lineHeight: 16,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
@@ -182,11 +190,12 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       flexWrap: "wrap",
-      gap: 4,
-      marginTop: 2.5,
+      columnGap: 4,
+      rowGap: 4,
+      marginTop: 2,
     },
     amountLabel: {
-      fontSize: 11,
+      fontSize: 10,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -194,19 +203,19 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroDot: {
-      fontSize: 11,
+      fontSize: 10,
       color: colors.textMuted,
       fontFamily: fonts.mono,
     },
     miniChip: {
-      paddingHorizontal: 5,
+      paddingHorizontal: 3,
       paddingVertical: 1,
       borderRadius: 0,
       borderWidth: 1.5,
       borderColor: colors.border,
     },
     miniChipText: {
-      fontSize: 11,
+      fontSize: 9,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -214,7 +223,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroPill: {
-      fontSize: 11,
+      fontSize: 9,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -224,11 +233,13 @@ const createStyles = (colors: ColorPalette) =>
     kcalBlock: {
       alignItems: "flex-end",
       justifyContent: "center",
-      paddingLeft: 4,
+      paddingLeft: 3,
+      minWidth: 44,
+      flexShrink: 0,
     },
     kcalValue: {
-      fontSize: 15,
-      fontWeight: "700",
+      fontSize: 14,
+      fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -249,10 +260,11 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       gap: 4,
       marginLeft: 4,
+      flexShrink: 0,
     },
     actionBtn: {
-      width: 30,
-      height: 30,
+      width: 32,
+      height: 32,
       borderRadius: 0,
       borderWidth: 1.5,
       alignItems: "center",

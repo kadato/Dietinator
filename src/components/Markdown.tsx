@@ -295,7 +295,7 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
       )
     case "quote":
       return (
-        <Box className="border-l-2 pl-3" style={{ borderLeftColor: colors.primaryMuted }}>
+        <Box className="border-l-2 pl-3" style={{ borderLeftColor: colors.border }}>
           <Text size="sm" className="leading-[20px] text-typography-500">
             <InlineText tokens={parseInline(block.text)} colors={colors} />
           </Text>

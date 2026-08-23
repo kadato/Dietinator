@@ -2,9 +2,11 @@ import type { ReactNode } from "react"
 import { StyleSheet, View } from "react-native"
 
 /**
- * `pointerEvents` must live in a registered style, not an inline one:
- * react-native-web only compiles it from `StyleSheet.create`, and inline
- * `{ pointerEvents: "box-none" }` is silently dropped on web.
+ * Pass `pointerEvents` as a prop, not a style. react-native-web
+ * drops it from inline styles and from css-interop-processed StyleSheet
+ * output. Verified live, computed style stayed auto. RN 0.85 deprecates
+ * the prop in favor of the style, but only the prop actually reaches CSS
+ * through NativeWind, so the warning is accepted over silent breakage.
  */
 const styles = StyleSheet.create({
   cluster: {
@@ -30,9 +32,9 @@ type Props = {
   left?: ReactNode
   /** FABs docked to the bottom-right of the screen. */
   right?: ReactNode
-  /** FABs docked bottom-center (thumb-friendly on phones). */
+  /** FABs docked bottom-center, thumb-friendly on phones. */
   center?: ReactNode
-  /** Distance from the bottom edge (safe area already included by callers). */
+  /** Distance from the bottom edge. Safe area already included by callers. */
   bottomOffset?: number
   /** Vertical gap between stacked FABs. */
   gap?: number
@@ -42,7 +44,7 @@ type Props = {
 
 /**
  * Docks FABs to the bottom corners or bottom-center. Renders only the
- * clusters (content-sized), never a full-screen wrapper, so taps outside the
+ * clusters, content-sized, never a full-screen wrapper, so taps outside the
  * cluster reach the screen below on every platform.
  */
 export function FabCluster({
@@ -59,7 +61,15 @@ export function FabCluster({
         <View style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}>{left}</View>
       ) : null}
       {center ? (
-        <View style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}>{center}</View>
+        // Prop form, not style: react-native-web drops `pointerEvents` from
+        // both inline and css-interop-processed styles, and a full-width
+        // center cluster would swallow every tap above it.
+        <View
+          pointerEvents="box-none"
+          style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}
+        >
+          {center}
+        </View>
       ) : null}
       {right ? (
         <View

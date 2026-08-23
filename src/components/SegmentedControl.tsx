@@ -45,8 +45,11 @@ export function SegmentedControl<T extends string>({
               borderColor: active ? accent : "transparent",
               borderRadius: 0,
               opacity: active ? 1 : 0.85,
-              boxShadow: "none",
-              elevation: 0,
+              // Fixed 44 height, not minHeight: stacked SettingsRows stretch
+              // children vertically, which inflated segments to row height.
+              // Deterministic height keeps labels dead-center everywhere.
+              height: 44,
+              justifyContent: "center",
             }}
             onPress={() => onChange(option.value)}
             hitSlop={2}
@@ -64,6 +67,9 @@ export function SegmentedControl<T extends string>({
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
                 fontSize: 12,
+                // No explicit lineHeight: numeric values serialize as CSS
+                // multipliers on web (12 => 144px box). Normal metrics
+                // center cleanly inside the fixed 44 segment.
               }}
             >
               {option.label}

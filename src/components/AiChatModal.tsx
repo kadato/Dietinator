@@ -30,6 +30,7 @@ import type { AiChatMessage } from "@/types"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { fonts } from "@/theme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 function formatTime(iso: string): string {
   const date = new Date(iso)
@@ -105,6 +106,7 @@ function AiChatModalContent() {
   const router = useRouter()
   const { settings } = useApp()
   const { open, closeAiChat } = useAiChatModal()
+  useEscapeToClose(open, closeAiChat)
   const { colors } = useTheme()
   const shell = createModalShellStyles(colors)
   const insets = useSafeAreaInsets()
@@ -774,6 +776,7 @@ function AiChatModalContent() {
                 selectionColor={colors.primary}
                 accessibilityLabel="Message the AI assistant"
                 returnKeyType="send"
+                enterKeyHint="send"
                 blurOnSubmit={false}
                 onSubmitEditing={canSend ? submit : undefined}
               />
@@ -833,7 +836,9 @@ function AiChatModalContent() {
     <Modal
       visible={open}
       transparent
-      animationType="none"
+      // Match sibling dialogs: fade when centered, slide as a phone sheet.
+      // A modal that snaps open breaks modality perception.
+      animationType={isWide ? "fade" : "slide"}
       onRequestClose={closeAiChat}
       statusBarTranslucent
     >
@@ -845,9 +850,10 @@ function AiChatModalContent() {
           accessibilityLabel="Dismiss AI chat"
         />
         {isWide ? (
-          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as any }]}>
+          <View pointerEvents="box-none" style={shell.dialogWrap}>
             <View
               testID="ai-chat-dialog"
+              accessibilityViewIsModal={true}
               style={[
                 shell.dialogBox,
                 {
@@ -867,6 +873,7 @@ function AiChatModalContent() {
           </View>
         ) : (
           <View
+            accessibilityViewIsModal={true}
             style={[
               shell.sheet,
               { backgroundColor: colors.surface, borderRadius: 0, boxShadow: "none", elevation: 0 },
@@ -879,9 +886,7 @@ function AiChatModalContent() {
         {isWide ? (
           <FabCluster
             bottomOffset={insets.bottom + 24}
-            left={
-              <Fab tone="surface" icon="close" onPress={closeAiChat} accessibilityLabel="Cancel" />
-            }
+            left={<Fab tone="surface" icon="x" onPress={closeAiChat} accessibilityLabel="Cancel" />}
           />
         ) : null}
       </View>

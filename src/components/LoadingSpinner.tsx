@@ -1,65 +1,89 @@
-import { useEffect, useState } from "react"
-import { StyleSheet, View, type ViewStyle } from "react-native"
+import { useEffect, useRef } from "react"
+import { Animated, Easing, StyleSheet, View } from "react-native"
+import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
 
-const EDGES = ["top", "right", "bottom", "left"] as const
-type Edge = (typeof EDGES)[number]
-/** One revolution every 640ms; each edge holds for 160ms. */
+/** One revolution every 900ms, smooth. */
 export const SPINNER_STEP_MS = 160
 
 /**
- * Field-terminal loader shared by every surface: a static square well whose
- * outline is the track while exactly one edge is inked at a time. The inked
- * edge steps around the perimeter. Nothing rotates.
+ * Single thick progress arc that sweeps the square perimeter. The previous
+ * two-line well (track + stepping edge) read as two separate strokes; now
+ * one 270° arc (`borderTopColor transparent`) rotates continuously, leaving
+ * a clear gap for progress.
  */
 export function LoadingSpinner({ size = 32 }: { size?: number }) {
   const { colors } = useTheme()
-  const [step, setStep] = useState(0)
+  const reduceMotion = useReduceMotion()
+  const spin = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setStep((s) => (s + 1) % EDGES.length)
-    }, SPINNER_STEP_MS)
-    return () => clearInterval(timer)
-  }, [])
+    if (reduceMotion) return
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [reduceMotion, spin])
 
-  const active = EDGES[step]
+  const rotate = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  })
+
+  const thickness = Math.max(Math.round(size * 0.12), 4)
+
+  if (reduceMotion) {
+    return (
+      <View
+        style={[
+          styles.trackStatic,
+          {
+            width: size,
+            height: size,
+            borderWidth: thickness,
+            borderColor: colors.primary,
+            backgroundColor: "transparent",
+          },
+        ]}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading"
+      />
+    )
+  }
 
   return (
     <View
-      style={[
-        styles.track,
-        {
-          width: size,
-          height: size,
-          borderColor: colors.surfaceAlt,
-        },
-      ]}
+      style={[styles.container, { width: size, height: size }]}
+      accessibilityRole="progressbar"
       accessibilityLabel="Loading"
     >
-      {EDGES.map((edge) =>
-        edge === active ? (
-          <View
-            key={edge}
-            style={[styles.edge, EDGE_GEOMETRY[edge], { backgroundColor: colors.primary }]}
-          />
-        ) : null,
-      )}
+      <Animated.View
+        style={[
+          styles.arc,
+          {
+            width: size,
+            height: size,
+            borderWidth: thickness,
+            borderColor: colors.primary,
+            borderTopColor: "transparent",
+            transform: [{ rotate }],
+          },
+        ]}
+      />
     </View>
   )
-}
-
-const EDGE_GEOMETRY: Record<Edge, ViewStyle> = {
-  top: { top: 0, left: 0, right: 0, height: 2 },
-  right: { top: 0, bottom: 0, right: 0, width: 2 },
-  bottom: { bottom: 0, left: 0, right: 0, height: 2 },
-  left: { top: 0, bottom: 0, left: 0, width: 2 },
 }
 
 export function LoadingView({ size = 32 }: { size?: number }) {
   const { colors } = useTheme()
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
       <LoadingSpinner size={size} />
     </View>
   )
@@ -67,17 +91,20 @@ export function LoadingView({ size = 32 }: { size?: number }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  track: {
-    borderWidth: 2,
+  trackStatic: {
     borderRadius: 0,
     backgroundColor: "transparent",
   },
-  edge: {
-    position: "absolute",
+  arc: {
     borderRadius: 0,
+    backgroundColor: "transparent",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 })

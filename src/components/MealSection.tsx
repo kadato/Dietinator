@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from "react"
-import { Pressable } from "react-native"
-import { Feather, Ionicons } from "@expo/vector-icons"
+import { Pressable, View } from "react-native"
+import { Feather } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
@@ -54,18 +54,18 @@ export const MealSection = memo(function MealSection({
   const totalFat = entries.reduce((s, e) => s + (e.fat || 0), 0)
 
   return (
-    <Card variant="elevated" className="mb-3 overflow-hidden rounded-3xl p-4">
-      <Box className="flex-row items-center gap-3">
+    <Card variant="elevated" className="mb-3 overflow-hidden rounded-none p-0">
+      {/* Header: icon + title on one line, kcal + add on the right. The icon
+          is top-aligned to the title baseline, not centered to the whole card,
+          so a tall goal bar below does not pull the icon down. */}
+      <Box className="flex-row items-start justify-between gap-3 px-4 pt-4">
         <Pressable
           onPress={() => {
             if (entries.length === 0) onAdd(mealType)
             else setExpanded((v) => !v)
           }}
-          className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
+          className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3 hover:opacity-90 active:opacity-80"
           accessibilityRole="button"
-          // 2.5.3 label-in-name: the accessible name must contain the visible
-          // text inside the button (goal line, pills, empty hint), so it is
-          // built from the same data.
           accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} kcal, ${
             goal
               ? `of ${Math.round(goal)} kcal goal, ${
@@ -81,87 +81,131 @@ export const MealSection = memo(function MealSection({
           }`}
         >
           <Box
-            className="h-12 w-12 shrink-0 items-center justify-center rounded-none border"
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
             style={{
-              backgroundColor: `${accent}1f`,
+              backgroundColor: `${accent}14`,
               borderColor: colors.border,
               borderWidth: 1.5,
               borderRadius: 0,
             }}
           >
-            <Feather name={MEAL_ICONS[mealType]} size={22} color={accent} />
+            <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />
           </Box>
 
-          <Box className="min-w-0 flex-1">
-            <Box className="flex-row items-center justify-between gap-2">
+          <Box className="min-w-0 flex-1 gap-1">
+            <Box className="flex-row items-baseline justify-between gap-2">
               <Box className="flex-row items-center gap-1.5">
-                {/* Trailing space separates the label from the kcal number in
-                    the concatenated accessible name (2.5.3). */}
-                <Text size="md" bold className="text-[16px] text-typography-900">
-                  {MEAL_LABELS[mealType]}{" "}
+                <Text
+                  size="md"
+                  bold
+                  className="text-[12px] uppercase tracking-widest text-typography-900"
+                  style={{ letterSpacing: 0.08 }}
+                >
+                  {MEAL_LABELS[mealType]}
                 </Text>
                 {entries.length > 0 ? (
-                  <Ionicons
+                  <Feather
                     name={expanded ? "chevron-up" : "chevron-down"}
-                    size={14}
+                    size={12}
                     color={colors.textMuted}
                   />
                 ) : null}
               </Box>
-              <Text size="md" bold className="font-tabular text-[15px] text-typography-900">
+              <Text size="sm" bold className="font-tabular text-[14px] text-typography-900">
                 {Math.round(totalKcal)}{" "}
-                <Text size="xs" className="font-normal text-typography-500">
+                <Text size="2xs" className="font-normal tracking-widest text-typography-500">
                   kcal
-                </Text>{" "}
+                </Text>
               </Text>
             </Box>
-
-            {goal ? (
-              <Box className="mt-0.5 flex-row items-center gap-1">
-                <Text size="xs" className="font-tabular text-[12px] text-typography-500">
-                  of {Math.round(goal)} kcal goal
-                </Text>
-                <Text size="xs" className="text-typography-400">
-                  ,
-                </Text>
-                <Text
-                  size="xs"
-                  bold
-                  style={{ color: overKcal ? colors.danger : colors.primary }}
-                  className="font-tabular text-[12px]"
-                >
-                  {overKcal
-                    ? `+${Math.round(overKcal)} over`
-                    : `${Math.round(remainingKcal ?? 0)} left`}
-                </Text>
-              </Box>
-            ) : null}
-
-            {entries.length > 0 ? (
-              <Box className="mt-1.5 min-w-0 flex-row flex-wrap">
-                <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
-              </Box>
-            ) : (
-              <Text size="xs" className="mt-0.5 text-typography-400">
-                Nothing logged yet
-              </Text>
-            )}
           </Box>
         </Pressable>
 
         <Pressable
-          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-500 active:opacity-80"
+          className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none bg-primary-500 hover:bg-primary-600 active:opacity-80"
           onPress={() => onAdd(mealType)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
-          <Ionicons name="add" size={24} color={colors.onPrimary} />
+          <Feather name="plus" size={18} color={colors.onPrimary} />
         </Pressable>
       </Box>
 
+      {/* Goal track spans the full card width below the header, not the
+          middle column, so it reads as the card's budget. */}
+      {goal ? (
+        <Box className="mt-3 gap-1.5 px-4">
+          <View
+            className="w-full overflow-hidden rounded-none border bg-background-100"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              height: 8,
+            }}
+          >
+            <View
+              style={{
+                width: `${Math.min((totalKcal / goal) * 100, 100)}%`,
+                height: "100%",
+                backgroundColor: overKcal ? colors.danger : accent,
+                borderTopWidth: 1.5,
+                borderTopColor: "rgba(255,255,255,0.22)",
+              }}
+            />
+          </View>
+          <Box className="flex-row items-center justify-between">
+            <Text
+              size="xs"
+              className="font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontSize: 10, letterSpacing: 0.06 }}
+            >
+              Goal {Math.round(goal)} kcal
+            </Text>
+            <View
+              className="rounded-none border px-2 py-0.5"
+              style={{
+                borderWidth: 1.5,
+                borderColor: overKcal ? colors.danger : accent,
+                backgroundColor: overKcal ? `${colors.danger}14` : `${accent}14`,
+                borderRadius: 0,
+              }}
+            >
+              <Text
+                size="xs"
+                bold
+                className="font-mono uppercase tracking-widest"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 0.06,
+                  color: overKcal ? colors.danger : accent,
+                }}
+              >
+                {overKcal
+                  ? `+${Math.round(overKcal)} over`
+                  : `${Math.round(remainingKcal ?? 0)} left`}
+              </Text>
+            </View>
+          </Box>
+        </Box>
+      ) : null}
+
+      {/* Logged macros or empty hint sit on their own full-width row. */}
+      <Box className="px-4 pb-4 pt-2.5">
+        {entries.length > 0 ? (
+          <Box className="min-w-0 flex-row flex-wrap">
+            <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
+          </Box>
+        ) : (
+          <Text size="xs" className="font-mono uppercase tracking-widest text-typography-400">
+            Nothing logged yet
+          </Text>
+        )}
+      </Box>
+
       {expanded && entries.length > 0 ? (
-        <Box className="mt-3 gap-1 border-t border-outline-100 pt-2.5">
+        <Box className="mt-2 gap-1 border-t border-outline-100 px-2 pb-2 pt-2">
           {entries.map((entry) => (
             <DiaryEntryRow
               key={`${dateKey}-${entry.id}`}

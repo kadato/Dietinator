@@ -1,4 +1,4 @@
-import { memo, useState } from "react"
+import { memo, useEffect, useRef, useState } from "react"
 import { View, Text, StyleSheet, Pressable } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
@@ -37,17 +37,23 @@ const MacroCompareRow = memo(function MacroCompareRow({
   const over = goal > 0 && projected > goal ? projected - goal : 0
   const currentPct = goal > 0 ? Math.min((current / goal) * 100, 100) : 0
   const addedPct = goal > 0 ? Math.min((added / goal) * 100, Math.max(100 - currentPct, 0)) : 0
+  const iconName: keyof typeof Feather.glyphMap =
+    label === "Protein" ? "zap" : label === "Carbs" ? "box" : "droplet"
 
   return (
     <View style={styles.macroRow}>
       <View style={styles.macroRowHeader}>
         <View style={styles.labelGroup}>
-          <View style={[styles.dot, { backgroundColor: color, borderColor: colors.border }]} />
+          <View
+            style={[styles.iconBox, { backgroundColor: `${color}18`, borderColor: colors.border }]}
+          >
+            <Feather name={iconName} size={10} color={color} />
+          </View>
           <Text style={[styles.macroLabel, { color }]}>{label}</Text>
         </View>
 
         <View style={styles.valueGroup}>
-          <Text style={styles.transitionText}>
+          <Text style={styles.transitionText} numberOfLines={1}>
             {Math.round(current)}g <Text style={styles.arrowText}>to</Text>{" "}
             <Text style={styles.projectedText}>{Math.round(projected)}g</Text>{" "}
             <Text style={[styles.addedText, { color }]}>(+{Math.round(added)}g)</Text>
@@ -58,18 +64,13 @@ const MacroCompareRow = memo(function MacroCompareRow({
               style={[
                 styles.budgetBadge,
                 {
-                  backgroundColor: over > 0 ? `${colors.danger}14` : `${colors.primary}14`,
+                  backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
                   borderColor: over > 0 ? colors.danger : color,
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.budgetBadgeText,
-                  { color: over > 0 ? colors.danger : colors.primary },
-                ]}
-              >
-                {over > 0 ? `+${Math.round(over)}g over` : `${Math.round(remaining)}g left`}
+              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
+                {over > 0 ? `+${Math.round(over)} over` : `${Math.round(remaining)} left`}
               </Text>
             </View>
           ) : null}
@@ -84,7 +85,7 @@ const MacroCompareRow = memo(function MacroCompareRow({
               {
                 width: `${currentPct}%`,
                 backgroundColor: color,
-                opacity: 0.5,
+                opacity: 0.35,
               },
             ]}
           />
@@ -94,6 +95,8 @@ const MacroCompareRow = memo(function MacroCompareRow({
               {
                 width: `${addedPct}%`,
                 backgroundColor: over > 0 ? colors.danger : color,
+                borderTopWidth: 1.5,
+                borderTopColor: "rgba(255,255,255,0.22)",
               },
             ]}
           />
@@ -184,6 +187,20 @@ export const DailyImpactCard = memo(function DailyImpactCard({
   const remainingKcal = goalKcal > 0 ? Math.max(goalKcal - projectedKcal, 0) : null
   const overKcal = goalKcal > 0 && projectedKcal > goalKcal ? projectedKcal - goalKcal : null
 
+  // Receipt flash: when the projection changes, for example when a quick-add landed, the
+  // badge inverts to solid ink for a beat. Emphasis comes from invert, not motion,
+  // so Reduce Motion needs no special casing.
+  const [badgeFlash, setBadgeFlash] = useState(false)
+  const prevProjectedRef = useRef(projectedKcal)
+  useEffect(() => {
+    if (prevProjectedRef.current !== projectedKcal) {
+      prevProjectedRef.current = projectedKcal
+      setBadgeFlash(true)
+      const timer = setTimeout(() => setBadgeFlash(false), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [projectedKcal])
+
   const currentKcalPct = goalKcal > 0 ? Math.min((currentKcal / goalKcal) * 100, 100) : 0
   const addedKcalPct =
     goalKcal > 0 ? Math.min((addedKcal / goalKcal) * 100, Math.max(100 - currentKcalPct, 0)) : 0
@@ -227,7 +244,13 @@ export const DailyImpactCard = memo(function DailyImpactCard({
               style={[
                 styles.calorieBadge,
                 {
-                  backgroundColor: overKcal ? `${colors.danger}14` : `${colors.primary}14`,
+                  backgroundColor: badgeFlash
+                    ? overKcal
+                      ? colors.danger
+                      : colors.primary
+                    : overKcal
+                      ? `${colors.danger}14`
+                      : `${colors.primary}14`,
                   borderColor: overKcal ? colors.danger : colors.primary,
                 },
               ]}
@@ -235,7 +258,13 @@ export const DailyImpactCard = memo(function DailyImpactCard({
               <Text
                 style={[
                   styles.calorieBadgeText,
-                  { color: overKcal ? colors.danger : colors.primary },
+                  {
+                    color: badgeFlash
+                      ? colors.onPrimary
+                      : overKcal
+                        ? colors.danger
+                        : colors.primary,
+                  },
                 ]}
               >
                 {overKcal
@@ -533,7 +562,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     heroBarTrack: {
-      height: 6,
+      height: 10,
       backgroundColor: colors.surface,
       borderRadius: 0,
       borderWidth: 1.5,
@@ -547,6 +576,8 @@ const createStyles = (colors: ColorPalette) =>
     heroBarSegment: {
       height: "100%",
       borderRadius: 0,
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
     },
     macrosSection: {
       gap: spacing.sm,
@@ -570,6 +601,16 @@ const createStyles = (colors: ColorPalette) =>
       height: 6,
       borderRadius: 0,
       borderWidth: 1,
+    },
+    iconBox: {
+      width: 20,
+      height: 20,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "none",
+      elevation: 0,
     },
     macroLabel: {
       fontSize: 11,
@@ -618,7 +659,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     budgetBadgeText: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -626,7 +667,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     barTrack: {
-      height: 5,
+      height: 9,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 0,
       borderWidth: 1.5,
@@ -639,6 +680,8 @@ const createStyles = (colors: ColorPalette) =>
     barSegment: {
       height: "100%",
       borderRadius: 0,
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
     },
     microsAccordion: {
       marginTop: spacing.sm,
@@ -712,23 +755,25 @@ const createStyles = (colors: ColorPalette) =>
       fontFamily: fonts.mono,
     },
     microBarTrack: {
-      height: 4,
+      height: 8,
       backgroundColor: colors.surfaceAlt,
       borderRadius: 0,
       borderWidth: 1.5,
       borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
-      marginTop: 2,
+      marginTop: 4,
       boxShadow: "none",
       elevation: 0,
     },
     microBarSegment: {
       height: "100%",
       borderRadius: 0,
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
     },
     rdiSub: {
-      fontSize: 9,
+      fontSize: 11,
       color: colors.textMuted,
       marginTop: 1,
       fontFamily: fonts.mono,

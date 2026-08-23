@@ -1,29 +1,28 @@
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import type { ComponentProps } from "react"
 import { useState } from "react"
 import { Pressable, StyleSheet } from "react-native"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
+import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
 import { Text } from "@ui/text"
 
-type IconComponent = typeof Ionicons | typeof MaterialCommunityIcons | typeof Feather
+type IconComponent = typeof MaterialCommunityIcons | typeof Feather
 type IconName = string
 
 type Props = {
   icon: IconName
-  /** Icon family to render `icon` from; defaults to Ionicons. */
+  /** Icon family to render `icon` from. Defaults to Ionicons. */
   IconComponent?: IconComponent
   onPress: () => void
   accessibilityLabel: string
-  /** Extended FAB shows a label next to the icon (primary "Add" style). */
+  /** Extended FAB shows a label next to the icon, primary Add style. */
   label?: string
   /**
-   * Visual emphasis: `primary` (default), `surface` (neutral, for cancel /
-   * dismiss actions) or `danger`.
+   * Visual emphasis. Primary is default, surface is neutral for cancel or dismiss actions, or danger.
    */
   tone?: "primary" | "surface" | "danger"
-  /** Disables presses and dims the button (for examplewhile saving). */
+  /** Disables presses and dims the button, for example while saving. */
   disabled?: boolean
-  /** `md` (default, 56px) or `sm` (44px, secondary buttons in FAB clusters). */
+  /** Md is default at 56px, or sm at 44px for secondary buttons in FAB clusters. */
   size?: "md" | "sm"
 }
 
@@ -38,7 +37,9 @@ function FabGlyph({
   size: number
   color: string
 }) {
-  // Explicit component wins
+  // Two families, explicitly declared. Feather for UI chrome, MCI only
+  // where no Feather glyph exists, such as barcode or food identity. No auto-detect.
+  // Silent family switching was how three icon sets leaked in.
   if (IconComponent === MaterialCommunityIcons) {
     return (
       <MaterialCommunityIcons
@@ -48,33 +49,17 @@ function FabGlyph({
       />
     )
   }
-  if (IconComponent === Feather) {
-    return <Feather name={icon as keyof typeof Feather.glyphMap} size={size} color={color} />
-  }
-  // Auto-detect: Feather names like "x", "plus", "maximize" are not in Ionicons
-  if ((Feather.glyphMap as Record<string, unknown>)[icon] !== undefined) {
-    return <Feather name={icon as keyof typeof Feather.glyphMap} size={size} color={color} />
-  }
-  if ((MaterialCommunityIcons.glyphMap as Record<string, unknown>)[icon] !== undefined) {
-    return (
-      <MaterialCommunityIcons
-        name={icon as keyof typeof MaterialCommunityIcons.glyphMap}
-        size={size}
-        color={color}
-      />
-    )
-  }
-  return <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={size} color={color} />
+  return <Feather name={icon as keyof typeof Feather.glyphMap} size={size} color={color} />
 }
 
 /**
- * Floating action button. Square sheet with a 1.5px ink rule (field-terminal
- * key); pass `label` for the extended variant. No shadow: emphasis comes
- * from fill and rule weight. Screens position it (absolute + safe area).
+ * Floating action button. Square sheet with a 1.5px ink rule, field-terminal
+ * key. Pass `label` for the extended variant. No shadow. Emphasis comes
+ * from fill and rule weight. Screens position it with absolute and safe area.
  */
 export function Fab({
   icon,
-  IconComponent = Ionicons,
+  IconComponent = Feather,
   onPress,
   accessibilityLabel,
   label,
@@ -84,15 +69,27 @@ export function Fab({
 }: Props) {
   const { colors } = useTheme()
   // Press feedback must live in a state-driven static style, not a
-  // Pressable style function: RN 0.85 Fabric drops function styles on
+  // Pressable style function. RN 0.85 Fabric drops function styles on
   // Android, collapsing the button to its icon size.
   const [pressed, setPressed] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const reduceMotion = useReduceMotion()
   const bg =
     tone === "surface" ? colors.surfaceAlt : tone === "danger" ? colors.danger : colors.primary
   // No `onDanger` token exists; white reads on both themes' danger shades.
   const fg = tone === "surface" ? colors.text : colors.onPrimary
 
-  const pressedStyle = disabled ? styles.disabled : styles.pressed
+  // Reduce Motion: keep the opacity cue, drop the transform. Hover gets the
+  // same calm opacity shift on desktop.
+  const pressedStyle = disabled
+    ? styles.disabled
+    : pressed
+      ? reduceMotion
+        ? styles.pressedStill
+        : styles.pressed
+      : hovered
+        ? styles.pressedStill
+        : styles.idle
   const shape =
     size === "sm"
       ? label
@@ -109,6 +106,9 @@ export function Fab({
       disabled={disabled}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      className="cursor-pointer"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
@@ -161,6 +161,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     transform: [{ scale: 0.92 }],
+    opacity: 0.92,
+  },
+  pressedStill: {
     opacity: 0.92,
   },
   disabled: {

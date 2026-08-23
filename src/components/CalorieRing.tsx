@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from "react-native"
+import Svg, { Rect } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { computeMacroRatios } from "@/utils/nutrients"
@@ -30,105 +31,76 @@ export function CalorieRing({
   const scale = size / 132
   const strokeWidth = Math.max(Math.round(10 * scale), 8)
 
-  // Square gauge, pure views. Four strips partition the perimeter clockwise
-  // from the top-left corner, and each strip owns exactly one corner so the
-  // painted path is continuous with no overlap and no gaps:
-  //   top (left→right) starts at top-left and owns top-right,
-  //   right (top→bottom) owns bottom-right,
-  //   bottom (right→left) owns bottom-left,
-  //   left (bottom→top) closes the loop back under the starting point.
-  // Strip lens sum to the exact centerline perimeter 4S - 4T.
+  // Square ring rendered with SVG for pixel-perfect corners. The previous
+  // four-View strip approach owned one corner per strip, which left a
+  // sub-pixel gap or double-paint at the seam when a macro segment ended
+  // exactly on a corner. SVG's stroke follows the centerline continuously,
+  // so the corners are a single miter join with no seam, and the dash
+  // pattern can be offset precisely for the macro split.
   const T = strokeWidth
   const S = size
-  type Strip = {
-    key: string
-    len: number
-    direction: "row" | "column" | "row-reverse" | "column-reverse"
-    style: object
-  }
-  const strips: Strip[] = [
-    { key: "top", len: S, direction: "row", style: { top: 0, left: 0, width: S, height: T } },
-    {
-      key: "right",
-      len: S - T,
-      direction: "column",
-      style: { top: T, left: S - T, width: T, height: S - T },
-    },
-    {
-      key: "bottom",
-      len: S - T,
-      direction: "row-reverse",
-      style: { top: S - T, left: 0, width: S - T, height: T },
-    },
-    {
-      key: "left",
-      len: Math.max(S - 2 * T, 0),
-      direction: "column-reverse",
-      style: { top: T, left: 0, width: T, height: Math.max(S - 2 * T, 0) },
-    },
-  ]
-  const perimeter = strips.reduce((acc, s) => acc + s.len, 0)
+  const inset = T / 2
+  const rectW = Math.max(S - T, 0)
+  const rectH = Math.max(S - T, 0)
+  const perimeter = 2 * (rectW + rectH)
   const fillTotal = perimeter * progress
 
   const { macroKcal: macroSumKcal, proteinPct, carbsPct } = computeMacroRatios(protein, carbs, fat)
 
-  const macroCutProtein = fillTotal * (proteinPct / 100)
-  const macroCutCarbs = macroCutProtein + fillTotal * (carbsPct / 100)
-  // Fat covers the remainder up to fillTotal.
+  // Macro segments along the perimeter. When no macros are logged the whole
+  // fill is breakfast blue so the user still sees progress.
+  const segments =
+    macroSumKcal > 0
+      ? [
+          { len: fillTotal * (proteinPct / 100), color: colors.breakfast },
+          { len: fillTotal * (carbsPct / 100), color: colors.lunch },
+          {
+            len: fillTotal - fillTotal * (proteinPct / 100) - fillTotal * (carbsPct / 100),
+            color: colors.dinner,
+          },
+        ].filter((s) => s.len > 0.5)
+      : fillTotal > 0.5
+        ? [{ len: fillTotal, color: colors.breakfast }]
+        : []
 
-  let segStart = 0
-  const renderedStrips = strips.map((strip) => {
-    const fill = Math.max(Math.min(fillTotal - segStart, strip.len), 0)
-    const pieces: { len: number; color: string }[] = []
-    if (fill > 0) {
-      const bounds =
-        macroSumKcal > 0
-          ? [
-              { end: macroCutProtein, color: colors.breakfast },
-              { end: macroCutCarbs, color: colors.lunch },
-              { end: fillTotal, color: colors.dinner },
-            ]
-          : [{ end: fillTotal, color: colors.breakfast }]
-      let cursor = segStart
-      for (const bound of bounds) {
-        if (cursor >= segStart + fill) break
-        const pieceEnd = Math.min(bound.end, segStart + fill)
-        if (pieceEnd > cursor) {
-          pieces.push({ len: pieceEnd - cursor, color: bound.color })
-          cursor = pieceEnd
-        }
-      }
-    }
-    segStart += strip.len
-    return { ...strip, fill, pieces }
+  let offset = 0
+  const svgSegments = segments.map((seg) => {
+    const o = offset
+    offset += seg.len
+    return { ...seg, offset: o }
   })
 
   return (
     <View style={styles.container}>
       <View style={[styles.ringWrap, { width: size, height: size }]}>
-        {/* Track: the full square outline. */}
-        <View style={[styles.gaugeTrack, { borderWidth: T, borderColor: colors.surfaceAlt }]} />
-        {/* Progress strips, clockwise from the top-left corner. */}
-        {renderedStrips.map((strip) =>
-          strip.fill > 0 ? (
-            <View
-              key={strip.key}
-              style={[styles.gaugeStrip, strip.style, { flexDirection: strip.direction }]}
-            >
-              {strip.pieces.map((piece, index) => (
-                <View
-                  key={`${strip.key}-${index}`}
-                  style={{
-                    backgroundColor: piece.color,
-                    ...(strip.direction === "row" || strip.direction === "row-reverse"
-                      ? { width: piece.len }
-                      : { height: piece.len }),
-                  }}
-                />
-              ))}
-            </View>
-          ) : null,
-        )}
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.gaugeSvg}>
+          <Rect
+            x={inset}
+            y={inset}
+            width={rectW}
+            height={rectH}
+            fill="none"
+            stroke={colors.surfaceAlt}
+            strokeWidth={T}
+          />
+          {svgSegments.map((seg, index) => (
+            <Rect
+              key={index}
+              x={inset}
+              y={inset}
+              width={rectW}
+              height={rectH}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={T}
+              strokeDasharray={`${seg.len} ${perimeter - seg.len}`}
+              strokeDashoffset={-seg.offset}
+              strokeLinecap="square"
+              strokeLinejoin="miter"
+              strokeMiterlimit={4}
+            />
+          ))}
+        </Svg>
 
         <View style={[styles.ringCenter, { width: size * 0.72, height: size * 0.72 }]}>
           <Text
@@ -152,7 +124,7 @@ export function CalorieRing({
           <Text style={styles.statValue}>{Math.round(consumed).toLocaleString()}</Text>{" "}
           <Text style={styles.statLabel}>eaten</Text>
         </Text>
-        <View style={styles.dot} />
+        <Text style={styles.statLabel}>·</Text>
         <Text style={styles.stat}>
           <Text style={styles.statValue}>{Math.round(goal).toLocaleString()}</Text>{" "}
           <Text style={styles.statLabel}>goal</Text>
@@ -177,6 +149,11 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
+    },
+    gaugeSvg: {
+      position: "absolute",
+      top: 0,
+      left: 0,
     },
     gaugeTrack: {
       position: "absolute",

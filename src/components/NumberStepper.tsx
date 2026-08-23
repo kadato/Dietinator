@@ -145,6 +145,7 @@ export function NumberStepper({
           inputWidth != null ? { width: inputWidth } : null,
         ]}
         keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "decimal-pad"}
+        enterKeyHint="done"
         value={value}
         onChangeText={handleTextChange}
         onFocus={handleFocus}
@@ -156,7 +157,7 @@ export function NumberStepper({
         blurOnSubmit={true}
         onSubmitEditing={onSubmit}
         accessibilityLabel={accessibilityLabel}
-        maxFontSizeMultiplier={1.4}
+        maxFontSizeMultiplier={2}
       />
       <Pressable
         onPress={() => stepBy(1)}

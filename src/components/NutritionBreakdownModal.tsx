@@ -9,6 +9,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
 import { spacing, fonts, type ColorPalette } from "@/theme"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 type Props = {
   visible: boolean
@@ -78,11 +79,12 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
   title = "Nutrition and Micronutrients",
   subtitle,
 }: Props) {
+  useEscapeToClose(visible, onClose)
   const { colors } = useTheme()
   const shell = createModalShellStyles(colors)
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
-  const { isWide } = useLayout()
+  const { isMedium } = useLayout()
 
   const { proteinPct, carbsPct, fatPct } = computeMacroRatios(
     nutrients.protein,
@@ -96,7 +98,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
 
   const modalBody = (
     <View style={styles.modalBody}>
-      {!isWide && (
+      {!isMedium && (
         <View style={styles.handleContainer}>
           <View style={styles.dragHandle} />
         </View>
@@ -347,7 +349,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
     <Modal
       visible={visible}
       transparent
-      animationType={isWide ? "fade" : "slide"}
+      animationType={isMedium ? "fade" : "slide"}
       onRequestClose={onClose}
       {...(Platform.OS === "android"
         ? { statusBarTranslucent: true, hardwareAccelerated: true }
@@ -360,8 +362,8 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           accessibilityRole="button"
           accessibilityLabel="Dismiss nutrition details"
         />
-        {isWide ? (
-          <View style={[shell.dialogWrap, { pointerEvents: "box-none" as const }]}>
+        {isMedium ? (
+          <View accessibilityViewIsModal={true} pointerEvents="box-none" style={shell.dialogWrap}>
             <View
               style={[
                 shell.dialogBox,
@@ -383,7 +385,9 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
           </View>
         ) : (
           <View style={styles.phoneSheetWrap}>
-            <View style={styles.phoneSheetBox}>{modalBody}</View>
+            <View accessibilityViewIsModal={true} style={styles.phoneSheetBox}>
+              {modalBody}
+            </View>
           </View>
         )}
       </View>

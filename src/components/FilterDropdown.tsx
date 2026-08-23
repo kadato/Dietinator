@@ -1,8 +1,8 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing, fonts } from "@/theme"
+import { fonts } from "@/theme"
 
 export type DropdownOption<T extends string> = {
   value: T
@@ -34,6 +34,14 @@ export function FilterDropdown<T extends string>({
   const accent = accentColor ?? colors.primary
 
   const current = options.find((o) => o.value === value) ?? options[0]
+
+  // A popover measured against one window geometry goes stale on rotation
+  // or Split View resize; closing beats anchoring into space.
+  useEffect(() => {
+    if (!open) return
+    const sub = Dimensions.addEventListener("change", () => setOpen(false))
+    return () => sub.remove()
+  }, [open])
 
   const handleOpen = () => {
     triggerRef.current?.measureInWindow((x, y, width, height) => {

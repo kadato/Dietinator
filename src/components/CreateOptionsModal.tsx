@@ -3,6 +3,7 @@ import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useTheme } from "@/hooks/useTheme"
 import { withAlpha } from "@/utils/color"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { Box } from "@ui/box"
@@ -57,6 +58,7 @@ type Props = {
 }
 
 export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) {
+  useEscapeToClose(visible, onClose)
   const router = useRouter()
   const { colors } = useTheme()
 
@@ -80,148 +82,147 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          justifyContent: "center",
+          alignItems: "center",
+          paddingHorizontal: 20,
+        }}
+      >
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Dismiss options"
         />
-        <View
+        <Box
+          accessibilityViewIsModal={true}
+          className="w-full max-w-[420px] self-center rounded-none border bg-background-50 p-5"
           style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: 20,
-            pointerEvents: "box-none",
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            borderRadius: 0,
+            backgroundColor: colors.surface,
+            boxShadow: "none",
+            elevation: 0,
           }}
         >
-          <Box
-            className="w-full max-w-[420px] self-center rounded-none border bg-background-50 p-5"
-            style={{
-              borderWidth: 1.5,
-              borderColor: colors.border,
-              borderRadius: 0,
-              backgroundColor: colors.surface,
-              boxShadow: "none",
-              elevation: 0,
-            }}
-          >
-            <Box className="flex-row items-center justify-between pb-3">
-              <Box>
-                <Text
-                  size="xl"
-                  bold
-                  className="text-typography-900"
-                  style={{
-                    fontFamily: fonts.mono,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  Create
-                </Text>
-                <Text
-                  size="xs"
-                  className="mt-0.5 text-typography-500"
-                  style={{
-                    fontFamily: fonts.mono,
-                    fontVariant: ["tabular-nums"],
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  What would you like to log or create?
-                </Text>
-              </Box>
-              <Pressable
-                onPress={onClose}
-                hitSlop={8}
-                className="h-8 w-8 items-center justify-center rounded-none border bg-background-100 active:opacity-70"
+          <Box className="flex-row items-center justify-between pb-3">
+            <Box>
+              <Text
+                size="xl"
+                bold
+                className="text-typography-900"
                 style={{
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                  backgroundColor: colors.surfaceAlt,
-                  boxShadow: "none",
-                  elevation: 0,
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
                 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
               >
-                <Feather name="x" size={16} color={colors.textMuted} />
-              </Pressable>
+                Create
+              </Text>
+              <Text
+                size="xs"
+                className="mt-0.5 text-typography-500"
+                style={{
+                  fontFamily: fonts.mono,
+                  fontVariant: ["tabular-nums"],
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
+                What would you like to log or create?
+              </Text>
             </Box>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              className="h-8 w-8 items-center justify-center rounded-none border bg-background-100 active:opacity-70"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: colors.surfaceAlt,
+                boxShadow: "none",
+                elevation: 0,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Feather name="x" size={16} color={colors.textMuted} />
+            </Pressable>
+          </Box>
 
-            <Box className="gap-2.5 pt-1">
-              {OPTIONS.map((option) => {
-                const tint = optionColor(option.id, colors)
-                return (
-                  <Pressable
-                    key={option.id}
-                    onPress={() => onSelect(option)}
-                    accessibilityRole="button"
-                    accessibilityLabel={option.title}
-                    style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+          <Box className="gap-2.5 pt-1">
+            {OPTIONS.map((option) => {
+              const tint = optionColor(option.id, colors)
+              return (
+                <Pressable
+                  key={option.id}
+                  onPress={() => onSelect(option)}
+                  accessibilityRole="button"
+                  accessibilityLabel={option.title}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                >
+                  <Box
+                    className="flex-row items-center gap-3.5 rounded-none border p-3.5"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: 0,
+                      backgroundColor: colors.surface,
+                      boxShadow: "none",
+                      elevation: 0,
+                    }}
                   >
                     <Box
-                      className="flex-row items-center gap-3.5 rounded-none border p-3.5"
+                      className="h-11 w-11 items-center justify-center rounded-none border"
                       style={{
+                        backgroundColor: withAlpha(tint, 0.14),
                         borderWidth: 1.5,
                         borderColor: colors.border,
                         borderRadius: 0,
-                        backgroundColor: colors.surface,
                         boxShadow: "none",
                         elevation: 0,
                       }}
                     >
-                      <Box
-                        className="h-11 w-11 items-center justify-center rounded-none border"
+                      <Feather name={option.icon} size={20} color={tint} />
+                    </Box>
+                    <Box className="flex-1">
+                      <Text
+                        size="md"
+                        bold
+                        className="text-typography-900"
                         style={{
-                          backgroundColor: withAlpha(tint, 0.14),
-                          borderWidth: 1.5,
-                          borderColor: colors.border,
-                          borderRadius: 0,
-                          boxShadow: "none",
-                          elevation: 0,
+                          fontFamily: fonts.mono,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.4,
                         }}
                       >
-                        <Feather name={option.icon} size={20} color={tint} />
-                      </Box>
-                      <Box className="flex-1">
-                        <Text
-                          size="md"
-                          bold
-                          className="text-typography-900"
-                          style={{
-                            fontFamily: fonts.mono,
-                            textTransform: "uppercase",
-                            letterSpacing: 0.4,
-                          }}
-                        >
-                          {option.title}
-                        </Text>
-                        <Text
-                          size="xs"
-                          className="mt-0.5 leading-4 text-typography-500"
-                          style={{
-                            fontFamily: fonts.mono,
-                            fontVariant: ["tabular-nums"],
-                            textTransform: "uppercase",
-                            letterSpacing: 0.4,
-                          }}
-                        >
-                          {option.description}
-                        </Text>
-                      </Box>
-                      <Feather name="chevron-right" size={16} color={colors.textMuted} />
+                        {option.title}
+                      </Text>
+                      <Text
+                        size="xs"
+                        className="mt-0.5 leading-4 text-typography-500"
+                        style={{
+                          fontFamily: fonts.mono,
+                          fontVariant: ["tabular-nums"],
+                          textTransform: "uppercase",
+                          letterSpacing: 0.4,
+                        }}
+                      >
+                        {option.description}
+                      </Text>
                     </Box>
-                  </Pressable>
-                )
-              })}
-            </Box>
+                    <Feather name="chevron-right" size={16} color={colors.textMuted} />
+                  </Box>
+                </Pressable>
+              )
+            })}
           </Box>
-        </View>
+        </Box>
       </View>
     </Modal>
   )
