@@ -228,6 +228,9 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             }
             onPress={onPress}
             onLongPress={onLongPress}
+            onHoverIn={() => setHoveredRoute(route.key)}
+            onHoverOut={() => setHoveredRoute(null)}
+            hitSlop={4}
             style={({ pressed }) => ({
               flex: 1,
               minHeight: tabBarHeight,
@@ -276,6 +279,33 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               >
                 {typeof label === "string" ? label : route.name}
               </Text>
+            ) : hoveredRoute === route.key ? (
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: tabBarHeight + 8,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 0,
+                }}
+                pointerEvents="none"
+              >
+                <Text
+                  size="2xs"
+                  bold
+                  style={{
+                    color: colors.text,
+                    fontSize: 10,
+                    letterSpacing: 0.06,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {typeof label === "string" ? label : route.name}
+                </Text>
+              </View>
             ) : null}
           </Pressable>
         )
