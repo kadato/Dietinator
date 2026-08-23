@@ -117,7 +117,9 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
   test("a real food can be logged for tomorrow, and today stays clean", async ({ page }) => {
     // Move to tomorrow, then log a real product there.
     await page.getByRole("button", { name: "Next day" }).click()
-    const preview = await openFoodPreview(page, "banana")
+    // Name filter: the live catalog fuzzy-matches "banana" to Ananász
+    // (pineapple) on this account's locale, so pin the fruit explicitly.
+    const preview = await openFoodPreview(page, "banana", /banán|banana/i)
     if (!preview) test.skip(true, "live YAZIO search returned no results")
     const { amount, kcal } = preview!
     const kcal100 = await previewKcalAt(page, amount, kcal, "100")
@@ -128,19 +130,21 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
 
     // Tomorrow's dashboard shows the entry; recorded kcal matches the preview
     // math (preview at 100 g × 1.2), so no conversion drift through the pipeline.
+    // The row selector demands the entry signature (macros then kcal), because
+    // meal headers like "Breakfast, 0 kcal," also contain a kcal figure.
     await page.getByRole("button", { name: /^Lunch, / }).click()
-    const entry = page.getByRole("button", { name: /, \d+ kcal, / }).first()
-    await expect(entry).toBeVisible({ timeout: 15_000 })
-    const label = (await entry.getAttribute("aria-label")) ?? ""
-    const logged = Number(/, (\d+) kcal, /.exec(label)?.[1] ?? 0)
+    const entryRow = page
+      .getByRole("button", { name: /, \d[\d.]*g \d[\d.]*g \d[\d.]*g, \d+ kcal/ })
+      .first()
+    await expect(entryRow).toBeVisible({ timeout: 15_000 })
+    const label = (await entryRow.getAttribute("aria-label")) ?? ""
+    const logged = Number(/, (\d+) kcal/.exec(label)?.[1] ?? 0)
     expect(Math.abs(logged - kcal100 * 1.2)).toBeLessThanOrEqual(15)
-    const name = label.replace(/, \d+ kcal.*$/, "")
+    const name = label.replace(/, \d[\d.]*g.*$/, "")
 
     // Back to today: the same product must NOT appear there.
     await page.getByRole("button", { name: "Open calendar" }).click()
     await page.getByRole("button", { name: "Go to today" }).click()
-    await expect(
-      page.getByRole("button", { name: new RegExp(`${name}, \\d+ kcal, `) }),
-    ).toHaveCount(0)
+    await expect(page.getByRole("button", { name: new RegExp(`${name}, \\d`) })).toHaveCount(0)
   })
 })

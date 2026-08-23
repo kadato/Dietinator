@@ -100,8 +100,12 @@ test.describe("serving sizes (real account)", () => {
     expect(await previewKcal(page)).toBe(134)
 
     // Close and reopen the same food. Chips must come straight from the cache
-    // (servings_json), not from a second network round-trip.
+    // (servings_json), not from a second network round-trip. An explicit
+    // navigation home keeps the reopen deterministic regardless of where the
+    // preview's Cancel lands.
     await page.getByRole("button", { name: "Cancel" }).click()
+    await page.goto("/")
+    await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
     await openFood(page, "banane", "Banán")
 
     await expect(page.getByRole("button", { name: "Serving: Cup Mashed (225 g)" })).toBeVisible({

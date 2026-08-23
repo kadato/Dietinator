@@ -1,19 +1,5 @@
 import { expect, test, bootAuthenticated } from "./helpers"
 
-/** Simulate a long-press on an element (RN long-press affordance). */
-async function longPress(page: import("@playwright/test").Page, selector: string) {
-  // Meal rows sit below the fold on the phone viewport. Scrolling is
-  // required for the synthetic mouse events to reach the element.
-  const target = page.locator(selector)
-  await target.scrollIntoViewIfNeeded()
-  const box = await target.boundingBox()
-  if (!box) throw new Error(`No bounding box for ${selector}`)
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  await page.mouse.down()
-  await page.waitForTimeout(700)
-  await page.mouse.up()
-}
-
 test.describe("diary flows (offline, local-first)", () => {
   /** Dashboard → log-meal modal → "More" → create-options. */
   async function openCreateOptions(page: import("@playwright/test").Page, meal: string) {
@@ -76,14 +62,16 @@ test.describe("diary flows (offline, local-first)", () => {
     const row = page.getByRole("button", { name: /^Quick add, / })
     await expect(row).toHaveCount(1)
 
-    // Reject first. Nothing should change.
+    // Reject first. Nothing should change. The visible delete button is the
+    // one users have; the former hidden long-press path was removed.
+    const deleteButton = page.getByRole("button", { name: "Delete Quick add" })
     page.once("dialog", (dialog) => void dialog.dismiss())
-    await longPress(page, '[aria-label^="Quick add,"]')
+    await deleteButton.click()
     await expect(row).toBeVisible()
 
     // Accept. The entry disappears.
     page.once("dialog", (dialog) => void dialog.accept())
-    await longPress(page, '[aria-label^="Quick add,"]')
+    await deleteButton.click()
     await expect(row).toHaveCount(0, { timeout: 15_000 })
   })
 

@@ -122,17 +122,12 @@ test.describe("YAZIO (real account)", () => {
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
 
-    // Accept the confirmation dialog BEFORE the long-press fires it.
+    // Accept the confirmation dialog BEFORE clicking delete. The visible
+    // delete button is the one users have; the former hidden long-press
+    // path was removed from the row.
     page.once("dialog", (dialog) => void dialog.accept())
-    // Live YAZIO data (weight card, meal goals) shifts the layout between runs,
-    // so make sure the row is actually reachable before pressing it.
     await entry.scrollIntoViewIfNeeded()
-    const box = await entry.boundingBox()
-    if (!box) throw new Error("entry not measurable")
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.down()
-    await page.waitForTimeout(700)
-    await page.mouse.up()
+    await page.getByRole("button", { name: "Delete Banán" }).click()
 
     await expect(entry).toBeHidden({ timeout: 15_000 })
   })

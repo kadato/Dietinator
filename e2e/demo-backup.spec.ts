@@ -5,20 +5,6 @@ import { expect, test, bootAuthenticated, openSettingsSection } from "./helpers"
  * demo seeds a fake local session, backup never touches the network.
  */
 
-/** Simulate a long-press on an element (RN long-press affordance). */
-async function longPress(page: import("@playwright/test").Page, selector: string) {
-  // Meal rows sit below the fold on the phone viewport. Scrolling is
-  // required for the synthetic mouse events to reach the element.
-  const target = page.locator(selector)
-  await target.scrollIntoViewIfNeeded()
-  const box = await target.boundingBox()
-  if (!box) throw new Error(`No bounding box for ${selector}`)
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  await page.mouse.down()
-  await page.waitForTimeout(700)
-  await page.mouse.up()
-}
-
 test.describe("demo mode", () => {
   test("seeds an explorable session from the login screen", async ({ page }) => {
     await page.goto("/")
@@ -85,7 +71,7 @@ test.describe("backup and restore (offline)", () => {
     const row = page.getByRole("button", { name: /^Quick add, / })
     await expect(row).toHaveCount(1)
     page.once("dialog", (dialog) => void dialog.accept())
-    await longPress(page, '[aria-label^="Quick add,"]')
+    await page.getByRole("button", { name: "Delete Quick add" }).click()
     await expect(row).toHaveCount(0, { timeout: 15_000 })
 
     // Restore from the downloaded file: confirm dialog, then file picker.
