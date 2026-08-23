@@ -8,13 +8,13 @@ adaptive
 
 ## Users
 
-**Primary: solo health tracker.** One person managing their own nutrition day to day. Opens Dietinator in the kitchen, at the desk, on the walk home, or right after a weigh-in. Jobs: log what was just eaten with minimal taps, see remaining calorie and macro budget instantly before committing, keep streaks and hydration moving, review the day without second-guessing. Values privacy, speed, and continuity over social features. Low tolerance for login friction, paywalls, or waiting on network.
+**Primary. Solo health tracker.** One person managing their own nutrition day to day. Opens Dietinator in the kitchen, at the desk, on the walk home, or right after a weigh-in. Jobs: log what was just eaten with minimal taps, see remaining calorie and macro budget instantly before committing, keep streaks and hydration moving, review the day without second-guessing. Values privacy, speed, and continuity over social features. Low tolerance for login friction, paywalls, or waiting on network.
 
-**Secondary: AI-assisted self-coach.** Same person when they want a second pair of eyes. Asks for a daily review, protein check, snack ideas, or a reset without leaving the diary. Uses the in-app assistant or an external MCP agent as a tool, not a destination. Wants streaming answers grounded in their own last 14 days, with confirmations before destructive actions.
+**Secondary. AI-assisted self-coach.** Same person when they want a second pair of eyes. Asks for a daily review, protein check, snack ideas, or a reset without leaving the diary. Uses the in-app assistant or an external MCP agent as a tool, not a destination. Wants streaming answers grounded in their own last 14 days, with confirmations before destructive actions.
 
 **Excluded by design.** Teams, coaches managing clients, meal-plan commerce, and social feeds are out of scope. Personal use only.
 
-## Product Purpose
+## Product purpose
 
 Dietinator is a local-first calorie and macro tracker that makes logging feel instant and staying in budget feel obvious. Diary entries live in on-device SQLite, food metadata is cached, and everything works offline. Search and best-effort sync use the unofficial YAZIO food database when available, never as a gate. Success is a solo user who logs most days without thinking about it, stays inside their goals, and trusts the numbers even when YAZIO is down. Demo mode at `/?demo=1` lets anyone try a full session with no account.
 
@@ -22,7 +22,7 @@ Dietinator is a local-first calorie and macro tracker that makes logging feel in
 
 The diary never waits for the network. Every log writes locally first, sync queues as `yazio_synced = 0` and retries later with `withRetry` on 5xx and 429 only, and cold starts render from SQLite before any import touches the UI. Food search is debounced, cached in `food_cache`, and served cache-first on repeats and barcodes. The same diary powers an on-device AI tool layer and a stateless MCP endpoint at `/mcp` plus `/api/agent/*` snapshot bridge for external agents. No analytics SDKs, no required account, no blocking dependency on an unofficial API.
 
-## Operating Context
+## Operating context
 
 **Where it is used.** Phones one-handed between bites, tablets on a kitchen counter, desktop browser at work. Light and dark themes follow system preference or explicit `theme_preference` in settings. Offline banner appears when `yazioAvailable` flips false.
 
@@ -32,7 +32,7 @@ The diary never waits for the network. Every log writes locally first, sync queu
 
 **Rhythms.** Daily logging streaks, 14-day diary snapshots pushed to the MCP bridge on boot and after every change, 365-day calorie history for adherence, weekly weight and water trends.
 
-## Capabilities and Constraints
+## Capabilities and constraints
 
 **Capabilities.** Instant offline logging and editing with undo, meal grouping with per-slot budgets, multilingual dynamic food icons, favorites ordering, recent foods by exact amount, named servings and gram amounts, barcode EAN and UPC lookup, water logging with +250ml preset and intake versus goal, weight check-ins with BMI and goal progress, calorie ring and macro bars, micronutrient breakdown for single entries and full days, CSV and JSON export, full DB backup and restore, AI chat with OpenAI, OpenRouter, OpenCode, Ollama or any OpenAI-compatible endpoint, streaming history persisted in SQLite, tool approvals for destructive writes, MCP write tools mirrored into the snapshot and applied on next focus as a revisioned change log.
 
@@ -40,17 +40,17 @@ The diary never waits for the network. Every log writes locally first, sync queu
 
 **Undecided.** Whether to add collaborative or social features later, confirmed earlier as not in scope for this pass.
 
-## Brand Commitments
+## Brand commitments
 
 Name Dietinator. Current identity is Teal Precision: primary ` #115e59` light and `#2dd4bf` dark, surfaces `#ffffff` and `#e8eaee` light and `#1a1a1e` and `#26262c` dark, backgrounds `#f4f5f7` and `#121215`, danger and warning tokens, meal accents breakfast teal, lunch orange, dinner pink, snack yellow with tints cleared to 4.5:1 for labels on chips. Type is Plus Jakarta Sans for UI and JetBrains Mono tabular for numbers, with Geist as secondary fallback. Tone today is quiet, precise, system-like. User confirmed the system may evolve warmer and bolder when it strengthens the product story, while keeping contrast and legibility invariants.
 
 Evidence paths: `src/theme.ts`, `global.css`, `tailwind.config.js`, `app.json` adaptive icon `#0d9488`, `assets/icon.png`, screenshots in `docs/screenshots/`.
 
-## Evidence on Hand
+## Evidence on hand
 
 Real product with runnable web and Android builds. Routes in `app/(tabs)/` and modals `scan`, `add-food`, `log-meal`, `meal-builder`, `manual-entry`, `create-options`. Services in `src/services/diary.ts`, `src/services/yazio/`, `src/db/` with WAL migrations, `src/utils/` pure helpers covered by Jest plus Playwright e2e at phone viewport for offline and local-first flows. CI runs typecheck, lint, format, coverage, e2e and gitleaks. Screenshots for dashboard, stats, AI chat, search, add-food, meal builder, log-meal and settings in `docs/screenshots/`. No fabricated testimonials. AI provider choice requires user-owned API key stored only in device keystore.
 
-## Product Principles
+## Product principles
 
 1. **Local truth first.** The diary renders from SQLite before any network. Sync is optional and never blocks logging, editing, or reading.
 2. **Zero-friction logging.** Every numeric field has minus and plus steppers with hold-repeat, remembers the last amount, and shows live budget impact before save. One tap beats typing.
@@ -58,6 +58,6 @@ Real product with runnable web and Android builds. Routes in `app/(tabs)/` and m
 4. **Privacy is a feature.** No analytics, no required account, on-device storage and AI tool grounding. Demo seeds itself without touching disk beyond the local DB.
 5. **Stay usable when YAZIO breaks.** Cache-first search and recents, offline banner, background refinement of stale nutrients. The unofficial API may change without notice and the app must not.
 
-## Accessibility & Inclusion
+## Accessibility and inclusion
 
 Full light and dark themes with system detection and explicit override. Contrast cleared to 4.5:1 for text on tinted chips and badges per `src/theme.ts` comments. Touch targets and tab bar at `64px` plus safe-area insets, keyboard-dismiss on modals, accessible labels on interactive controls. Web fallback for secure storage is weaker than native keystore, surfaced when auth flow changes. No additional product-specific accessibility mandate was established.

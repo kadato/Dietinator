@@ -12,7 +12,7 @@ A local-first calorie tracker. Diary entries live in on-device SQLite, food sear
 
 </div>
 
-> **Try it:** Open `/?demo=1` or tap **Explore the demo** on the login screen to seed a local session without an account.
+> **Try it.** Open `/?demo=1` or tap **Explore the demo** on the login screen to seed a local session without an account.
 
 ## Download
 
@@ -141,7 +141,7 @@ through boot, demo mode, diary CRUD, offline search, backup and restore, and
 the AI chat surface. CI runs typecheck, lint, format, coverage, e2e and a
 secret scan on every push.
 
-## AI assistant and Agent API (MCP)
+## AI assistant and agent API (MCP)
 
 ### In-app chat
 
@@ -197,6 +197,6 @@ agent loop across all tools, and verifies the change log.
 - Releases build a signed Android APK via `.github/workflows/release.yml`.
   See [Download](#download) for APK installation and in-app update details.
 
-> **Note:** Dietinator uses an unofficial, reverse-engineered YAZIO API. For personal
-> use only. The API may change or become unavailable without notice; local-first
+> **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. For personal
+> use only. The API may change or become unavailable without notice. Local-first
 > architecture ensures all offline features remain functional.

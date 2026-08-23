@@ -4,9 +4,9 @@ Guidance for AI agents and contributors working on this codebase.
 
 ## Project summary
 
-**Dietinator** is a personal calorie tracker built with **Expo SDK 56** and **React Native**. It is **local-first**: diary entries live in **SQLite** on device; food search and optional sync use the **unofficial** [`yazio`](https://www.npmjs.com/package/yazio) npm client (reverse-engineered API). No analytics SDKs.
+**Dietinator** is a personal calorie tracker built with **Expo SDK 56** and **React Native**. It is **local-first**. Diary entries live in **SQLite** on device. Food search and optional sync use the **unofficial** [`yazio`](https://www.npmjs.com/package/yazio) npm client (reverse-engineered API). No analytics SDKs.
 
-**Constraints agents must respect:**
+**Constraints agents must respect.**
 
 - Personal use only. Do not productize or redistribute YAZIO API access.
 - Never commit credentials, tokens, or `.env` secrets.
@@ -51,7 +51,7 @@ src/
 scripts/                # expo-cli wrapper, polyfills
 ```
 
-**Layering rule:** `app/*` screens compose UI and call `src/services/*` or `src/db/*`. Avoid putting SQL or YAZIO calls directly in route files when a service already exists.
+**Layering rule.** `app/*` screens compose UI and call `src/services/*` or `src/db/*`. Avoid putting SQL or YAZIO calls directly in route files when a service already exists.
 
 ## Architecture patterns
 
@@ -81,37 +81,37 @@ scripts/                # expo-cli wrapper, polyfills
 
 ## Coding conventions (match existing code)
 
-- **TypeScript:** explicit types for public APIs; shared domain types in `src/types/index.ts`.
-- **SQLite booleans:** `INTEGER` 0/1 (`yazio_synced`, `is_favorite`), not JS `boolean` in DB rows.
-- **IDs:** diary entry IDs generated in sync layer (`Date.now()` + random); DB uses `TEXT PRIMARY KEY`.
-- **Dates:** store as `YYYY-MM-DD` strings (`toDateKey` in `src/utils/date.ts`).
-- **Styling:** Prefer **gluestack-ui** components (`components/ui/*`) with NativeWind `className`; keep `src/theme.ts` for domain tokens (meal colors, layout). Use `StyleSheet` only for unmigrated screens or SVG-heavy widgets. Import gluestack via `@ui/…` (for example `@ui/button`). App code stays on `@/…`, which maps to `src/`.
-- **Icons:** `@expo/vector-icons` (Ionicons).
-- **Lists:** prefer stable keys; memoize heavy child components when profiling shows need.
-- **Network:** wrap flaky YAZIO calls with `withRetry` (`src/utils/retry.ts`). It retries 5xx and 429 responses, not most other 4xx.
-- **Search:** debounce user input with `useDebounce` (~200ms) before hitting API/cache.
+- **TypeScript.** explicit types for public APIs. Shared domain types live in `src/types/index.ts`.
+- **SQLite booleans.** `INTEGER` 0/1 (`yazio_synced`, `is_favorite`), not JS `boolean` in DB rows.
+- **IDs.** diary entry IDs generated in sync layer via `Date.now()` plus random. DB uses `TEXT PRIMARY KEY`.
+- **Dates.** store as `YYYY-MM-DD` strings (`toDateKey` in `src/utils/date.ts`).
+- **Styling.** Prefer **gluestack-ui** components (`components/ui/*`) with NativeWind `className`. Keep `src/theme.ts` for domain tokens (meal colors, layout). Use `StyleSheet` only for unmigrated screens or SVG-heavy widgets. Import gluestack via `@ui/…`, for example `@ui/button`. App code stays on `@/…`, which maps to `src/`.
+- **Icons.** `@expo/vector-icons` (Ionicons).
+- **Lists.** prefer stable keys. Memoize heavy child components when profiling shows need.
+- **Network.** wrap flaky YAZIO calls with `withRetry` (`src/utils/retry.ts`). It retries 5xx and 429 responses, not most other 4xx.
+- **Search.** debounce user input with `useDebounce` (~200ms) before hitting API/cache.
 
-## React / React Native best practices
+## React and React Native best practices
 
 ### Components
 
 - Prefer **function components** + hooks.
-- Keep screens thin; extract reusable UI to `src/components/`.
+- Keep screens thin. Extract reusable UI to `src/components/`.
 - Use **`Pressable`** over legacy `TouchableOpacity` for new code (existing code may mix, so follow the nearby file).
 - **`useCallback` / `useMemo`** for context values and handlers passed to memoized children (see `AppContext`).
 - Reload screen data on focus with **`useFocusEffect`** when returning from modals (see `app/(tabs)/index.tsx`).
 
 ### State
 
-- **Global:** `AppContext` for auth, settings, `yazioAvailable`, `ready`.
-- **Local:** `useState` for screen-specific UI (selected date, refresh, form fields).
+- **Global.** `AppContext` for auth, settings, `yazioAvailable`, `ready`.
+- **Local.** `useState` for screen-specific UI (selected date, refresh, form fields).
 - Avoid new global state libraries unless the app grows substantially.
 
-### Expo Router
+### Expo router
 
 - File names define routes. Group folders `(tabs)` don't affect the URL.
 - Modals: `presentation: 'modal'` in `_layout.tsx` for `scan`, `add-food`.
-- Use `useRouter()` for navigation; `router.push` / `replace` / `back` as appropriate.
+- Use `useRouter()` for navigation. Use `router.push`, `replace`, or `back` as appropriate.
 - Deep links: scheme `dietinator` in `app.json`.
 
 ### Performance
@@ -119,7 +119,7 @@ scripts/                # expo-cli wrapper, polyfills
 - Batch DB reads with `Promise.all` where independent (diary list + totals).
 - Cache food search results in SQLite before refetching.
 - Don't block UI on sync. Use fire-and-forget or background sync with clear UI state.
-- Images/assets: keep in `assets/`; reference via Expo static requires.
+- Images and assets. Keep files in `assets/`. Reference them via Expo static requires.
 
 ### Platform differences
 
@@ -137,7 +137,7 @@ Test both targets when touching storage, camera, or native modules.
 - Use **`import type`** for type-only imports.
 - Align DB row shapes with interfaces in `src/types/index.ts`, and map JSON strings at the service boundary.
 
-## Security & privacy
+## Security and privacy
 
 - Credentials/tokens only via `secure-storage` / `auth-storage`. Never log them.
 - No PII in analytics (there are none).
@@ -172,25 +172,25 @@ npm run test:e2e     # build + Playwright (phone viewport, offline/local-first f
 npm run test:e2e:dev # Playwright against a running `npm run dev:web` (fast loop)
 ```
 
-**Quality gates:** husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). CI (`.github/workflows/ci.yml`) runs typecheck, lint, `format:check`, e2e, and a gitleaks secret scan on every push/PR. Dependabot updates npm + GitHub Actions weekly (`yazio` is ignored as an unofficial API, pin it manually).
+**Quality gates.** husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). CI (`.github/workflows/ci.yml`) runs typecheck, lint, `format:check`, e2e, and a gitleaks secret scan on every push/PR. Dependabot updates npm + GitHub Actions weekly (`yazio` is ignored as an unofficial API, pin it manually).
 
-**Iteration notes:** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials; run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json`. Prefer it over hand-written selectors when driving the browser.
+**Iteration notes.** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials. Run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json`. Prefer it over hand-written selectors when driving the browser.
 
-**Dev Container:** `.devcontainer/devcontainer.json` has Node 22, `npm ci` on create, ports 8081/8082/19000+.
+**Dev Container.** `.devcontainer/devcontainer.json` has Node 22, `npm ci` on create, ports 8081/8082/19000+.
 
-**Docker Compose:** web-oriented reproducible build (`docker compose up --build`). Physical device Expo Go usually needs Metro on the **host** or tunnel.
+**Docker Compose.** web-oriented reproducible build (`docker compose up --build`). Physical device Expo Go usually needs Metro on the **host** or tunnel.
 
 ## Database (quick reference)
 
-- **`diary_entries`:** logged meals, with `yazio_synced` and `yazio_item_id` for sync state.
-- **`food_cache`:** YAZIO products, favorites, and `last_used_at`.
-- **`settings`:** single row `id = 1`, goals and `yazio_sync_enabled`.
+- **`diary_entries`.** logged meals, with `yazio_synced` and `yazio_item_id` for sync state.
+- **`food_cache`.** YAZIO products, favorites, and `last_used_at`.
+- **`settings`.** single row `id = 1`, goals and `yazio_sync_enabled`.
 
 Schema changes: update `migrate()` in `src/db/database.ts` only (no separate migration runner yet). Use `IF NOT EXISTS` / additive columns for compatibility.
 
 ## Testing and quality
 
-- **Unit tests:** Jest + jest-expo in `src/**/__tests__/` (`npm test`) cover utils, diary/backup services (mocked DB), and the migration contract. Add tests for new pure logic.
+- **Unit tests.** Jest + jest-expo in `src/**/__tests__/` (`npm test`) cover utils, diary/backup services (mocked DB), and the migration contract. Add tests for new pure logic.
 - Manual smoke: log in, search food, add an entry, check the dashboard, optionally sync, add an offline entry with a cached food, then scan a barcode on device.
 
 ## Useful files for common tasks

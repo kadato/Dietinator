@@ -69,12 +69,12 @@ flowchart LR
 
 ## Data model
 
-| Table           | Purpose                                               | Sync state                      |
-| --------------- | ----------------------------------------------------- | ------------------------------- |
-| `diary_entries` | Logged meals; id = `TEXT PRIMARY KEY` from sync layer | `yazio_synced`, `yazio_item_id` |
-| `food_cache`    | YAZIO products, favorites, recents                    | `last_used_at`                  |
-| `meals`         | Foods you often eat together                          | None                            |
-| `settings`      | Single row `id = 1`: goals, `yazio_sync_enabled`      | None                            |
+| Table           | Purpose                                                | Sync state                      |
+| --------------- | ------------------------------------------------------ | ------------------------------- |
+| `diary_entries` | Logged meals. Id is `TEXT PRIMARY KEY` from sync layer | `yazio_synced`, `yazio_item_id` |
+| `food_cache`    | YAZIO products, favorites, recents                     | `last_used_at`                  |
+| `meals`         | Foods you often eat together                           | None                            |
+| `settings`      | Single row `id = 1`: goals, `yazio_sync_enabled`       | None                            |
 
 Schema changes go through `migrate()` in `src/db/database.ts` only, as additive
 `IF NOT EXISTS` columns for compatibility.
@@ -104,6 +104,6 @@ Schema changes go through `migrate()` in `src/db/database.ts` only, as additive
   APK build, GitHub release with changelog from conventional commits.
 - The Android app checks GitHub releases on startup and offers an in-app
   update with the rendered changelog.
-- EAS (`eas.json`) is the alternative mobile path: development/preview/
-  production profiles; production uses `autoIncrement` and `expo-updates`
+- EAS (`eas.json`) is the alternative mobile path. It has development, preview, and
+  production profiles. Production uses `autoIncrement` and `expo-updates`
   channels for OTA updates once EAS Update is configured.
