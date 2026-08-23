@@ -1,32 +1,32 @@
-// Polyfill runs in scripts/polyfill-os.cjs before Expo CLI loads (metro.config.js is too late).
+// Polyfill runs in scripts/polyfill-os.cjs before Expo CLI loads. metro.config.js is too late for it.
 const { getDefaultConfig } = require("expo/metro-config")
 const { withNativeWind } = require("nativewind/metro")
 
 const YAZIO_API_BASE = "https://yzapi.yazio.com/v15"
 const YAZIO_PROXY_PREFIX = "/api/yazio"
 
-// MCP server + agent snapshot bridge (shared with scripts/serve-dist.mjs).
+// MCP server and agent snapshot bridge. Shared with scripts/serve-dist.mjs.
 const { createSnapshotStore, createAgentMiddleware } = require("./scripts/mcp-server.cjs")
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname)
 
-// The Node native watcher is slow on Windows with this repo's ~460k files —
-// watch startup can outrun Metro's 4-minute timeout and the server crashes.
-// Watchman is installed and fast; use it for the file-map crawl and watch.
+// The Node native watcher is slow on Windows with this repo's about 460k files.
+// Watch startup can outrun Metro's 4-minute timeout and the server crashes.
+// Watchman is installed and fast. Use it for the file-map crawl and watch.
 config.resolver.useWatchman = true
 
-// On Windows, pnpm's deep node_modules plus the per-process file-handle
-// limit (~8K on this machine) can trigger EMFILE during Metro's crawl and
+// On Windows, pnpm deep node_modules plus the per-process file-handle
+// limit, about 8K on this machine, can trigger EMFILE during Metro crawl and
 // concurrent dev SSR renders. Capping workers keeps peak concurrent file
-// opens low; transforms are still fast with 2.
+// opens low. Transforms are still fast with 2.
 config.maxWorkers = 2
 
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push("wasm")
 
-// react-native-svg's fetchData.ts imports `buffer` on native; alias it to the
-// npm polyfill (documented react-native-svg setup for Expo).
+// react-native-svg fetchData.ts imports `buffer` on native. Alias it to the
+// npm polyfill. This is the documented react-native-svg setup for Expo.
 config.resolver.extraNodeModules = {
   ...config.resolver.extraNodeModules,
   buffer: require.resolve("buffer/"),
@@ -53,8 +53,8 @@ async function proxyYazioRequest(req, res) {
   const hasBody = req.method !== "GET" && req.method !== "HEAD"
   const body = hasBody ? await readRequestBody(req) : undefined
 
-  // A hung upstream must fail fast as a 502, not leave the browser spinning —
-  // the app wraps YAZIO calls in withRetry and will retry a 502.
+  // A hung upstream must fail fast as a 502, not leave the browser spinning.
+  // The app wraps YAZIO calls in withRetry and will retry a 502.
   const upstream = await fetch(targetUrl, {
     method: req.method,
     headers,
@@ -86,7 +86,7 @@ config.server.enhanceMiddleware = (middleware) => {
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
 
-    // Agent API → YAZIO proxy → Metro (only when nothing above handled it).
+    // Agent API, then YAZIO proxy, then Metro. Only when nothing above handled it.
     const fallback = (innerReq, innerRes) => {
       if (innerReq.url?.startsWith(YAZIO_PROXY_PREFIX)) {
         proxyYazioRequest(innerReq, innerRes).catch((error) => {

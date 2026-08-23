@@ -1,10 +1,10 @@
-/* Dietinator service worker — runtime precache for the static web export.
+/* Dietinator service worker. Runtime precache for the static web export.
  *
- * - Hashed build assets (`/_expo/static/*`, fonts, wasm) are cached forever on
+ * - Hashed build assets such as _expo/static/*, fonts, and wasm are cached forever on
  *   first use, so repeat loads skip the network entirely.
  * - Navigations are network-first with a cached fallback, so the app still
- *   boots when offline (the local-first engine keeps working in SQLite).
- * - The YAZIO proxy (`/api/*`) always hits the network — never cached.
+ *   boots when offline. The local-first engine keeps working in SQLite.
+ * - The YAZIO proxy (`/api/*`) always hits the network. Never cached.
  *
  * Bump VERSION to invalidate old caches after an app update.
  */

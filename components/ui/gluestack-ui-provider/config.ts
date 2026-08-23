@@ -258,7 +258,9 @@ export const config = {
     "--color-typography-100": "41 46 66",
     "--color-typography-200": "65 72 104",
     "--color-typography-300": "86 90 110",
-    "--color-typography-400": "120 128 160",
+    // 130 138 168 clears AA 4.5:1 on the #1a1b26 ground; the previous
+    // 120 128 160 measured 4.39:1 and carried tiny metadata text.
+    "--color-typography-400": "130 138 168",
     "--color-typography-500": "169 177 214",
     "--color-typography-600": "192 202 245",
     "--color-typography-700": "203 214 250",

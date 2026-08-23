@@ -1,6 +1,6 @@
 /*
- * Terminal face: JetBrainsMono Nerd Font Mono (NFM build — no ligatures by
- * Nerd Fonts policy). Registered at runtime by src/utils/web-fonts.ts, which
+ * Terminal face: JetBrainsMono NFM. The NFM build has no ligatures by
+ * Nerd Fonts policy. Registered at runtime by src/utils/web-fonts.ts, which
  * requires the TTFs through Metro so dev and exported builds both serve them.
  */
 
@@ -9,7 +9,7 @@
 @tailwind utilities;
 
 /*
- * Terminal field computer — mono, sharp, fast. Paper grid on light, void on dark.
+ * Terminal field computer. Mono, sharp, fast. Paper grid on light, void on dark.
  */
 html,
 body {
@@ -141,7 +141,7 @@ p,
   }
 }
 
-/* Browser surfaces — Tokyo Night ink */
+/* Browser surfaces. Tokyo Night ink */
 ::selection {
   background: #34548a;
   color: #ffffff;
@@ -161,7 +161,7 @@ html.dark input {
   caret-color: #7aa2f7;
 }
 
-/* Sharp focus — 1.5px solid Tokyo Night ink, square */
+/* Sharp focus. 1.5px solid Tokyo Night ink, square */
 :focus-visible {
   outline: 1.5px solid #34548a;
   outline-offset: 1px;
@@ -171,7 +171,7 @@ html.dark :focus-visible {
   outline-color: #7aa2f7;
 }
 
-/* ── Terminal world — square, sharp, no soft shadows ── */
+/* Terminal world - square, sharp, no soft shadows */
 .rounded-3xl,
 .rounded-2xl,
 .rounded-xl,
@@ -206,7 +206,7 @@ html.dark .bg-background-50 {
 html.dark .bg-primary-500 {
   border-color: #7aa2f7;
 }
-/* paper grid — Tokyo Night graph — tokenized via CSS variables */
+/* paper grid. Tokyo Night graph. Tokenized via CSS variables */
 :root {
   --paper-grid: rgba(52, 84, 138, 0.08);
   --paper-grid-dark: rgba(192, 202, 245, 0.06);
@@ -250,7 +250,7 @@ html.dark [class*="border-outline"] {
   }
 }
 
-/* reduce motion — preserve feedback without scale */
+/* reduce motion. Preserve feedback without scale */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -269,7 +269,7 @@ html.dark [class*="border-outline"] {
   }
 }
 
-/* ledger skeleton — ruled placeholder while SQLite hydrates */
+/* ledger skeleton. Ruled placeholder while SQLite hydrates */
 @keyframes ledger-shimmer {
   0% {
     background-position: -200px 0;

@@ -58,6 +58,10 @@ function SquareSwitchImpl(
       ref={ref}
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled: off }}
+      // Explicit aria-checked: react-native-web does not materialize
+      // accessibilityState.checked into DOM, so switches announced no state
+      // to assistive tech and automation read them as permanently unchecked.
+      aria-checked={value}
       accessibilityLabel={accessibilityLabel}
       disabled={off}
       onPress={() => onValueChange?.(!value)}

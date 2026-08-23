@@ -5,17 +5,17 @@ export type ColorPalette = {
   surface: string
   surfaceAlt: string
   primary: string
-  /** Deeper shade for text/icons on tinted primary backgrounds (tab rails). */
+  /** Deeper shade for text and icons on tinted primary backgrounds, such as tab rails. */
   primaryStrong: string
   primaryMuted: string
   onPrimary: string
-  /** Secondary text on primary surfaces (headers, bubbles), clears 4.5:1 in both themes. */
+  /** Secondary text on primary surfaces, headers and bubbles, clears 4.5 to 1 in both themes. */
   onPrimaryMuted: string
   /** Translucent chip/avatar surface laid on top of primary backgrounds. */
   primaryOverlay: string
   text: string
   textMuted: string
-  /** Section titles and chrome on the page background (not on cards). */
+  /** Section titles and chrome on the page background, not on cards. */
   textOnBackground: string
   danger: string
   warning: string
@@ -44,10 +44,14 @@ export const darkColors: ColorPalette = {
   warning: "#e0af68",
   onWarning: "#1a1b26",
   border: "#414868",
-  breakfast: "#8ab4f8",
-  lunch: "#bb9af7",
-  dinner: "#f7768e",
-  snack: "#e0af68",
+  // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito.
+  // Blue for protein and breakfast, amber for carbs and lunch, vermillion for fat and dinner
+  // remain distinct under deuteranopia, protanopia, or tritanopia. Snack keeps
+  // a teal that is luminance-separated from the three.
+  breakfast: "#3A86FF",
+  lunch: "#FFB020",
+  dinner: "#FF4D6A",
+  snack: "#2EC4B6",
 }
 
 export const lightColors: ColorPalette = {
@@ -67,10 +71,10 @@ export const lightColors: ColorPalette = {
   warning: "#8f5e15",
   onWarning: "#ffffff",
   border: "#a9b1d6",
-  breakfast: "#214a7a",
-  lunch: "#5a3e8e",
-  dinner: "#8c4351",
-  snack: "#8f5e15",
+  breakfast: "#0F5BA6",
+  lunch: "#8A5A00",
+  dinner: "#B91C3A",
+  snack: "#137A6B",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {
@@ -95,15 +99,15 @@ export const layout = {
   maxWidthContent: 720,
   maxWidthWide: 1100,
   sideTabWidth: 120,
-  /** Fixed bottom tab bar height on phones (excluding the safe-area inset). */
-  tabBarHeight: 64,
+  /** Fixed bottom tab bar height on phones, excluding the safe-area inset. */
+  tabBarHeight: 56,
 }
 
 /**
- * Terminal face: JetBrainsMono Nerd Font Mono (no ligatures).
+ * Terminal face: JetBrainsMono Nerd Font Mono with no ligatures.
  * Web: registered from assets/fonts by src/utils/web-fonts.ts.
  * Native: resolved verbatim from android/app/src/main/assets/fonts
- * (JetBrains Mono.ttf + JetBrains Mono_bold.ttf per RN font manager rules).
+ * as JetBrains Mono.ttf and JetBrains Mono_bold.ttf per RN font manager rules.
  */
 const MONO_WEB = "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
 const MONO_NATIVE = "JetBrains Mono"
