@@ -99,8 +99,8 @@ export async function loginWithCredentials(username: string, password: string): 
 
   const yazio = new Yazio({
     credentials: { username, password },
-    onRefresh: async ({ token }) => {
-      await saveToken(token as StoredToken)
+    onRefresh: async ({ token }: { token: StoredToken }) => {
+      await saveToken(token)
     },
   })
 
