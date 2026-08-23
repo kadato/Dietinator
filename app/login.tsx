@@ -162,6 +162,7 @@ export default function LoginScreen() {
                 textContentType="username"
                 autoComplete="email"
                 returnKeyType="next"
+                enterKeyHint="next"
                 blurOnSubmit={false}
                 value={email}
                 onChangeText={setEmail}
@@ -184,6 +185,7 @@ export default function LoginScreen() {
                 textContentType="password"
                 autoComplete="password"
                 returnKeyType="go"
+                enterKeyHint="go"
                 value={password}
                 onChangeText={setPassword}
                 onSubmitEditing={handleLogin}

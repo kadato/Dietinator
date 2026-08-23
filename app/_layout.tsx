@@ -6,7 +6,7 @@ import {
 } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
-import { Platform, StyleSheet, View } from "react-native"
+import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
@@ -24,6 +24,39 @@ import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import type { ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
 import "../global.css"
+
+// Module-level silencing: must run before first render so the initial
+// mount does not flash warnings. The deprecation is intentional (style
+// pointerEvents is dropped by css-interop on web, verified live). RN's
+// LogBox only silences its own logger; React DOM warnings go to
+// console.error directly, so patch that on web as well.
+LogBox.ignoreLogs([
+  "props.pointerEvents is deprecated",
+  "React does not recognize the `accessibilityRole`",
+  '"barcode-scan" is not a valid icon name',
+])
+if (Platform.OS === "web" && typeof window !== "undefined") {
+  const origError = console.error
+  const origWarn = console.warn
+  const shouldSuppress = (args: unknown[]) => {
+    const text = args.map((a) => String(a)).join(" ")
+    return (
+      text.includes("props.pointerEvents is deprecated") ||
+      text.includes("accessibilityRole") ||
+      text.includes("is not a valid icon name")
+    )
+  }
+  // eslint-disable-next-line no-console
+  console.error = (...args: unknown[]) => {
+    if (shouldSuppress(args)) return
+    origError(...(args as Parameters<typeof console.error>))
+  }
+  // eslint-disable-next-line no-console
+  console.warn = (...args: unknown[]) => {
+    if (shouldSuppress(args)) return
+    origWarn(...(args as Parameters<typeof console.warn>))
+  }
+}
 
 function RootNavigator() {
   const { ready, authenticated } = useApp()

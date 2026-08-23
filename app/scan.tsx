@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import {
+  AccessibilityInfo,
   Animated,
   View,
   Text,
@@ -13,7 +14,7 @@ import {
 import { useToast } from "@/context/ToastContext"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Feather } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { MealType, SearchFoodResult } from "@/types"
 import { getFoodByBarcode, searchFoodsRemote } from "@/services/yazio/foods"
 import { FoodListItem } from "@/components/FoodListItem"
@@ -182,7 +183,7 @@ function Viewfinder() {
         <ScanLine color={colors.primary} />
       </View>
       <View style={cameraStyles.frameHint}>
-        <Feather name="maximize" size={14} color="#ffffff" />
+        <MaterialCommunityIcons name="barcode-scan" size={14} color="#ffffff" />
         <Text style={cameraStyles.frameHintText}>Align barcode in frame</Text>
       </View>
     </View>
@@ -223,7 +224,7 @@ function BarcodeMatchesList({
             accessibilityRole="button"
             accessibilityLabel="Scan another barcode"
           >
-            <Feather name="maximize" size={14} color={colors.onPrimary} />
+            <MaterialCommunityIcons name="barcode-scan" size={14} color={colors.onPrimary} />
             <Text style={styles.scanAgainText}>Scan another</Text>
           </Pressable>
         </View>
@@ -255,27 +256,15 @@ function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?:
         ]}
       >
         <View style={styles.headerTitleWrap}>
-          <Feather name="maximize" size={18} color={overlay ? "#ffffff" : colors.primary} />
+          <MaterialCommunityIcons
+            name="barcode-scan"
+            size={18}
+            color={overlay ? "#ffffff" : colors.primary}
+          />
           <Text style={[overlay ? cameraStyles.headerTitle : styles.headerTitle, { color: tint }]}>
             Scan barcode
           </Text>
         </View>
-        {onClose ? (
-          <Pressable
-            onPress={onClose}
-            hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-none border active:bg-background-200"
-            style={{
-              borderWidth: 1.5,
-              borderColor: overlay ? "rgba(255,255,255,0.25)" : colors.border,
-              borderRadius: 0,
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Close camera"
-          >
-            <Feather name="x" size={18} color={tint} />
-          </Pressable>
-        ) : null}
       </View>
     </View>
   )
@@ -319,6 +308,9 @@ export default function ScanScreen() {
     setLoading(true)
     setLastBarcode(barcode)
     setNotFound(false)
+    // Scan states are visual-only overlays otherwise; screen readers get
+    // the same timeline spoken.
+    AccessibilityInfo.announceForAccessibility(`Looking up barcode ${barcode}`)
     try {
       const match = await getFoodByBarcode(barcode)
       if (match) {
@@ -328,11 +320,13 @@ export default function ScanScreen() {
       const remote = await searchFoodsRemote(barcode)
       setYazioAvailable(true)
       if (remote.length === 0) {
+        AccessibilityInfo.announceForAccessibility(`No match for barcode ${barcode}`)
         setNotFound(true)
         setScanned(false)
       } else if (remote.length === 1) {
         openFood(remote[0])
       } else {
+        AccessibilityInfo.announceForAccessibility(`${remote.length} matches found`)
         setResults(remote)
       }
     } catch (error) {
@@ -381,7 +375,7 @@ export default function ScanScreen() {
     return (
       <View style={styles.container}>
         <ModalContainer maxWidth={640}>
-          <ScanHeader />
+          <ScanHeader onClose={close} />
           <Box className="flex-1 justify-center px-6" style={styles.webScanContent}>
             <Box
               className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
@@ -392,7 +386,7 @@ export default function ScanScreen() {
                 borderRadius: 0,
               }}
             >
-              <Feather name="maximize" size={36} color={colors.primary} />
+              <MaterialCommunityIcons name="barcode-scan" size={36} color={colors.primary} />
             </Box>
             <Text style={styles.webScanTitle}>No camera here</Text>
             <Text style={styles.webScanHint}>
@@ -494,11 +488,6 @@ export default function ScanScreen() {
             ) : null}
           </Box>
         </ModalContainer>
-
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
-        />
       </View>
     )
   }
@@ -514,6 +503,7 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.center}>
+        <ScanHeader onClose={close} />
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <Box
             className="h-20 w-20 items-center justify-center rounded-none border bg-background-50"
@@ -575,11 +565,6 @@ export default function ScanScreen() {
             </Button>
           )}
         </PageContainer>
-
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
-        />
       </View>
     )
   }
@@ -663,7 +648,7 @@ export default function ScanScreen() {
       <ScanHeader overlay={cameraActive} onClose={close} />
 
       {loading && (
-        <View style={styles.overlay}>
+        <View style={styles.overlay} accessibilityLiveRegion="polite">
           <View style={styles.overlayCard}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.overlayText, { color: colors.text }]}>
@@ -675,7 +660,7 @@ export default function ScanScreen() {
 
       <FabCluster
         bottomOffset={insets.bottom + 20}
-        left={<Fab tone="surface" icon="x" onPress={close} accessibilityLabel="Cancel" />}
+        left={<Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />}
         right={
           cameraActive ? (
             <Fab

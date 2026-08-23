@@ -8,6 +8,7 @@ import {
 } from "react"
 import {
   ActivityIndicator,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,7 +18,7 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Feather } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useUpdates } from "@/context/UpdateContext"
@@ -44,14 +45,12 @@ import { SettingsSection } from "@/components/SettingsSection"
 import { NumberStepper } from "@/components/NumberStepper"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
 import { SegmentedControl } from "@/components/SegmentedControl"
-import { Fab } from "@/components/Fab"
-import { FabCluster } from "@/components/FabCluster"
+import { useLayout } from "@/hooks/useLayout"
 import {
   getFoodDatabaseCountryLabel,
   resolveFoodDatabaseCountry,
 } from "@/utils/food-database-country"
 import { useTheme } from "@/hooks/useTheme"
-import { useLayout } from "@/hooks/useLayout"
 import { confirmAction } from "@/utils/confirm"
 import { formatNumber } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
@@ -161,8 +160,11 @@ function GoalInput({
   last = false,
   error,
   inputWidth = 76,
+  accent,
+  mci,
 }: {
-  icon: IconName
+  /** Feather glyph name, or an MCI name when `mci` is set. */
+  icon: IconName | (string & {})
   label: string
   value: string
   onChange: (value: string) => void
@@ -173,19 +175,33 @@ function GoalInput({
   last?: boolean
   error?: string
   inputWidth?: number
+  /** Accent color for the icon well (macro rows use the meal accents). */
+  accent?: string
+  /** Render the glyph from MaterialCommunityIcons instead of Feather. */
+  mci?: boolean
 }) {
   const { colors } = useTheme()
+  const tint = accent ?? colors.primary
 
   return (
     <View className={`px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}>
       <View className="flex-row items-center justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row items-center gap-3">
-          <Box
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border bg-background-100"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          <View
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
+            style={{
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: `${tint}14`,
+            }}
           >
-            <Feather name={icon} size={20} color={colors.primary} />
-          </Box>
+            {mci ? (
+              <MaterialCommunityIcons name={icon as never} size={20} color={tint} />
+            ) : (
+              <Feather name={icon as IconName} size={20} color={tint} />
+            )}
+          </View>
           <View className="min-w-0 flex-1">
             <Text size="sm" bold className="text-typography-900">
               {label}
@@ -216,6 +232,41 @@ function GoalInput({
           {error}
         </Text>
       ) : null}
+    </View>
+  )
+}
+
+/** Goals-hub subtitle: the three macro icons carry the values, no P/C/F letters. */
+function MacroGoalSubtitle({
+  settings,
+  colors,
+}: {
+  settings: AppSettings
+  colors: ReturnType<typeof useTheme>["colors"]
+}) {
+  const items = [
+    {
+      icon: "zap" as const,
+      color: colors.breakfast,
+      value: `${formatNumber(settings.protein_goal)}g`,
+    },
+    { icon: "box" as const, color: colors.lunch, value: `${formatNumber(settings.carbs_goal)}g` },
+    {
+      icon: "droplet" as const,
+      color: colors.dinner,
+      value: `${formatNumber(settings.fat_goal)}g`,
+    },
+  ]
+  return (
+    <View className="mt-0.5 flex-row items-center gap-3">
+      {items.map((item) => (
+        <View key={item.icon} className="flex-row items-center gap-1">
+          <Feather name={item.icon} size={11} color={item.color} />
+          <Text size="xs" className="font-tabular text-typography-500">
+            {item.value}
+          </Text>
+        </View>
+      ))}
     </View>
   )
 }
@@ -365,7 +416,8 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     <>
       <SettingsSection title="Daily nutrition goals">
         <GoalInput
-          icon="zap"
+          icon="fire"
+          mci
           label="Calories"
           value={calorieGoal}
           onChange={setCalorieGoal}
@@ -375,7 +427,8 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="kcal"
         />
         <GoalInput
-          icon="activity"
+          icon="zap"
+          accent={colors.breakfast}
           label="Protein"
           value={proteinGoal}
           onChange={setProteinGoal}
@@ -385,7 +438,8 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           unit="g"
         />
         <GoalInput
-          icon="layers"
+          icon="box"
+          accent={colors.lunch}
           label="Carbohydrates"
           value={carbsGoal}
           onChange={setCarbsGoal}
@@ -396,6 +450,7 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
         />
         <GoalInput
           icon="droplet"
+          accent={colors.dinner}
           label="Fat"
           value={fatGoal}
           onChange={setFatGoal}
@@ -413,38 +468,77 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
             </Text>
           </View>
           <View
-            className="h-3 flex-row overflow-hidden rounded-none border bg-background-100"
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
+            className="h-4 flex-row overflow-hidden rounded-none border bg-background-100"
+            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
           >
-            {pPct > 0 ? <View style={{ flex: pPct, backgroundColor: colors.breakfast }} /> : null}
-            {cPct > 0 ? <View style={{ flex: cPct, backgroundColor: colors.lunch }} /> : null}
+            {pPct > 0 ? (
+              <View
+                style={{
+                  flex: pPct,
+                  backgroundColor: colors.breakfast,
+                  borderRightWidth: cPct > 0 || fPct > 0 ? 1.5 : 0,
+                  borderRightColor: colors.border,
+                }}
+              />
+            ) : null}
+            {cPct > 0 ? (
+              <View
+                style={{
+                  flex: cPct,
+                  backgroundColor: colors.lunch,
+                  borderRightWidth: fPct > 0 ? 1.5 : 0,
+                  borderRightColor: colors.border,
+                }}
+              />
+            ) : null}
             {fPct > 0 ? <View style={{ flex: fPct, backgroundColor: colors.dinner }} /> : null}
           </View>
-          <View className="mt-2 flex-row flex-wrap items-center gap-x-4 gap-y-1">
+          <View className="mt-3 flex-row flex-wrap items-center gap-3">
             <View className="flex-row items-center gap-1.5">
               <View
-                className="h-2 w-2 rounded-none"
-                style={{ backgroundColor: colors.breakfast, borderRadius: 0 }}
-              />
-              <Text size="xs" className="text-typography-600">
+                className="h-5 w-5 items-center justify-center rounded-none border"
+                style={{
+                  backgroundColor: `${colors.breakfast}18`,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
+              >
+                <Feather name="zap" size={10} color={colors.breakfast} />
+              </View>
+              <Text size="xs" bold className="font-tabular text-typography-700">
                 P {pPct}%
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
               <View
-                className="h-2 w-2 rounded-none"
-                style={{ backgroundColor: colors.lunch, borderRadius: 0 }}
-              />
-              <Text size="xs" className="text-typography-600">
+                className="h-5 w-5 items-center justify-center rounded-none border"
+                style={{
+                  backgroundColor: `${colors.lunch}18`,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
+              >
+                <Feather name="box" size={10} color={colors.lunch} />
+              </View>
+              <Text size="xs" bold className="font-tabular text-typography-700">
                 C {cPct}%
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
               <View
-                className="h-2 w-2 rounded-none"
-                style={{ backgroundColor: colors.dinner, borderRadius: 0 }}
-              />
-              <Text size="xs" className="text-typography-600">
+                className="h-5 w-5 items-center justify-center rounded-none border"
+                style={{
+                  backgroundColor: `${colors.dinner}18`,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                }}
+              >
+                <Feather name="droplet" size={10} color={colors.dinner} />
+              </View>
+              <Text size="xs" bold className="font-tabular text-typography-700">
                 F {fPct}%
               </Text>
             </View>
@@ -863,7 +957,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
 export default function SettingsScreen() {
   const router = useRouter()
-  const { settings, updateSettings, refreshAuth, refreshSettings } = useApp()
+  const { settings, updateSettings, refreshAuth, refreshSettings, authenticated } = useApp()
   const { showSuccess, showError } = useToast()
   const { checking, checkForUpdates } = useUpdates()
   const { colors } = useTheme()
@@ -875,7 +969,28 @@ export default function SettingsScreen() {
   const [mcpExpanded, setMcpExpanded] = useState(false)
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null)
 
+  // One shared pop-to-hub for the header button and hardware Back alike.
+  const backToHub = useCallback(() => {
+    setActiveSection(null)
+    scrollRef.current?.scrollTo({ y: 0, animated: false })
+  }, [])
+
+  // The drilldown lives in component state, invisible to the navigation
+  // stack. Without this handler, system Back from any subsection exits the
+  // whole app on Android.
   useEffect(() => {
+    if (Platform.OS === "web" || activeSection === null) return
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      backToHub()
+      return true
+    })
+    return () => sub.remove()
+  }, [activeSection, backToHub])
+
+  useEffect(() => {
+    // The profile lookup only makes sense signed in; signed-out mounts were
+    // firing a doomed network call on every open.
+    if (!authenticated) return
     let cancelled = false
     ;(async () => {
       try {
@@ -890,7 +1005,7 @@ export default function SettingsScreen() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [authenticated])
 
   const effectiveCountry = resolveFoodDatabaseCountry(
     settings.food_database_country,
@@ -1031,9 +1146,13 @@ export default function SettingsScreen() {
                         <Text size="md" bold className="text-typography-900">
                           {section.label}
                         </Text>
-                        <Text size="xs" numberOfLines={1} className="mt-0.5 text-typography-500">
-                          {section.getSubtitle(settings, effectiveCountry)}
-                        </Text>
+                        {section.id === "goals" ? (
+                          <MacroGoalSubtitle settings={settings} colors={colors} />
+                        ) : (
+                          <Text size="xs" numberOfLines={1} className="mt-0.5 text-typography-500">
+                            {section.getSubtitle(settings, effectiveCountry)}
+                          </Text>
+                        )}
                       </Box>
                       <Feather name="chevron-right" size={18} color={colors.textMuted} />
                     </Pressable>
@@ -1055,10 +1174,7 @@ export default function SettingsScreen() {
               {/* Back Button and Section Title */}
               <Box className="mb-4">
                 <Pressable
-                  onPress={() => {
-                    setActiveSection(null)
-                    scrollRef.current?.scrollTo({ y: 0, animated: false })
-                  }}
+                  onPress={backToHub}
                   hitSlop={8}
                   className="flex-row items-center gap-1 py-1"
                   accessibilityRole="button"
@@ -1450,22 +1566,9 @@ export default function SettingsScreen() {
           />
         </PageContainer>
       </ScrollView>
-      {activeSection !== null ? (
-        <FabCluster
-          bottomOffset={isWide ? 32 : 14}
-          left={
-            <Fab
-              tone="surface"
-              icon="arrow-left"
-              onPress={() => {
-                setActiveSection(null)
-                scrollRef.current?.scrollTo({ y: 0, animated: false })
-              }}
-              accessibilityLabel="Back to all settings"
-            />
-          }
-        />
-      ) : null}
+      {/* The drilldown's back affordance is the header row button plus the
+          system Back gesture. A second floating duplicate competed with the
+          Material one-primary-action rule, so it was removed. */}
     </KeyboardAvoidingView>
   )
 }

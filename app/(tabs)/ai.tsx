@@ -167,7 +167,8 @@ export default function AiScreen() {
           <Box
             className="h-8 w-8 items-center justify-center rounded-none border"
             style={{
-              backgroundColor: colors.primaryMuted,
+              // Ink carries chrome. The violet accent is reserved for data.
+              backgroundColor: colors.primary,
               borderWidth: 1.5,
               borderColor: colors.border,
               borderRadius: 0,
@@ -648,6 +649,7 @@ export default function AiScreen() {
                   selectionColor={colors.primary}
                   accessibilityLabel="Message the AI assistant"
                   returnKeyType="send"
+                  enterKeyHint="send"
                   blurOnSubmit={false}
                   onSubmitEditing={canSend ? submit : undefined}
                 />

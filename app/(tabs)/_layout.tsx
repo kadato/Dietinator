@@ -1,4 +1,5 @@
 import type React from "react"
+import { useState } from "react"
 import { Tabs } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -7,6 +8,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useApp } from "@/context/AppContext"
 import { withAlpha } from "@/utils/color"
+import { layout } from "@/theme"
 import { Text } from "@ui/text"
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>["tabBar"]>>[0]
@@ -15,6 +17,10 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   const { colors } = useTheme()
   const { isWide, width } = useLayout()
   const insets = useSafeAreaInsets()
+  // Desktop affordance: the rail item's rule tints toward ink on hover.
+  // Pressable's style callback has no hovered flag in core RN types, so the
+  // rail tracks it via hover events (web-only, no-op on touch).
+  const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
 
   const visibleRoutes = state.routes.filter((route: (typeof state.routes)[number]) => {
     const descriptor = descriptors[route.key]
@@ -103,14 +109,17 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               }
               onPress={onPress}
               onLongPress={onLongPress}
+              onHoverIn={() => setHoveredRoute(route.key)}
+              onHoverOut={() => setHoveredRoute(null)}
               style={({ pressed }) => [
                 {
                   width: 88,
                   paddingVertical: 10,
                   paddingHorizontal: 6,
                   borderRadius: 0,
-                  borderWidth: isFocused ? 1.5 : 1,
-                  borderColor: isFocused ? colors.primary : colors.border,
+                  borderWidth: isFocused || hoveredRoute === route.key ? 1.5 : 1,
+                  borderColor:
+                    isFocused || hoveredRoute === route.key ? colors.primary : colors.border,
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
@@ -135,7 +144,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                 style={{
                   color: isFocused ? colors.onPrimary : inactiveColor,
                   marginTop: 2,
-                  fontSize: 10,
+                  fontSize: 11,
                   letterSpacing: 0.04,
                   textAlign: "center",
                   textTransform: "uppercase",
@@ -153,10 +162,14 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
     )
   }
 
-  // Mobile Bottom Tab Bar, a tight terminal dock. Below 480 the labels drop
+  // Mobile Bottom Tab Bar, a tight terminal dock. Below 640 the labels drop
   // entirely: icons carry the destinations, no loose text at small sizes.
-  const showLabels = width >= 480
-  const tabBarHeight = 48
+  // Keep the bar short so it never covers content on 320-390px phones.
+  const showLabels = width >= 640
+  const compactBar = width < 380
+  // Single source: theme.layout.tabBarHeight, so the constant cannot drift
+  // from the real bar again. Compact phones get a shorter bar.
+  const tabBarHeight = compactBar ? 48 : layout.tabBarHeight
   return (
     <View
       accessibilityRole="tablist"
@@ -248,8 +261,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                 bold={isFocused}
                 style={{
                   color: isFocused ? colors.onPrimary : inactiveColor,
-                  fontSize: 8,
-                  lineHeight: 9,
+                  fontSize: 11,
+                  lineHeight: 12,
                   letterSpacing: 0.08,
                   textTransform: "uppercase",
                   textAlign: "center",

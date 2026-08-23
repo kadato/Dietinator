@@ -278,8 +278,8 @@ export default function StatsScreen() {
 
   return (
     <Box className="flex-1 bg-background-0">
-      <PageContainer variant={isWide ? "wide" : "narrow"} className="flex-1">
-        <Box className="px-6 pb-2" style={{ paddingTop: insets.top + spacing.md }}>
+      <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
+        <Box className="px-3 pb-2" style={{ paddingTop: insets.top + spacing.md }}>
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats
           </Text>
@@ -289,7 +289,7 @@ export default function StatsScreen() {
         </Box>
 
         <ScrollView
-          contentContainerClassName={`p-4 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-16"}`}
+          contentContainerClassName={`p-3 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-16"}`}
         >
           <SegmentedControl
             value={range}

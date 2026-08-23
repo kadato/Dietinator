@@ -10,7 +10,7 @@ import {
 } from "react-native"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useLocalSearchParams } from "expo-router"
-import { Feather } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { getDiaryEntriesForDate, logFood, updateDiaryEntry } from "@/services/diary"
 import { getFoodRemote, isUsableCacheRow } from "@/services/yazio/foods"
 import {
@@ -406,10 +406,10 @@ export default function AddFoodScreen() {
         >
           <PageContainer
             grow={false}
-            variant="narrow"
+            variant={isWide ? "wide" : "default"}
             contentStyle={isWide ? [styles.page, { maxWidth: 520 }] : styles.page}
           >
-            {/* Header: Title, Producer, Date, Favorite */}
+            {/* Header: Title, Producer, Date, Favorite, Close */}
             <View style={styles.headerBlock}>
               <View style={styles.titleRow}>
                 <View style={styles.titleBlock}>
@@ -426,9 +426,20 @@ export default function AddFoodScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
                     accessibilityState={{ disabled: favoriteToggling }}
-                    style={{ opacity: favoriteToggling ? 0.5 : 1 }}
+                    style={{
+                      opacity: favoriteToggling ? 0.5 : 1,
+                      backgroundColor: isFavorite ? `${colors.warning}18` : "transparent",
+                      borderWidth: isFavorite ? 1.5 : 0,
+                      borderColor: colors.warning,
+                      padding: 6,
+                      borderRadius: 0,
+                    }}
                   >
-                    <Feather name={isFavorite ? "star" : "star"} size={26} color={colors.warning} />
+                    <MaterialCommunityIcons
+                      name={isFavorite ? "star" : "star-outline"}
+                      size={26}
+                      color={isFavorite ? colors.warning : colors.textMuted}
+                    />
                   </Pressable>
                 ) : null}
               </View>
@@ -560,7 +571,9 @@ export default function AddFoodScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
+          }
           right={
             <Fab
               icon="check"

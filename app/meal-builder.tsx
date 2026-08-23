@@ -196,19 +196,10 @@ export default function MealBuilderScreen() {
     >
       <ModalContainer maxWidth={640}>
         <Box
-          className="flex-row items-center justify-between px-4 pb-2"
+          className="flex-row items-center justify-between px-3 pb-2"
           style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 16 }}
         >
-          <Pressable
-            onPress={safeBack}
-            hitSlop={8}
-            className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Feather name="x" size={20} color={colors.text} />
-          </Pressable>
+          <Box className="w-10" />
           <Text
             size="xl"
             bold
@@ -235,7 +226,7 @@ export default function MealBuilderScreen() {
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-32"
+          contentContainerClassName="px-3 pb-32"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -469,7 +460,9 @@ export default function MealBuilderScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
+          }
           right={
             <Fab
               icon="check"

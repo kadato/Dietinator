@@ -114,7 +114,7 @@ export default function ManualEntryScreen() {
     >
       <ModalContainer hug maxWidth={520} outerClassName="bg-background-50">
         <Box
-          className="flex-row items-center justify-between px-6 pb-2"
+          className="flex-row items-center px-3 pb-2"
           style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
         >
           <Box>
@@ -134,20 +134,10 @@ export default function ManualEntryScreen() {
               {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
             </Text>
           </Box>
-          <Pressable
-            onPress={safeBack}
-            hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-          >
-            <Feather name="x" size={18} color={colors.textMuted} />
-          </Pressable>
         </Box>
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-28 pt-2"
+          contentContainerClassName="px-3 pb-28 pt-2"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -167,7 +157,7 @@ export default function ManualEntryScreen() {
                   accessibilityLabel="Food name"
                   returnKeyType="done"
                   onSubmitEditing={() => void handleSave()}
-                  maxFontSizeMultiplier={1.4}
+                  maxFontSizeMultiplier={2}
                   style={{ fontFamily: fonts.mono }}
                 />
               </Input>
@@ -243,7 +233,9 @@ export default function ManualEntryScreen() {
       {!keyboardOpen ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={safeBack} accessibilityLabel="Cancel" />}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
+          }
           right={
             <Fab
               icon="check"
@@ -263,7 +255,7 @@ const createStyles = (colors: ColorPalette) =>
     container: { flex: 1, backgroundColor: colors.background },
     label: {
       color: colors.textMuted,
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",
