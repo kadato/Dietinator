@@ -2,7 +2,8 @@ import { View, Text, StyleSheet } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, borders, radii, type ColorPalette } from "@/theme"
+import { chipTint } from "@/theme.helpers"
 
 type MacroRowProps = {
   label: string
@@ -24,11 +25,14 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
       <View style={styles.rowHeader}>
         <View style={styles.labelGroup}>
           <View
-            style={[styles.iconBox, { borderColor: colors.border, backgroundColor: `${color}14` }]}
+            style={[
+              styles.iconBox,
+              { borderColor: chipTint(color, 0.35), backgroundColor: chipTint(color) },
+            ]}
           >
             <Feather name={icon} size={12} color={color} />
           </View>
-          <Text style={[styles.label, { color }]}>{label}</Text>
+          <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
         </View>
 
         <View style={styles.valueGroup}>
@@ -46,12 +50,14 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
               style={[
                 styles.budgetBadge,
                 {
-                  backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
+                  backgroundColor: over > 0 ? chipTint(colors.danger) : chipTint(color),
                   borderColor: over > 0 ? colors.danger : color,
                 },
               ]}
             >
-              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
+              <Text
+                style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : colors.text }]}
+              >
                 {over > 0 ? `+${Math.round(over)}g over` : `${Math.round(remaining)}g left`}
               </Text>
             </View>
@@ -126,16 +132,16 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       gap: 10,
-      borderTopWidth: 1.5,
+      borderTopWidth: borders.width,
       borderTopColor: colors.border,
       marginTop: spacing.xs,
-      borderRadius: 0,
+      borderRadius: radii.none,
       boxShadow: "none",
       elevation: 0,
     },
     row: {
       gap: 6,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     rowHeader: {
       flexDirection: "row",
@@ -150,8 +156,8 @@ const createStyles = (colors: ColorPalette) =>
     iconBox: {
       width: 20,
       height: 20,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       alignItems: "center",
       justifyContent: "center",
       boxShadow: "none",
@@ -191,8 +197,8 @@ const createStyles = (colors: ColorPalette) =>
     budgetBadge: {
       paddingHorizontal: 7,
       paddingVertical: 2,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
     },
@@ -207,19 +213,19 @@ const createStyles = (colors: ColorPalette) =>
     barBg: {
       height: 10,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
+      borderRadius: radii.none,
       overflow: "hidden",
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       boxShadow: "none",
       elevation: 0,
     },
     barFill: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
       // Vibrant fill with a subtle top highlight for luminance separation
       // beyond hue alone (helps deuteranopia/protanopia).
-      borderTopWidth: 1.5,
+      borderTopWidth: borders.width,
       borderTopColor: "rgba(255,255,255,0.22)",
     },
   })
