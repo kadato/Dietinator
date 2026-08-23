@@ -27,9 +27,9 @@ test.describe("food search (offline)", () => {
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
 
-    // The log-meal modal closes via its bottom-left cancel FAB.
-    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible()
-    await page.getByRole("button", { name: "Cancel" }).click()
+    // The log-meal modal closes via its bottom-left back FAB.
+    await expect(page.getByRole("button", { name: "Go back" })).toBeVisible()
+    await page.getByRole("button", { name: "Go back" }).click()
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible()
   })
 

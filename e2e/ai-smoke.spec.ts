@@ -63,9 +63,9 @@ test.describe("AI assistant + FABs (offline)", () => {
     // No direct scanner shortcut on the dashboard anymore.
     await expect(page.getByRole("button", { name: "Scan barcode" })).toBeHidden()
 
-    // Food tracking (log-meal) has the Scan mode.
+    // Food tracking (log-meal) has the scan FAB.
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
-    await expect(page.getByRole("button", { name: "Scan" })).toBeVisible()
-    await page.getByRole("button", { name: "Cancel" }).click()
+    await expect(page.getByRole("button", { name: "Scan barcode" })).toBeVisible()
+    await page.getByRole("button", { name: "Go back" }).click()
   })
 })
