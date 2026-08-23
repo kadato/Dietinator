@@ -1,7 +1,7 @@
 import * as SQLite from "expo-sqlite"
 import { Platform } from "react-native"
 
-/** Single in-flight open; avoids duplicate OPFS access handles on web (Strict Mode / parallel boot). */
+/** Single in-flight open. Avoids duplicate OPFS access handles on web. Covers Strict Mode and parallel boot. */
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
@@ -27,11 +27,11 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
     await migrate(database)
     return database
   } catch (error) {
-    // On web, the wa-sqlite worker occasionally fails its one-time VFS init:
-    // opening OPFS sync access handles races the previous page's worker being
-    // torn down. The worker is then permanently poisoned (every later call
-    // fails with "Invalid VFS state"), so the only recovery is a fresh page.
-    // Reload once per tab; the fresh worker then acquires the released handles.
+    // On web, the wa-sqlite worker occasionally fails its one-time VFS init.
+    // Opening OPFS sync access handles races the previous page worker being
+    // torn down. The worker is then permanently poisoned and every later call
+    // fails with Invalid VFS state, so the only recovery is a fresh page.
+    // Reload once per tab. The fresh worker then acquires the released handles.
     if (isVfsInitError(error) && typeof window !== "undefined") {
       try {
         if (!sessionStorage.getItem(RELOAD_KEY)) {
@@ -40,7 +40,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
         }
       } catch {
         // sessionStorage can throw in some embedded webviews, so degrade to the
-        // existing behavior (boot continues, screens show their error states).
+        // existing behavior. Boot continues and screens show their error states.
       }
     }
     throw error
@@ -50,7 +50,7 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
 const RELOAD_KEY = "dietinator-db-reloaded"
 
 export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
-  // WAL uses extra OPFS files; web OPFS allows only one sync handle per file.
+  // WAL uses extra OPFS files. Web OPFS allows only one sync handle per file.
   const journalMode = Platform.OS === "web" ? "DELETE" : "WAL"
   await database.execAsync(`
     PRAGMA journal_mode = ${journalMode};
@@ -135,8 +135,8 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       created_at TEXT NOT NULL
     );
 
-    -- Redundant index from an earlier schema: id is the rowid alias (already
-    -- indexed by INTEGER PRIMARY KEY). Dropped for existing databases too.
+    -- Redundant index from an earlier schema. Id is the rowid alias and already
+    -- indexed by INTEGER PRIMARY KEY. Dropped for existing databases too.
     DROP INDEX IF EXISTS idx_ai_chat_created;
 
     CREATE TABLE IF NOT EXISTS meals (
@@ -157,7 +157,7 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
       created_at TEXT NOT NULL
     );
 
-    -- Redundant index from an earlier schema: date is UNIQUE (auto-indexed).
+    -- Redundant index from an earlier schema. Date is UNIQUE and auto-indexed.
     -- Dropped for existing databases too.
     DROP INDEX IF EXISTS idx_weight_date;
 
@@ -244,12 +244,12 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     )
   }
   if (!foodCacheColumns.some((column) => column.name === "source")) {
-    // 'search' rows hold per-gram nutrients (never served cache-first);
-    // 'detail' rows are normalized per 100 g/ml and are safe to serve locally.
+    // Search rows hold per-gram nutrients and are never served cache-first.
+    // Detail rows are normalized per 100 g per ml and are safe to serve locally.
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN source TEXT`)
   }
   if (!foodCacheColumns.some((column) => column.name === "servings_json")) {
-    // All YAZIO serving options (cup, each, serving, whole, …) so the
+    // All YAZIO serving options, such as cup, each, serving, and whole, so the
     // add-food chips survive cache round-trips and offline use.
     await database.execAsync(`ALTER TABLE food_cache ADD COLUMN servings_json TEXT`)
   }
@@ -267,8 +267,8 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_food_favorite_order ON food_cache(is_favorite, favorite_order ASC)`,
   )
 
-  // One-time cleanup (user_version 0 to 1): drop cached foods whose stored
-  // nutrients look per-gram (kcal < 10). They are either legacy raw per-gram
+  // One-time cleanup from user_version 0 to 1. Drop cached foods whose stored
+  // nutrients look per-gram, where kcal is less than 10. They are either legacy raw per-gram
   // rows or rare normalized low-cal rows. Both are ambiguous to read back, so
   // they get refetched and re-normalized from the API instead.
   const versionRow = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version")

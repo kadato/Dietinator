@@ -32,19 +32,19 @@ export interface CachedFood {
   /** Base-unit amount logged the last time this food was consumed. */
   last_amount: number | null
   /**
-   * JSON array of all YAZIO serving options (cup, each, serving, whole, …).
+   * JSON array of all YAZIO serving options, such as cup, each, serving, and whole.
    * Null for rows cached before this column existed or from search results.
    */
   servings_json: string | null
   /**
-   * Where the row came from: 'search' (per-gram nutrients, stale by design,
-   * never served cache-first) or 'detail' (normalized per 100 g/ml, safe to
-   * serve locally). Null for rows written before this column existed.
+   * Where the row came from. Search means per-gram nutrients, stale by design
+   * and never served cache-first. Detail means normalized per 100 g per ml, safe to
+   * serve locally. Null for rows written before this column existed.
    */
   source: string | null
 }
 
-/** Provider presets mirroring Physiquinator (base URL + default model per provider). */
+/** Provider presets mirroring Physiquinator. Base URL and default model per provider. */
 export type AiProviderId = "openai" | "openrouter" | "opencode" | "ollama" | "custom"
 
 export interface AppSettings {
@@ -60,23 +60,23 @@ export interface AppSettings {
   update_check_enabled: number
   /** In-app AI assistant master switch. */
   ai_enabled: number
-  /** Provider preset. Fills base URL + default model (see src/db/ai-settings.ts). */
+  /** Provider preset. Fills base URL and default model. See src/db/ai-settings.ts. */
   ai_provider: AiProviderId
-  /** OpenAI-compatible endpoint, for example https://api.openai.com/v1 (OpenAI, OpenRouter, Ollama...). */
+  /** OpenAI-compatible endpoint, for example https://api.openai.com/v1 for OpenAI, OpenRouter, Ollama, and others. */
   ai_base_url: string
   /** Model name, for example gpt-4o-mini. */
   ai_model: string
   /** Optional extra instructions appended to the assistant's system prompt. */
   ai_system_prompt: string
-  /** Last-applied agent (MCP) change revision. Web snapshot bridge only. */
+  /** Last-applied agent change revision. MCP. Web snapshot bridge only. */
   agent_bridge_rev: number
-  /** Explicit app theme: follow the system, or force light/dark. */
+  /** Explicit app theme. Follow the system, or force light or dark. */
   theme_preference: "system" | "light" | "dark"
-  /** Daily hydration target in milliliters (0 = unset, falls back to YAZIO). */
+  /** Daily hydration target in milliliters. 0 is unset and falls back to YAZIO. */
   water_goal_ml: number
-  /** Body height in centimeters (0 = unset, so no BMI shown). */
+  /** Body height in centimeters. 0 is unset, so no BMI shown. */
   height_cm: number
-  /** Goal bodyweight in kilograms (0 = unset). */
+  /** Goal bodyweight in kilograms. 0 is unset. */
   target_weight_kg: number
 }
 
@@ -129,7 +129,7 @@ export interface SearchFoodResult {
   producer: string
   nutrients: FoodNutrients
   serving: FoodServing
-  /** All serving options from YAZIO product detail (when loaded). */
+  /** All serving options from YAZIO product detail, when loaded. */
   servings?: FoodServing[]
   base_unit: string
   is_verified: boolean
@@ -152,8 +152,8 @@ export interface MealItem {
 }
 
 /**
- * One past (food, amount) log. The recents list renders these as separate
- * quick-add rows, so the same food can appear multiple times with the amounts
+ * One past food and amount log. The recents list renders these as separate
+ * quick-add rows, so the same food can appear many times with the amounts
  * it was actually logged at.
  */
 export interface RecentFoodUsage {
@@ -174,7 +174,7 @@ export interface Meal {
   items: MealItem[]
 }
 
-/** One logged bodyweight. At most one row per date (upsert on save). */
+/** One logged bodyweight. At most one row per date. Upsert on save. */
 export interface WeightEntry {
   id: string
   date: string
@@ -221,7 +221,7 @@ export interface StreamingChunk {
   delta?: string
   reasoning?: string
   tool_calls?: AiToolCallInfo[]
-  /** Non-null when the stream ended with an error (content carries the message). */
+  /** Non-null when the stream ended with an error. Content carries the message. */
   error?: string
 }
 

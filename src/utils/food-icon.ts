@@ -28,7 +28,7 @@ const CATEGORY_RULES: {
   icon: MaterialIconName
   keywords: string[]
 }[] = [
-  // 1. Drinks and Beverages (prioritized so "Orange Juice" or "Apple Cider" -> drink)
+  // 1. Drinks and Beverages. Prioritized so Orange Juice and Apple Cider map to drink.
   {
     category: "drink",
     icon: "cup-water",
@@ -74,7 +74,7 @@ const CATEGORY_RULES: {
       "cocktail",
     ],
   },
-  // 2. Fish and Seafood (prioritized so "Tuna salad" -> fish)
+  // 2. Fish and Seafood. Prioritized so Tuna salad maps to fish.
   {
     category: "fish",
     icon: "fish",
@@ -475,7 +475,7 @@ export function getFoodIconDescriptor(
           return { name: rule.icon, category: rule.category }
         }
       } else if (normKw.length <= 3) {
-        // Short words: match exact token or compound prefixes/suffixes (for exampledio -> diobel, rak -> garnelarak)
+        // Short words: match exact token or compound prefixes or suffixes. For example, dio maps to diobel and rak maps to garnelarak.
         if (
           tokens.some(
             (t) => t === normKw || (t.length <= 8 && (t.startsWith(normKw) || t.endsWith(normKw))),

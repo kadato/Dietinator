@@ -1,6 +1,6 @@
 import type { FoodNutrients, FoodServing, SearchFoodResult } from "@/types"
 
-/** Convert YAZIO energy to kcal using the account's `unit_energy` (kcal or kj). */
+/** Convert YAZIO energy to kcal using the account `unit_energy`, either kcal or kj. */
 export function toKcal(energy: number, unitEnergy = "kcal"): number {
   const unit = unitEnergy.trim().toLowerCase()
   if (unit === "kj" || unit === "kilojoule" || unit === "kilojoules") {
@@ -20,10 +20,10 @@ export function rawEnergyKcal(nutrients: Record<string, number>, unitEnergy = "k
 }
 
 /**
- * Product detail API stores nutrients per gram/ml. Verified against live
- * payloads: raw `energy.energy` is 0.1 to 9 kcal per gram (banana 0.89, olive oil
- * 8.84, lettuce 0.15) and default servings are named portions ("whole.regular"
- * @150 g), so the serving label is NOT a per-100 g signal.
+ * Product detail API stores nutrients per gram or ml. Verified against live
+ * payloads. Raw `energy.energy` is 0.1 to 9 kcal per gram. Banana is 0.89, olive oil
+ * is 8.84, lettuce is 0.15. Default servings are named portions such as whole.regular
+ * at 150 g, so the serving label is not a per-100 g signal.
  */
 export function isPerGramRawNutrients(
   nutrients: Record<string, number>,
@@ -37,11 +37,11 @@ export function isPerGramRawNutrients(
 /**
  * Detect per-gram values already stored in cache.
  *
- * `serving_quantity` is the reliable discriminator:
+ * `serving_quantity` is the reliable discriminator.
  * - Search rows carry `serving_quantity = 1` with nutrients per gram.
  * - Normalized product-detail cache rows carry `serving_quantity = 100`
- *   (nutrients per 100 g/ml). Even when the food is genuinely low-cal
- *   (for example diet drinks at ~0.4 kcal/100 ml), those must NOT be read as per-gram.
+ *   with nutrients per 100 g per ml. Even when the food is genuinely low-cal,
+ *   for example diet drinks at about 0.4 kcal per 100 ml, those rows must not be read as per-gram.
  */
 export function isPerGramNutrients(
   nutrients: FoodNutrients,
@@ -57,7 +57,7 @@ export function isPerGramNutrients(
 export function nutrientsFromYazio(
   nutrients: Record<string, number>,
   unitEnergy = "kcal",
-  /** Scale raw API values before rounding (for example 100 to normalize per-gram to per-100 g). */
+  /** Scale raw API values before rounding. For example, use 100 to normalize per-gram to per-100 g. */
   multiplier = 1,
 ): FoodNutrients {
   const scale = multiplier
@@ -97,7 +97,7 @@ export function nutrientsFromYazio(
 }
 
 /**
- * Standard Recommended Daily Intake (RDI / DRI) reference guidelines for adults.
+ * Standard Recommended Daily Intake, RDI or DRI, reference guidelines for adults.
  */
 export const DAILY_RECOMMENDED_INTAKE = {
   fiber: { value: 30, unit: "g", label: "Dietary Fiber" },
@@ -117,9 +117,9 @@ export const DAILY_RECOMMENDED_INTAKE = {
 } as const
 
 /**
- * Grams/ml (or base units) the stored `nutrients` values apply to.
- * YAZIO search can use `serving_quantity` when it differs from `amount`;
- * full product payloads are usually per 100 g/ml.
+ * Grams or ml, or base units, the stored `nutrients` values apply to.
+ * YAZIO search can use `serving_quantity` when it differs from `amount`.
+ * Full product payloads are usually per 100 g per ml.
  */
 function isBaseUnitServingLabelForRef(servingName: string, baseUnit: string): boolean {
   const label = servingName.trim().toLowerCase()
@@ -139,27 +139,27 @@ export function nutrientsReferenceAmount(
 
   if (qty === amount) return amount
 
-  // Per 100 g/ml label on product detail
+  // Per 100 g per ml label on product detail
   if ((baseUnit === "g" || baseUnit === "ml") && qty === 100 && amount !== 100) {
     return 100
   }
 
-  // Search "gram" rows: nutrients are per serving_quantity (often 1 g), not default amount
+  // Search gram rows: nutrients are per serving_quantity, often 1 g, not default amount
   if (
     (baseUnit === "g" || baseUnit === "ml") &&
     isBaseUnitServingLabelForRef(serving.serving ?? "", baseUnit)
   ) {
-    // API often returns amount=100 with serving_quantity=1 while nutrients are per 100 g/ml
+    // API often returns amount=100 with serving_quantity=1 while nutrients are per 100 g per ml
     if (qty === 1 && amount >= 100) return 100
-    // Default portion (for example a 30 g bar): nutrients match `amount`, not 1 g
+    // Default portion, for example a 30 g bar, nutrients match `amount`, not 1 g
     if (qty === 1 && amount > 1) return amount
     return qty
   }
 
-  // Named portion (1 scoop, 1 bar, and so on): nutrients match `amount`. Only valid
-  // for g/ml products: for countable base units (each, cup, stück) nutrients
+  // Named portion, for example 1 scoop or 1 bar, nutrients match `amount`. Only valid
+  // for g or ml products. For countable base units such as each, cup, or stück, nutrients
   // are per base unit, so a multi-piece serving must scale from 1, not from
-  // the option's own amount.
+  // the option own amount.
   if (
     (baseUnit === "g" || baseUnit === "ml") &&
     qty <= 10 &&
@@ -263,9 +263,9 @@ export function nutrientsForAmount(
 }
 
 /**
- * Convert a per-gram/per-ml cache row (search data) into a normalized per-100
+ * Convert a per-gram or per-ml cache row from search data into a normalized per-100
  * display food, so a preview can render instantly from the cache. Only valid
- * for g/ml rows. Search rows for countable units (pieces, scoops) hold
+ * for g or ml rows. Search rows for countable units, such as pieces or scoops, hold
  * per-item nutrients and must not be multiplied.
  */
 export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {

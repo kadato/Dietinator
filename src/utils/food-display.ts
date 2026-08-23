@@ -6,7 +6,7 @@ import {
 } from "@/utils/nutrients"
 import { formatNumber } from "@/utils/format"
 
-/** YAZIO serving keys are dotted ids ("whole.regular", "small.piece"); show readable labels. */
+/** YAZIO serving keys are dotted ids, such as whole.regular and small.piece. Show readable labels. */
 export function formatServingLabel(label: string): string {
   return label
     .split(".")
@@ -15,7 +15,7 @@ export function formatServingLabel(label: string): string {
     .join(" ")
 }
 
-/** Human label for a YAZIO base unit (g/ml stay, countable units get English names). */
+/** Human label for a YAZIO base unit. G and ml stay, countable units get English names. */
 export function displayUnit(baseUnit: string): string {
   switch (baseUnit) {
     case "stück":
@@ -31,8 +31,8 @@ export function formatServingOption(serving: FoodServing, baseUnit: string): str
   const label = serving.serving || baseUnit
   const unit = displayUnit(baseUnit)
   const pretty = formatServingLabel(label)
-  // Plain unit labels ("100 g", "250 ml") and countable labels that are just
-  // the unit ("each" on a stück product) render without the redundant
+  // Plain unit labels such as 100 g and 250 ml and countable labels that are just
+  // the unit, such as each on a stück product, render without the redundant
   // parenthetical.
   if (
     label === "g" ||
@@ -79,7 +79,7 @@ export function formatListNutrientLine(food: SearchFoodResult): string {
   return `${prefix}${kcal} kcal, ${p}g P, ${c}g C, ${f}g F, ${portion}`
 }
 
-/** Subtitle for a recents usage row: the logged amount with its calories and macros, for example "92 kcal, 15g P, 4g C, 2g F, 120 g". */
+/** Subtitle for a recents usage row. Shows the logged amount with its calories and macros, for example 92 kcal, 15g P, 4g C, 2g F, 120 g. */
 export function formatUsageAmountLine(food: SearchFoodResult, amount: number): string {
   const unit = displayUnit(food.base_unit || "g")
   const nutrients = nutrientsForAmount(food.nutrients, food.serving, amount, food.base_unit || "g")

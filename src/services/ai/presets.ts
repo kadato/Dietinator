@@ -63,7 +63,7 @@ export const AI_PRESETS: AiPreset[] = [
   },
 ]
 
-/** Fill dynamic slots (for example{date}) and return the final prompt. */
+/** Fill dynamic slots, for example {date}, and return the final prompt. */
 export function presetPrompt(preset: AiPreset): string {
   return preset.prompt.replaceAll("{date}", toDateKey())
 }

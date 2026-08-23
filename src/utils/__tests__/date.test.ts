@@ -46,7 +46,7 @@ describe("shiftDateKey", () => {
   })
 
   it("is DST-safe for a summer-to-winter transition", () => {
-    // 2026-10-25 is the EU DST end date; shifting must stay on calendar days.
+    // 2026-10-25 is the EU DST end date. Shifting must stay on calendar days.
     expect(shiftDateKey("2026-10-25", -1)).toBe("2026-10-24")
     expect(shiftDateKey("2026-10-24", 1)).toBe("2026-10-25")
   })
@@ -76,8 +76,8 @@ describe("formatDisplayDate", () => {
   })
 
   it("formats other dates with a short weekday", () => {
-    // Locale-aware (may be "Sat, Aug 1" or "aug. 1., Szo"), so just prove it is
-    // a real short date and not the Today/Yesterday label.
+    // Locale-aware. May be Sat, Aug 1 or aug. 1., Szo, so just prove it is
+    // a real short date and not the Today or Yesterday label.
     expect(formatDisplayDate("2026-08-01")).not.toBe("Today")
     expect(formatDisplayDate("2026-08-01")).not.toBe("Yesterday")
     expect(formatDisplayDate("2026-08-01")).toContain(",")
