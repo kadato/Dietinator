@@ -3,7 +3,6 @@ import { Pressable, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
-import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { formatNumber } from "@/utils/format"
 import { Box } from "@ui/box"
@@ -20,7 +19,6 @@ type Props = {
   onAdd: (mealType: MealType) => void
   onEdit: (entryId: string) => void
   onDelete: (id: string) => void
-  onShowNutrition?: (entry: DiaryEntry) => void
 }
 
 export const MealSection = memo(function MealSection({
@@ -31,7 +29,6 @@ export const MealSection = memo(function MealSection({
   onAdd,
   onEdit,
   onDelete,
-  onShowNutrition,
 }: Props) {
   const { colors } = useTheme()
   // Default to collapsed for a clean, compact diary overview
@@ -55,10 +52,11 @@ export const MealSection = memo(function MealSection({
 
   return (
     <Card variant="elevated" className="mb-3 overflow-hidden rounded-none p-0">
+      <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />
       {/* Header: icon + title on one line, kcal + add on the right. The icon
           is top-aligned to the title baseline, not centered to the whole card,
           so a tall goal bar below does not pull the icon down. */}
-      <Box className="flex-row items-start justify-between gap-3 px-4 pt-4">
+      <Box className="flex-row items-start justify-between gap-3 px-3 py-3">
         <Pressable
           onPress={() => {
             if (entries.length === 0) onAdd(mealType)
@@ -135,7 +133,7 @@ export const MealSection = memo(function MealSection({
       {/* Goal track spans the full card width below the header, not the
           middle column, so it reads as the card's budget. */}
       {goal ? (
-        <Box className="mt-3 gap-1.5 px-4">
+        <Box className="mt-2 gap-1.5 px-3 pb-3">
           <View
             className="w-full overflow-hidden rounded-none border bg-background-100"
             style={{
@@ -191,21 +189,18 @@ export const MealSection = memo(function MealSection({
         </Box>
       ) : null}
 
-      {/* Logged macros or empty hint sit on their own full-width row. */}
-      <Box className="px-4 pb-4 pt-2.5">
-        {entries.length > 0 ? (
-          <Box className="min-w-0 flex-row flex-wrap">
-            <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
-          </Box>
-        ) : (
+      {entries.length === 0 ? (
+        <Box className="px-3 pb-3 pt-1">
           <Text size="xs" className="font-mono uppercase tracking-widest text-typography-400">
             Nothing logged yet
           </Text>
-        )}
-      </Box>
+        </Box>
+      ) : !expanded && entries.length > 0 && !goal ? (
+        <Box className="px-3 pb-3" />
+      ) : null}
 
       {expanded && entries.length > 0 ? (
-        <Box className="mt-2 gap-1 border-t border-outline-100 px-2 pb-2 pt-2">
+        <Box className="mt-0 border-t border-outline-100 px-1.5 pb-2 pt-1.5">
           {entries.map((entry) => (
             <DiaryEntryRow
               key={`${dateKey}-${entry.id}`}
@@ -213,7 +208,6 @@ export const MealSection = memo(function MealSection({
               accentColor={accent}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onShowNutrition={onShowNutrition}
             />
           ))}
         </Box>

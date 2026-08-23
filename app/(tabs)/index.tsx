@@ -5,7 +5,6 @@ import { useFocusEffect, useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
-import { MacroBar } from "@/components/MacroBar"
 import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
@@ -13,23 +12,20 @@ import { DatePickerModal } from "@/components/DatePickerModal"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { LogWaterModal } from "@/components/LogWaterModal"
 import { MealSlotModal } from "@/components/MealSlotModal"
-import { NutritionBreakdownModal } from "@/components/NutritionBreakdownModal"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
-import type { DiaryEntry, FoodNutrients, MealType, WeightEntry } from "@/types"
+import type { DiaryEntry, MealType, WeightEntry } from "@/types"
 import {
   copyEntriesToDate,
   deleteFoodEntry,
   getDiaryEntriesForDate,
-  getNutritionBreakdownForEntries,
-  getNutritionBreakdownForEntry,
   restoreFoodEntry,
 } from "@/services/diary"
-import { getLatestWeightEntry } from "@/db/weight"
+import { getLatestWeightEntry, getRecentWeightEntries } from "@/db/weight"
 import { addWaterEntry, deleteWaterEntry, getWaterTotalForDate } from "@/db/water"
 import { getCalorieHistory } from "@/db/stats"
 import { computeLogStreak } from "@/utils/adherence"
@@ -64,6 +60,7 @@ export default function TodayScreen() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [streak, setStreak] = useState(0)
   const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
+  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([])
   const [logWeightOpen, setLogWeightOpen] = useState(false)
   const [logWaterOpen, setLogWaterOpen] = useState(false)
   const [logSlotOpen, setLogSlotOpen] = useState(false)
@@ -72,60 +69,8 @@ export default function TodayScreen() {
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   // Session cache for the streak computation, see load() below.
   const streakCacheRef = useRef<{ day: string; count: number } | null>(null)
-  const [nutritionModal, setNutritionModal] = useState<{
-    visible: boolean
-    nutrients: FoodNutrients
-    title?: string
-    subtitle?: string
-  }>({
-    visible: false,
-    nutrients: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
-  })
 
   const totals = useMemo(() => sumNutrients(entries), [entries])
-
-  const handleShowItemNutrition = useCallback(async (entry: DiaryEntry) => {
-    try {
-      const nut = await getNutritionBreakdownForEntry(entry)
-      setNutritionModal({
-        visible: true,
-        nutrients: nut,
-        title: entry.food_name,
-        subtitle: `${entry.amount} ${entry.unit} · ${Math.round(entry.kcal)} kcal`,
-      })
-    } catch {
-      setNutritionModal({
-        visible: true,
-        nutrients: {
-          kcal: entry.kcal,
-          protein: entry.protein,
-          carbs: entry.carbs,
-          fat: entry.fat,
-        },
-        title: entry.food_name,
-        subtitle: `${entry.amount} ${entry.unit} · ${Math.round(entry.kcal)} kcal`,
-      })
-    }
-  }, [])
-
-  const handleShowDayNutrition = useCallback(async () => {
-    try {
-      const nut = await getNutritionBreakdownForEntries(entries)
-      setNutritionModal({
-        visible: true,
-        nutrients: nut,
-        title: "Daily Nutrition and Micros",
-        subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
-      })
-    } catch {
-      setNutritionModal({
-        visible: true,
-        nutrients: totals,
-        title: "Daily Nutrition and Micros",
-        subtitle: `${formatDisplayDate(dateKey)} · ${entries.length} foods logged`,
-      })
-    }
-  }, [dateKey, entries, totals])
 
   const mealEntries = useMemo(() => {
     const grouped: Record<MealType, DiaryEntry[]> = {
@@ -146,15 +91,17 @@ export default function TodayScreen() {
       //  touched. Stale nutrient values are refined in the background below.
       let list: DiaryEntry[]
       try {
-        const [diaryEntries, weight, water] = await Promise.all([
+        const [diaryEntries, weight, water, recentWeights] = await Promise.all([
           getDiaryEntriesForDate(dateKey, { remote: false }),
           getLatestWeightEntry(),
           getWaterTotalForDate(dateKey),
+          getRecentWeightEntries(7),
         ])
         list = diaryEntries
         setEntries(list)
         setLocalWeight(weight)
         setLocalWaterMl(water)
+        setWeightHistory(recentWeights.slice().reverse())
         // The streak depends only on which days up to today hold entries.
         // Cache per day plus today's entry count so tab focus never re-scans
         // a year of calorie history just to repaint one number.
@@ -248,7 +195,7 @@ export default function TodayScreen() {
     const handler = (event: KeyboardEvent) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
       if (keyboardVisible) return
-      if (pickerOpen || logWeightOpen || logWaterOpen || logSlotOpen || nutritionModal.visible) {
+      if (pickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
         return
       }
       const target = event.target as HTMLElement | null
@@ -257,14 +204,7 @@ export default function TodayScreen() {
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [
-    keyboardVisible,
-    pickerOpen,
-    logWeightOpen,
-    logWaterOpen,
-    logSlotOpen,
-    nutritionModal.visible,
-  ])
+  }, [keyboardVisible, pickerOpen, logWeightOpen, logWaterOpen, logSlotOpen])
 
   const openAdd = useCallback(
     (mealType: MealType) => {
@@ -356,7 +296,6 @@ export default function TodayScreen() {
           onAdd={openAdd}
           onEdit={openEdit}
           onDelete={onDeleteEntry}
-          onShowNutrition={handleShowItemNutrition}
         />
       )
       return grid ? (
@@ -378,8 +317,14 @@ export default function TodayScreen() {
 
   const handleQuickWater = async (amount: number) => {
     try {
-      await addWaterEntry({ date: dateKey, amountMl: amount })
+      const entry = await addWaterEntry({ date: dateKey, amountMl: amount })
       await load({ quiet: true })
+      showUndo(`${amount}ml water added.`, async () => {
+        try {
+          await deleteWaterEntry(entry.id)
+          await load({ quiet: true })
+        } catch {}
+      })
     } catch (error) {
       showError(error, "Could not log water.")
     }
@@ -454,7 +399,7 @@ export default function TodayScreen() {
                 size={compact ? "xs" : "sm"}
                 bold
                 className="font-tabular leading-none"
-                style={{ color: colors.lunch }}
+                style={{ color: colors.text }}
               >
                 {streak}
               </Text>
@@ -516,36 +461,7 @@ export default function TodayScreen() {
           size={isWide ? 168 : width < 380 ? 140 : 152}
         />
       </Box>
-      <Box className="px-4 pb-3 pt-3">
-        <MacroBar
-          protein={totals.protein}
-          carbs={totals.carbs}
-          fat={totals.fat}
-          proteinGoal={settings.protein_goal}
-          carbsGoal={settings.carbs_goal}
-          fatGoal={settings.fat_goal}
-        />
-      </Box>
-      <Pressable
-        onPress={() => void handleShowDayNutrition()}
-        hitSlop={6}
-        className="mx-3 mb-3 cursor-pointer flex-row items-center justify-center gap-2 border bg-background-100 py-2.5 hover:bg-background-200 active:bg-background-200"
-        style={
-          { minHeight: 44, borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 } as any
-        }
-        accessibilityRole="button"
-        accessibilityLabel="View Nutrition and Micros, full nutrition and micronutrient breakdown"
-      >
-        <Feather name="pie-chart" size={12} color={colors.primary} />
-        <Text
-          size="2xs"
-          bold
-          className="font-mono uppercase tracking-widest"
-          style={{ color: colors.primary, letterSpacing: 0.06 }}
-        >
-          View Nutrition and Micros
-        </Text>
-      </Pressable>
+
       {summary && summary.steps > 0 ? (
         <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5">
           <Feather name="activity" size={12} color={colors.textMuted} />
@@ -638,31 +554,72 @@ export default function TodayScreen() {
       </Box>
       <Pressable
         onPress={() => setLogWeightOpen(true)}
-        className={`min-w-0 flex-1 cursor-pointer flex-row items-center rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
+        className={`min-w-0 flex-1 cursor-pointer rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
         style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
         accessibilityRole="button"
         accessibilityLabel={`Log weight, ${
           displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} weight` : ""
         }`}
       >
-        <Box
-          className="shrink-0 items-center justify-center rounded-none"
-          style={{
-            width: 44,
-            height: 44,
-            borderWidth: 1.5,
-            borderColor: colors.border,
-            borderRadius: 0,
-            backgroundColor: `${colors.primary}12`,
-          }}
-        >
-          <Feather name="activity" size={compact ? 16 : 18} color={colors.primary} />
-        </Box>
-        <Box className="min-w-0 flex-1">
-          <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
-            {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "-"}
-          </Text>
-        </Box>
+        <View className="w-full flex-row items-center gap-2">
+          <Box
+            className="shrink-0 items-center justify-center rounded-none"
+            style={{
+              width: 44,
+              height: 44,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: `${colors.primary}12`,
+            }}
+          >
+            <Feather name="activity" size={compact ? 16 : 18} color={colors.primary} />
+          </Box>
+          <Box className="min-w-0 flex-1">
+            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+              {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "-"}
+            </Text>
+            <Text
+              size="2xs"
+              numberOfLines={1}
+              className="font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontSize: 10, letterSpacing: 0.06 }}
+            >
+              {weightHistory.length > 1
+                ? `${weightHistory.length} weigh-ins`
+                : weightHistory.length === 1
+                  ? "1 weigh-in"
+                  : "Tap to log"}
+            </Text>
+          </Box>
+        </View>
+        {weightHistory.length >= 2 ? (
+          <View className="mt-2 flex-row items-end gap-1" style={{ height: 18 }}>
+            {(() => {
+              const vals = weightHistory.slice(-7).map((w) => w.weight_kg)
+              const min = Math.min(...vals)
+              const max = Math.max(...vals)
+              const range = max - min || 1
+              return vals.map((v, i) => {
+                const h = 6 + ((v - min) / range) * 12
+                const isLast = i === vals.length - 1
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      flex: 1,
+                      height: h,
+                      backgroundColor: isLast ? colors.primary : `${colors.primary}55`,
+                      borderWidth: 1,
+                      borderColor: isLast ? colors.primary : `${colors.primary}40`,
+                      borderRadius: 0,
+                    }}
+                  />
+                )
+              })
+            })()}
+          </View>
+        ) : null}
       </Pressable>
     </Box>
   )
@@ -744,14 +701,6 @@ export default function TodayScreen() {
           )}
         </ScrollView>
       </PageContainer>
-
-      <NutritionBreakdownModal
-        visible={nutritionModal.visible}
-        onClose={() => setNutritionModal((s) => ({ ...s, visible: false }))}
-        nutrients={nutritionModal.nutrients}
-        title={nutritionModal.title}
-        subtitle={nutritionModal.subtitle}
-      />
 
       <DatePickerModal
         visible={pickerOpen}

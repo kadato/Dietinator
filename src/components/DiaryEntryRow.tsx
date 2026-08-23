@@ -5,17 +5,16 @@ import type { DiaryEntry } from "@/types"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { usePressedState } from "@/hooks/usePressedState"
-import { MacroPills } from "@/components/MacroPills"
 import { formatNumber } from "@/utils/format"
 import { getFoodIcon } from "@/utils/food-icon"
-import { fonts, type ColorPalette } from "@/theme"
+import { fonts, borders, radii, type ColorPalette } from "@/theme"
+import { chipTint } from "@/theme.helpers"
 
 type Props = {
   entry: DiaryEntry
   accentColor: string
   onEdit: (entryId: string) => void
   onDelete: (entryId: string) => void
-  onShowNutrition?: (entry: DiaryEntry) => void
 }
 
 export const DiaryEntryRow = memo(function DiaryEntryRow({
@@ -23,14 +22,12 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
   accentColor,
   onEdit,
   onDelete,
-  onShowNutrition,
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const amountLabel =
     entry.unit === "serving" ? "1 serving " : `${formatNumber(entry.amount)}${entry.unit} `
   const mainPress = usePressedState()
-  const infoPress = usePressedState()
   const editPress = usePressedState()
   const deletePress = usePressedState()
 
@@ -49,10 +46,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         <View
           style={[
             styles.iconWrap,
-            {
-              backgroundColor: `${accentColor}14`,
-              borderColor: colors.border,
-            },
+            { backgroundColor: chipTint(accentColor), borderColor: colors.border },
           ]}
         >
           <MaterialCommunityIcons
@@ -63,11 +57,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </View>
         <View style={styles.info}>
           <Text style={styles.name}>{entry.food_name}</Text>
-          <View style={styles.macroRow}>
-            <Text style={styles.amountLabel}>{amountLabel}</Text>
-            <Text style={styles.macroDot}>,</Text>
-            <MacroPills protein={entry.protein} carbs={entry.carbs} fat={entry.fat} size="xs" />
-          </View>
+          <Text style={styles.amountLabel}>{amountLabel.trim()}</Text>
         </View>
         <View style={styles.kcalBlock}>
           <Text style={styles.kcalValue}>{Math.round(entry.kcal)}</Text>
@@ -75,33 +65,15 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </View>
       </Pressable>
       <View style={styles.actions}>
-        {onShowNutrition ? (
-          <Pressable
-            onPress={() => onShowNutrition(entry)}
-            hitSlop={4}
-            className="cursor-pointer hover:opacity-70"
-            onPressIn={infoPress.onPressIn}
-            onPressOut={infoPress.onPressOut}
-            style={[
-              styles.actionBtn,
-              { backgroundColor: `${colors.primary}14`, borderColor: colors.border },
-              ...(infoPress.pressed ? [styles.actionPressed] : []),
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`View nutrition facts for ${entry.food_name}`}
-          >
-            <Feather name="pie-chart" size={14} color={colors.primary} />
-          </Pressable>
-        ) : null}
         <Pressable
           onPress={() => onEdit(entry.id)}
-          hitSlop={4}
+          hitSlop={12}
           className="cursor-pointer hover:opacity-70"
           onPressIn={editPress.onPressIn}
           onPressOut={editPress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${accentColor}14`, borderColor: colors.border },
+            { backgroundColor: chipTint(accentColor), borderColor: colors.border },
             ...(editPress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
@@ -111,13 +83,13 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         </Pressable>
         <Pressable
           onPress={() => onDelete(entry.id)}
-          hitSlop={4}
+          hitSlop={12}
           className="cursor-pointer hover:opacity-70"
           onPressIn={deletePress.onPressIn}
           onPressOut={deletePress.onPressOut}
           style={[
             styles.actionBtn,
-            { backgroundColor: `${colors.danger}14`, borderColor: colors.border },
+            { backgroundColor: chipTint(colors.danger), borderColor: colors.border },
             ...(deletePress.pressed ? [styles.actionPressed] : []),
           ]}
           accessibilityRole="button"
@@ -135,13 +107,13 @@ const createStyles = (colors: ColorPalette) =>
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-      paddingVertical: 6,
+      gap: 8,
+      paddingVertical: 4,
       paddingHorizontal: 4,
       borderRadius: 0,
       borderWidth: 0,
       borderBottomWidth: 1,
-      borderBottomColor: `${colors.border}10`,
+      borderBottomColor: `${colors.border}14`,
       boxShadow: "none",
       elevation: 0,
       overflow: "hidden",
@@ -151,9 +123,9 @@ const createStyles = (colors: ColorPalette) =>
       minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 10,
       borderRadius: 0,
-      paddingVertical: 2,
+      paddingVertical: 4,
       paddingHorizontal: 2,
       borderWidth: 1.5,
       borderColor: "transparent",
@@ -168,8 +140,8 @@ const createStyles = (colors: ColorPalette) =>
     iconWrap: {
       width: 38,
       height: 38,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       alignItems: "center",
       justifyContent: "center",
       boxShadow: "none",
@@ -258,15 +230,16 @@ const createStyles = (colors: ColorPalette) =>
     actions: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
-      marginLeft: 4,
+      gap: 6,
+      marginLeft: 6,
       flexShrink: 0,
+      paddingVertical: 2,
     },
     actionBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      width: 36,
+      height: 36,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       alignItems: "center",
       justifyContent: "center",
       boxShadow: "none",
