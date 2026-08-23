@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react"
-import { Animated, Easing, StyleSheet, View } from "react-native"
+import { useEffect, useMemo } from "react"
+import { Animated, Easing, Platform, StyleSheet, View } from "react-native"
 import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
 
@@ -15,7 +15,7 @@ export const SPINNER_STEP_MS = 160
 export function LoadingSpinner({ size = 32 }: { size?: number }) {
   const { colors } = useTheme()
   const reduceMotion = useReduceMotion()
-  const spin = useRef(new Animated.Value(0)).current
+  const spin = useMemo(() => new Animated.Value(0), [])
 
   useEffect(() => {
     if (reduceMotion) return
@@ -24,7 +24,7 @@ export function LoadingSpinner({ size = 32 }: { size?: number }) {
         toValue: 1,
         duration: 900,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       }),
     )
     loop.start()
