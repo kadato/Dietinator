@@ -1,12 +1,11 @@
 # Dependabot configuration for Dietinator
 # Reference: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Strategy: one grouped PR per ecosystem for version updates (plus one for security).
 
 version: 2
 
 updates:
-  # ---------------------------------------------------------------------------
   # npm: application dependencies and build tools
-  # ---------------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -14,7 +13,7 @@ updates:
       day: "monday"
       time: "04:00"
       timezone: "Etc/UTC"
-    open-pull-requests-limit: 6
+    open-pull-requests-limit: 5
     rebase-strategy: "auto"
     commit-message:
       prefix: "deps"
@@ -25,66 +24,18 @@ updates:
       - "npm"
     cooldown:
       default-days: 3
-      semver-minor-days: 5
-      semver-patch-days: 2
     groups:
-      # Group security patches into a single PR when vulnerabilities arise
       security-patches:
         applies-to: security-updates
         patterns: ["*"]
-        update-types: ["patch", "minor"]
-
-      # Expo and React Native core ecosystem
-      expo-framework:
-        patterns:
-          - "expo"
-          - "expo-*"
-          - "@expo/*"
-          - "react"
-          - "react-dom"
-          - "react-native"
-          - "react-native-*"
-          - "@react-native*"
-          - "@gluestack-ui/*"
-          - "nativewind"
-          - "tailwind*"
-          - "babel-*"
+      all-dependencies:
+        patterns: ["*"]
         update-types: ["minor", "patch"]
-
-      # Testing and E2E frameworks
-      testing:
-        patterns:
-          - "jest*"
-          - "@types/jest"
-          - "@testing-library/*"
-          - "playwright*"
-          - "@playwright/*"
-          - "puppeteer*"
-          - "lighthouse"
-        update-types: ["minor", "patch"]
-
-      # Linting, formatting, type definitions, and tooling
-      linting-and-tooling:
-        patterns:
-          - "eslint*"
-          - "prettier*"
-          - "husky"
-          - "lint-staged"
-          - "typescript"
-          - "@types/*"
-          - "globals"
-          - "cross-env"
-        update-types: ["minor", "patch"]
-
     ignore:
-      # YAZIO is an unofficial reverse-engineered API client that must be tested and pinned manually
       - dependency-name: "yazio"
-      # Major version bumps (e.g. Expo SDK, React Native, Tailwind v4) require deliberate coordinated migration
       - update-types: ["version-update:semver-major"]
 
-  # ---------------------------------------------------------------------------
   # GitHub Actions: CI/CD workflows and automation
-  # ---------------------------------------------------------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -102,17 +53,10 @@ updates:
       - "github-actions"
       - "ci"
     groups:
-      actions:
-        patterns:
-          - "actions/*"
-          - "gradle/*"
-          - "android-actions/*"
-          - "softprops/*"
-          - "gitleaks/*"
+      all-actions:
+        patterns: ["*"]
 
-  # ---------------------------------------------------------------------------
   # Docker: web / Metro container image
-  # ---------------------------------------------------------------------------
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -128,9 +72,7 @@ updates:
       - "dependencies"
       - "docker"
 
-  # ---------------------------------------------------------------------------
   # Dev Containers: VS Code / GitHub Codespaces environment
-  # ---------------------------------------------------------------------------
   - package-ecosystem: "devcontainers"
     directory: "/.devcontainer"
     schedule:
