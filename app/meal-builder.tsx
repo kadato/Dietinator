@@ -26,8 +26,9 @@ import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
 import { FoodListItem } from "@/components/FoodListItem"
 import { MacroPills } from "@/components/MacroPills"
-import { NumberStepper } from "@/components/NumberStepper"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
+import { NumberStepper } from "@/components/NumberStepper"
+
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { fonts } from "@/theme"
@@ -349,7 +350,6 @@ export default function MealBuilderScreen() {
                   </Box>
                 )
               })}
-
               <Box className="mb-4 mt-2">
                 <NutritionFactsCard
                   nutrients={totals}

@@ -474,7 +474,6 @@ export default function AddFoodScreen() {
               </View>
             ) : null}
 
-            {/* Nutrition Facts and Daily Budget Impact Cards (Top) */}
             {preview && (
               <View style={styles.nutritionSection}>
                 <NutritionFactsCard
