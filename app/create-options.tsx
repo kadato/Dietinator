@@ -67,7 +67,6 @@ export default function CreateOptionsScreen() {
   const { colors } = useTheme()
 
   const onSelect = (option: CreateOption) => {
-    safeBack()
     switch (option.id) {
       case "meal":
         router.push({ pathname: "/meal-builder" })

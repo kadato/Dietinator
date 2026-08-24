@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
-import { useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
@@ -87,6 +87,7 @@ function MacroInput({
 }
 
 export default function ManualEntryScreen() {
+  const router = useRouter()
   const safeBack = useSafeBack()
   useEscapeToClose(true, safeBack)
   const params = useLocalSearchParams<{ meal?: string; date?: string; quickAdd?: string }>()
@@ -127,7 +128,7 @@ export default function ManualEntryScreen() {
         carbs: Math.round(Number(carbs) || 0),
         fat: Math.round(Number(fat) || 0),
       })
-      safeBack()
+      router.dismissAll()
     } catch (error) {
       showError(error, "Could not save entry.")
     } finally {
