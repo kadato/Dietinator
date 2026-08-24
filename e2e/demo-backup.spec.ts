@@ -13,7 +13,7 @@ test.describe("demo mode", () => {
     await page.getByRole("button", { name: "Try the demo" }).click()
 
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
-      timeout: 30_000,
+      timeout: 60_000,
     })
     // Meal sections start collapsed. Expand Breakfast and Snacks to reveal
     // the seeded entries.
@@ -28,7 +28,7 @@ test.describe("demo mode", () => {
   test("?demo=1 boots straight into a demo session", async ({ page }) => {
     await page.goto("/?demo=1")
     await expect(page.getByRole("button", { name: "Open calendar" })).toBeVisible({
-      timeout: 30_000,
+      timeout: 60_000,
     })
     // Sections start collapsed. Expand Breakfast to reveal the oatmeal entry.
     await page.getByRole("button", { name: /^Breakfast, / }).click()

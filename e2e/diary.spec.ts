@@ -32,7 +32,7 @@ test.describe("diary flows (offline, local-first)", () => {
 
     await openCreateOptions(page, "Lunch")
     await page.getByRole("button", { name: "New food" }).click()
-    await expect(page.getByText("Manual entry", { exact: true })).toBeVisible()
+    await expect(page.getByText("New Food", { exact: true })).toBeVisible()
 
     await page.getByLabel("Food name").fill("Homemade soup")
     await page.getByRole("textbox", { name: "Calories" }).fill("250")
@@ -107,11 +107,11 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // The entry appears on tomorrow's dashboard (and the ring reflects 250 kcal).
-    await page.getByRole("button", { name: /^Snacks, / }).click()
+    await page.getByRole("button", { name: /^Snacks, 250/ }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(page.getByText("250", { exact: true }).first()).toBeVisible()
+    await expect(page.getByRole("button", { name: /^Snacks, 250/ })).toBeVisible()
 
     // Today stays empty.
     await page.getByRole("button", { name: "Open calendar" }).click()
