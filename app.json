@@ -18,7 +18,7 @@
       "package": "com.personal.dietinator",
       "permissions": ["CAMERA", "REQUEST_INSTALL_PACKAGES"],
       "adaptiveIcon": {
-        "backgroundColor": "#9a3412",
+        "backgroundColor": "#1a1b26",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -53,7 +53,7 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffedd5"
+          "backgroundColor": "#1a1b26"
         }
       ]
     ]

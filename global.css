@@ -1,6 +1,6 @@
 /*
- * Terminal face: JetBrainsMono NFM. The NFM build has no ligatures by
- * Nerd Fonts policy. Registered at runtime by src/utils/web-fonts.ts, which
+ * Cyberpunk Brutalist face: Chakra Petch with JetBrainsMono NFM fallback.
+ * Registered at runtime by src/utils/web-fonts.ts, which
  * requires the TTFs through Metro so dev and exported builds both serve them.
  */
 
@@ -9,11 +9,11 @@
 @tailwind utilities;
 
 /*
- * Terminal field computer. Mono, sharp, fast. Paper grid on light, void on dark.
+ * Cyberpunk Brutalist field computer. Squared, sharp, fast.
  */
 html,
 body {
-  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace;
+  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -62,12 +62,12 @@ textarea::placeholder {
  * Update theme.ts, then mirror the hex here.
  */
 :root {
-  --app-background: #ffedd5;
+  --app-background: #f1f5f9;
   --app-surface: #ffffff;
-  --app-surface-alt: #fed7aa;
-  --app-primary: #9a3412;
-  --app-border: #c2410c;
-  --app-text: #431407;
+  --app-surface-alt: #e2e8f0;
+  --app-primary: #0066ff;
+  --app-border: #0f172a;
+  --app-text: #0f172a;
 }
 html.dark {
   --app-background: #1a1b26;
@@ -88,25 +88,25 @@ html.dark {
 }
 html:not(.dark) {
   --color-background-50: 255 255 255;
-  --color-background-100: 254 215 170;
-  --color-background-200: 194 65 12;
-  --color-background-300: 124 45 18;
+  --color-background-100: 241 245 249;
+  --color-background-200: 226 232 240;
+  --color-background-300: 203 213 225;
 }
 
 /*
- * Typography Utilities: JetBrains Mono / Nerd Font for tabular numeric data
+ * Typography Utilities: Chakra Petch / JetBrains Mono for tabular numeric data
  */
 .font-tabular,
 .font-mono,
 .font-jetbrains {
-  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace !important;
+  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
 .font-heading {
-  font-family: "JetBrainsMono NFM", "JetBrains Mono", monospace;
-  letter-spacing: -0.03em;
+  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -229,7 +229,7 @@ html.dark .bg-primary-500 {
 }
 /* paper grid. Tokyo Night graph. Tokenized via CSS variables */
 :root {
-  --paper-grid: rgba(154, 52, 18, 0.08);
+  --paper-grid: rgba(15, 23, 42, 0.06);
   --paper-grid-dark: rgba(192, 202, 245, 0.06);
   --scrim: rgba(26, 27, 38, 0.65);
 }

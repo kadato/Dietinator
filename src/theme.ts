@@ -68,26 +68,26 @@ export const darkColors: ColorPalette = {
 }
 
 export const lightColors: ColorPalette = {
-  background: "#ffedd5",
+  background: "#f1f5f9",
   surface: "#ffffff",
-  surfaceAlt: "#fed7aa",
-  primary: "#9a3412",
-  primaryStrong: "#7c2d12",
-  primaryMuted: "#431407",
+  surfaceAlt: "#e2e8f0",
+  primary: "#0066ff",
+  primaryStrong: "#0044cc",
+  primaryMuted: "#0f172a",
   onPrimary: "#ffffff",
-  onPrimaryMuted: "#ffedd5",
-  primaryOverlay: "rgba(154,52,18,0.14)",
-  text: "#431407",
-  textMuted: "#7c2d12",
-  textOnBackground: "#431407",
-  danger: "#9f1239",
-  warning: "#92400e",
+  onPrimaryMuted: "#f1f5f9",
+  primaryOverlay: "rgba(0,102,255,0.14)",
+  text: "#0f172a",
+  textMuted: "#475569",
+  textOnBackground: "#0f172a",
+  danger: "#e11d48",
+  warning: "#d97706",
   onWarning: "#ffffff",
-  border: "#c2410c",
-  breakfast: "#0072B2",
-  lunch: "#E69F00",
-  dinner: "#D55E00",
-  snack: "#009E73",
+  border: "#0f172a",
+  breakfast: "#0072b2",
+  lunch: "#e69f00",
+  dinner: "#d55e00",
+  snack: "#009e73",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {
@@ -137,15 +137,16 @@ export const layout = {
 }
 
 /**
- * Terminal face: JetBrainsMono Nerd Font Mono with no ligatures.
+ * Terminal face: Chakra Petch with JetBrainsMono fallback.
  * Web: registered from assets/fonts by src/utils/web-fonts.ts.
  * Native: resolved verbatim from android/app/src/main/assets/fonts
- * as JetBrains Mono.ttf and JetBrains Mono_bold.ttf per RN font manager rules.
+ * as Chakra Petch per RN font manager rules.
  */
-const MONO_WEB = "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-const MONO_NATIVE = "JetBrains Mono"
+const CHAKRA_WEB = "'Chakra Petch', 'JetBrainsMono NFM', monospace"
+const CHAKRA_NATIVE = "Chakra Petch"
 
 export const fonts = {
-  mono: Platform.OS === "web" ? MONO_WEB : MONO_NATIVE,
-  sans: Platform.OS === "web" ? MONO_WEB : MONO_NATIVE,
+  mono: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
+  sans: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
+  display: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
 }

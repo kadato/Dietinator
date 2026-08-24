@@ -21,7 +21,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useBundledTerminalFont } from "@/utils/web-fonts"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
-import type { ColorPalette } from "@/theme"
+import { fonts, type ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
 import "../global.css"
 
@@ -46,12 +46,12 @@ if (Platform.OS === "web" && typeof window !== "undefined") {
       text.includes("is not a valid icon name")
     )
   }
-  // eslint-disable-next-line no-console
+
   console.error = (...args: unknown[]) => {
     if (shouldSuppress(args)) return
     origError(...(args as Parameters<typeof console.error>))
   }
-  // eslint-disable-next-line no-console
+
   console.warn = (...args: unknown[]) => {
     if (shouldSuppress(args)) return
     origWarn(...(args as Parameters<typeof console.warn>))
@@ -81,31 +81,19 @@ function RootNavigator() {
       },
       fonts: {
         regular: {
-          fontFamily:
-            Platform.OS === "web"
-              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-              : "JetBrains Mono",
+          fontFamily: fonts.mono,
           fontWeight: "400" as const,
         },
         medium: {
-          fontFamily:
-            Platform.OS === "web"
-              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-              : "JetBrains Mono",
+          fontFamily: fonts.mono,
           fontWeight: "500" as const,
         },
         bold: {
-          fontFamily:
-            Platform.OS === "web"
-              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-              : "JetBrains Mono",
+          fontFamily: fonts.mono,
           fontWeight: "700" as const,
         },
         heavy: {
-          fontFamily:
-            Platform.OS === "web"
-              ? "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-              : "JetBrains Mono",
+          fontFamily: fonts.mono,
           fontWeight: "800" as const,
         },
       },

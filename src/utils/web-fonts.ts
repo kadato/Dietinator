@@ -11,14 +11,53 @@ import { Platform } from "react-native"
  * export. Native resolves the family from android/app/src/main/assets/fonts
  * instead, so this hook is a no-op there.
  */
-const FAMILY = "JetBrainsMono NFM"
+const FAMILY_CHAKRA = "Chakra Petch"
+const FAMILY_MONO = "JetBrainsMono NFM"
 
 const FONT_FILES = [
-  { weight: "400", src: require("../../assets/fonts/JetBrainsMonoNFM-Regular.ttf") },
-  { weight: "500", src: require("../../assets/fonts/JetBrainsMonoNFM-Medium.ttf") },
-  { weight: "600", src: require("../../assets/fonts/JetBrainsMonoNFM-SemiBold.ttf") },
-  { weight: "700", src: require("../../assets/fonts/JetBrainsMonoNFM-Bold.ttf") },
-  { weight: "800", src: require("../../assets/fonts/JetBrainsMonoNFM-ExtraBold.ttf") },
+  // Chakra Petch weights
+  {
+    family: FAMILY_CHAKRA,
+    weight: "400",
+    src: require("../../assets/fonts/ChakraPetch-Regular.ttf"),
+  },
+  {
+    family: FAMILY_CHAKRA,
+    weight: "500",
+    src: require("../../assets/fonts/ChakraPetch-Medium.ttf"),
+  },
+  {
+    family: FAMILY_CHAKRA,
+    weight: "600",
+    src: require("../../assets/fonts/ChakraPetch-SemiBold.ttf"),
+  },
+  { family: FAMILY_CHAKRA, weight: "700", src: require("../../assets/fonts/ChakraPetch-Bold.ttf") },
+  // JetBrainsMono weights (fallback)
+  {
+    family: FAMILY_MONO,
+    weight: "400",
+    src: require("../../assets/fonts/JetBrainsMonoNFM-Regular.ttf"),
+  },
+  {
+    family: FAMILY_MONO,
+    weight: "500",
+    src: require("../../assets/fonts/JetBrainsMonoNFM-Medium.ttf"),
+  },
+  {
+    family: FAMILY_MONO,
+    weight: "600",
+    src: require("../../assets/fonts/JetBrainsMonoNFM-SemiBold.ttf"),
+  },
+  {
+    family: FAMILY_MONO,
+    weight: "700",
+    src: require("../../assets/fonts/JetBrainsMonoNFM-Bold.ttf"),
+  },
+  {
+    family: FAMILY_MONO,
+    weight: "800",
+    src: require("../../assets/fonts/JetBrainsMonoNFM-ExtraBold.ttf"),
+  },
 ]
 
 /** Starts the font load once per web session; returns when faces are ready. */
@@ -26,15 +65,17 @@ export function useBundledTerminalFont(): boolean {
   const [loaded, setLoaded] = useState(() => {
     if (Platform.OS !== "web") return true
     // Fast refresh can re-mount after faces are already registered.
-    return typeof document !== "undefined" && Boolean(document.fonts?.check(`16px "${FAMILY}"`))
+    return (
+      typeof document !== "undefined" && Boolean(document.fonts?.check(`16px "${FAMILY_CHAKRA}"`))
+    )
   })
 
   useEffect(() => {
     if (Platform.OS !== "web" || loaded) return
     let cancelled = false
     Promise.all(
-      FONT_FILES.map(async ({ weight, src }) => {
-        const face = new FontFace(FAMILY, `url(${String(src)})`, {
+      FONT_FILES.map(async ({ family, weight, src }) => {
+        const face = new FontFace(family, `url(${String(src)})`, {
           weight,
           display: "swap",
         })
