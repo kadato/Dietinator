@@ -69,17 +69,17 @@ describe("matchesDateKey", () => {
 })
 
 describe("formatDisplayDate", () => {
-  it("labels today and yesterday", () => {
+  it("labels today and yesterday with month and day", () => {
     const today = toDateKey()
-    expect(formatDisplayDate(today)).toBe("Today")
-    expect(formatDisplayDate(shiftDateKey(today, -1))).toBe("Yesterday")
+    expect(formatDisplayDate(today)).toMatch(/^Today, /)
+    expect(formatDisplayDate(shiftDateKey(today, -1))).toMatch(/^Yesterday, /)
   })
 
   it("formats other dates with a short weekday", () => {
     // Locale-aware. May be Sat, Aug 1 or aug. 1., Szo, so just prove it is
     // a real short date and not the Today or Yesterday label.
-    expect(formatDisplayDate("2026-08-01")).not.toBe("Today")
-    expect(formatDisplayDate("2026-08-01")).not.toBe("Yesterday")
+    expect(formatDisplayDate("2026-08-01")).not.toMatch(/^Today/)
+    expect(formatDisplayDate("2026-08-01")).not.toMatch(/^Yesterday/)
     expect(formatDisplayDate("2026-08-01")).toContain(",")
   })
 })

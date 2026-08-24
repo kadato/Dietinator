@@ -29,6 +29,14 @@ export function toDateKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`
 }
 
+function shortMonthDay(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  })
+}
+
 function shortDisplayDate(dateKey: string): string {
   const [y, m, d] = dateKey.split("-").map(Number)
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
@@ -40,10 +48,10 @@ function shortDisplayDate(dateKey: string): string {
 
 export function formatDisplayDate(dateKey: string): string {
   const today = toDateKey()
-  if (dateKey === today) return "Today"
+  if (dateKey === today) return `Today, ${shortMonthDay(dateKey)}`
 
   const yesterday = shiftDateKey(today, -1)
-  if (dateKey === yesterday) return "Yesterday"
+  if (dateKey === yesterday) return `Yesterday, ${shortMonthDay(dateKey)}`
 
   return shortDisplayDate(dateKey)
 }
