@@ -1,3 +1,2 @@
 #!/bin/sh
-export PATH="/c/WINDOWS/system32:/c/WINDOWS:/c/Program Files/nodejs:$PWD/node_modules/.bin:$PATH"
-exec "/c/Program Files/nodejs/node.exe" "$PWD/node_modules/lint-staged/bin/lint-staged.js"
+npx lint-staged
