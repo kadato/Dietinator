@@ -3,12 +3,13 @@ import { Pressable, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
+import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { formatNumber } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { Card } from "@ui/card"
 import { useTheme } from "@/hooks/useTheme"
+import { fonts } from "@/theme"
 
 type Props = {
   mealType: MealType
@@ -51,7 +52,10 @@ export const MealSection = memo(function MealSection({
   const totalFat = entries.reduce((s, e) => s + (e.fat || 0), 0)
 
   return (
-    <Card variant="elevated" className="mb-3 overflow-hidden rounded-none p-0">
+    <Box
+      className="mb-3 overflow-hidden rounded-none border bg-background-50 p-0"
+      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+    >
       <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />
       {/* Header: icon + title on one line, kcal + add on the right. The icon
           is top-aligned to the title baseline, not centered to the whole card,
@@ -62,7 +66,7 @@ export const MealSection = memo(function MealSection({
             if (entries.length === 0) onAdd(mealType)
             else setExpanded((v) => !v)
           }}
-          className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3 hover:opacity-90 active:opacity-80"
+          className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3"
           accessibilityRole="button"
           accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} kcal, ${
             goal
@@ -94,10 +98,27 @@ export const MealSection = memo(function MealSection({
             <Box className="flex-row items-baseline justify-between gap-2">
               <Box className="flex-row items-center gap-1.5">
                 <Text
+                  size="2xs"
+                  bold
+                  style={{
+                    color: accent,
+                    fontFamily: fonts.mono,
+                    letterSpacing: 0.8,
+                  }}
+                >
+                  {mealType === "breakfast"
+                    ? "/01"
+                    : mealType === "lunch"
+                      ? "/02"
+                      : mealType === "dinner"
+                        ? "/03"
+                        : "/04"}
+                </Text>
+                <Text
                   size="md"
                   bold
                   className="text-[12px] uppercase tracking-widest text-typography-900"
-                  style={{ letterSpacing: 0.08 }}
+                  style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
                 >
                   {MEAL_LABELS[mealType]}
                 </Text>
@@ -116,6 +137,12 @@ export const MealSection = memo(function MealSection({
                 </Text>
               </Text>
             </Box>
+
+            {entries.length > 0 ? (
+              <View style={{ marginTop: 3 }}>
+                <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
+              </View>
+            ) : null}
           </Box>
         </Pressable>
 
@@ -212,6 +239,6 @@ export const MealSection = memo(function MealSection({
           ))}
         </Box>
       ) : null}
-    </Card>
+    </Box>
   )
 })

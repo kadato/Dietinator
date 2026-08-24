@@ -1,12 +1,17 @@
 import { useState } from "react"
 import { Modal, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { formatDisplayDate, shiftDateKey, toDateKey } from "@/utils/date"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 import type { MealType } from "@/types"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -23,6 +28,8 @@ type Props = {
 export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClose }: Props) {
   useEscapeToClose(visible, onClose)
   const { colors } = useTheme()
+  const { isMedium } = useLayout()
+  const insets = useSafeAreaInsets()
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lastVisible, setLastVisible] = useState(false)
@@ -40,9 +47,10 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
         style={{
           flex: 1,
           backgroundColor: "rgba(0,0,0,0.45)",
-          justifyContent: "center",
+          justifyContent: isMedium ? "center" : "flex-end",
           alignItems: "center",
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
+          paddingBottom: isMedium ? 24 : insets.bottom + 84,
         }}
       >
         <Pressable
@@ -53,42 +61,108 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
         />
         <Box
           accessibilityViewIsModal={true}
-          className="w-full max-w-[380px] self-center rounded-none bg-background-50 p-4"
-          style={{ borderWidth: 1.5, borderColor: colors.border }}
+          className="w-full max-w-[420px] self-center rounded-none bg-background-50 p-4"
+          style={{
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            borderRadius: 0,
+            backgroundColor: colors.surface,
+          }}
         >
-          <Text size="md" bold className="mb-4 px-1 text-typography-900">
+          <Text
+            size="lg"
+            bold
+            className="mb-3 px-1 uppercase tracking-widest text-typography-900"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+          >
             {title}
           </Text>
 
-          <Box className="mb-2 flex-row items-center justify-between gap-2 px-1">
+          <Box className="mb-3 flex-row items-center justify-between gap-2 px-1">
             <Pressable
               onPress={() => setDateKey((current) => shiftDateKey(current, -1))}
               hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-none border border-outline-200 active:bg-background-100"
               accessibilityRole="button"
               accessibilityLabel="Previous day"
             >
-              <Feather name="chevron-left" size={20} color={colors.text} />
+              {({ pressed }) => (
+                <Box
+                  className="items-center justify-center"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderStyle: "solid",
+                    borderRadius: 0,
+                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  }}
+                >
+                  <Feather name="chevron-left" size={20} color={colors.text} />
+                </Box>
+              )}
             </Pressable>
+
             <Pressable
               onPress={() => setPickerOpen(true)}
-              className="flex-row items-center gap-1.5 rounded-none border border-outline-200 bg-background-100 px-4 py-2 active:opacity-70"
+              className="min-w-0 flex-1"
               accessibilityRole="button"
               accessibilityLabel="Choose date"
             >
-              <Feather name="calendar" size={16} color={colors.primary} />
-              <Text size="sm" bold className="text-typography-900">
-                {formatDisplayDate(dateKey)}
-              </Text>
+              {({ pressed }) => (
+                <Box
+                  className="w-full flex-row items-center justify-center"
+                  style={{
+                    height: 40,
+                    paddingHorizontal: 12,
+                    gap: 6,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderStyle: "solid",
+                    borderRadius: 0,
+                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  }}
+                >
+                  <Feather name="calendar" size={15} color={colors.primary} />
+                  <Text
+                    size="sm"
+                    bold
+                    numberOfLines={1}
+                    className="text-typography-900"
+                    style={{
+                      fontFamily: fonts.mono,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.04,
+                    }}
+                  >
+                    {formatDisplayDate(dateKey)}
+                  </Text>
+                </Box>
+              )}
             </Pressable>
+
             <Pressable
               onPress={() => setDateKey((current) => shiftDateKey(current, 1))}
               hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-none border border-outline-200 active:bg-background-100"
               accessibilityRole="button"
               accessibilityLabel="Next day"
             >
-              <Feather name="chevron-right" size={20} color={colors.text} />
+              {({ pressed }) => (
+                <Box
+                  className="items-center justify-center"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderStyle: "solid",
+                    borderRadius: 0,
+                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  }}
+                >
+                  <Feather name="chevron-right" size={20} color={colors.text} />
+                </Box>
+              )}
             </Pressable>
           </Box>
 
@@ -97,19 +171,25 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
               <Pressable
                 key={slot}
                 onPress={() => onSelect(slot, dateKey)}
-                className="flex-row items-center gap-4 rounded-none border-b border-outline-200 px-1 py-2 last:border-b-0 active:opacity-70"
+                className="flex-row items-center gap-3.5 rounded-none border px-3 py-3"
+                style={({ pressed }) => ({
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                  backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+                })}
                 accessibilityRole="button"
                 accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
               >
                 <Box
-                  className="h-9 w-9 items-center justify-center rounded-none border"
+                  className="h-10 w-10 items-center justify-center rounded-none border"
                   style={{
                     backgroundColor: `${colors[slot]}22`,
                     borderColor: `${colors[slot]}55`,
+                    borderWidth: 1.5,
+                    borderRadius: 0,
                   }}
                 >
-                  {/* Same glyph family as the phone dock keys (MCI): food
-                        identity icons stay one family across surfaces. */}
                   <MaterialCommunityIcons
                     name={
                       slot === "breakfast"
@@ -120,38 +200,35 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                             ? "weather-night"
                             : "cookie"
                     }
-                    size={18}
+                    size={20}
                     color={colors[slot]}
                   />
                 </Box>
-                <Text size="md" bold className="flex-1 text-typography-900">
+                <Text
+                  size="md"
+                  bold
+                  className="flex-1 uppercase tracking-widest text-typography-900"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                >
                   {MEAL_LABELS[slot]}
                 </Text>
                 <Feather name="chevron-right" size={18} color={colors.textMuted} />
               </Pressable>
             ))}
           </Box>
-
-          <Pressable
-            onPress={onClose}
-            className="mt-2 items-center justify-center self-center rounded-none border px-6 py-2.5 active:opacity-80"
-            style={{
-              borderWidth: 1.5,
-              borderColor: colors.border,
-              backgroundColor: colors.surfaceAlt,
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel logging meal"
-          >
-            <Text
-              size="sm"
-              bold
-              className="font-mono uppercase tracking-widest text-typography-700"
-            >
-              Cancel
-            </Text>
-          </Pressable>
         </Box>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 16}
+          left={
+            <Fab
+              icon="x"
+              tone="surface"
+              onPress={onClose}
+              accessibilityLabel="Close meal slot picker"
+            />
+          }
+        />
       </View>
       <DatePickerModal
         visible={pickerOpen}

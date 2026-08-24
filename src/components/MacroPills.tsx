@@ -2,7 +2,6 @@ import { memo } from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
-import { formatNumber } from "@/utils/format"
 import { fonts, borders, radii } from "@/theme"
 import { chipTint } from "@/theme.helpers"
 
@@ -12,6 +11,11 @@ type Props = {
   fat: number
   variant?: "compact" | "detailed" | "card"
   size?: "xs" | "sm" | "md"
+}
+
+function formatMacro(value: number): string {
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
 export const MacroPills = memo(function MacroPills({
@@ -36,47 +40,67 @@ export const MacroPills = memo(function MacroPills({
   const cPct = totalKcal > 0 ? Math.round((cKcal / totalKcal) * 100) : 0
   const fPct = totalKcal > 0 ? Math.round((fKcal / totalKcal) * 100) : 0
 
+  const maxPct = Math.max(pPct, cPct, fPct)
+  const isDominant = (pct: number) => pct === maxPct && maxPct > 35
+
   if (variant === "card") {
     const cards = [
       { label: "Protein", icon: "zap" as const, accent: colors.breakfast, value: p, pct: pPct },
       { label: "Carbs", icon: "box" as const, accent: colors.lunch, value: c, pct: cPct },
       { label: "Fat", icon: "droplet" as const, accent: colors.dinner, value: f, pct: fPct },
     ]
+
     return (
       <View style={styles.cardContainer}>
-        {cards.map((card) => (
-          <View
-            key={card.label}
-            style={[
-              styles.cardItem,
-              {
-                backgroundColor: chipTint(card.accent, 0.12),
-                borderColor: chipTint(card.accent, 0.33),
-              },
-            ]}
-          >
-            <View style={styles.cardHeader}>
-              <View
-                style={[
-                  styles.cardIconBox,
-                  {
-                    backgroundColor: chipTint(card.accent, 0.15),
-                    borderColor: chipTint(card.accent, 0.33),
-                  },
-                ]}
-              >
-                <Feather name={card.icon} size={13} color={card.accent} />
+        {cards.map((card) => {
+          const dominant = isDominant(card.pct)
+          return (
+            <View
+              key={card.label}
+              style={[
+                styles.cardItem,
+                dominant ? styles.cardItemDominant : styles.cardItemNormal,
+                {
+                  backgroundColor: chipTint(card.accent, dominant ? 0.16 : 0.1),
+                  borderColor: dominant ? card.accent : chipTint(card.accent, 0.4),
+                },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.cardIconBox,
+                    dominant && styles.cardIconBoxDominant,
+                    {
+                      backgroundColor: chipTint(card.accent, dominant ? 0.24 : 0.16),
+                      borderColor: chipTint(card.accent, dominant ? 0.6 : 0.35),
+                    },
+                  ]}
+                >
+                  <Feather name={card.icon} size={dominant ? 14 : 12} color={card.accent} />
+                </View>
+                <Text style={[styles.cardLabel, { color: card.accent }]}>{card.label}</Text>
               </View>
-              <Text style={[styles.cardLabel, { color: colors.text }]}>{card.label}</Text>
+              {dominant ? (
+                <View style={styles.cardValueCol}>
+                  <Text style={[styles.cardGramsDominant, { color: card.accent }]}>
+                    {formatMacro(card.value)}g
+                  </Text>
+                  <Text style={[styles.cardPctDominant, { color: card.accent }]}>
+                    ({card.pct}%)
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.cardValueRow}>
+                  <Text style={[styles.cardGrams, { color: card.accent }]}>
+                    {formatMacro(card.value)}g
+                  </Text>
+                  <Text style={[styles.cardPct, { color: card.accent }]}>({card.pct}%)</Text>
+                </View>
+              )}
             </View>
-            <View style={styles.cardValueRow}>
-              <Text style={[styles.cardGrams, { color: colors.text }]}>
-                {formatNumber(card.value)}g
-              </Text>
-              <Text style={[styles.cardPct, { color: colors.textMuted }]}>({card.pct}%)</Text>
-            </View>
-          </View>
-        ))}
+          )
+        })}
       </View>
     )
   }
@@ -86,38 +110,40 @@ export const MacroPills = memo(function MacroPills({
   const iconSize = isXs ? 11 : size === "md" ? 14 : 13
 
   const pills = [
-    { accent: colors.breakfast, icon: "zap" as const, value: p },
-    { accent: colors.lunch, icon: "box" as const, value: c },
-    { accent: colors.dinner, icon: "droplet" as const, value: f },
+    { accent: colors.breakfast, icon: "zap" as const, label: "P", value: p, pct: pPct },
+    { accent: colors.lunch, icon: "box" as const, label: "C", value: c, pct: cPct },
+    { accent: colors.dinner, icon: "droplet" as const, label: "F", value: f, pct: fPct },
   ]
 
   return (
     <View style={styles.pillContainer}>
-      {pills.map((pill) => (
-        <View
-          key={pill.icon}
-          style={[
-            styles.pill,
-            isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
-            { backgroundColor: chipTint(pill.accent), borderColor: chipTint(pill.accent, 0.35) },
-          ]}
-        >
-          <Feather name={pill.icon} size={iconSize} color={pill.accent} style={styles.pillIcon} />
-          <Text
+      {pills.map((pill) => {
+        const dominant = isDominant(pill.pct)
+        return (
+          <View
+            key={pill.icon}
             style={[
-              styles.pillText,
-              isXs ? styles.pillTextXs : size === "md" ? styles.pillTextMd : styles.pillTextSm,
-              { color: colors.text },
+              styles.pill,
+              isXs ? styles.pillXs : size === "md" ? styles.pillMd : styles.pillSm,
+              {
+                backgroundColor: chipTint(pill.accent, dominant && isDetailed ? 0.2 : 0.14),
+                borderColor: dominant && isDetailed ? pill.accent : chipTint(pill.accent, 0.4),
+              },
             ]}
           >
-            {" "}
-            {formatNumber(pill.value)}g
-            {isDetailed
-              ? ` (${pill.icon === "zap" ? pPct : pill.icon === "box" ? cPct : fPct}%)`
-              : ""}{" "}
-          </Text>
-        </View>
-      ))}
+            <Feather name={pill.icon} size={iconSize} color={pill.accent} style={styles.pillIcon} />
+            <Text
+              style={[
+                styles.pillText,
+                isXs ? styles.pillTextXs : size === "md" ? styles.pillTextMd : styles.pillTextSm,
+                { color: pill.accent },
+              ]}
+            >
+              {formatMacro(pill.value)}g{isDetailed ? ` (${pill.pct}%)` : ""}
+            </Text>
+          </View>
+        )
+      })}
     </View>
   )
 })
@@ -180,37 +206,51 @@ const styles = StyleSheet.create({
   cardContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    gap: 6,
     width: "100%",
-    flexWrap: "wrap",
+    paddingVertical: 6,
   },
   cardItem: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 88,
-    minWidth: 88,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
     borderRadius: radii.none,
-    borderWidth: borders.width,
     boxShadow: "none",
     elevation: 0,
+    justifyContent: "space-between",
+  },
+  cardItemNormal: {
+    flex: 1,
+    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 8,
+    minHeight: 56,
+  },
+  cardItemDominant: {
+    flex: 1.45,
+    borderWidth: 1.5,
+    paddingHorizontal: 9,
+    paddingVertical: 12,
+    minHeight: 74,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginBottom: 3,
+    marginBottom: 4,
   },
   cardIconBox: {
-    width: 22,
-    height: 22,
+    width: 18,
+    height: 18,
     borderRadius: radii.none,
-    borderWidth: borders.width,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "none",
     elevation: 0,
+  },
+  cardIconBoxDominant: {
+    width: 22,
+    height: 22,
+    borderWidth: 1.5,
   },
   cardLabel: {
     fontSize: 11,
@@ -220,6 +260,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
+  cardValueCol: {
+    flexDirection: "column",
+    gap: 1,
+  },
   cardValueRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -227,12 +271,12 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   cardGrams: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "700",
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
     textTransform: "uppercase",
-    letterSpacing: 0.4,
+    letterSpacing: 0.2,
   },
   cardPct: {
     fontSize: 11,
@@ -240,7 +284,24 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],
     textTransform: "uppercase",
-    letterSpacing: 0.4,
-    opacity: 0.8,
+    letterSpacing: 0.2,
+    opacity: 0.9,
+  },
+  cardGramsDominant: {
+    fontSize: 17,
+    fontWeight: "800",
+    fontFamily: fonts.mono,
+    fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  cardPctDominant: {
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: fonts.mono,
+    fontVariant: ["tabular-nums"],
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    opacity: 0.9,
   },
 })

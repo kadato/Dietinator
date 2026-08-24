@@ -110,6 +110,8 @@ export const FoodListItem = memo(function FoodListItem({
       style={{
         borderWidth: 1.5,
         borderColor: colors.border,
+        borderLeftWidth: 3,
+        borderLeftColor: accent,
         borderRadius: 0,
         backgroundColor: colors.surface,
         boxShadow: "none",
@@ -128,7 +130,7 @@ export const FoodListItem = memo(function FoodListItem({
             borderWidth: 1.5,
             borderColor: colors.border,
             borderRadius: 0,
-            backgroundColor: colors.surfaceAlt,
+            backgroundColor: `${accent}14`,
             boxShadow: "none",
             elevation: 0,
           }}

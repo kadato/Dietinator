@@ -304,7 +304,7 @@ function AiChatModalContent() {
           letterSpacing: 0.4,
         }}
       >
-        Ask about your diary, log foods, or adjust goals. All on device.
+        Ask about your diary, log foods, or adjust goals. Your data stays private.
       </Text>
 
       <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
@@ -618,39 +618,6 @@ function AiChatModalContent() {
             </Box>
           </Box>
           <Box className="ml-2 flex-row items-center gap-1">
-            <Box
-              className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1"
-              style={{
-                backgroundColor: colors.primaryOverlay,
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <Box
-                className="h-1.5 w-1.5 rounded-none border"
-                style={{
-                  backgroundColor: colors.onPrimary,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                }}
-              />
-              <Text
-                size="2xs"
-                bold
-                style={{
-                  color: colors.onPrimary,
-                  fontFamily: fonts.mono,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                }}
-              >
-                On device
-              </Text>
-            </Box>
             <Pressable
               onPress={() => void clear()}
               hitSlop={8}

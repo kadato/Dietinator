@@ -6,6 +6,7 @@ import { createModalShellStyles } from "@/components/modal-shell"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { MacroPills } from "@/components/MacroPills"
 import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
 import { spacing, fonts, type ColorPalette } from "@/theme"
@@ -133,37 +134,13 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
             <Text style={styles.energyKcal}>{Math.round(nutrients.kcal)}</Text>
             <Text style={styles.energyLabel}>Total Calories (kcal)</Text>
           </View>
-          <View style={styles.macroPillRow}>
-            <View
-              style={[
-                styles.macroPill,
-                { backgroundColor: `${colors.breakfast}14`, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.macroPillLabel, { color: colors.breakfast }]}>
-                Protein {Math.round(nutrients.protein)}g ({proteinPct}%)
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.macroPill,
-                { backgroundColor: `${colors.lunch}14`, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.macroPillLabel, { color: colors.lunch }]}>
-                Carbs {Math.round(nutrients.carbs)}g ({carbsPct}%)
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.macroPill,
-                { backgroundColor: `${colors.dinner}14`, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.macroPillLabel, { color: colors.dinner }]}>
-                Fat {Math.round(nutrients.fat)}g ({fatPct}%)
-              </Text>
-            </View>
+          <View style={{ marginTop: 10, width: "100%" }}>
+            <MacroPills
+              protein={nutrients.protein}
+              carbs={nutrients.carbs}
+              fat={nutrients.fat}
+              variant="card"
+            />
           </View>
         </View>
 

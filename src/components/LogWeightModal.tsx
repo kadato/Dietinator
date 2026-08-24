@@ -28,7 +28,6 @@ import { spacing, fonts, type ColorPalette } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
@@ -134,68 +133,29 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           },
         ]}
       >
-        <Box className="items-center pt-2">
+        <Box className="flex-row items-center gap-3 px-5 pb-2 pt-4">
           <Box
-            className="h-1 w-9 rounded-none border bg-outline-200"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-          />
-        </Box>
-        {isMedium ? (
-          <Text
-            size="2xl"
-            bold
-            className="px-6 text-center text-typography-900"
+            className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
             style={{
-              paddingTop: insets.top + spacing.sm,
-              fontFamily: fonts.mono,
-              textTransform: "uppercase",
-              letterSpacing: 0.4,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              backgroundColor: `${colors.primary}14`,
+              boxShadow: "none",
+              elevation: 0,
             }}
+          >
+            <Feather name="activity" size={18} color={colors.primary} />
+          </Box>
+          <Text
+            size="xl"
+            bold
+            className="text-typography-900"
+            style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
           >
             Log weight
           </Text>
-        ) : (
-          <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
-            <Box
-              className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                backgroundColor: `${colors.primary}14`,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <Feather name="activity" size={18} color={colors.primary} />
-            </Box>
-            <Text
-              size="xl"
-              bold
-              className="flex-1 text-typography-900"
-              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
-            >
-              Log weight
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-none border active:opacity-70"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                backgroundColor: colors.surfaceAlt,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Feather name="x" size={18} color={colors.textMuted} />
-            </Pressable>
-          </Box>
-        )}
+        </Box>
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-5 pb-4"
@@ -305,79 +265,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             </Box>
           ) : null}
         </ScrollView>
-        {isMedium ? null : (
-          <Box
-            className="flex-row items-center gap-3 border-t px-5 py-4"
-            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
-          >
-            <Button
-              size="md"
-              variant="outline"
-              action="secondary"
-              className="flex-1"
-              onPress={onClose}
-              style={
-                {
-                  borderRadius: 0,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  boxShadow: "none",
-                  elevation: 0,
-                } as any
-              }
-            >
-              <ButtonText
-                style={
-                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
-                }
-              >
-                Cancel
-              </ButtonText>
-            </Button>
-            <Button
-              size="md"
-              className="flex-1"
-              onPress={handleSave}
-              isDisabled={saving}
-              // Specific action name on mobile, matching the wide-layout
-              // FAB: generic "Save" says nothing about what gets saved.
-              accessibilityLabel="Save weight"
-              style={
-                {
-                  borderRadius: 0,
-                  borderWidth: 1.5,
-                  borderColor: colors.primary,
-                  boxShadow: "none",
-                  elevation: 0,
-                } as any
-              }
-            >
-              <ButtonText
-                style={
-                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
-                }
-              >
-                {saving ? "Saving…" : "Save"}
-              </ButtonText>
-            </Button>
-          </Box>
-        )}
       </View>
-
-      {isMedium ? (
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
-          right={
-            <Fab
-              icon="checkmark"
-              onPress={handleSave}
-              disabled={saving}
-              accessibilityLabel="Save weight"
-            />
-          }
-        />
-      ) : null}
 
       <DatePickerModal
         visible={pickerOpen}
@@ -406,24 +294,37 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           accessibilityLabel="Dismiss weight dialog"
         />
         {isMedium ? (
-          // Prop form, not style. react-native-web drops `pointerEvents`
-          // from both inline styles and css-interop-processed StyleSheet
-          // output (computed stays `auto`), so the full-screen wrapper
-          // swallowed backdrop taps and desktop could not dismiss the
-          // dialog. RN 0.85 deprecation-warns on the prop; that noise is
-          // accepted because the style form is functionally broken here.
           <View accessibilityViewIsModal={true} pointerEvents="box-none" style={shell.dialogWrap}>
             {form}
           </View>
         ) : (
           <KeyboardAvoidingView
             accessibilityViewIsModal={true}
-            style={shell.dialogWrap}
+            style={[
+              shell.dialogWrap,
+              {
+                justifyContent: "flex-end",
+                paddingBottom: insets.bottom + 84,
+              },
+            ]}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}
           </KeyboardAvoidingView>
         )}
+
+        <FabCluster
+          bottomOffset={insets.bottom + 16}
+          left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
+          right={
+            <Fab
+              icon="check"
+              onPress={handleSave}
+              disabled={saving}
+              accessibilityLabel="Save weight"
+            />
+          }
+        />
       </View>
     </Modal>
   )

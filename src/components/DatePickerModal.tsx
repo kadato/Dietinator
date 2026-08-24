@@ -1,11 +1,15 @@
 import { useMemo, useState } from "react"
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, toDateKey } from "@/utils/date"
 import { spacing, fonts, type ColorPalette } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 
 type Props = {
   visible: boolean
@@ -34,6 +38,8 @@ function monthGrid(year: number, month: number): (number | null)[] {
 export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) {
   useEscapeToClose(visible, onClose)
   const { colors } = useTheme()
+  const { isMedium } = useLayout()
+  const insets = useSafeAreaInsets()
   const styles = useThemedStyles(createStyles)
   const selected = parseDateKey(dateKey)
   const [view, setView] = useState({ year: selected.getFullYear(), month: selected.getMonth() })
@@ -75,7 +81,16 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
           accessibilityRole="button"
           accessibilityLabel="Dismiss date picker"
         />
-        <View accessibilityViewIsModal={true} style={styles.centerWrap}>
+        <View
+          accessibilityViewIsModal={true}
+          style={[
+            styles.centerWrap,
+            {
+              justifyContent: isMedium ? "center" : "flex-end",
+              paddingBottom: isMedium ? 24 : insets.bottom + 84,
+            },
+          ]}
+        >
           <View style={styles.sheet}>
             <View style={styles.monthRow}>
               <Pressable
@@ -155,10 +170,17 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
               accessibilityRole="button"
               accessibilityLabel="Go to today"
             >
-              <Text style={styles.todayText}>Today</Text>
+              <Text style={styles.todayText}>TODAY</Text>
             </Pressable>
           </View>
         </View>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 16}
+          left={
+            <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close date picker" />
+          }
+        />
       </View>
     </Modal>
   )
@@ -260,10 +282,11 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.2,
     },
     todayBtn: {
-      alignSelf: "center",
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "center",
       marginTop: spacing.sm,
-      paddingHorizontal: 20,
-      paddingVertical: spacing.sm,
+      paddingVertical: 12,
       borderRadius: 0,
       borderWidth: 1.5,
       borderColor: colors.primary,
@@ -275,12 +298,12 @@ const createStyles = (colors: ColorPalette) =>
       opacity: 0.85,
     },
     todayText: {
-      fontSize: 12,
-      fontWeight: "700",
+      fontSize: 13,
+      fontWeight: "800",
       color: colors.onPrimary,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.8,
     },
   })

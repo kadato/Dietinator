@@ -120,15 +120,15 @@ export function CalorieRing({
       </View>
 
       <View style={styles.statsRow}>
-        <Text style={styles.stat}>
-          <Text style={styles.statValue}>{Math.round(consumed).toLocaleString()}</Text>{" "}
-          <Text style={styles.statLabel}>eaten</Text>
-        </Text>
-        <Text style={styles.statLabel}>·</Text>
-        <Text style={styles.stat}>
-          <Text style={styles.statValue}>{Math.round(goal).toLocaleString()}</Text>{" "}
-          <Text style={styles.statLabel}>goal</Text>
-        </Text>
+        <View style={styles.statPill}>
+          <Text style={styles.statValue}>{Math.round(consumed).toLocaleString()}</Text>
+          <Text style={styles.statLabel}>EATEN</Text>
+        </View>
+        <Text style={styles.separator}>·</Text>
+        <View style={styles.statPill}>
+          <Text style={styles.statValue}>{Math.round(goal).toLocaleString()}</Text>
+          <Text style={styles.statLabel}>GOAL</Text>
+        </View>
       </View>
     </View>
   )
@@ -196,32 +196,39 @@ const createStyles = (colors: ColorPalette) =>
     statsRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: spacing.sm,
+      justifyContent: "center",
+      gap: spacing.md,
       marginTop: spacing.md,
       borderRadius: 0,
     },
-    stat: {
-      fontSize: 13,
-      fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+    statPill: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 6,
     },
     statValue: {
-      fontWeight: "700",
+      fontSize: 16,
+      fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.5,
     },
     statLabel: {
+      fontSize: 12,
       color: colors.textMuted,
-      fontWeight: "600",
+      fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.8,
+    },
+    separator: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.border,
+      fontFamily: fonts.mono,
     },
     dot: {
       width: 4,

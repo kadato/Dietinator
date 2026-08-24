@@ -38,7 +38,16 @@ export const MealListItem = memo(function MealListItem({
   const foodCount = meal.items.length === 1 ? "1 food" : `${meal.items.length} foods`
 
   return (
-    <Box className="mb-2.5 flex-row items-center gap-2 rounded-none border border-outline-100 bg-background-50 px-4 py-3.5">
+    <Box
+      className="mb-2.5 flex-row items-center gap-2 rounded-none bg-background-50 px-4 py-3.5"
+      style={{
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        borderLeftWidth: 3,
+        borderLeftColor: accent,
+        backgroundColor: colors.surface,
+      }}
+    >
       <Pressable
         className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-80"
         onPress={onPress}

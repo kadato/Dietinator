@@ -54,9 +54,9 @@ const MacroCompareRow = memo(function MacroCompareRow({
 
         <View style={styles.valueGroup}>
           <Text style={styles.transitionText} numberOfLines={1}>
-            {Math.round(current)}g <Text style={styles.arrowText}>to</Text>{" "}
+            {Math.round(current)}g <Text style={styles.arrowText}>→</Text>{" "}
             <Text style={styles.projectedText}>{Math.round(projected)}g</Text>{" "}
-            <Text style={[styles.addedText, { color }]}>(+{Math.round(added)}g)</Text>
+            <Text style={[styles.addedText, { color }]}>[+{Math.round(added)}g]</Text>
           </Text>
 
           {goal > 0 ? (
@@ -133,12 +133,12 @@ const MicroCompareRow = memo(function MicroCompareRow({
       <View style={styles.microHeader}>
         <Text style={styles.microLabel}>{label}</Text>
         <Text style={styles.microValues}>
-          {Math.round(current * 10) / 10} to{" "}
+          {Math.round(current * 10) / 10} <Text style={styles.arrowText}>→</Text>{" "}
           <Text style={styles.microProjected}>
             {Math.round(projected * 10) / 10} {unit}
           </Text>{" "}
           <Text style={styles.microAdded}>
-            (+{Math.round(added * 10) / 10} {unit})
+            [+{Math.round(added * 10) / 10} {unit}]
           </Text>
         </Text>
       </View>
@@ -231,11 +231,11 @@ export const DailyImpactCard = memo(function DailyImpactCard({
       <View style={styles.calorieHero}>
         <View style={styles.calorieTopRow}>
           <View>
-            <Text style={styles.heroLabel}>Total Calories</Text>
+            <Text style={styles.heroLabel}>Daily Calories</Text>
             <Text style={styles.heroTransition}>
-              {currentKcal.toLocaleString()} to{" "}
+              {currentKcal.toLocaleString()} <Text style={styles.arrowText}>→</Text>{" "}
               <Text style={styles.heroProjected}>{projectedKcal.toLocaleString()}</Text>{" "}
-              <Text style={styles.heroAdded}>(+{addedKcal.toLocaleString()} kcal)</Text>
+              <Text style={styles.heroAdded}>[+{addedKcal.toLocaleString()} kcal]</Text>
             </Text>
           </View>
 

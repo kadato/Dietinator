@@ -29,7 +29,6 @@ import { spacing, fonts, type ColorPalette } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { Button, ButtonText } from "@ui/button"
 
 type Props = {
   visible: boolean
@@ -134,70 +133,31 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           isMedium ? styles.dialogBodyWide : { maxHeight: "90%" },
         ]}
       >
-        <Box className="items-center pt-2">
+        <Box className="flex-row items-center gap-3 px-5 pb-2 pt-4">
           <Box
-            className="h-1 w-9 rounded-none border bg-outline-200"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-          />
-        </Box>
-        {isMedium ? (
-          <Text
-            size="2xl"
-            bold
-            className="px-6 text-center text-typography-900"
+            className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
             style={{
-              paddingTop: insets.top + spacing.sm,
-              fontFamily: fonts.mono,
-              textTransform: "uppercase",
-              letterSpacing: 0.4,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+              boxShadow: "none",
+              elevation: 0,
             }}
+          >
+            <Feather name="droplet" size={18} color={colors.primary} />
+          </Box>
+          <Text
+            size="xl"
+            bold
+            className="text-typography-900"
+            style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
           >
             Water
           </Text>
-        ) : (
-          <Box className="flex-row items-center gap-3 px-5 pb-1" style={{ paddingTop: spacing.sm }}>
-            <Box
-              className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <Feather name="droplet" size={18} color={colors.primary} />
-            </Box>
-            <Text
-              size="xl"
-              bold
-              className="flex-1 text-typography-900"
-              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
-            >
-              Water
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-none border active:opacity-70"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                backgroundColor: colors.surfaceAlt,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Feather name="x" size={18} color={colors.textMuted} />
-            </Pressable>
-          </Box>
-        )}
+        </Box>
         <ScrollView
           className="flex-1"
-          contentContainerClassName={`${isMedium ? "" : "grow"} px-4 pb-4`}
+          contentContainerClassName="px-4 pb-6 pt-2"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -409,42 +369,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             </Box>
           )}
         </ScrollView>
-        {isMedium ? null : (
-          <Box
-            className="border-t border-outline-100 px-5 py-4"
-            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
-          >
-            <Button
-              size="lg"
-              onPress={onClose}
-              style={
-                {
-                  borderRadius: 0,
-                  borderWidth: 1.5,
-                  borderColor: colors.primary,
-                  boxShadow: "none",
-                  elevation: 0,
-                } as any
-              }
-            >
-              <ButtonText
-                style={
-                  { fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 } as any
-                }
-              >
-                Done
-              </ButtonText>
-            </Button>
-          </Box>
-        )}
       </View>
-
-      {isMedium ? (
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
-        />
-      ) : null}
 
       <DatePickerModal
         visible={pickerOpen}
@@ -479,12 +404,25 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
         ) : (
           <KeyboardAvoidingView
             accessibilityViewIsModal={true}
-            style={shell.dialogWrap}
+            style={[
+              shell.dialogWrap,
+              {
+                justifyContent: "flex-end",
+                paddingBottom: insets.bottom + 84,
+              },
+            ]}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             {form}
           </KeyboardAvoidingView>
         )}
+
+        <FabCluster
+          bottomOffset={insets.bottom + 16}
+          left={
+            <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close water modal" />
+          }
+        />
       </View>
     </Modal>
   )

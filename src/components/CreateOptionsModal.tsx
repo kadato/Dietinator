@@ -1,9 +1,13 @@
 import { Modal, Pressable, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { withAlpha } from "@/utils/color"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { Box } from "@ui/box"
@@ -61,23 +65,23 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
   useEscapeToClose(visible, onClose)
   const router = useRouter()
   const { colors } = useTheme()
+  const { isMedium } = useLayout()
+  const insets = useSafeAreaInsets()
 
   const onSelect = (option: CreateOption) => {
     onClose()
-    setTimeout(() => {
-      switch (option.id) {
-        case "meal":
-          router.push({ pathname: "/meal-builder" })
-          break
-        case "manual-food":
-        case "quick-add":
-          router.push({
-            pathname: "/manual-entry",
-            params: { meal: mealType, date, quickAdd: option.id === "quick-add" ? "1" : "0" },
-          })
-          break
-      }
-    }, 60)
+    switch (option.id) {
+      case "meal":
+        router.push({ pathname: "/meal-builder" })
+        break
+      case "manual-food":
+      case "quick-add":
+        router.push({
+          pathname: "/manual-entry",
+          params: { meal: mealType, date, quickAdd: option.id === "quick-add" ? "1" : "0" },
+        })
+        break
+    }
   }
 
   return (
@@ -86,9 +90,10 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
         style={{
           flex: 1,
           backgroundColor: "rgba(0,0,0,0.5)",
-          justifyContent: "center",
+          justifyContent: isMedium ? "center" : "flex-end",
           alignItems: "center",
           paddingHorizontal: 20,
+          paddingBottom: isMedium ? 20 : insets.bottom + 84,
         }}
       >
         <Pressable
@@ -109,50 +114,31 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
             elevation: 0,
           }}
         >
-          <Box className="flex-row items-center justify-between pb-3">
-            <Box>
-              <Text
-                size="xl"
-                bold
-                className="text-typography-900"
-                style={{
-                  fontFamily: fonts.mono,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                }}
-              >
-                Create
-              </Text>
-              <Text
-                size="xs"
-                className="mt-0.5 text-typography-500"
-                style={{
-                  fontFamily: fonts.mono,
-                  fontVariant: ["tabular-nums"],
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                }}
-              >
-                What would you like to log or create?
-              </Text>
-            </Box>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-none border bg-background-100 active:opacity-70"
+          <Box className="pb-3">
+            <Text
+              size="xl"
+              bold
+              className="text-typography-900"
               style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-                backgroundColor: colors.surfaceAlt,
-                boxShadow: "none",
-                elevation: 0,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
               }}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
             >
-              <Feather name="x" size={16} color={colors.textMuted} />
-            </Pressable>
+              Create
+            </Text>
+            <Text
+              size="xs"
+              className="mt-0.5 text-typography-500"
+              style={{
+                fontFamily: fonts.mono,
+                fontVariant: ["tabular-nums"],
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
+              What would you like to log or create?
+            </Text>
           </Box>
 
           <Box className="gap-2.5 pt-1">
@@ -223,6 +209,18 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
             })}
           </Box>
         </Box>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 16}
+          left={
+            <Fab
+              icon="x"
+              tone="surface"
+              onPress={onClose}
+              accessibilityLabel="Close create options"
+            />
+          }
+        />
       </View>
     </Modal>
   )
