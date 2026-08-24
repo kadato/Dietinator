@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Keyboard, Platform, Pressable, RefreshControl, ScrollView, View } from "react-native"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect, useRouter } from "expo-router"
-import { Feather } from "@expo/vector-icons"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
+import { MacroBar } from "@/components/MacroBar"
 import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
@@ -36,7 +37,7 @@ import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing, layout } from "@/theme"
+import { spacing, layout, fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -333,114 +334,201 @@ export default function TodayScreen() {
   const dateChrome = (
     <Box
       className="mb-3 border bg-background-50 px-3 py-3"
-      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+      style={{
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        borderStyle: "solid",
+        borderRadius: 0,
+        backgroundColor: colors.surface,
+      }}
     >
-      {/* Shrink-safe instrument row: the date pill is the only flexible item
-          and truncates under pressure, so the streak and sync badges always
-          fit inside the border instead of clipping out. */}
-      <View className={`flex-row items-center ${compact ? "gap-1.5" : "gap-3"}`}>
-        <Box className={`min-w-0 flex-1 flex-row items-center ${compact ? "gap-1.5" : "gap-3"}`}>
+      <View className={`flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
+        <Box className={`min-w-0 flex-1 flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
           <Pressable
             onPress={() => setDateKey((d) => shiftDateKey(d, -1))}
             hitSlop={8}
-            className={`shrink-0 cursor-pointer items-center justify-center rounded-none border bg-background-100 hover:bg-background-200 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Previous day"
           >
-            <Feather name="chevron-left" size={compact ? 16 : 18} color={colors.text} />
+            {({ pressed }) => (
+              <Box
+                className="items-center justify-center"
+                style={{
+                  width: compact ? 38 : 42,
+                  height: compact ? 38 : 42,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="chevron-left" size={compact ? 18 : 20} color={colors.text} />
+              </Box>
+            )}
           </Pressable>
+
           <Pressable
             onPress={() => setPickerOpen(true)}
             hitSlop={6}
-            className={`min-w-0 flex-1 cursor-pointer flex-row items-center justify-center rounded-none border bg-background-100 hover:bg-background-200 active:bg-background-200 ${compact ? "h-9 gap-1.5 px-3" : "h-11 gap-2 px-4"}`}
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            className="min-w-0 flex-1"
             accessibilityRole="button"
             accessibilityLabel={`Selected date: ${formatHeaderDate(dateKey)}. Tap to open calendar.`}
           >
-            <Feather name="calendar" size={compact ? 14 : 17} color={colors.primary} />
-            <Text
-              size={compact ? "xs" : "sm"}
-              bold
-              numberOfLines={1}
-              className="text-center text-typography-900"
-              style={{ fontSize: compact ? 13 : 16, flexShrink: 1, textAlign: "center" }}
-            >
-              {compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
-            </Text>
+            {({ pressed }) => (
+              <Box
+                className="w-full flex-row items-center justify-center"
+                style={{
+                  height: compact ? 38 : 42,
+                  paddingHorizontal: compact ? 10 : 14,
+                  gap: 6,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="calendar" size={compact ? 14 : 17} color={colors.primary} />
+                <Text
+                  size={compact ? "xs" : "sm"}
+                  bold
+                  numberOfLines={1}
+                  className="text-center text-typography-900"
+                  style={{
+                    fontSize: compact ? 13 : 15,
+                    flexShrink: 1,
+                    textAlign: "center",
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.04,
+                  }}
+                >
+                  {compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
+                </Text>
+              </Box>
+            )}
           </Pressable>
+
           <Pressable
             onPress={() => setDateKey((d) => shiftDateKey(d, 1))}
             hitSlop={8}
-            className={`shrink-0 cursor-pointer items-center justify-center rounded-none border bg-background-100 hover:bg-background-200 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Next day"
           >
-            <Feather name="chevron-right" size={compact ? 16 : 18} color={colors.text} />
+            {({ pressed }) => (
+              <Box
+                className="items-center justify-center"
+                style={{
+                  width: compact ? 38 : 42,
+                  height: compact ? 38 : 42,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="chevron-right" size={compact ? 18 : 20} color={colors.text} />
+              </Box>
+            )}
           </Pressable>
-          {/* Streak sits in the same instrument row, with a clear gap before it.
-              Hidden at zero: a failing score before the first log of the day
-              reads as blame, not invitation. */}
+
           {streak > 0 ? (
             <Box
-              className={`shrink-0 flex-row items-center gap-1 rounded-none border px-2.5 ${compact ? "h-9" : "h-11"}`}
+              className="flex-row items-center justify-center gap-1.5 px-2.5"
               style={{
+                height: compact ? 38 : 42,
                 borderWidth: 1.5,
-                borderColor: colors.border,
+                borderColor: colors.warning,
+                borderStyle: "solid",
                 borderRadius: 0,
-                backgroundColor: `${colors.lunch}14`,
+                backgroundColor: `${colors.warning}18`,
               }}
               accessibilityRole="text"
               accessibilityLabel={`${streak} day logging streak`}
             >
-              <Feather name="zap" size={compact ? 14 : 16} color={colors.lunch} />
+              <MaterialCommunityIcons name="fire" size={compact ? 16 : 18} color={colors.warning} />
               <Text
                 size={compact ? "xs" : "sm"}
                 bold
                 className="font-tabular leading-none"
-                style={{ color: colors.text }}
+                style={{
+                  color: colors.warning,
+                  fontFamily: fonts.mono,
+                  fontWeight: "700",
+                }}
               >
                 {streak}
               </Text>
             </Box>
           ) : null}
         </Box>
+
         {authenticated ? (
           <Pressable
             onPress={() => load({ force: true })}
             disabled={importing || refreshing}
             hitSlop={8}
-            className={`shrink-0 cursor-pointer items-center justify-center rounded-none border bg-background-100 hover:bg-background-200 active:bg-background-200 ${compact ? "h-9 w-9" : "h-11 w-11"}`}
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 0 }}
             accessibilityRole="button"
             accessibilityLabel="Refresh from YAZIO"
           >
-            <Feather
-              name="download-cloud"
-              size={compact ? 16 : 18}
-              color={importing ? colors.textMuted : colors.primary}
-            />
+            {({ pressed }) => (
+              <Box
+                className="items-center justify-center"
+                style={{
+                  width: compact ? 38 : 42,
+                  height: compact ? 38 : 42,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather
+                  name="download-cloud"
+                  size={compact ? 16 : 18}
+                  color={importing ? colors.textMuted : colors.primary}
+                />
+              </Box>
+            )}
           </Pressable>
         ) : null}
       </View>
+
       <Pressable
         onPress={onCopyPrevious}
         hitSlop={8}
-        className="mt-3 flex w-full cursor-pointer flex-row items-center justify-center gap-2 rounded-none border bg-background-100 px-4 py-3 hover:bg-background-200 active:bg-background-200"
-        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+        className="mt-2.5 w-full"
         accessibilityRole="button"
         accessibilityLabel="Copy previous day's meals"
       >
-        <Feather name="copy" size={14} color={colors.primary} />
-        <Text
-          size="xs"
-          bold
-          className="font-mono uppercase tracking-widest text-typography-900"
-          style={{ letterSpacing: 0.06 }}
-        >
-          Copy previous day
-        </Text>
+        {({ pressed }) => (
+          <Box
+            className="w-full flex-row items-center justify-center"
+            style={{
+              height: 42,
+              paddingHorizontal: 16,
+              gap: 8,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderStyle: "solid",
+              borderRadius: 0,
+              backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+            }}
+          >
+            <Feather name="copy" size={14} color={colors.primary} />
+            <Text
+              size="xs"
+              bold
+              className="font-mono uppercase tracking-widest text-typography-900"
+              style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+            >
+              Copy previous day
+            </Text>
+          </Box>
+        )}
       </Pressable>
     </Box>
   )
@@ -461,6 +549,15 @@ export default function TodayScreen() {
           size={isWide ? 168 : width < 380 ? 140 : 152}
         />
       </Box>
+
+      <MacroBar
+        protein={totals.protein}
+        carbs={totals.carbs}
+        fat={totals.fat}
+        proteinGoal={settings.protein_goal}
+        carbsGoal={settings.carbs_goal}
+        fatGoal={settings.fat_goal}
+      />
 
       {summary && summary.steps > 0 ? (
         <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5">
@@ -738,7 +835,7 @@ export default function TodayScreen() {
 
       {!keyboardVisible ? (
         <FabCluster
-          bottomOffset={isWide ? 32 : 14}
+          bottomOffset={isWide ? 20 : 8}
           right={
             <Fab
               size="md"

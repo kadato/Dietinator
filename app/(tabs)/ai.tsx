@@ -265,7 +265,7 @@ export default function AiScreen() {
         className="mt-2 text-center font-mono leading-5 text-typography-500"
         style={{ maxWidth: 380, fontFamily: fonts.mono }}
       >
-        Ask about your diary, log foods, or adjust goals. All on device.
+        Ask about your diary, log foods, or adjust goals. Your data stays private.
       </Text>
 
       <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
@@ -543,28 +543,6 @@ export default function AiScreen() {
               </Box>
             </Box>
             <Box className="ml-2 flex-row items-center gap-1">
-              <Box
-                className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1"
-                style={{
-                  backgroundColor: colors.primaryOverlay,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                }}
-              >
-                <Box
-                  className="h-1.5 w-1.5 rounded-none"
-                  style={{ backgroundColor: colors.onPrimary, borderRadius: 0 }}
-                />
-                <Text
-                  size="2xs"
-                  bold
-                  className="font-mono uppercase tracking-widest"
-                  style={{ color: colors.onPrimary, fontFamily: fonts.mono, letterSpacing: 0.08 }}
-                >
-                  On device
-                </Text>
-              </Box>
               <Pressable
                 onPress={handleClearHistory}
                 hitSlop={8}
@@ -572,7 +550,7 @@ export default function AiScreen() {
                 onPressOut={headerPress.onPressOut}
                 accessibilityRole="button"
                 accessibilityLabel="Clear chat history"
-                className="ml-1 h-9 w-9 items-center justify-center rounded-none border"
+                className="h-9 w-9 items-center justify-center rounded-none border"
                 style={[
                   {
                     backgroundColor: colors.primaryOverlay,

@@ -28,6 +28,7 @@ import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useSafeBack } from "@/hooks/useSafeBack"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
 import { spacing, fonts, type ColorPalette } from "@/theme"
@@ -236,45 +237,6 @@ function BarcodeMatchesList({
   )
 }
 
-function ScanHeader({ overlay = false, onClose }: { overlay?: boolean; onClose?: () => void }) {
-  const { colors } = useTheme()
-  const styles = useThemedStyles(createStyles)
-  const insets = useSafeAreaInsets()
-  const tint = overlay ? "#ffffff" : colors.text
-  return (
-    <View
-      style={[
-        overlay ? cameraStyles.headerOverlay : styles.headerFlow,
-        {
-          paddingTop: overlay ? insets.top + spacing.sm : insets.top + 16,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.headerBar,
-          overlay
-            ? cameraStyles.headerBarOverlay
-            : { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <View style={styles.headerTitleWrap}>
-          <MaterialCommunityIcons
-            name="barcode-scan"
-            size={18}
-            color={overlay ? "#ffffff" : colors.primary}
-          />
-          <Text style={[overlay ? cameraStyles.headerTitle : styles.headerTitle, { color: tint }]}>
-            Scan barcode
-          </Text>
-        </View>
-      </View>
-    </View>
-  )
-}
-
 export default function ScanScreen() {
   const router = useRouter()
   const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>()
@@ -375,13 +337,13 @@ export default function ScanScreen() {
   }
 
   const close = useSafeBack()
+  useEscapeToClose(true, close)
 
   if (MANUAL_SCAN_ON_WEB) {
     return (
       <View style={styles.container}>
         <ModalContainer maxWidth={640}>
-          <ScanHeader onClose={close} />
-          <Box className="flex-1 justify-center px-6" style={styles.webScanContent}>
+          <Box className="flex-1 items-center justify-center px-6" style={styles.webScanContent}>
             <Box
               className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
               style={{
@@ -393,65 +355,44 @@ export default function ScanScreen() {
             >
               <MaterialCommunityIcons name="barcode-scan" size={36} color={colors.primary} />
             </Box>
-            <Text style={styles.webScanTitle}>No camera here</Text>
+            <Text style={styles.webScanTitle}>Barcode Lookup</Text>
             <Text style={styles.webScanHint}>
-              No camera in the browser. Enter the barcode number from the label instead (EAN-13 /
-              UPC).
+              Enter the numeric barcode (EAN-13 / UPC) from product packaging to query food
+              database.
             </Text>
-            <Input
-              size="lg"
-              variant="outline"
-              className="mb-4 rounded-none border bg-background-50"
-              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            >
-              <InputField
-                placeholder="4000539012345"
-                keyboardType="number-pad"
-                value={manualBarcode}
-                onChangeText={(value) => {
-                  setManualBarcode(value)
-                  setNotFound(false)
-                }}
-                autoCorrect={false}
-                onSubmitEditing={handleManualLookup}
-                returnKeyType="search"
-                accessibilityLabel="Barcode number"
-                style={{ fontFamily: fonts.mono }}
-              />
-            </Input>
-            <Button
-              size="lg"
-              onPress={handleManualLookup}
-              disabled={loading}
-              className="rounded-none border"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.primary,
-                borderRadius: 0,
-                backgroundColor: colors.primary,
-              }}
-            >
-              <ButtonText
-                style={{
-                  fontFamily: fonts.mono,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.06,
-                  color: colors.onPrimary,
-                }}
+            <View style={{ width: "100%", maxWidth: 440 }}>
+              <Input
+                size="lg"
+                variant="outline"
+                className="mb-4 rounded-none border bg-background-50"
+                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
               >
-                {loading ? "Looking up..." : "Look up"}
-              </ButtonText>
-            </Button>
+                <InputField
+                  placeholder="4000539012345"
+                  keyboardType="number-pad"
+                  value={manualBarcode}
+                  onChangeText={(value) => {
+                    setManualBarcode(value)
+                    setNotFound(false)
+                  }}
+                  autoCorrect={false}
+                  onSubmitEditing={handleManualLookup}
+                  returnKeyType="search"
+                  accessibilityLabel="Barcode number"
+                  style={{ fontFamily: fonts.mono, fontSize: 16 }}
+                />
+              </Input>
+            </View>
 
             {notFound ? (
-              <Box className="mt-10 items-center">
-                <Feather name="search" size={36} color={colors.textMuted} />
+              <Box className="mt-6 items-center">
+                <Feather name="alert-circle" size={28} color={colors.warning} />
                 <Text style={styles.notFoundText}>No match for {lastBarcode}.</Text>
                 <Button
                   size="md"
                   variant="outline"
                   action="secondary"
-                  className="mt-4 rounded-none border"
+                  className="mt-3 rounded-none border"
                   style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
                   onPress={confirmNotFound}
                 >
@@ -465,14 +406,6 @@ export default function ScanScreen() {
                     Search foods
                   </ButtonText>
                 </Button>
-                <Pressable
-                  style={styles.linkBtn}
-                  onPress={resetForNextScan}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear barcode"
-                >
-                  <Text style={styles.linkBtnText}>Scan again</Text>
-                </Pressable>
               </Box>
             ) : null}
 
@@ -493,6 +426,22 @@ export default function ScanScreen() {
             ) : null}
           </Box>
         </ModalContainer>
+
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />
+          }
+          right={
+            <Fab
+              icon="check"
+              tone="primary"
+              onPress={handleManualLookup}
+              disabled={loading || !manualBarcode.trim()}
+              accessibilityLabel="Look up barcode"
+            />
+          }
+        />
       </View>
     )
   }
@@ -508,7 +457,6 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.center}>
-        <ScanHeader onClose={close} />
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <Box
             className="h-20 w-20 items-center justify-center rounded-none border bg-background-50"
@@ -570,6 +518,12 @@ export default function ScanScreen() {
             </Button>
           )}
         </PageContainer>
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />
+          }
+        />
       </View>
     )
   }
@@ -649,8 +603,6 @@ export default function ScanScreen() {
       )}
 
       {cameraActive ? <Viewfinder /> : null}
-
-      <ScanHeader overlay={cameraActive} onClose={close} />
 
       {loading && (
         <View style={styles.overlay} accessibilityLiveRegion="polite">
@@ -792,6 +744,16 @@ const createStyles = (colors: ColorPalette) =>
       fontFamily: fonts.mono,
       textTransform: "uppercase",
       letterSpacing: 0.04,
+    },
+    closeBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
     },
     center: {
       flex: 1,

@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from "react-native"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
+import { useLocalSearchParams } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
@@ -8,11 +8,10 @@ import { useToast } from "@/context/ToastContext"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
-import { useLayout } from "@/hooks/useLayout"
-import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { routeParam } from "@/utils/route"
 import { toDateKey, formatDisplayDate } from "@/utils/date"
-import { MEAL_LABELS } from "@/utils/meals"
+import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
@@ -24,31 +23,62 @@ import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
 
 function MacroInput({
+  icon,
+  accent,
   label,
   value,
   onChange,
   onSubmit,
   placeholder = "0",
-  styles,
-  stacked,
 }: {
+  icon: keyof typeof Feather.glyphMap
+  accent: string
   label: string
   value: string
   onChange: (value: string) => void
   onSubmit?: () => void
   placeholder?: string
-  styles: ReturnType<typeof createStyles>
-  stacked?: boolean
 }) {
+  const { colors } = useTheme()
   return (
-    <Box className={stacked ? "w-full" : "flex-1"}>
-      <Text style={styles.label}>{label}</Text>
+    <Box
+      className="flex-row items-center justify-between rounded-none border bg-background-50 px-3 py-2.5"
+      style={{
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        borderRadius: 0,
+        backgroundColor: colors.surface,
+      }}
+    >
+      <Box className="flex-row items-center gap-2.5">
+        <Box
+          className="h-8 w-8 items-center justify-center rounded-none border"
+          style={{
+            backgroundColor: `${accent}18`,
+            borderColor: colors.border,
+            borderWidth: 1.5,
+            borderRadius: 0,
+          }}
+        >
+          <Feather name={icon} size={15} color={accent} />
+        </Box>
+        <Text
+          size="xs"
+          bold
+          className="text-typography-900"
+          style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+        >
+          {label}
+        </Text>
+      </Box>
       <NumberStepper
         value={value}
         onChangeText={onChange}
         onSubmit={onSubmit}
         step={1}
+        min={0}
         size="sm"
+        inputWidth={64}
         placeholder={placeholder}
         accessibilityLabel={label}
       />
@@ -57,8 +87,8 @@ function MacroInput({
 }
 
 export default function ManualEntryScreen() {
-  const router = useRouter()
   const safeBack = useSafeBack()
+  useEscapeToClose(true, safeBack)
   const params = useLocalSearchParams<{ meal?: string; date?: string; quickAdd?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
@@ -67,8 +97,6 @@ export default function ManualEntryScreen() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
-  const { width } = useLayout()
-  const keyboardOpen = useKeyboardVisible()
   const [name, setName] = useState("")
   const [kcal, setKcal] = useState("")
   const [protein, setProtein] = useState("")
@@ -93,13 +121,13 @@ export default function ManualEntryScreen() {
       await logManualEntry({
         date,
         mealType,
-        name: isQuickAdd ? "Quick add" : name,
-        kcal: kcalValue,
-        protein: Number(protein) || 0,
-        carbs: Number(carbs) || 0,
-        fat: Number(fat) || 0,
+        name: isQuickAdd ? "Quick add" : name.trim(),
+        kcal: Math.round(kcalValue),
+        protein: Math.round(Number(protein) || 0),
+        carbs: Math.round(Number(carbs) || 0),
+        fat: Math.round(Number(fat) || 0),
       })
-      router.dismissAll()
+      safeBack()
     } catch (error) {
       showError(error, "Could not save entry.")
     } finally {
@@ -113,18 +141,30 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ModalContainer hug maxWidth={520} outerClassName="bg-background-50">
-        <Box
-          className="flex-row items-center px-3 pb-2"
-          style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
-        >
+        <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
+          <Box
+            className="h-10 w-10 items-center justify-center rounded-none border"
+            style={{
+              backgroundColor: `${colors.primary}18`,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              borderRadius: 0,
+            }}
+          >
+            <Feather
+              name={isQuickAdd ? "zap" : MEAL_ICONS[mealType] || "edit-3"}
+              size={18}
+              color={colors.primary}
+            />
+          </Box>
           <Box>
             <Text
-              size="2xl"
+              size="xl"
               bold
               className="uppercase tracking-widest text-typography-900"
               style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
             >
-              {isQuickAdd ? "Quick Add" : "Manual entry"}
+              {isQuickAdd ? "Quick Add" : "New Food"}
             </Text>
             <Text
               size="xs"
@@ -137,7 +177,7 @@ export default function ManualEntryScreen() {
         </Box>
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-3 pb-28 pt-2"
+          contentContainerClassName="px-4 pb-28 pt-2"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -170,89 +210,63 @@ export default function ManualEntryScreen() {
             onChangeText={setKcal}
             onSubmit={() => void handleSave()}
             step={10}
+            min={0}
             accessibilityLabel="Calories"
             placeholder="0"
             style={{ marginBottom: spacing.md }}
           />
 
-          {width < 360 ? (
-            <Box className="gap-3">
-              <MacroInput
-                label="Protein (g)"
-                value={protein}
-                onChange={setProtein}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-                stacked
-              />
-              <MacroInput
-                label="Carbs (g)"
-                value={carbs}
-                onChange={setCarbs}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-                stacked
-              />
-              <MacroInput
-                label="Fat (g)"
-                value={fat}
-                onChange={setFat}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-                stacked
-              />
-            </Box>
-          ) : (
-            <Box className="flex-row gap-3">
-              <MacroInput
-                label="Protein (g)"
-                value={protein}
-                onChange={setProtein}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-              />
-              <MacroInput
-                label="Carbs (g)"
-                value={carbs}
-                onChange={setCarbs}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-              />
-              <MacroInput
-                label="Fat (g)"
-                value={fat}
-                onChange={setFat}
-                onSubmit={() => void handleSave()}
-                styles={styles}
-              />
-            </Box>
-          )}
+          <Text style={styles.label}>Nutrient Breakdown</Text>
+          <Box className="gap-2">
+            <MacroInput
+              icon="zap"
+              accent={colors.breakfast}
+              label="Protein (g)"
+              value={protein}
+              onChange={setProtein}
+              onSubmit={() => void handleSave()}
+            />
+            <MacroInput
+              icon="box"
+              accent={colors.lunch}
+              label="Carbs (g)"
+              value={carbs}
+              onChange={setCarbs}
+              onSubmit={() => void handleSave()}
+            />
+            <MacroInput
+              icon="droplet"
+              accent={colors.dinner}
+              label="Fat (g)"
+              value={fat}
+              onChange={setFat}
+              onSubmit={() => void handleSave()}
+            />
+          </Box>
         </ScrollView>
       </ModalContainer>
 
-      {!keyboardOpen ? (
-        <FabCluster
-          bottomOffset={insets.bottom + 20}
-          left={
-            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
-          }
-          right={
-            <Fab
-              icon="check"
-              onPress={handleSave}
-              disabled={saving}
-              accessibilityLabel="Add to diary"
-            />
-          }
-        />
-      ) : null}
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={
+          <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
+        }
+        right={
+          <Fab
+            icon="check"
+            onPress={handleSave}
+            disabled={saving}
+            accessibilityLabel="Add to diary"
+          />
+        }
+      />
     </KeyboardAvoidingView>
   )
 }
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: colors.background, justifyContent: "flex-end" },
     label: {
       color: colors.textMuted,
       fontSize: 11,

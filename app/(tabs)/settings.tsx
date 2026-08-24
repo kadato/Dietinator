@@ -41,6 +41,8 @@ import {
 import { fetchAvailableModels, testProviderConnection } from "@/services/ai/openai-client"
 import type { AiProviderId, AiProviderSettings, AppSettings } from "@/types"
 import { PageContainer } from "@/components/PageContainer"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { SettingsSection } from "@/components/SettingsSection"
 import { NumberStepper } from "@/components/NumberStepper"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
@@ -248,13 +250,17 @@ function MacroGoalSubtitle({
     {
       icon: "zap" as const,
       color: colors.breakfast,
-      value: `${formatNumber(settings.protein_goal)}g`,
+      value: `${Math.round(settings.protein_goal)}g`,
     },
-    { icon: "box" as const, color: colors.lunch, value: `${formatNumber(settings.carbs_goal)}g` },
+    {
+      icon: "box" as const,
+      color: colors.lunch,
+      value: `${Math.round(settings.carbs_goal)}g`,
+    },
     {
       icon: "droplet" as const,
       color: colors.dinner,
-      value: `${formatNumber(settings.fat_goal)}g`,
+      value: `${Math.round(settings.fat_goal)}g`,
     },
   ]
   return (
@@ -277,7 +283,7 @@ const SETTINGS_SECTIONS = [
     label: "Goals and Nutrition",
     icon: "flag" as const,
     getSubtitle: (s: AppSettings) =>
-      `${formatNumber(s.calorie_goal)} kcal · ${s.protein_goal}g P · ${s.carbs_goal}g C · ${s.fat_goal}g F`,
+      `${Math.round(s.calorie_goal)} kcal · ${Math.round(s.protein_goal)}g P · ${Math.round(s.carbs_goal)}g C · ${Math.round(s.fat_goal)}g F`,
   },
   {
     id: "general",
@@ -324,26 +330,25 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
   const [saving, setSaving] = useState(false)
-  const [calorieGoal, setCalorieGoal] = useState(formatNumber(settings.calorie_goal))
-  const [proteinGoal, setProteinGoal] = useState(formatNumber(settings.protein_goal))
-  const [carbsGoal, setCarbsGoal] = useState(formatNumber(settings.carbs_goal))
-  const [fatGoal, setFatGoal] = useState(formatNumber(settings.fat_goal))
-  const [waterGoal, setWaterGoal] = useState(formatNumber(settings.water_goal_ml))
+  const [calorieGoal, setCalorieGoal] = useState(String(Math.round(settings.calorie_goal)))
+  const [proteinGoal, setProteinGoal] = useState(String(Math.round(settings.protein_goal)))
+  const [carbsGoal, setCarbsGoal] = useState(String(Math.round(settings.carbs_goal)))
+  const [fatGoal, setFatGoal] = useState(String(Math.round(settings.fat_goal)))
+  const [waterGoal, setWaterGoal] = useState(String(Math.round(settings.water_goal_ml)))
   const [heightCm, setHeightCm] = useState(formatNumber(settings.height_cm))
   const [targetWeight, setTargetWeight] = useState(formatNumber(settings.target_weight_kg))
   const [goalError, setGoalError] = useState<string | null>(null)
 
-  const goalsKey = `${settings.calorie_goal}|${settings.protein_goal}|${settings.carbs_goal}|${settings.fat_goal}|${settings.water_goal_ml}|${settings.height_cm}|${settings.target_weight_kg}`
+  const goalsKey = `${Math.round(settings.calorie_goal)}|${Math.round(settings.protein_goal)}|${Math.round(settings.carbs_goal)}|${Math.round(settings.fat_goal)}|${Math.round(settings.water_goal_ml)}|${settings.height_cm}|${settings.target_weight_kg}`
   const [syncedGoalsKey, setSyncedGoalsKey] = useState(goalsKey)
   if (goalsKey !== syncedGoalsKey) {
     setSyncedGoalsKey(goalsKey)
-    setCalorieGoal(formatNumber(settings.calorie_goal))
-    setProteinGoal(formatNumber(settings.protein_goal))
-    setCarbsGoal(formatNumber(settings.carbs_goal))
-    setFatGoal(formatNumber(settings.fat_goal))
-    setWaterGoal(formatNumber(settings.water_goal_ml))
+    setCalorieGoal(String(Math.round(settings.calorie_goal)))
+    setProteinGoal(String(Math.round(settings.protein_goal)))
+    setCarbsGoal(String(Math.round(settings.carbs_goal)))
+    setFatGoal(String(Math.round(settings.fat_goal)))
+    setWaterGoal(String(Math.round(settings.water_goal_ml)))
     setHeightCm(formatNumber(settings.height_cm))
     setTargetWeight(formatNumber(settings.target_weight_kg))
   }
@@ -351,11 +356,11 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const saveGoals = useCallback(async () => {
     if (saving) return
     const values = {
-      calorie_goal: Number(calorieGoal),
-      protein_goal: Number(proteinGoal),
-      carbs_goal: Number(carbsGoal),
-      fat_goal: Number(fatGoal),
-      water_goal_ml: Number(waterGoal),
+      calorie_goal: Math.round(Number(calorieGoal)),
+      protein_goal: Math.round(Number(proteinGoal)),
+      carbs_goal: Math.round(Number(carbsGoal)),
+      fat_goal: Math.round(Number(fatGoal)),
+      water_goal_ml: Math.round(Number(waterGoal)),
       height_cm: Number(heightCm),
       target_weight_kg: Number(targetWeight),
     }
@@ -414,11 +419,11 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
   const fPct = ratios.fatPct
 
   const isDirty =
-    formatNumber(settings.calorie_goal) !== calorieGoal ||
-    formatNumber(settings.protein_goal) !== proteinGoal ||
-    formatNumber(settings.carbs_goal) !== carbsGoal ||
-    formatNumber(settings.fat_goal) !== fatGoal ||
-    formatNumber(settings.water_goal_ml) !== waterGoal ||
+    String(Math.round(settings.calorie_goal)) !== calorieGoal ||
+    String(Math.round(settings.protein_goal)) !== proteinGoal ||
+    String(Math.round(settings.carbs_goal)) !== carbsGoal ||
+    String(Math.round(settings.fat_goal)) !== fatGoal ||
+    String(Math.round(settings.water_goal_ml)) !== waterGoal ||
     formatNumber(settings.height_cm) !== heightCm ||
     formatNumber(settings.target_weight_kg) !== targetWeight
 
@@ -519,65 +524,33 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
                 }}
               />
             ) : null}
-            {fPct > 0 ? <View style={{ flex: fPct, backgroundColor: colors.dinner }} /> : null}
+            {fPct > 0 ? (
+              <View
+                style={{
+                  flex: fPct,
+                  backgroundColor: colors.dinner,
+                }}
+              />
+            ) : null}
           </View>
-          <View className="mt-3 flex-row flex-wrap items-center gap-3">
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="h-5 w-5 items-center justify-center rounded-none border"
-                style={{
-                  backgroundColor: `${colors.breakfast}18`,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                }}
-              >
-                <Feather name="zap" size={10} color={colors.breakfast} />
-              </View>
-              <Text size="xs" bold className="font-tabular text-typography-700">
-                P {pPct}%
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="h-5 w-5 items-center justify-center rounded-none border"
-                style={{
-                  backgroundColor: `${colors.lunch}18`,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                }}
-              >
-                <Feather name="box" size={10} color={colors.lunch} />
-              </View>
-              <Text size="xs" bold className="font-tabular text-typography-700">
-                C {cPct}%
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="h-5 w-5 items-center justify-center rounded-none border"
-                style={{
-                  backgroundColor: `${colors.dinner}18`,
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                }}
-              >
-                <Feather name="droplet" size={10} color={colors.dinner} />
-              </View>
-              <Text size="xs" bold className="font-tabular text-typography-700">
-                F {fPct}%
-              </Text>
-            </View>
+          <View className="mt-2 flex-row items-center justify-between text-xs">
+            <Text size="xs" bold style={{ color: colors.breakfast }}>
+              Protein {pPct}% ({Math.round(p)}g)
+            </Text>
+            <Text size="xs" bold style={{ color: colors.lunch }}>
+              Carbs {cPct}% ({Math.round(c)}g)
+            </Text>
+            <Text size="xs" bold style={{ color: colors.dinner }}>
+              Fat {fPct}% ({Math.round(f)}g)
+            </Text>
           </View>
         </View>
       </SettingsSection>
 
-      <SettingsSection title="Water and body goals">
+      <SettingsSection title="Body and hydration">
         <GoalInput
           icon="droplet"
-          label="Daily water goal"
+          label="Water intake goal"
           value={waterGoal}
           onChange={setWaterGoal}
           onSubmit={saveGoals}
@@ -609,75 +582,89 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           last
           error={fieldErrors.weight}
         />
-        <View
-          className="gap-3 border-t border-outline-100 p-4"
-          style={
-            Platform.OS === "web"
-              ? ({
-                  position: "sticky" as any,
-                  bottom: 0,
-                  zIndex: 10,
-                  backgroundColor: colors.surface,
-                  marginHorizontal: -16,
-                  marginBottom: -16,
-                  paddingBottom: insets.bottom ? insets.bottom + 16 : 16,
-                  borderTopWidth: 1.5,
-                  borderTopColor: colors.border,
-                } as any)
-              : {
-                  backgroundColor: colors.surface,
-                  borderTopWidth: 1.5,
-                  borderTopColor: colors.border,
-                }
-          }
-        >
-          {goalError ? (
-            <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
-              {goalError}
-            </Text>
-          ) : null}
-          {!isDirty && !goalError ? (
-            <Text
-              size="xs"
-              className="text-center font-mono uppercase tracking-widest text-typography-400"
-            >
-              No changes
-            </Text>
-          ) : null}
-          <Button
-            size="md"
-            className="rounded-none border bg-primary-500 active:bg-primary-600"
+        {isDirty || goalError ? (
+          <View
+            className="gap-2 border-t border-outline-100 p-4"
             style={{
-              borderWidth: 1.5,
-              borderColor: isDirty ? colors.primary : colors.border,
-              borderRadius: 0,
-              opacity: isDirty ? 1 : 0.6,
+              backgroundColor: colors.surface,
+              borderTopWidth: 1.5,
+              borderTopColor: colors.border,
             }}
-            onPress={saveGoals}
-            disabled={saving || !isDirty}
           >
-            <ButtonText style={{ color: isDirty ? colors.onPrimary : colors.textMuted }}>
-              {saving ? "Saving…" : isDirty ? "Save" : "Saved"}
-            </ButtonText>
-          </Button>
-        </View>
+            {goalError ? (
+              <Text size="sm" bold className="mb-1" style={{ color: colors.danger }}>
+                {goalError}
+              </Text>
+            ) : null}
+            <Button
+              size="md"
+              className="rounded-none border bg-primary-500 active:bg-primary-600"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                borderRadius: 0,
+              }}
+              onPress={saveGoals}
+              disabled={saving}
+            >
+              <ButtonText
+                style={{
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.06,
+                  fontWeight: "800",
+                  color: colors.onPrimary,
+                }}
+              >
+                {saving ? "SAVING..." : "SAVE GOALS"}
+              </ButtonText>
+            </Button>
+          </View>
+        ) : null}
       </SettingsSection>
     </>
   )
 }
 
-function SettingsField({ label, children }: { label: string; children: ReactNode }) {
+function SettingsField({
+  icon,
+  accent,
+  label,
+  children,
+}: {
+  icon?: IconName
+  accent?: string
+  label: string
+  children: ReactNode
+}) {
+  const { colors } = useTheme()
+  const tint = accent ?? colors.primary
   return (
     <View className="border-b border-outline-100 px-4 py-3.5">
-      <Text size="xs" bold className="mb-2 uppercase text-typography-500">
-        {label}
-      </Text>
+      <Box className="mb-2 flex-row items-center gap-2">
+        {icon ? (
+          <Box
+            className="h-5 w-5 items-center justify-center rounded-none"
+            style={{ backgroundColor: `${tint}20`, borderWidth: 1, borderColor: tint }}
+          >
+            <Feather name={icon} size={11} color={tint} />
+          </Box>
+        ) : null}
+        <Text
+          size="xs"
+          bold
+          className="uppercase tracking-widest text-typography-500"
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+        >
+          {label}
+        </Text>
+      </Box>
       {children}
     </View>
   )
 }
 
-/** AI form, isolated state, so typing an API key or model never re-renders other parts. */
+/** AI form with vibrant cyberpunk palette, model chips, telemetry cards, and distinct action buttons. */
 function AiSettingsForm({ settings }: { settings: AppSettings }) {
   const router = useRouter()
   const { updateSettings } = useApp()
@@ -814,10 +801,18 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
   return (
     <View className="border-t border-outline-100">
-      <SettingsField label="Provider preset">
-        <Box className="flex-row flex-wrap gap-1.5">
+      <SettingsField label="Provider Preset" icon="sliders" accent={colors.primary}>
+        <Box className="flex-row flex-wrap gap-2">
           {AI_PROVIDER_IDS.map((provider) => {
             const selected = provider === aiProvider
+            const providerColors: Record<string, string> = {
+              openai: colors.lunch,
+              ollama: colors.warning,
+              anthropic: colors.breakfast,
+              openrouter: colors.dinner,
+              custom: colors.primary,
+            }
+            const tint = providerColors[provider] ?? colors.primary
             return (
               <Pressable
                 key={provider}
@@ -825,16 +820,27 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
                 accessibilityRole="button"
                 accessibilityLabel={`AI provider ${provider}`}
                 accessibilityState={{ selected }}
-                className={`rounded-none border px-3 py-1.5 active:opacity-80 ${
-                  selected
-                    ? "border-primary-500 bg-primary-500/10"
-                    : "border-outline-200 bg-background-50"
-                }`}
+                className="cursor-pointer flex-row items-center gap-1.5 rounded-none border px-3 py-2"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: selected ? tint : colors.border,
+                  backgroundColor: selected ? `${tint}20` : colors.surface,
+                  borderRadius: 0,
+                }}
               >
+                <Box
+                  className="h-2 w-2 rounded-none"
+                  style={{ backgroundColor: selected ? tint : colors.textMuted }}
+                />
                 <Text
                   size="xs"
-                  bold={selected}
-                  style={{ color: selected ? colors.primary : colors.textMuted }}
+                  bold
+                  style={{
+                    color: selected ? tint : colors.text,
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
                 >
                   {AI_PROVIDER_PRESETS[provider].label}
                 </Text>
@@ -844,8 +850,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         </Box>
       </SettingsField>
 
-      <SettingsField label="Base URL">
-        <Input size="md">
+      <SettingsField label="Base Endpoint URL" icon="globe" accent={colors.lunch}>
+        <Input size="md" className="rounded-none border bg-background-50">
           <InputField
             value={aiBaseUrl}
             onChangeText={setAiBaseUrl}
@@ -854,13 +860,14 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             autoCorrect={false}
             returnKeyType="next"
             accessibilityLabel="AI base URL"
+            style={{ fontFamily: fonts.mono }}
           />
         </Input>
       </SettingsField>
 
-      <SettingsField label="API Key">
+      <SettingsField label="API Secret Key" icon="key" accent={colors.warning}>
         <View className="flex-row items-center gap-2">
-          <Input size="md" className="flex-1">
+          <Input size="md" className="flex-1 rounded-none border bg-background-50">
             <InputField
               value={aiApiKey}
               onChangeText={setAiApiKey}
@@ -870,22 +877,40 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
               autoCorrect={false}
               returnKeyType="next"
               accessibilityLabel="AI API key"
+              style={{ fontFamily: fonts.mono }}
             />
           </Input>
-          <Button
-            size="sm"
-            variant="outline"
-            action="secondary"
+          <Pressable
             onPress={() => setShowApiKey((s) => !s)}
+            className="h-11 items-center justify-center rounded-none border px-3"
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              borderColor: colors.border,
+              borderWidth: 1.5,
+              borderRadius: 0,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={showApiKey ? "Hide key" : "Show key"}
           >
-            <ButtonText>{showApiKey ? "Hide" : "Show"}</ButtonText>
-          </Button>
+            <Text
+              size="xs"
+              bold
+              style={{
+                color: colors.text,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
+              {showApiKey ? "Hide" : "Show"}
+            </Text>
+          </Pressable>
         </View>
       </SettingsField>
 
-      <SettingsField label="Model">
+      <SettingsField label="Target Model" icon="cpu" accent={colors.breakfast}>
         <View className="flex-row items-center gap-2">
-          <Input size="md" className="flex-1">
+          <Input size="md" className="flex-1 rounded-none border bg-background-50">
             <InputField
               value={aiModel}
               onChangeText={setAiModel}
@@ -895,34 +920,63 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
               returnKeyType="done"
               onSubmitEditing={() => void saveAiSettings()}
               accessibilityLabel="AI model name"
+              style={{ fontFamily: fonts.mono }}
             />
           </Input>
-          <Button
-            size="sm"
-            variant="outline"
-            action="secondary"
+          <Pressable
             onPress={() => void fetchAiModels()}
             disabled={fetchingModels}
+            className="h-11 flex-row items-center gap-1.5 rounded-none border px-3"
+            style={{
+              backgroundColor: `${colors.breakfast}18`,
+              borderColor: colors.breakfast,
+              borderWidth: 1.5,
+              borderRadius: 0,
+              opacity: fetchingModels ? 0.6 : 1,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Fetch model list"
           >
-            <ButtonText>{fetchingModels ? "Fetching…" : "Fetch list"}</ButtonText>
-          </Button>
+            <Feather name="download" size={13} color={colors.breakfast} />
+            <Text
+              size="xs"
+              bold
+              style={{
+                color: colors.breakfast,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
+              {fetchingModels ? "Fetching…" : "Fetch"}
+            </Text>
+          </Pressable>
         </View>
 
         {fetchedModels.length > 0 ? (
-          <Box className="mt-2 flex-row flex-wrap gap-1.5">
+          <Box className="mt-2.5 flex-row flex-wrap gap-1.5">
             {fetchedModels.slice(0, 10).map((model) => (
               <Pressable
                 key={model}
                 onPress={() => setAiModel(model)}
-                className={`rounded-none border px-2.5 py-1 ${
-                  aiModel === model
-                    ? "border-primary-500 bg-primary-500/15"
-                    : "border-outline-200 bg-background-50"
-                }`}
+                className="rounded-none border px-2.5 py-1.5"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: aiModel === model ? colors.primary : colors.border,
+                  backgroundColor: aiModel === model ? `${colors.primary}20` : colors.surfaceAlt,
+                  borderRadius: 0,
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`Select model ${model}`}
               >
-                <Text size="xs" style={{ color: aiModel === model ? colors.primary : colors.text }}>
+                <Text
+                  size="xs"
+                  bold={aiModel === model}
+                  style={{
+                    color: aiModel === model ? colors.primary : colors.text,
+                    fontFamily: fonts.mono,
+                  }}
+                >
                   {model}
                 </Text>
               </Pressable>
@@ -931,63 +985,151 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         ) : null}
       </SettingsField>
 
-      <SettingsField label="System prompt (optional)">
-        <Input size="md" className="h-24">
+      <SettingsField label="System Prompt (Optional)" icon="terminal" accent={colors.dinner}>
+        <Input size="md" className="h-24 rounded-none border bg-background-50 p-2">
           <InputField
             value={aiSystemPrompt}
             onChangeText={setAiSystemPrompt}
-            placeholder="Custom assistant instructions"
+            placeholder="Custom assistant instructions..."
             multiline
             numberOfLines={4}
             textAlignVertical="top"
             accessibilityLabel="Custom AI system prompt"
+            style={{ fontFamily: fonts.mono, fontSize: 12 }}
           />
         </Input>
       </SettingsField>
 
       {aiError ? (
-        <View className="border-b border-outline-100 px-4 py-3">
-          <Text size="xs" bold style={{ color: colors.danger }}>
-            {aiError}
-          </Text>
+        <View
+          className="mx-4 my-2 border p-3"
+          style={{
+            borderColor: colors.danger,
+            backgroundColor: `${colors.danger}18`,
+            borderWidth: 1.5,
+            borderRadius: 0,
+          }}
+        >
+          <Box className="flex-row items-center gap-2">
+            <Feather name="alert-triangle" size={16} color={colors.danger} />
+            <Text
+              size="xs"
+              bold
+              style={{
+                color: colors.danger,
+                fontFamily: fonts.mono,
+                letterSpacing: 0.04,
+              }}
+            >
+              {aiError}
+            </Text>
+          </Box>
         </View>
       ) : null}
 
       {testResult ? (
-        <View className="border-b border-outline-100 px-4 py-3">
-          <Text size="xs" bold style={{ color: testResult.ok ? colors.primary : colors.danger }}>
-            {testResult.ok ? "✓ " : "✗ "}
-            {testResult.message}
-          </Text>
+        <View
+          className="mx-4 my-2 border p-3.5"
+          style={{
+            borderColor: testResult.ok ? colors.primary : colors.danger,
+            backgroundColor: testResult.ok ? `${colors.primary}18` : `${colors.danger}18`,
+            borderWidth: 1.5,
+            borderRadius: 0,
+          }}
+        >
+          <Box className="flex-row items-center gap-2">
+            <Feather
+              name={testResult.ok ? "check-circle" : "x-circle"}
+              size={18}
+              color={testResult.ok ? colors.primary : colors.danger}
+            />
+            <Box className="flex-1">
+              <Text
+                size="xs"
+                bold
+                className="uppercase tracking-widest"
+                style={{
+                  color: testResult.ok ? colors.primary : colors.danger,
+                  fontFamily: fonts.mono,
+                  letterSpacing: 0.08,
+                }}
+              >
+                {testResult.ok ? "Telemetry Connection: Verified" : "Telemetry Connection: Failed"}
+              </Text>
+              <Text
+                size="xs"
+                className="mt-0.5"
+                style={{
+                  color: colors.text,
+                  fontFamily: fonts.mono,
+                }}
+              >
+                {testResult.message}
+              </Text>
+            </Box>
+          </Box>
         </View>
       ) : null}
 
       <View className="gap-3 p-4">
-        <Box className="flex-row flex-wrap gap-2">
-          <Button
+        {/* Test Connection Button - styled prominently with colors and clear padding */}
+        <Pressable
+          onPress={() => void testAiConnection()}
+          disabled={testingConnection}
+          className="w-full flex-row items-center justify-center gap-2.5 rounded-none border px-4 py-3.5 active:opacity-80"
+          style={{
+            backgroundColor: `${colors.primary}20`,
+            borderColor: colors.primary,
+            borderWidth: 1.5,
+            borderRadius: 0,
+            opacity: testingConnection ? 0.6 : 1,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Test AI connection"
+        >
+          <Feather name="activity" size={16} color={colors.primary} />
+          <Text
             size="sm"
-            variant="outline"
-            action="primary"
-            className="min-w-[140px] flex-1"
-            onPress={() => void testAiConnection()}
-            disabled={testingConnection}
+            bold
+            style={{
+              color: colors.primary,
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.08,
+            }}
           >
-            <ButtonText>{testingConnection ? "Testing…" : "Test connection"}</ButtonText>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            action="secondary"
-            className="min-w-[140px] flex-1"
+            {testingConnection ? "Testing Telemetry..." : "Test Connection"}
+          </Text>
+        </Pressable>
+
+        <Box className="flex-row gap-2">
+          <Pressable
             onPress={() => router.push("/(tabs)/ai")}
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-none border px-3 py-3 active:opacity-80"
+            style={{
+              backgroundColor: `${colors.lunch}18`,
+              borderColor: colors.lunch,
+              borderWidth: 1.5,
+              borderRadius: 0,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Open AI chat"
           >
-            <ButtonText>Open AI chat</ButtonText>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            action="secondary"
-            className="min-w-[140px] flex-1"
+            <Feather name="message-square" size={14} color={colors.lunch} />
+            <Text
+              size="xs"
+              bold
+              style={{
+                color: colors.lunch,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.06,
+              }}
+            >
+              Open AI Chat
+            </Text>
+          </Pressable>
+          <Pressable
             onPress={() =>
               confirmAction({
                 title: "Clear chat history?",
@@ -1003,19 +1145,50 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
                 },
               })
             }
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-none border px-3 py-3 active:opacity-80"
+            style={{
+              backgroundColor: `${colors.danger}18`,
+              borderColor: colors.danger,
+              borderWidth: 1.5,
+              borderRadius: 0,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear chat history"
           >
-            <ButtonText>Clear chat history</ButtonText>
-          </Button>
+            <Feather name="trash-2" size={14} color={colors.danger} />
+            <Text
+              size="xs"
+              bold
+              style={{
+                color: colors.danger,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.06,
+              }}
+            >
+              Clear History
+            </Text>
+          </Pressable>
         </Box>
 
         <Button
           size="lg"
-          className="mt-2 rounded-none border bg-primary-500 py-3.5 active:bg-primary-600"
+          className="mt-1 rounded-none border bg-primary-500 py-3.5 active:bg-primary-600"
           style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
           onPress={saveAiSettings}
           disabled={aiSaving}
         >
-          <ButtonText>{aiSaving ? "Saving AI settings…" : "Save AI settings"}</ButtonText>
+          <ButtonText
+            style={{
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.08,
+              fontWeight: "800",
+              color: colors.onPrimary,
+            }}
+          >
+            {aiSaving ? "SAVING AI SETTINGS…" : "SAVE AI SETTINGS"}
+          </ButtonText>
         </Button>
       </View>
     </View>
@@ -1238,25 +1411,20 @@ export default function SettingsScreen() {
             /* 2. SECTION DRILLDOWN VIEW                                  */
             /* ========================================================== */
             <>
-              {/* Back Button and Section Title */}
-              <Box className="mb-4">
-                <Pressable
-                  onPress={backToHub}
-                  hitSlop={8}
-                  className="flex-row items-center gap-1 py-1"
-                  accessibilityRole="button"
-                  accessibilityLabel="Back to all settings"
+              {/* Section Title */}
+              <Box className="mb-4 pt-1">
+                <Text
+                  size="2xl"
+                  bold
+                  style={{
+                    color: colors.textOnBackground,
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                  }}
                 >
-                  <Feather name="chevron-left" size={20} color={colors.primary} />
-                  <Text size="sm" bold style={{ color: colors.primary }}>
-                    All Settings
-                  </Text>
-                </Pressable>
-                <Box className="mt-1 flex-row items-center justify-between">
-                  <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
-                    {currentSection?.label}
-                  </Text>
-                </Box>
+                  {currentSection?.label}
+                </Text>
               </Box>
 
               {/* Goals and Nutrition */}
@@ -1373,7 +1541,7 @@ export default function SettingsScreen() {
                   <SettingsRow
                     icon="cpu"
                     title="Enable AI Assistant"
-                    subtitle="Chat with your diary on device. Your API key never leaves the app"
+                    subtitle="Chat with your diary. Your API key and diary data stay on your device"
                     right={
                       <Switch
                         value={settings.ai_enabled === 1}
@@ -1396,11 +1564,56 @@ export default function SettingsScreen() {
 
               {/* YAZIO Sync */}
               {activeSection === "sync" ? (
-                <SettingsSection title="YAZIO Sync">
+                <SettingsSection title="YAZIO Cloud Sync">
+                  {/* Connectivity Status Banner */}
+                  <View
+                    className="flex-row items-center gap-2.5 border-b px-4 py-3"
+                    style={{
+                      borderBottomWidth: 1.5,
+                      borderBottomColor: colors.border,
+                      backgroundColor: authenticated
+                        ? settings.yazio_sync_enabled === 1
+                          ? `${colors.primary}14`
+                          : `${colors.warning}14`
+                        : colors.surfaceAlt,
+                    }}
+                  >
+                    <Box
+                      className="h-2.5 w-2.5 rounded-none"
+                      style={{
+                        backgroundColor: authenticated
+                          ? settings.yazio_sync_enabled === 1
+                            ? colors.primary
+                            : colors.warning
+                          : colors.textMuted,
+                      }}
+                    />
+                    <Text
+                      size="xs"
+                      bold
+                      className="flex-1 uppercase tracking-widest text-typography-900"
+                      style={{
+                        fontFamily: fonts.mono,
+                        letterSpacing: 0.08,
+                        color: authenticated
+                          ? settings.yazio_sync_enabled === 1
+                            ? colors.primary
+                            : colors.warning
+                          : colors.textMuted,
+                      }}
+                    >
+                      {authenticated
+                        ? settings.yazio_sync_enabled === 1
+                          ? "CLOUD SYNC: ACTIVE (BEST-EFFORT)"
+                          : "CLOUD SYNC: PAUSED (LOCAL-ONLY)"
+                        : "CLOUD SYNC: DISCONNECTED (NOT LOGGED IN)"}
+                    </Text>
+                  </View>
+
                   <SettingsRow
                     icon="repeat"
-                    title="Sync diary to YAZIO"
-                    subtitle="Upload new entries as you log them (best-effort)"
+                    title="Automatic Cloud Sync"
+                    subtitle="Push diary entries to YAZIO automatically as you log them"
                     right={
                       <Switch
                         value={settings.yazio_sync_enabled === 1}
@@ -1415,50 +1628,93 @@ export default function SettingsScreen() {
                       />
                     }
                   />
-                  <SettingsRow
-                    icon="upload-cloud"
-                    title="Sync pending entries now"
-                    subtitle="Send unsynced diary entries to YAZIO"
-                    onPress={async () => {
-                      try {
-                        const count = await syncPendingEntries()
-                        showSuccess(
-                          count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`,
-                          "Sync",
-                        )
-                      } catch (error) {
-                        showError(error, "Could not sync entries to YAZIO.")
-                      }
-                    }}
-                  />
-                  <SettingsRow
-                    icon="download-cloud"
-                    title="Import today from YAZIO"
-                    subtitle="Pull today's foods and refresh your goals"
-                    last
-                    onPress={async () => {
-                      try {
-                        const { imported, skipped, failed } = await importFromYazio(toDateKey())
-                        await refreshSettings()
-                        const parts = ["Goals updated."]
-                        if (imported > 0) {
-                          parts.push(
-                            imported === 1
-                              ? "Imported 1 food for today."
-                              : `Imported ${imported} foods for today.`,
+
+                  <View className="gap-2.5 p-4">
+                    <Pressable
+                      onPress={async () => {
+                        try {
+                          const count = await syncPendingEntries()
+                          showSuccess(
+                            count === 1 ? "Synced 1 entry." : `Synced ${count} entries.`,
+                            "Sync",
                           )
-                        } else if (skipped > 0 && failed === 0) {
-                          parts.push("Today's foods are already up to date.")
+                        } catch (error) {
+                          showError(error, "Could not sync entries to YAZIO.")
                         }
-                        if (failed > 0) {
-                          parts.push(`${failed} item(s) could not be loaded.`)
+                      }}
+                      className="flex-row items-center justify-center gap-2 rounded-none border px-4 py-3 active:opacity-80"
+                      style={({ pressed }) => ({
+                        backgroundColor: pressed ? colors.surfaceAlt : `${colors.primary}18`,
+                        borderColor: colors.primary,
+                        borderWidth: 1.5,
+                        borderRadius: 0,
+                      })}
+                      accessibilityRole="button"
+                      accessibilityLabel="Sync pending entries now"
+                    >
+                      <Feather name="upload-cloud" size={16} color={colors.primary} />
+                      <Text
+                        size="xs"
+                        bold
+                        className="font-mono uppercase tracking-widest"
+                        style={{
+                          color: colors.primary,
+                          fontFamily: fonts.mono,
+                          letterSpacing: 0.08,
+                        }}
+                      >
+                        Sync Pending Entries Now
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={async () => {
+                        try {
+                          const { imported, skipped, failed } = await importFromYazio(toDateKey())
+                          await refreshSettings()
+                          const parts = ["Goals updated."]
+                          if (imported > 0) {
+                            parts.push(
+                              imported === 1
+                                ? "Imported 1 food for today."
+                                : `Imported ${imported} foods for today.`,
+                            )
+                          } else if (skipped > 0 && failed === 0) {
+                            parts.push("Today's foods are already up to date.")
+                          }
+                          if (failed > 0) {
+                            parts.push(`${failed} item(s) could not be loaded.`)
+                          }
+                          showSuccess(parts.join(" "), "Imported from YAZIO")
+                        } catch (error) {
+                          showError(error, "Could not import from YAZIO.")
                         }
-                        showSuccess(parts.join(" "), "Imported from YAZIO")
-                      } catch (error) {
-                        showError(error, "Could not import from YAZIO.")
-                      }
-                    }}
-                  />
+                      }}
+                      className="flex-row items-center justify-center gap-2 rounded-none border px-4 py-3 active:opacity-80"
+                      style={({ pressed }) => ({
+                        backgroundColor: pressed ? colors.surfaceAlt : `${colors.lunch}18`,
+                        borderColor: colors.lunch,
+                        borderWidth: 1.5,
+                        borderRadius: 0,
+                      })}
+                      accessibilityRole="button"
+                      accessibilityLabel="Import today from YAZIO"
+                    >
+                      <Feather name="download-cloud" size={16} color={colors.lunch} />
+                      <Text
+                        size="xs"
+                        bold
+                        className="font-mono uppercase tracking-widest"
+                        style={{
+                          color: colors.lunch,
+                          fontFamily: fonts.mono,
+                          letterSpacing: 0.08,
+                        }}
+                      >
+                        Import Today From YAZIO
+                      </Text>
+                    </Pressable>
+                  </View>
                 </SettingsSection>
               ) : null}
 
@@ -1633,9 +1889,20 @@ export default function SettingsScreen() {
           />
         </PageContainer>
       </ScrollView>
-      {/* The drilldown's back affordance is the header row button plus the
-          system Back gesture. A second floating duplicate competed with the
-          Material one-primary-action rule, so it was removed. */}
+
+      {activeSection !== null ? (
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          left={
+            <Fab
+              icon="arrow-left"
+              tone="surface"
+              onPress={backToHub}
+              accessibilityLabel="Back to all settings"
+            />
+          }
+        />
+      ) : null}
     </KeyboardAvoidingView>
   )
 }

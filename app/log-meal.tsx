@@ -759,12 +759,6 @@ export default function LogMealScreen() {
           </View>
         </View>
 
-        {/* Logged in this meal. Lives under the budget bar, not inside the
-            FlatList header, so adding a food does not push the search field
-            and tabs down. Fixed max height with internal scroll keeps the
-            outer layout stable. */}
-        {loggedSection ? <View style={styles.loggedSectionWrap}>{loggedSection}</View> : null}
-
         {/* Always visible quick-switch tabs: Frequent, Recent, Favorites, Meals */}
         <View style={styles.tabBar} accessibilityRole="tablist">
           {TABS.map((tab) => {
@@ -809,8 +803,8 @@ export default function LogMealScreen() {
           })}
         </View>
 
-        {/* Search Bar: always visible. Search is the core verb of this
-            screen, so it never hides behind a toggle FAB. */}
+        {/* Search Bar: always visible and pinned at a fixed position so
+            adding food does NOT jump or shift the input field. */}
         <View style={styles.searchWrap}>
           <View style={styles.searchIconBox}>
             <Feather name="search" size={14} color={colors.text} />
@@ -861,6 +855,9 @@ export default function LogMealScreen() {
               renderItem={() => null}
               ListHeaderComponent={
                 <>
+                  {loggedSection ? (
+                    <View style={styles.loggedSectionWrap}>{loggedSection}</View>
+                  ) : null}
                   {favoritesToolbar}
                   <SortableFavoriteList
                     foods={foods as SearchFoodResult[]}
@@ -884,7 +881,14 @@ export default function LogMealScreen() {
               contentContainerClassName={
                 foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-36"
               }
-              ListHeaderComponent={favoritesToolbar}
+              ListHeaderComponent={
+                <>
+                  {loggedSection ? (
+                    <View style={styles.loggedSectionWrap}>{loggedSection}</View>
+                  ) : null}
+                  {favoritesToolbar}
+                </>
+              }
               renderItem={renderFood}
               ListEmptyComponent={
                 !loading ? (
@@ -946,15 +950,20 @@ export default function LogMealScreen() {
               filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-36"
             }
             ListHeaderComponent={
-              <Pressable
-                style={styles.newMealBtn}
-                onPress={() => router.push({ pathname: "/meal-builder" })}
-                accessibilityRole="button"
-                accessibilityLabel="Create a new meal"
-              >
-                <Feather name="shopping-bag" size={20} color={colors.onPrimary} />
-                <Text style={styles.newMealText}>New meal</Text>
-              </Pressable>
+              <>
+                {loggedSection ? (
+                  <View style={styles.loggedSectionWrap}>{loggedSection}</View>
+                ) : null}
+                <Pressable
+                  style={styles.newMealBtn}
+                  onPress={() => router.push({ pathname: "/meal-builder" })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Create a new meal"
+                >
+                  <Feather name="shopping-bag" size={20} color={colors.onPrimary} />
+                  <Text style={styles.newMealText}>New meal</Text>
+                </Pressable>
+              </>
             }
             renderItem={renderMeal}
             ListEmptyComponent={
@@ -1051,9 +1060,12 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     title: {
-      fontSize: 19,
+      fontSize: 18,
       fontWeight: "800",
       color: colors.text,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
     },
     headerKcal: {
       fontSize: 15,
@@ -1065,13 +1077,17 @@ const createStyles = (colors: ColorPalette) =>
     },
     headerUnit: {
       fontSize: 11,
-      fontWeight: "500",
+      fontWeight: "600",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
     },
     moreBtn: {
       width: 36,
       height: 36,
       borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
       justifyContent: "center",
@@ -1080,7 +1096,7 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      marginHorizontal: spacing.sm + 4,
+      marginHorizontal: spacing.md,
       marginBottom: spacing.xs,
     },
     tabItem: {
@@ -1090,10 +1106,10 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 3,
-      paddingVertical: 6,
+      paddingVertical: 7,
       paddingHorizontal: 2,
       borderRadius: 0,
-      borderWidth: 1,
+      borderWidth: 1.5,
     },
     tabItemActive: {},
     tabItemInactive: {
@@ -1101,12 +1117,14 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     tabLabel: {
-      fontSize: 11,
-      fontWeight: "600",
-      letterSpacing: 0.01,
+      fontSize: 10,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     tabLabelActive: {
-      fontWeight: "700",
+      fontWeight: "800",
     },
     searchWrap: {
       flexDirection: "row",
@@ -1122,7 +1140,7 @@ const createStyles = (colors: ColorPalette) =>
       height: 28,
       borderWidth: 1.5,
       borderColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceAlt,
       borderRadius: 0,
       alignItems: "center",
       justifyContent: "center",
@@ -1134,9 +1152,12 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 0,
       borderWidth: 1.5,
       paddingVertical: spacing.sm,
-      paddingLeft: 40,
+      paddingLeft: 42,
       paddingRight: spacing.xl,
-      fontSize: 15,
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      letterSpacing: 0.4,
       color: colors.text,
     },
     // 28x28 visual, hitSlop 10 brings the effective target to 48px.
@@ -1368,26 +1389,31 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     budgetSectionLabel: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: "700",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
       textTransform: "uppercase",
-      letterSpacing: 0.5,
+      letterSpacing: 0.6,
     },
     dayBudgetBadgeWrap: {
       flexDirection: "row",
       alignItems: "center",
     },
     dayBudgetBadge: {
-      paddingHorizontal: 7,
+      paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 0,
+      borderWidth: 1.5,
+      borderColor: colors.border,
     },
     dayBudgetBadgeText: {
       fontSize: 11,
-      fontWeight: "700",
+      fontWeight: "800",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     budgetPillsRow: {
       flexDirection: "row",

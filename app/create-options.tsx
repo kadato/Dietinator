@@ -3,6 +3,8 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { ModalContainer } from "@/components/ModalContainer"
+import { Fab } from "@/components/Fab"
+import { FabCluster } from "@/components/FabCluster"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { withAlpha } from "@/utils/color"
@@ -56,8 +58,8 @@ function optionColor(id: CreateOption["id"], colors: ColorPalette): string {
 }
 
 export default function CreateOptionsScreen() {
-  const router = useRouter()
   const safeBack = useSafeBack()
+  const router = useRouter()
   const params = useLocalSearchParams<{ meal?: string; date?: string }>()
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
@@ -65,6 +67,7 @@ export default function CreateOptionsScreen() {
   const { colors } = useTheme()
 
   const onSelect = (option: CreateOption) => {
+    safeBack()
     switch (option.id) {
       case "meal":
         router.push({ pathname: "/meal-builder" })
@@ -82,42 +85,27 @@ export default function CreateOptionsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "flex-end" }}>
       <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
-        <Box
-          className="flex-row items-center justify-between px-6 pb-2"
-          style={{ paddingTop: insets.top > 0 ? insets.top + 8 : 20 }}
-        >
-          <Box>
-            <Text
-              size="2xl"
-              bold
-              className="uppercase tracking-widest text-typography-900"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
-            >
-              Create
-            </Text>
-            <Text
-              size="xs"
-              className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
-            >
-              What would you like to log or create?
-            </Text>
-          </Box>
-          <Pressable
-            onPress={safeBack}
-            hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
+        <Box className="px-6 pb-2 pt-4">
+          <Text
+            size="2xl"
+            bold
+            className="uppercase tracking-widest text-typography-900"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
           >
-            <Feather name="x" size={18} color={colors.textMuted} />
-          </Pressable>
+            Create
+          </Text>
+          <Text
+            size="xs"
+            className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+          >
+            What would you like to log or create?
+          </Text>
         </Box>
 
-        <ScrollView className="flex-1" contentContainerClassName="px-4 py-3 gap-3 pb-16">
+        <ScrollView className="flex-1" contentContainerClassName="px-4 py-3 gap-3 pb-28">
           {OPTIONS.map((option) => {
             const tint = optionColor(option.id, colors)
             return (
@@ -174,6 +162,18 @@ export default function CreateOptionsScreen() {
           })}
         </ScrollView>
       </ModalContainer>
+
+      <FabCluster
+        bottomOffset={insets.bottom + 20}
+        left={
+          <Fab
+            icon="x"
+            tone="surface"
+            onPress={safeBack}
+            accessibilityLabel="Close create options"
+          />
+        }
+      />
     </View>
   )
 }
