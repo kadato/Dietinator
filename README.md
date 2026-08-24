@@ -88,35 +88,35 @@ A local-first calorie tracker. Diary entries live in on-device SQLite, food sear
 - **Local-first diary.** Immediate writes to on-device SQLite with WAL mode. Operates fully offline with local food caching.
 - **Daily dashboard.** Calorie ring, macronutrient budget bars, meal sections, hydration logging, body weight tracking, and a "Copy previous day" action.
 - **Live daily budget impact.** Real-time recalculation of remaining calories, macronutrients, and daily goals before confirming a food entry.
-- **Micronutrient tracking.** Breakdown of vitamins and minerals (fiber, sugar, saturated fat, sodium, potassium, calcium, iron) from the dashboard and food detail views.
+- **Micronutrient tracking.** Breakdown of vitamins and minerals, including fiber, sugar, saturated fat, sodium, potassium, calcium, and iron, from the dashboard and food detail views.
 - **Food search and category icons.** Debounced search with multilingual food category icons, pinned favorites, recent items, and SQLite caching.
-- **Serving sizes and portions.** Named portions (cup, whole, piece) and gram amounts with prefilled quantities from previous logs.
+- **Serving sizes and portions.** Named portions, such as cup, whole, or piece, and gram amounts with prefilled quantities from previous logs.
 - **Numeric steppers.** Increment and decrement controls on numeric fields with press-and-hold repeat.
 - **Meal builder and Quick Add.** Save reusable food combinations with automatic nutrition aggregation, or log calories and macros directly.
 - **Meal slot budgets.** Real-time meal budget tracking, daily totals, quick-add actions, and inline entry editing.
-- **Barcode scanning.** Camera-based EAN/UPC barcode scanner on mobile devices with local cache lookup.
-- **Hydration and weight tracking.** Log water intake with presets (+250 ml) and record body weight with BMI calculation and trend charts.
+- **Barcode scanning.** Camera-based EAN or UPC barcode scanner on mobile devices with local cache lookup.
+- **Hydration and weight tracking.** Log water intake with presets and record body weight with BMI calculation and trend charts.
 - **AI assistant.** In-app assistant supporting OpenAI, OpenRouter, Ollama, and custom OpenAI-compatible endpoints. It streams responses, runs on-device SQLite tools, asks for confirmation before destructive actions, and keeps history in SQLite.
-- **Agent API (MCP).** Model Context Protocol endpoint at `/mcp` exposing real-time diary snapshots and tool execution to external agents (Claude Desktop, Cursor).
+- **Agent API.** Model Context Protocol endpoint at `/mcp` exposing real-time diary snapshots and tool execution to external agents, including Claude Desktop and Cursor.
 - **Backup, export, and restore.** Export diary entries to CSV or JSON, with on-device SQLite database backup and restore.
-- **In-app updates (Android).** Automatic GitHub release checks on startup with background APK download and direct package installation.
+- **In-app updates on Android.** Automatic GitHub release checks on startup with background APK download and direct package installation.
 - **Demo mode.** Instant session with populated sample data, no account required.
 - **Light and dark themes.** System theme detection, manual override, and responsive layouts across mobile and desktop.
 
 ## Tech stack
 
-| Area      | Choice                                                                         |
-| --------- | ------------------------------------------------------------------------------ |
-| Framework | Expo SDK 56, React Native, expo-router                                         |
-| Database  | expo-sqlite, WAL journal mode, migrations in `src/db/database.ts`              |
-| UI        | gluestack-ui v3 + NativeWind v4                                                |
-| Sync      | unofficial `yazio` npm client, `withRetry`, offline-first                      |
-| AI chat   | OpenAI-compatible streaming client under `src/services/ai/`, tools over SQLite |
-| Agent API | MCP server in `scripts/mcp-server.cjs`, served by Metro and `serve:web`        |
-| Updates   | expo-intent-launcher, GitHub releases pipeline                                 |
-| Auth/data | expo-secure-store, React Context                                               |
-| Tests     | Jest unit tests, Playwright e2e on the web build                               |
-| Quality   | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks           |
+| Area          | Choice                                                                         |
+| ------------- | ------------------------------------------------------------------------------ |
+| Framework     | Expo SDK 56, React Native, expo-router                                         |
+| Database      | expo-sqlite, WAL journal mode, migrations in `src/db/database.ts`              |
+| UI            | gluestack-ui v3 and NativeWind v4                                              |
+| Sync          | unofficial `yazio` npm client, `withRetry`, offline-first                      |
+| AI chat       | OpenAI-compatible streaming client under `src/services/ai/`, tools over SQLite |
+| Agent API     | MCP server in `scripts/mcp-server.cjs`, served by Metro and `serve:web`        |
+| Updates       | expo-intent-launcher, GitHub releases pipeline                                 |
+| Auth and data | expo-secure-store, React Context                                               |
+| Tests         | Jest unit tests, Playwright e2e on the web build                               |
+| Quality       | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks           |
 
 ## Getting started
 
@@ -141,14 +141,14 @@ through boot, demo mode, diary CRUD, offline search, backup and restore, and
 the AI chat surface. CI runs typecheck, lint, format, coverage, e2e and a
 secret scan on every push.
 
-## AI assistant and agent API (MCP)
+## AI assistant and agent API
 
 ### In-app chat
 
 Enable **AI Assistant** in Settings and select a provider preset: OpenAI,
 OpenRouter, OpenCode, Ollama, or a custom OpenAI-compatible endpoint. The preset
 fills the base URL and a default model. Enter an API key. Keys are stored in the
-device keystore (prefixed `localStorage` on web) and transmitted only to the
+device keystore, prefixed `localStorage` on web, and transmitted only to the
 configured provider endpoint. Use **Fetch models** to query supported models or
 **Test connection** to validate the endpoint.
 
@@ -168,7 +168,7 @@ Model Context Protocol server at `/mcp` plus a same-origin snapshot bridge at
    and favorites on boot and after every data change. The snapshot lives in memory only.
    Nothing touches disk.
 2. Any MCP client, such as Claude Desktop, Cursor, or MCP Inspector, connects to
-   `http://localhost:9082/mcp` (the default dev/serve port) and exposes these tools:
+   `http://localhost:9082/mcp`, the default port, and exposes these tools:
    `get_diary`, `get_diary_stats`, `get_water`, `get_weight`, `get_meals`,
    `get_favorite_foods`, `get_goals`, `get_settings`, `get_health_summary`,
    `log_food`, `log_water`, `log_weight`, `log_meal`, `save_meal`,
@@ -199,4 +199,4 @@ agent loop across all tools, and verifies the change log.
 
 > **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. For personal
 > use only. The API may change or become unavailable without notice. Local-first
-> architecture ensures all offline features remain functional.
+> architecture keeps all offline features functional.

@@ -57,22 +57,28 @@ async function captureAll() {
       // 1. DASHBOARD (DEMO SESSION)
       console.log(`Capturing dashboard-${scheme}...`)
       await page.goto(`${BASE_URL}/?demo=1`)
-      await page.getByRole("button", { name: "Open calendar" }).waitFor({ timeout: 30000 })
+      await page
+        .getByRole("button", { name: /calendar/i })
+        .first()
+        .waitFor({ timeout: 30000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1500)
       await page.screenshot({ path: join(OUT_DIR, `dashboard-${scheme}.png`) })
 
       // 2. STATS & TRENDS
       console.log(`Capturing stats-${scheme}...`)
-      await page.getByRole("tab", { name: "Stats" }).click()
+      await page.getByRole("tab", { name: /Stats/i }).click()
       await page.getByText("Consistency", { exact: false }).waitFor({ timeout: 15000 })
       await page.getByText("Body weight", { exact: false }).waitFor({ timeout: 15000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1500)
       await page.screenshot({ path: join(OUT_DIR, `stats-${scheme}.png`) })
 
       // 3. AI CHAT
       console.log(`Capturing ai-chat-${scheme}...`)
-      await page.getByRole("tab", { name: "AI Assistant" }).click()
+      await page.getByRole("tab", { name: /AI/i }).click()
       await page.getByText("Dietinator AI", { exact: false }).waitFor({ timeout: 15000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1000)
       await page.screenshot({ path: join(OUT_DIR, `ai-chat-${scheme}.png`) })
 
@@ -80,6 +86,7 @@ async function captureAll() {
       console.log(`Capturing search-${scheme}...`)
       await page.goto(`${BASE_URL}/log-meal?meal=dinner`)
       await page.getByPlaceholder(/Search/i).waitFor({ timeout: 15000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `search-${scheme}.png`) })
 
@@ -95,6 +102,7 @@ async function captureAll() {
         await page.locator('[aria-label*="calories"]').first().click()
       }
       await page.getByRole("button", { name: "Add to diary" }).waitFor({ timeout: 15000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `add-food-${scheme}.png`) })
 
@@ -130,6 +138,7 @@ async function captureAll() {
         if (scrollable) scrollable.scrollTop = 0
         window.scrollTo(0, 0)
       })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(800)
       await page.screenshot({ path: join(OUT_DIR, `meal-builder-${scheme}.png`) })
 
@@ -146,6 +155,7 @@ async function captureAll() {
       console.log(`Capturing log-meal-${scheme}...`)
       await page.goto(`${BASE_URL}/log-meal?meal=lunch`)
       await page.getByText("Logged in Lunch", { exact: false }).waitFor({ timeout: 15000 })
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `log-meal-${scheme}.png`) })
 
@@ -156,6 +166,7 @@ async function captureAll() {
       const goalsSection = page.getByRole("button", { name: /Goals/i }).first()
       await goalsSection.waitFor({ timeout: 15000 })
       await goalsSection.click()
+      await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1000)
       await page.screenshot({ path: join(OUT_DIR, `settings-${scheme}.png`) })
 
