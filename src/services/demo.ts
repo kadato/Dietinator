@@ -10,6 +10,52 @@ import type { FoodServing, SearchFoodResult } from "@/types"
 const serving100g: FoodServing = { serving: "100 g", amount: 100, serving_quantity: 100 }
 const serving100ml: FoodServing = { serving: "100 ml", amount: 100, serving_quantity: 100 }
 
+/**
+ * Deterministic PRNG (mulberry32). Demo data must look organic but seed
+ * identically on every run: stable `demo-*` row IDs, reproducible charts,
+ * and predictable e2e fixtures all depend on it.
+ */
+function createRandom(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const round1 = (value: number): number => Math.round(value * 10) / 10
+
+/** Scale a food's per-100g nutrients to a logged amount. */
+function nutrientsFor(food: SearchFoodResult, amount: number) {
+  const factor = amount / 100
+  return {
+    kcal: Math.round(food.nutrients.kcal * factor),
+    protein: round1(food.nutrients.protein * factor),
+    carbs: round1(food.nutrients.carbs * factor),
+    fat: round1(food.nutrients.fat * factor),
+  }
+}
+
+/** A food with the realistic portion range it gets logged in. */
+type Portion = { food: SearchFoodResult; min: number; max: number; step: number }
+type MealTemplate = Portion[]
+
+function pickAmount(rand: () => number, portion: Portion): number {
+  const steps = Math.max(0, Math.round((portion.max - portion.min) / portion.step))
+  return Math.round(portion.min + Math.round(rand() * steps) * portion.step)
+}
+
+function pickTemplate(rand: () => number, templates: MealTemplate[]): MealTemplate {
+  return templates[Math.floor(rand() * templates.length)]
+}
+
+/** Minute-of-hour jitter so meal timestamps do not all read :00. */
+function pickMinute(rand: () => number): string {
+  return String(Math.floor(rand() * 12) * 5).padStart(2, "0")
+}
+
 const banana: SearchFoodResult = {
   product_id: "demo-banana",
   name: "Banana",
@@ -377,47 +423,20 @@ export async function seedDemoSession(): Promise<void> {
     DELETE FROM ai_chat_messages;
   `)
 
-  // Seed sample AI chat conversation
-  const nowIso = new Date().toISOString()
-  await db.runAsync(
-    `INSERT INTO ai_chat_messages (role, content, reasoning, tool_calls_json, tool_call_id, tool_name, is_error, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    "user",
-    "How am I tracking towards my protein goal today?",
-    "",
-    null,
-    null,
-    null,
-    0,
-    nowIso,
-  )
-  await db.runAsync(
-    `INSERT INTO ai_chat_messages (role, content, reasoning, tool_calls_json, tool_call_id, tool_name, is_error, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    "assistant",
-    "You've logged **75.8g of protein** so far today against your **150g daily goal** (51% complete). A balanced dinner with grilled salmon or chicken breast will easily close the remaining gap!",
-    "",
-    JSON.stringify([{ id: "call_demo_1", name: "get_today_summary" }]),
-    null,
-    null,
-    0,
-    nowIso,
-  )
-
   const today = toDateKey()
 
-  // 3. Seed 35 days of weight entries showing a steady, realistic downward trend
-  // Starting at ~78.4 kg 34 days ago down to 75.2 kg today.
-  const baseWeights = [
-    78.4, 78.3, 78.5, 78.1, 78.0, 77.9, 78.1, 77.8, 77.6, 77.7, 77.4, 77.3, 77.5, 77.1, 76.9, 77.0,
-    76.7, 76.6, 76.8, 76.4, 76.3, 76.5, 76.1, 76.0, 76.2, 75.9, 75.7, 75.8, 75.6, 75.5, 75.7, 75.4,
-    75.5, 75.4, 75.2,
-  ]
+  // One PRNG drives the whole seed, so the data is varied per day yet
+  // identical across runs.
+  const rand = createRandom(0x0d1e7)
 
+  // 3. Seed 35 days of weight entries: downward trend from ~78.4 kg to
+  // 75.2 kg with per-day noise, so the trend chart shows a realistic,
+  // non-linear descent.
   for (let i = 34; i >= 0; i--) {
     const date = shiftDateKey(today, -i)
-    const weightIndex = 34 - i
-    const weightKg = baseWeights[weightIndex] ?? 75.2
+    const progress = (34 - i) / 34
+    const base = 78.4 + (75.2 - 78.4) * progress
+    const weightKg = i === 0 ? 75.2 : Math.round((base + (rand() - 0.5) * 0.6) * 10) / 10
     let note: string | null = null
     if (i === 34) note = "Starting check-in"
     else if (i === 21) note = "Weekly low"
@@ -437,385 +456,250 @@ export async function seedDemoSession(): Promise<void> {
     )
   }
 
-  // 4. Seed 35 days of water hydration logs (~2300 - 2750 ml per past day, 1750 ml today)
+  // 4. Seed 35 days of water logs. Past days land between 2.1 L and 2.95 L,
+  // split across 2-4 pours at varied times; today sits at 1.75 L so the
+  // dashboard shows mid-progress hydration.
+  const pourHours = [8, 11, 14, 17, 20]
   for (let i = 34; i >= 0; i--) {
     const date = shiftDateKey(today, -i)
     if (i === 0) {
-      // Today: 1,750 ml logged so far
+      const todayPours: [number, string][] = [
+        [500, "08:00"],
+        [500, "12:30"],
+        [750, "15:15"],
+      ]
+      for (let p = 0; p < todayPours.length; p++) {
+        await db.runAsync(
+          "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
+          `demo-water-${date}-${p + 1}`,
+          date,
+          todayPours[p][0],
+          `${date}T${todayPours[p][1]}:00.000Z`,
+        )
+      }
+      continue
+    }
+    const totalMl = 2100 + Math.round(rand() * 17) * 50
+    const pourCount = rand() < 0.3 ? 4 : rand() < 0.6 ? 3 : 2
+    const weights = Array.from({ length: pourCount }, () => 0.6 + rand())
+    const weightSum = weights.reduce((sum, w) => sum + w, 0)
+    const hourOffsets = Array.from({ length: pourCount }, () =>
+      Math.floor(rand() * pourHours.length),
+    )
+    let loggedMl = 0
+    for (let p = 0; p < pourCount; p++) {
+      const isLast = p === pourCount - 1
+      const amount = isLast
+        ? Math.round((totalMl - loggedMl) / 50) * 50
+        : Math.round((totalMl * weights[p]) / weightSum / 50) * 50
+      loggedMl += amount
+      const hour = pourHours[(hourOffsets[p] + p) % pourHours.length]
       await db.runAsync(
         "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-1`,
+        `demo-water-${date}-${p + 1}`,
         date,
-        500,
-        `${date}T08:00:00.000Z`,
-      )
-      await db.runAsync(
-        "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-2`,
-        date,
-        500,
-        `${date}T12:30:00.000Z`,
-      )
-      await db.runAsync(
-        "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-3`,
-        date,
-        750,
-        `${date}T15:15:00.000Z`,
-      )
-    } else {
-      // Past days: vary amounts around 2500ml
-      const baseMl = 2400 + ((i * 37) % 350) - 100
-      await db.runAsync(
-        "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-1`,
-        date,
-        Math.round(baseMl * 0.4),
-        `${date}T08:30:00.000Z`,
-      )
-      await db.runAsync(
-        "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-2`,
-        date,
-        Math.round(baseMl * 0.35),
-        `${date}T13:00:00.000Z`,
-      )
-      await db.runAsync(
-        "INSERT INTO water_log (id, date, amount_ml, created_at) VALUES (?, ?, ?, ?)",
-        `demo-water-${date}-3`,
-        date,
-        Math.round(baseMl * 0.25),
-        `${date}T18:45:00.000Z`,
+        Math.max(amount, 50),
+        `${date}T${String(hour).padStart(2, "0")}:${pickMinute(rand)}:00.000Z`,
       )
     }
   }
 
-  // 5. Seed 35 days of diary entries
-  // Past days: breakfast, lunch, dinner, snack (~1920 - 2060 kcal, ~150g P, ~200g C, ~65g F)
+  // 5. Seed 35 days of diary entries. Each day draws its breakfast, lunch,
+  // dinner, and snack from rotating whole-food templates with jittered
+  // portion sizes, and nutrients are computed from the food's per-100g
+  // values, so no two days are identical.
+  const BREAKFASTS: MealTemplate[] = [
+    [
+      { food: oatmeal, min: 150, max: 250, step: 10 },
+      { food: eggs, min: 100, max: 150, step: 5 },
+      { food: coffee, min: 200, max: 300, step: 10 },
+    ],
+    [
+      { food: greekYogurt, min: 150, max: 250, step: 10 },
+      { food: blueberries, min: 40, max: 80, step: 10 },
+      { food: toast, min: 60, max: 90, step: 5 },
+      { food: coffee, min: 200, max: 300, step: 10 },
+    ],
+    [
+      { food: oatmeal, min: 150, max: 250, step: 10 },
+      { food: banana, min: 90, max: 140, step: 10 },
+      { food: coffee, min: 200, max: 300, step: 10 },
+    ],
+    [
+      { food: eggs, min: 100, max: 150, step: 5 },
+      { food: toast, min: 60, max: 90, step: 5 },
+      { food: coffee, min: 200, max: 300, step: 10 },
+    ],
+  ]
+  const LUNCHES: MealTemplate[] = [
+    [
+      { food: chicken, min: 140, max: 200, step: 10 },
+      { food: brownRice, min: 140, max: 200, step: 10 },
+      { food: broccoli, min: 80, max: 150, step: 10 },
+    ],
+    [
+      { food: salmon, min: 120, max: 180, step: 10 },
+      { food: brownRice, min: 140, max: 200, step: 10 },
+      { food: broccoli, min: 80, max: 150, step: 10 },
+    ],
+    [
+      { food: chicken, min: 140, max: 200, step: 10 },
+      { food: toast, min: 60, max: 90, step: 5 },
+      { food: avocado, min: 50, max: 100, step: 10 },
+    ],
+  ]
+  const DINNERS: MealTemplate[] = [
+    [
+      { food: salmon, min: 120, max: 180, step: 10 },
+      { food: toast, min: 60, max: 90, step: 5 },
+      { food: avocado, min: 50, max: 100, step: 10 },
+    ],
+    [
+      { food: chicken, min: 140, max: 200, step: 10 },
+      { food: brownRice, min: 140, max: 200, step: 10 },
+      { food: broccoli, min: 80, max: 150, step: 10 },
+    ],
+    [
+      { food: salmon, min: 120, max: 180, step: 10 },
+      { food: brownRice, min: 140, max: 200, step: 10 },
+      { food: broccoli, min: 80, max: 150, step: 10 },
+    ],
+  ]
+  const SNACKS: MealTemplate[] = [
+    [
+      { food: greekYogurt, min: 120, max: 200, step: 10 },
+      { food: blueberries, min: 40, max: 80, step: 10 },
+    ],
+    [
+      { food: banana, min: 90, max: 140, step: 10 },
+      { food: wheyProtein, min: 25, max: 40, step: 5 },
+    ],
+    [
+      { food: greekYogurt, min: 120, max: 200, step: 10 },
+      { food: banana, min: 90, max: 140, step: 10 },
+    ],
+    [{ food: banana, min: 90, max: 140, step: 10 }],
+  ]
+  const MEAL_TIMES: Record<string, string> = {
+    breakfast: "07",
+    lunch: "12",
+    dinner: "19",
+    snack: "15",
+  }
+
+  async function logTemplateMeal(
+    date: string,
+    mealType: "breakfast" | "lunch" | "dinner" | "snack",
+    template: MealTemplate,
+  ): Promise<void> {
+    const minute = pickMinute(rand)
+    for (let item = 0; item < template.length; item++) {
+      const portion = template[item]
+      const amount = pickAmount(rand, portion)
+      const nutrients = nutrientsFor(portion.food, amount)
+      await addDiaryEntry({
+        id: `demo-entry-${date}-${mealType[0]}${item + 1}`,
+        date,
+        meal_type: mealType,
+        food_id: portion.food.product_id,
+        food_name: portion.food.name,
+        amount,
+        unit: portion.food.base_unit,
+        ...nutrients,
+        created_at: `${date}T${MEAL_TIMES[mealType]}:${item === 0 ? minute : pickMinute(rand)}:00.000Z`,
+      })
+    }
+  }
+
+  // Past days: every day logs something (the 35-day streak stays honest) but
+  // the mix rotates. About one day in nine skips the afternoon snack, and a
+  // handful of days skip dinner, like real logging behavior.
   for (let i = 34; i >= 1; i--) {
     const date = shiftDateKey(today, -i)
+    await logTemplateMeal(date, "breakfast", pickTemplate(rand, BREAKFASTS))
+    await logTemplateMeal(date, "lunch", pickTemplate(rand, LUNCHES))
+    if (rand() > 0.12) await logTemplateMeal(date, "snack", pickTemplate(rand, SNACKS))
+    if (rand() > 0.08) await logTemplateMeal(date, "dinner", pickTemplate(rand, DINNERS))
+  }
 
-    // Breakfast: Oatmeal (200g) + Eggs (120g) + Coffee (250ml) -> ~396 kcal
-    await addDiaryEntry({
-      id: `demo-entry-${date}-b1`,
-      date,
-      meal_type: "breakfast",
-      food_id: oatmeal.product_id,
-      food_name: oatmeal.name,
-      amount: 200,
-      unit: "g",
-      kcal: 142,
-      protein: 5.0,
-      carbs: 24.0,
-      fat: 3.0,
-      created_at: `${date}T07:30:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-b2`,
-      date,
-      meal_type: "breakfast",
-      food_id: eggs.product_id,
-      food_name: eggs.name,
-      amount: 120,
-      unit: "g",
-      kcal: 179,
-      protein: 12.0,
-      carbs: 1.9,
-      fat: 13.2,
-      created_at: `${date}T07:35:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-b3`,
-      date,
-      meal_type: "breakfast",
-      food_id: coffee.product_id,
-      food_name: coffee.name,
-      amount: 250,
-      unit: "ml",
-      kcal: 75,
-      protein: 2.5,
-      carbs: 7.5,
-      fat: 3.3,
-      created_at: `${date}T07:40:00.000Z`,
-    })
-
-    // Lunch: Chicken (170g) + Brown Rice (160g) + Broccoli (120g) -> ~502 kcal
-    await addDiaryEntry({
-      id: `demo-entry-${date}-l1`,
-      date,
+  // Today: fixed, recognizable meals. Breakfast and the snack keep oatmeal
+  // and banana (e2e fixtures key on them); dinner is left unlogged so the
+  // dashboard shows healthy progress and a remaining budget.
+  const todayMeals: {
+    id: string
+    meal_type: "breakfast" | "lunch" | "dinner" | "snack"
+    food: SearchFoodResult
+    amount: number
+    time: string
+  }[] = [
+    { id: "demo-breakfast", meal_type: "breakfast", food: oatmeal, amount: 200, time: "07:30" },
+    { id: "demo-eggs-today", meal_type: "breakfast", food: eggs, amount: 150, time: "07:32" },
+    { id: "demo-coffee", meal_type: "breakfast", food: coffee, amount: 250, time: "07:35" },
+    {
+      id: "demo-lunch-chicken",
       meal_type: "lunch",
-      food_id: chicken.product_id,
-      food_name: chicken.name,
-      amount: 170,
-      unit: "g",
-      kcal: 281,
-      protein: 52.7,
-      carbs: 0,
-      fat: 6.1,
-      created_at: `${date}T12:15:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-l2`,
-      date,
+      food: chicken,
+      amount: 180,
+      time: "12:30",
+    },
+    { id: "demo-lunch-rice", meal_type: "lunch", food: brownRice, amount: 150, time: "12:30" },
+    {
+      id: "demo-lunch-broccoli",
       meal_type: "lunch",
-      food_id: brownRice.product_id,
-      food_name: brownRice.name,
-      amount: 160,
-      unit: "g",
-      kcal: 179,
-      protein: 4.2,
-      carbs: 37.6,
-      fat: 1.4,
-      created_at: `${date}T12:15:00.000Z`,
-    })
+      food: broccoli,
+      amount: 100,
+      time: "12:30",
+    },
+    { id: "demo-snack", meal_type: "snack", food: banana, amount: 120, time: "15:10" },
+    { id: "demo-snack-yogurt", meal_type: "snack", food: greekYogurt, amount: 150, time: "15:10" },
+    { id: "demo-snack-berries", meal_type: "snack", food: blueberries, amount: 80, time: "15:10" },
+  ]
+  let todayProtein = 0
+  for (const meal of todayMeals) {
+    const nutrients = nutrientsFor(meal.food, meal.amount)
+    todayProtein += nutrients.protein
     await addDiaryEntry({
-      id: `demo-entry-${date}-l3`,
-      date,
-      meal_type: "lunch",
-      food_id: broccoli.product_id,
-      food_name: broccoli.name,
-      amount: 120,
-      unit: "g",
-      kcal: 42,
-      protein: 2.9,
-      carbs: 8.6,
-      fat: 0.5,
-      created_at: `${date}T12:15:00.000Z`,
-    })
-
-    // Dinner: Salmon (170g) + Toast (76g) + Avocado (75g) -> ~660 kcal
-    await addDiaryEntry({
-      id: `demo-entry-${date}-d1`,
-      date,
-      meal_type: "dinner",
-      food_id: salmon.product_id,
-      food_name: salmon.name,
-      amount: 170,
-      unit: "g",
-      kcal: 350,
-      protein: 37.4,
-      carbs: 0,
-      fat: 20.9,
-      created_at: `${date}T19:00:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-d2`,
-      date,
-      meal_type: "dinner",
-      food_id: toast.product_id,
-      food_name: toast.name,
-      amount: 76,
-      unit: "g",
-      kcal: 190,
-      protein: 8.4,
-      carbs: 32.7,
-      fat: 2.7,
-      created_at: `${date}T19:00:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-d3`,
-      date,
-      meal_type: "dinner",
-      food_id: avocado.product_id,
-      food_name: avocado.name,
-      amount: 75,
-      unit: "g",
-      kcal: 120,
-      protein: 1.5,
-      carbs: 6.4,
-      fat: 11.0,
-      created_at: `${date}T19:00:00.000Z`,
-    })
-
-    // Snack: Greek Yogurt (150g) + Blueberries (50g) + Banana (120g) + Whey (30g) -> ~438 kcal
-    await addDiaryEntry({
-      id: `demo-entry-${date}-s1`,
-      date,
-      meal_type: "snack",
-      food_id: greekYogurt.product_id,
-      food_name: greekYogurt.name,
-      amount: 150,
-      unit: "g",
-      kcal: 89,
-      protein: 15.0,
-      carbs: 5.4,
-      fat: 0.3,
-      created_at: `${date}T15:30:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-s2`,
-      date,
-      meal_type: "snack",
-      food_id: blueberries.product_id,
-      food_name: blueberries.name,
-      amount: 50,
-      unit: "g",
-      kcal: 29,
-      protein: 0.4,
-      carbs: 7.3,
-      fat: 0.2,
-      created_at: `${date}T15:30:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-s3`,
-      date,
-      meal_type: "snack",
-      food_id: banana.product_id,
-      food_name: banana.name,
-      amount: 120,
-      unit: "g",
-      kcal: 107,
-      protein: 1.3,
-      carbs: 27.4,
-      fat: 0.4,
-      created_at: `${date}T15:30:00.000Z`,
-    })
-    await addDiaryEntry({
-      id: `demo-entry-${date}-s4`,
-      date,
-      meal_type: "snack",
-      food_id: wheyProtein.product_id,
-      food_name: wheyProtein.name,
-      amount: 30,
-      unit: "g",
-      kcal: 114,
-      protein: 23.1,
-      carbs: 1.5,
-      fat: 1.1,
-      created_at: `${date}T15:30:00.000Z`,
+      id: meal.id,
+      date: today,
+      meal_type: meal.meal_type,
+      food_id: meal.food.product_id,
+      food_name: meal.food.name,
+      amount: meal.amount,
+      unit: meal.food.base_unit,
+      ...nutrients,
+      created_at: `${today}T${meal.time}:00.000Z`,
     })
   }
 
-  // Today (day 0): Log breakfast, lunch, and snack totaling 1,185 kcal.
-  // Dinner is left unlogged so the dashboard shows healthy progress and remaining budget.
-  await addDiaryEntry({
-    id: "demo-breakfast",
-    date: today,
-    meal_type: "breakfast",
-    food_id: oatmeal.product_id,
-    food_name: oatmeal.name,
-    amount: 200,
-    unit: "g",
-    kcal: 142,
-    protein: 5.0,
-    carbs: 24.0,
-    fat: 3.0,
-    created_at: `${today}T07:30:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-eggs-today",
-    date: today,
-    meal_type: "breakfast",
-    food_id: eggs.product_id,
-    food_name: eggs.name,
-    amount: 150,
-    unit: "g",
-    kcal: 224,
-    protein: 15.0,
-    carbs: 2.4,
-    fat: 16.5,
-    created_at: `${today}T07:32:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-coffee",
-    date: today,
-    meal_type: "breakfast",
-    food_id: coffee.product_id,
-    food_name: coffee.name,
-    amount: 250,
-    unit: "ml",
-    kcal: 75,
-    protein: 2.5,
-    carbs: 7.5,
-    fat: 3.3,
-    created_at: `${today}T07:35:00.000Z`,
-  })
-
-  await addDiaryEntry({
-    id: "demo-lunch-chicken",
-    date: today,
-    meal_type: "lunch",
-    food_id: chicken.product_id,
-    food_name: chicken.name,
-    amount: 180,
-    unit: "g",
-    kcal: 297,
-    protein: 55.8,
-    carbs: 0,
-    fat: 6.5,
-    created_at: `${today}T12:30:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-lunch-rice",
-    date: today,
-    meal_type: "lunch",
-    food_id: brownRice.product_id,
-    food_name: brownRice.name,
-    amount: 150,
-    unit: "g",
-    kcal: 168,
-    protein: 3.9,
-    carbs: 35.3,
-    fat: 1.4,
-    created_at: `${today}T12:30:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-lunch-broccoli",
-    date: today,
-    meal_type: "lunch",
-    food_id: broccoli.product_id,
-    food_name: broccoli.name,
-    amount: 100,
-    unit: "g",
-    kcal: 35,
-    protein: 2.4,
-    carbs: 7.2,
-    fat: 0.4,
-    created_at: `${today}T12:30:00.000Z`,
-  })
-
-  await addDiaryEntry({
-    id: "demo-snack",
-    date: today,
-    meal_type: "snack",
-    food_id: banana.product_id,
-    food_name: banana.name,
-    amount: 120,
-    unit: "g",
-    kcal: 107,
-    protein: 1.3,
-    carbs: 27.4,
-    fat: 0.4,
-    created_at: `${today}T15:10:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-snack-yogurt",
-    date: today,
-    meal_type: "snack",
-    food_id: greekYogurt.product_id,
-    food_name: greekYogurt.name,
-    amount: 150,
-    unit: "g",
-    kcal: 89,
-    protein: 15.0,
-    carbs: 5.4,
-    fat: 0.3,
-    created_at: `${today}T15:10:00.000Z`,
-  })
-  await addDiaryEntry({
-    id: "demo-snack-berries",
-    date: today,
-    meal_type: "snack",
-    food_id: blueberries.product_id,
-    food_name: blueberries.name,
-    amount: 80,
-    unit: "g",
-    kcal: 46,
-    protein: 0.6,
-    carbs: 11.6,
-    fat: 0.2,
-    created_at: `${today}T15:10:00.000Z`,
-  })
+  // Seed a sample AI chat conversation whose numbers match today's real
+  // seeded totals.
+  const proteinLogged = round1(todayProtein)
+  const proteinPct = Math.round((proteinLogged / 150) * 100)
+  const nowIso = new Date().toISOString()
+  await db.runAsync(
+    `INSERT INTO ai_chat_messages (role, content, reasoning, tool_calls_json, tool_call_id, tool_name, is_error, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    "user",
+    "How am I tracking towards my protein goal today?",
+    "",
+    null,
+    null,
+    null,
+    0,
+    nowIso,
+  )
+  await db.runAsync(
+    `INSERT INTO ai_chat_messages (role, content, reasoning, tool_calls_json, tool_call_id, tool_name, is_error, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    "assistant",
+    `You've logged **${proteinLogged}g of protein** so far today against your **150g daily goal** (${proteinPct}% complete). A balanced dinner with grilled salmon or chicken breast will easily close the remaining gap!`,
+    "",
+    JSON.stringify([{ id: "call_demo_1", name: "get_today_summary" }]),
+    null,
+    null,
+    0,
+    nowIso,
+  )
 
   // 6. Seed saved reusable meals
   const yesterday = shiftDateKey(today, -1)
