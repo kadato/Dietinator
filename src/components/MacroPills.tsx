@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   pillTextMd: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 17,
   },
   cardContainer: {
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   cardGrams: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
     fontFamily: fonts.mono,
     fontVariant: ["tabular-nums"],

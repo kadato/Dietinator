@@ -39,41 +39,41 @@ ink-grid: "rgba(154,52,18,0.08)"
 ink-grid-dark: "rgba(192,202,245,0.06)"
 typography:
 display:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+fontFamily: "'Departure Mono', monospace"
 fontSize: "clamp(1.75rem, 5vw, 2rem)"
 fontWeight: 800
 lineHeight: 1
-letterSpacing: "-0.03em"
+letterSpacing: "0"
 headline:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+fontFamily: "'Departure Mono', monospace"
 fontSize: "16px"
 fontWeight: 700
 lineHeight: 1.2
-letterSpacing: "-0.02em"
+letterSpacing: "0"
 title:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-fontSize: "13px"
+fontFamily: "'Departure Mono', monospace"
+fontSize: "14px"
 fontWeight: 700
 lineHeight: 1.3
 letterSpacing: "0.04em"
 body:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-fontSize: "13px"
+fontFamily: "'Departure Mono', monospace"
+fontSize: "14px"
 fontWeight: 400
 lineHeight: 1.5
-letterSpacing: "-0.01em"
+letterSpacing: "0"
 label:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
-fontSize: "10px"
+fontFamily: "'Departure Mono', monospace"
+fontSize: "11px"
 fontWeight: 700
 lineHeight: 1.2
 letterSpacing: "0.08em"
 mono:
-fontFamily: "'JetBrainsMono NFM', 'JetBrains Mono', monospace"
+fontFamily: "'Departure Mono', monospace"
 fontSize: "12px"
 fontWeight: 700
 lineHeight: 1.4
-letterSpacing: "-0.01em"
+letterSpacing: "0"
 rounded:
 none: "0px"
 xs: "0px"
@@ -134,7 +134,7 @@ This replacement world keeps product truth, content, function, and constraints, 
 **Key characteristics:**
 
 - Square strict. Every card, button, input, bar, and tab is `0` radius with a 1.5px ink rule. Tinted chips use 1px interior rules not glows.
-- Mono ledger. JetBrains Mono everywhere. Tabular-nums forced. Headings uppercase at 0.04 to 0.08 tracking.
+- Mono ledger. Departure Mono everywhere. Tabular-nums forced. Headings uppercase at 0.04 to 0.08 tracking.
 - Paper grid system. 24px graph on `#ffedd5` light and 24px dotted void on `#1a1b26` dark. No gradients, no blur.
 - Harvest deep. Light is now deep amber paper #ffedd5, wells #fed7aa, ink #9a3412 burnt orange. Wong meals #0072B2 #E69F00 #D55E00 #009E73 carry macros colorblind-safe and very vibrant. Dark stays Tokyo Night.
 - Thumb-first density. Tight 4 to 12 rhythm. Generous separation between groups. Bottom dock of 52 square keys for one-hand logging.
@@ -174,26 +174,26 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ## Typography
 
-**Display font. JetBrainsMono NFM, Nerd Font Mono build, no ligatures. JetBrains Mono is the fallback.**
-**Body font. JetBrainsMono NFM.**
-**Label and mono font. JetBrainsMono NFM, tabular-nums, -0.01em.**
+**Display font. Departure Mono, a single-weight pixel monospace, used everywhere. Uncovered glyphs fall back to the system monospace.**
+**Body font. Departure Mono.**
+**Label and mono font. Departure Mono, tabular-nums, -0.01em.**
 
-**Shipping contract.** The face is bundled, not fetched. TTFs live in `assets/fonts/` with weights 400 to 800. Web registers them through `src/utils/web-fonts.ts` via the CSS Font Loading API. Android resolves the family from `android/app/src/main/assets/fonts`. The NFM build ships without ligatures by Nerd Fonts policy. The ledger needs this so glyph pairs never fuse. No remote font requests run at runtime.
+**Shipping contract.** The face is bundled, not fetched. `DepartureMono-Regular.otf` lives in `assets/fonts/`. Departure Mono ships one outline, so web maps every requested weight (400 to 800) to it through `src/utils/web-fonts.ts` via the CSS Font Loading API, which keeps the browser from synthesizing faux bold over pixel glyphs. Android resolves the family from `android/app/src/main/assets/fonts`. No other face ships; glyphs Departure Mono does not cover fall through the stack to the system monospace. No remote font requests run at runtime.
 
-**Character. Terminal instrument, not decorative mono costume. Every numeral is tabular so columns hold when `1840` becomes `2012`. Headings are uppercase, tight, and crowded. Body is small and breathable at 13 and 1.5. The mono texture carries the ledger without needing color.**
+**Character. Terminal instrument, not decorative mono costume. Every numeral is tabular so columns hold when `1840` becomes `2012`. Headings are uppercase, tight, and crowded. Body is small and breathable at 14 and 1.5. The mono texture carries the ledger without needing color.**
 
 ### Hierarchy
 
-- **Display. Uses 800, clamp 28 to 32, 1.0, -0.03. App name on login and empty terminal prompts only. Uppercase.**
-- **Headline. Uses 700, 16, 1.2, -0.02. Section headers `MEALS` and `TODAY · MON` in uppercase tracking 0.04.**
-- **Title. Uses 700, 13, 1.3, 0.04. Meal labels `BRKF LUNCH DINR SNCK`, card titles, and dock keys.**
-- **Body. Uses 400, 13, 1.5, -0.01. Forms, row names, and helper copy. Measure 65 to 75ch because containers cap at 720.**
-- **Label. Uses 700, 10, 0.08, uppercase. Chips, badges, chart ticks, and tab labels at 9 to 10, always uppercase with wide tracking.**
-- **Mono. Uses 700, 12, 1.4, -0.01. Every changing number. Ring 28, row kcal 16, bar 13, stepper 19.**
+- **Display. Uses 800, clamp 28 to 32, 1.0, 0. App name on login and empty terminal prompts only. Uppercase.**
+- **Headline. Uses 700, 16, 1.2, 0. Section headers `MEALS` and `TODAY · MON` in uppercase tracking 0.04.**
+- **Title. Uses 700, 14, 1.3, 0.04. Meal labels `BRKF LUNCH DINR SNCK`, card titles, and dock keys.**
+- **Body. Uses 400, 14, 1.5, 0. Forms, row names, and helper copy. Measure 65 to 75ch because containers cap at 720.**
+- **Label. Uses 700, 11, 0.08, uppercase. Chips, badges, chart ticks, and tab labels at 10 to 11, always uppercase with wide tracking.**
+- **Mono. Uses 700, 12, 1.4, 0. Every changing number. Ring 28, row kcal 16, bar 14, stepper 19.**
 
 ### Named rules
 
-**The Tabular Numbers Rule.** Any numeral that updates is mono tabular. Body text never carries the remaining budget. The ring 28, row 16, bar 13 all mono.
+**The Tabular Numbers Rule.** Any numeral that updates is mono tabular. Body text never carries the remaining budget. The ring 28, row 16, bar 14 all mono.
 
 ## Layout
 
@@ -201,7 +201,7 @@ Graph-paper grid, thumb-first. `breakpointMedium` is 600. `breakpointWide` is 90
 
 `PageContainer` centers the page at `maxWidthContent`. It uses `p-4` at base and `px-6` on wide. On narrow, the scroll reserves `pb-40` to clear the dock and the tab bar. At 900 the Today view splits into two flex columns at 0.95 and 1.05 with a 16 gap. Meals wrap at 48 percent basis and 280 minimum. The topology stays the same as before, but sheets are square and ruled.
 
-One-hand dock. On phones a fixed row sits above the tab bar at `insets.bottom + 64 + 10`. It uses left and right 12, flex row gap 8, four squares flex 1 min 56 tall for Breakfast, Lunch, Dinner, and Snack each 52 square, plus a 56 square primary water quick add at the end. Hit targets are 48 minimum. Thumb arc is centered. Labels `BRKF` and similar are 9 mono wide.
+One-hand dock. On phones a fixed row sits above the tab bar at `insets.bottom + 64 + 10`. It uses left and right 12, flex row gap 8, four squares flex 1 min 56 tall for Breakfast, Lunch, Dinner, and Snack each 52 square, plus a 56 square primary water quick add at the end. Hit targets are 48 minimum. Thumb arc is centered. Labels `BRKF` and similar are 10 mono wide.
 
 **The Gutter Consistency Rule.** Settings defines the gutter with `12px` `spacing.md` on `PageContainer` `default` `720`. Every main surface now mirrors that `12px` inset. `add-food`, `log-meal`, `manual-entry`, `meal-builder`, `scan`, and `stats` all use `p-3` and `12px`, never `narrow` `420` waste on `500px` tablets. Today is the one exception that spends the entire space. `PageContainer` `default` `720` plus `p-2` `8px` on small phones so meal cards stretch `366` to `374` and read larger. Wide keeps `px-6`. No page may reintroduce a centered `420` column on medium.
 
@@ -249,7 +249,7 @@ Sharp and square. All radii are `0`. Cards, buttons, inputs, tabs, pills, bars, 
 
 ### Inputs and fields
 
-- **Style. Surface sheet with `1.5px` ink rule, `0` radius, `10 12` padding, mono 13.**
+- **Style. Surface sheet with `1.5px` ink rule, `0` radius, `10 12` padding, mono 14.**
 - **Focus. `1.5px` solid ink square outline at `1px` offset, no glow, no inset ring.**
 - **Disabled. `0.5` opacity, not muted color.**
 

@@ -298,7 +298,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   bold
                   style={{
                     color: colors.text,
-                    fontSize: 10,
+                    fontSize: 11,
                     letterSpacing: 0.06,
                     textTransform: "uppercase",
                   }}

@@ -181,7 +181,7 @@ export const MealSection = memo(function MealSection({
             <Text
               size="xs"
               className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontSize: 10, letterSpacing: 0.06 }}
+              style={{ fontSize: 11, letterSpacing: 0.06 }}
             >
               Goal {Math.round(goal)} kcal
             </Text>
@@ -199,7 +199,7 @@ export const MealSection = memo(function MealSection({
                 bold
                 className="font-mono uppercase tracking-widest"
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   letterSpacing: 0.06,
                   color: overKcal ? colors.danger : accent,
                 }}

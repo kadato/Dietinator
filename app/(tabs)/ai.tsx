@@ -685,7 +685,7 @@ export default function AiScreen() {
 
 const styles = StyleSheet.create({
   input: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
     maxHeight: 110,
     paddingTop: 12,

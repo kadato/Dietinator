@@ -203,7 +203,7 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     rowLabel: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.text,
       flex: 1,
       fontFamily: fonts.mono,
@@ -221,7 +221,7 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
       color: colors.textMuted,
       marginTop: spacing.xl,
-      fontSize: 13,
+      fontSize: 14,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",

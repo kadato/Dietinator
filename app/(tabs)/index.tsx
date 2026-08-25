@@ -686,7 +686,7 @@ export default function TodayScreen() {
               size="2xs"
               numberOfLines={1}
               className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontSize: 10, letterSpacing: 0.06 }}
+              style={{ fontSize: 11, letterSpacing: 0.06 }}
             >
               {weightHistory.length > 1
                 ? `${weightHistory.length} weigh-ins`

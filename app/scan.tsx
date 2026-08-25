@@ -124,7 +124,7 @@ const cameraStyles = StyleSheet.create({
   },
   headerTitle: {
     color: "#ffffff",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
     fontFamily: fonts.mono,
     textTransform: "uppercase",
@@ -651,7 +651,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     webScanHint: {
       color: colors.textMuted,
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 20,
       fontFamily: fonts.mono,
       marginBottom: spacing.lg,
@@ -659,7 +659,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     notFoundText: {
       color: colors.text,
-      fontSize: 13,
+      fontSize: 14,
       fontFamily: fonts.mono,
       textTransform: "uppercase",
       letterSpacing: 0.04,
@@ -691,7 +691,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     pickerTitle: {
       color: colors.text,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",
@@ -739,7 +739,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     headerTitle: {
       color: colors.text,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",
@@ -769,7 +769,7 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.text,
       textAlign: "center",
       marginTop: spacing.md,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",

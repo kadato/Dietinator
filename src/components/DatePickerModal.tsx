@@ -298,7 +298,7 @@ const createStyles = (colors: ColorPalette) =>
       opacity: 0.85,
     },
     todayText: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "800",
       color: colors.onPrimary,
       fontFamily: fonts.mono,

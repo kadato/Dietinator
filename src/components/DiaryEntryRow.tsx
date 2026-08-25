@@ -151,7 +151,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     info: { flex: 1, minWidth: 0, gap: 2, overflow: "hidden" },
     name: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       lineHeight: 16,
@@ -169,7 +169,7 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: 2,
     },
     amountLabel: {
-      fontSize: 10,
+      fontSize: 11,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -177,7 +177,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroDot: {
-      fontSize: 10,
+      fontSize: 11,
       color: colors.textMuted,
       fontFamily: fonts.mono,
     },
@@ -189,7 +189,7 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     miniChipText: {
-      fontSize: 9,
+      fontSize: 10,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -197,7 +197,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroPill: {
-      fontSize: 9,
+      fontSize: 10,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -221,7 +221,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     kcalUnit: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,

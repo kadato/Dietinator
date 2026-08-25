@@ -554,7 +554,7 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
     },
     nutrientLabel: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "600",
       color: colors.text,
       fontFamily: fonts.mono,
@@ -568,7 +568,7 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     nutrientValue: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,

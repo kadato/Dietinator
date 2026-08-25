@@ -94,7 +94,7 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "center",
     },
     message: {
-      fontSize: 13,
+      fontSize: 14,
       textAlign: "center",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -137,7 +137,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     buttonText: {
       color: colors.onPrimary,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],

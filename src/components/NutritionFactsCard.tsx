@@ -285,7 +285,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroVal: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,

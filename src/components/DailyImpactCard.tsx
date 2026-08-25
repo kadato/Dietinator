@@ -480,7 +480,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     cardTitle: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
@@ -522,7 +522,7 @@ const createStyles = (colors: ColorPalette) =>
       fontVariant: ["tabular-nums"],
     },
     heroTransition: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,

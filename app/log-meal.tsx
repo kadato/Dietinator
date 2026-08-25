@@ -1117,7 +1117,7 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     tabLabel: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",
@@ -1154,7 +1154,7 @@ const createStyles = (colors: ColorPalette) =>
       paddingVertical: spacing.sm,
       paddingLeft: 42,
       paddingRight: spacing.xl,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       letterSpacing: 0.4,
@@ -1254,7 +1254,7 @@ const createStyles = (colors: ColorPalette) =>
       borderBottomColor: `${colors.border}12`,
     },
     loggedCollapsedPreviewText: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -1264,7 +1264,7 @@ const createStyles = (colors: ColorPalette) =>
       lineHeight: 13,
     },
     loggedCollapsedPreviewItem: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.text,
       fontFamily: fonts.mono,
@@ -1273,7 +1273,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     loggedCollapsedPreviewMore: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -1389,7 +1389,7 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     budgetSectionLabel: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -1434,7 +1434,7 @@ const createStyles = (colors: ColorPalette) =>
       borderTopColor: colors.border,
     },
     contextualTitle: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.textMuted,
       marginBottom: spacing.xs,
@@ -1448,7 +1448,7 @@ const createStyles = (colors: ColorPalette) =>
       marginBottom: spacing.xs,
     },
     reorderTitle: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.textMuted,
     },

@@ -343,7 +343,7 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     emptyText: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
       marginTop: spacing.xs,
     },

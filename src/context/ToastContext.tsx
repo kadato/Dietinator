@@ -414,7 +414,7 @@ const createToastStyles = (colors: ColorPalette) =>
     textWrap: { flex: 1, gap: 2 },
     title: {
       color: colors.text,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -423,7 +423,7 @@ const createToastStyles = (colors: ColorPalette) =>
     },
     message: {
       color: colors.textMuted,
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 18,
       fontFamily: fonts.mono,
       letterSpacing: 0.2,
