@@ -55,8 +55,10 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(`${VERSION}-shell`);
-    cache.put(request, response.clone());
+    if (response.ok && response.type !== 'opaqueredirect') {
+      const cache = await caches.open(`${VERSION}-shell`);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     const cached = await caches.match(request);

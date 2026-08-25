@@ -714,15 +714,11 @@ export default function TodayScreen() {
         className={`min-w-0 flex-1 cursor-pointer rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
         style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
         accessibilityRole="button"
-        accessibilityLabel={`Log weight: ${
-          displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "-"
-        } ${
-          weightHistory.length > 1
-            ? `${weightHistory.length} weigh-ins`
-            : weightHistory.length === 1
-              ? "1 weigh-in"
-              : "Tap to log"
-        }`}
+        accessibilityLabel={
+          displayedWeight != null
+            ? `${formatWeight(displayedWeight, settings.units)} ${weightHistory.length > 1 ? `${weightHistory.length} WEIGH-INS` : weightHistory.length === 1 ? "1 WEIGH-IN" : "TAP TO LOG"}`
+            : "TAP TO LOG WEIGHT"
+        }
       >
         <View className="w-full flex-row items-center gap-2">
           <Box
@@ -789,7 +785,7 @@ export default function TodayScreen() {
 
   const nutritionHeader = (
     <Box className="mb-3 flex-row items-center justify-between px-1">
-      <Text accessibilityRole="header" size="xl" bold style={{ color: colors.textOnBackground }}>
+      <Text size="xl" bold style={{ color: colors.textOnBackground }}>
         MEALS
       </Text>
       {/* No header-level log button here. Every meal card carries its own
@@ -813,28 +809,7 @@ export default function TodayScreen() {
           contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-2 pb-24" : "max-w-[720px] self-center p-2 pb-56"}`}
           style={{ paddingTop: insets.top + spacing.xs }}
         >
-          {isInitialLoading ? (
-            <View
-              style={{
-                flex: 1,
-                minHeight: 320,
-                alignItems: "center",
-                justifyContent: "center",
-                gap: spacing.md,
-                paddingVertical: 48,
-              }}
-            >
-              <LoadingSpinner size={40} />
-              <Text
-                size="2xs"
-                bold
-                className="font-mono uppercase tracking-widest text-typography-500"
-                accessibilityRole="text"
-              >
-                Loading diary…
-              </Text>
-            </View>
-          ) : isWide ? (
+          {isWide ? (
             <Box className={`w-full flex-row items-start ${isLarge ? "gap-6" : "gap-5"}`}>
               <Box
                 className={`${isLarge ? "w-[400px]" : "w-[380px]"} shrink-0 gap-4`}
@@ -1034,6 +1009,8 @@ export default function TodayScreen() {
         >
           <Pressable
             onPress={() => setShowShortcuts(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close shortcuts dialog"
             style={{
               width: "100%",
               maxWidth: 420,

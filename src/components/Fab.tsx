@@ -108,6 +108,7 @@ export function Fab({
       onPressOut={() => setPressed(false)}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
+      hitSlop={8}
       className="cursor-pointer"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}

@@ -10,7 +10,6 @@ import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
-import { AiChatModal } from "@/components/AiChatModal"
 import { AppProvider, useApp } from "@/context/AppContext"
 import { AiChatModalProvider } from "@/context/AiChatContext"
 import { NetworkProvider } from "@/context/NetworkContext"
@@ -24,6 +23,8 @@ import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import { fonts, type ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
 import "../global.css"
+
+import { AiChatModal } from "@/components/AiChatModal"
 
 // Module-level silencing: must run before first render so the initial
 // mount does not flash warnings. The deprecation is intentional (style
@@ -171,10 +172,6 @@ export default function RootLayout() {
     <>
       <Head>
         <title>Dietinator: calorie and macro tracker</title>
-        <meta
-          name="description"
-          content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
-        />
       </Head>
       <AppErrorBoundary>
         <AppProvider>

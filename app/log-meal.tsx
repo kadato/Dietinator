@@ -538,6 +538,7 @@ export default function LogMealScreen() {
       <View style={styles.loggedWrapCompact}>
         <Pressable
           style={styles.loggedCollapsedBarCompact}
+          hitSlop={8}
           onPress={() => {
             if (debounced.trim()) {
               setLoggedOpenQuery(isLoggedExpanded ? null : debounced)
@@ -631,7 +632,7 @@ export default function LogMealScreen() {
                   <Pressable
                     style={[styles.loggedIconBtn, { backgroundColor: `${accent}1a` }]}
                     onPress={() => openEdit(entry)}
-                    hitSlop={6}
+                    hitSlop={8}
                     accessibilityRole="button"
                     // "details" disambiguates from the row's own edit action.
                     accessibilityLabel={`Edit ${entry.food_name} details`}
@@ -641,7 +642,7 @@ export default function LogMealScreen() {
                   <Pressable
                     style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
                     onPress={() => onDeleteEntry(entry)}
-                    hitSlop={6}
+                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={`Delete ${entry.food_name}`}
                   >
@@ -667,6 +668,7 @@ export default function LogMealScreen() {
             reorderFavorites && { backgroundColor: accent, borderColor: accent },
           ]}
           onPress={() => setReorderFavorites((v) => !v)}
+          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={reorderFavorites ? "Done reordering" : "Reorder favorites"}
         >
@@ -789,6 +791,7 @@ export default function LogMealScreen() {
               <Pressable
                 key={tab.id}
                 onPress={() => handleTabPress(tab.id)}
+                hitSlop={4}
                 style={[
                   styles.tabItem,
                   isActive

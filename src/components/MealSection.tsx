@@ -70,11 +70,7 @@ export const MealSection = memo(function MealSection({
           }}
           className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3"
           accessibilityRole="button"
-          // Explicit label mirrors the visible header text ("Breakfast 441 kcal
-          // 22.5g 33.9g 22.8g", single-spaced) so it satisfies 2.5.3
-          // label-in-name while staying stable for assistive tech; the raw
-          // content name carries icon glyphs and doubled spaces.
-          accessibilityLabel={`${MEAL_LABELS[mealType]} ${Math.round(totalKcal)} kcal${
+          accessibilityLabel={`${MEAL_LABELS[mealType].toUpperCase()} ${Math.round(totalKcal)} kcal${
             entries.length > 0
               ? ` ${formatMacro(totalProtein)}g ${formatMacro(totalCarbs)}g ${formatMacro(totalFat)}g`
               : ""
@@ -98,7 +94,6 @@ export const MealSection = memo(function MealSection({
                 <Text
                   size="md"
                   bold
-                  accessibilityRole="header"
                   className="text-[12px] uppercase tracking-widest text-typography-900"
                   style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
                 >

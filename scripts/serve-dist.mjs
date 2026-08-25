@@ -138,7 +138,12 @@ function serveStatic(req, res, urlPath) {
   // extension-less SPA routes that resolve to index.html) and the service
   // worker must always revalidate so app updates ship immediately.
   const servesHtml = ext === ".html" || urlPath.endsWith("/")
-  if (/^\/_expo\/static\//.test(urlPath) || /^\/assets\//.test(urlPath)) {
+  const isImmutableAsset =
+    /^\/_expo\/static\//.test(urlPath) ||
+    /^\/assets\//.test(urlPath) ||
+    urlPath.endsWith(".wasm") ||
+    urlPath.endsWith(".woff2")
+  if (isImmutableAsset) {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
   } else if (servesHtml || urlPath === "/sw.js") {
     res.setHeader("Cache-Control", "no-cache")
@@ -183,6 +188,7 @@ function serveStatic(req, res, urlPath) {
     }
     res.setHeader("Content-Length", String(body.length))
     if (encoding) res.setHeader("Content-Encoding", encoding)
+    res.setHeader("Vary", "Accept-Encoding")
     res.end(body)
     return
   }
@@ -249,7 +255,7 @@ function decorateHtml(raw) {
   if (WASM_PRELOAD_URL && !out.includes('rel="preload" href="' + WASM_PRELOAD_URL + '"')) {
     out = out.replace(
       "</head>",
-      `<link rel="preload" href="${WASM_PRELOAD_URL}" as="fetch" crossorigin="use-credentials">\n</head>`,
+      `<link rel="preload" href="${WASM_PRELOAD_URL}" as="fetch" crossorigin="anonymous">\n</head>`,
     )
   }
   if (WORKER_PRELOAD_URL && !out.includes('rel="preload" href="' + WORKER_PRELOAD_URL + '"')) {

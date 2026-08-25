@@ -26,10 +26,47 @@ export default function Root({ children }: PropsWithChildren) {
           name="description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)').matches;var t=null;try{t=localStorage.getItem('calorie_tracker_theme_preference')||localStorage.getItem('theme')}catch(e){}var dark=t==='dark'||((!t||t==='system')&&m);if(dark){d.classList.add('dark');d.style.colorScheme='dark'}else{d.classList.remove('dark');d.style.colorScheme='light'}}catch(e){}",
+          }}
+        />
+        <link
+          rel="preload"
+          href="/assets/fonts/DepartureMono-Regular.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <style>{`@font-face{font-family:"Departure Mono";src:url("/assets/fonts/DepartureMono-Regular.otf") format("opentype");font-weight:400 800;font-style:normal;font-display:swap;size-adjust:100%;ascent-override:95%;descent-override:25%}`}</style>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b26" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta property="og:title" content="Dietinator: calorie and macro tracker" />
+        <meta
+          property="og:description"
+          content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
+        />
+        <meta
+          property="og:image"
+          content="https://dietinator.kadatodev.workers.dev/assets/icon.png"
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://dietinator.kadatodev.workers.dev/" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Dietinator: calorie and macro tracker" />
+        <meta
+          name="twitter:description"
+          content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
+        />
+        <meta
+          name="twitter:image"
+          content="https://dietinator.kadatodev.workers.dev/assets/icon.png"
+        />
+        <link rel="canonical" href="https://dietinator.kadatodev.workers.dev/" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
         <link rel="icon" type="image/png" href="/assets/favicon.png?v=4" sizes="48x48" />
         <link rel="apple-touch-icon" href="/assets/icon.png?v=4" />
@@ -41,6 +78,7 @@ export default function Root({ children }: PropsWithChildren) {
           resolve against an auto-height parent and collapse the app to zero.
         */}
         <style>{`main{height:100%}`}</style>
+        <style>{`.skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:10000;padding:8px 16px;background:#ffffff;color:#1a1b26;border:1.5px solid #1a1b26;font-family:"Departure Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none}.skip-link:focus{left:8px;top:8px;width:auto;height:auto;overflow:visible}`}</style>
         <style>{`
           #app-shell {
             position: fixed;
@@ -125,6 +163,9 @@ export default function Root({ children }: PropsWithChildren) {
         `}</style>
       </head>
       <body>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <span
           dangerouslySetInnerHTML={{
             __html:
@@ -135,7 +176,9 @@ export default function Root({ children }: PropsWithChildren) {
         <div id="app-shell" aria-hidden="true">
           <div className="app-shell-spinner" />
         </div>
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
       </body>
     </html>
   )

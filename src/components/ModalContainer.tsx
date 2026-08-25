@@ -66,6 +66,10 @@ export function ModalContainer({
   if (!isWide) {
     return (
       <Box
+        // @ts-expect-error dialog is valid for web but not in RN types
+        accessibilityRole="dialog"
+        accessibilityViewIsModal
+        aria-modal={true}
         className={`w-full ${hug ? "" : "flex-1"} ${outerClassName ?? ""}`}
         style={[
           surface ? { backgroundColor: colors.surface } : undefined,
@@ -101,6 +105,10 @@ export function ModalContainer({
         />
       ) : null}
       <Box
+        // @ts-expect-error dialog is valid for web but not in RN types
+        accessibilityRole="dialog"
+        accessibilityViewIsModal
+        aria-modal={true}
         className={`w-full ${hug ? "" : "flex-1"} overflow-hidden rounded-none`}
         style={{
           maxWidth,
