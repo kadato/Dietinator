@@ -47,7 +47,6 @@ playwright/.cache/
 
 # local env files (may contain test credentials)
 .env
-.envrc
 
 # Playwright MCP artifacts
 .playwright-mcp/
