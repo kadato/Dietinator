@@ -1,0 +1,24 @@
+# Dietinator - direnv + Bitwarden pattern for YAZIO creds
+# Copy this file to .envrc and run `direnv allow`.
+# Never commit .envrc with real secrets. This example only has references.
+
+# Requires: brew install bitwarden-cli && bw login
+# Store once in vault as a Login item named yazio-dietinator.
+# All agents inherit these env vars when run inside the project.
+
+# Unlock vault in this shell and export session for bw get calls.
+# Do not commit the session value. Run manually:
+# export BW_SESSION="$(bw unlock --raw)"
+
+# Pull at runtime - no plaintext on disk
+# export YAZIO_EMAIL="$(bw get username yazio-dietinator)"
+# export YAZIO_PASSWORD="$(bw get password yazio-dietinator)"
+# export OPENCODE_API_KEY="$(bw get password opencode-api-key)"
+# export MCP_API_KEY="$(bw get password mcp-api-key)"
+
+# Local-only alternative if you use pass instead of Bitwarden:
+# export YAZIO_EMAIL="$(pass show yazio/dietinator/email)"
+# export YAZIO_PASSWORD="$(pass show yazio/dietinator/password)"
+
+# Uncomment after you have created the vault item and run direnv allow
+# echo "YAZIO creds loaded from Bitwarden for Dietinator" >&2

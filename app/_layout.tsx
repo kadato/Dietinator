@@ -73,7 +73,7 @@ function RootNavigator() {
       dark: isDark,
       colors: {
         primary: colors.primary,
-        background: colors.background,
+        background: "transparent",
         card: colors.surface,
         text: colors.text,
         border: colors.border,
@@ -124,7 +124,7 @@ function RootNavigator() {
     <NavigationThemeProvider value={navTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}
       >
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />

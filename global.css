@@ -54,6 +54,7 @@ textarea::placeholder {
  * Single source: src/theme.ts is the palette. These CSS variables mirror
  * lightColors / darkColors so NativeWind and plain CSS stay in sync.
  * Update theme.ts, then mirror the hex here.
+ * Exact same as prototype board for pixel-identical grid.
  */
 :root {
   --app-background: #f1f5f9;
@@ -62,6 +63,19 @@ textarea::placeholder {
   --app-primary: #0b57d0;
   --app-border: #0f172a;
   --app-text: #0f172a;
+  --bg: #f1f5f9;
+  --bg-grid: rgba(15, 23, 42, 0.06);
+  --surface: #ffffff;
+  --surface-alt: #e2e8f0;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+  --primary: #0b57d0;
+  --on-primary: #ffffff;
+  --border: #0f172a;
+  --meal-b: #075985;
+  --meal-l: #804707;
+  --meal-d: #96340a;
+  --meal-s: #0b5f5a;
 }
 html.dark {
   --app-background: #1a1b26;
@@ -70,6 +84,19 @@ html.dark {
   --app-primary: #7aa2f7;
   --app-border: #6b739c;
   --app-text: #c0caf5;
+  --bg: #1a1b26;
+  --bg-grid: rgba(192, 202, 245, 0.06);
+  --surface: #24283b;
+  --surface-alt: #292e42;
+  --ink: #c0caf5;
+  --ink-muted: #a9b1d6;
+  --primary: #7aa2f7;
+  --on-primary: #1a1b26;
+  --border: #6b739c;
+  --meal-b: #8db8ff;
+  --meal-l: #ffb020;
+  --meal-d: #ff92a6;
+  --meal-s: #2ec4b6;
 }
 /*
  * gluestack-ui Tokyo Night alignment - derived from theme surfaceAlt / border
@@ -89,6 +116,9 @@ html:not(.dark) {
 
 /*
  * Typography Utilities: Departure Mono for tabular numeric data
+ * For pixel-perfect results, set the font size to increments of 11px.
+ * Departure Mono is drawn on an 11px grid. 11, 22, 33 keep stems
+ * on device pixels. Body 14 is the readability compromise.
  */
 .font-tabular,
 .font-mono,
@@ -96,12 +126,25 @@ html:not(.dark) {
   font-family: "Departure Mono", monospace !important;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
+  font-feature-settings: "tnum" 1;
 }
 
 .font-heading {
   font-family: "Departure Mono", monospace;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+
+/* 11px grid snap for tabular data on wide where crispness matters */
+@media (min-width: 900px) {
+  .font-tabular,
+  .font-mono {
+    font-size: 11px;
+  }
+  .text-\[14px\].font-tabular,
+  .text-\[16px\].font-tabular {
+    font-size: 14px;
+  }
 }
 
 /*
@@ -119,6 +162,18 @@ h6 {
 p,
 .text-pretty {
   text-wrap: pretty;
+}
+
+/* Big screen: stabilize scrollbar and avoid layout shift */
+html {
+  scrollbar-gutter: stable;
+  interpolate-size: allow-keywords;
+}
+
+@media (min-width: 1280px) {
+  body {
+    text-rendering: geometricPrecision;
+  }
 }
 
 /*
@@ -221,24 +276,29 @@ html.dark .bg-background-50 {
 html.dark .bg-primary-500 {
   border-color: var(--app-primary);
 }
-/* paper grid. Tokyo Night graph. Tokenized via CSS variables */
+/* paper grid. Tokyo Night graph. Tokenized via CSS variables — exact same as prototype board */
 :root {
   --paper-grid: rgba(15, 23, 42, 0.06);
   --paper-grid-dark: rgba(192, 202, 245, 0.06);
   --scrim: rgba(26, 27, 38, 0.65);
 }
-html:not(.dark) body {
+html:not(.dark) body,
+html:not(.dark) .app-grid {
+  background-color: var(--bg);
   background-image:
-    linear-gradient(to right, var(--paper-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--paper-grid) 1px, transparent 1px);
+    linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: -1px -1px;
 }
-html.dark body {
+html.dark body,
+html.dark .app-grid {
+  background-color: var(--bg);
   background-image:
-    linear-gradient(to right, var(--paper-grid-dark) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--paper-grid-dark) 1px, transparent 1px);
+    linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
   background-size: 24px 24px;
+  background-position: -1px -1px;
 }
 /* tabular numbers forced everywhere for ledger speed */
 .font-tabular,
@@ -262,6 +322,58 @@ html.dark [class*="border-outline"] {
   }
   html.dark *::-webkit-scrollbar-thumb {
     background: var(--app-primary);
+  }
+}
+
+/* Big screen performance: content-visibility for long diaries and stats.
+   Only on web where the CSS is parsed. Cards below the fold skip paint
+   until scrolled near the viewport. intrinsic-size keeps scrollbar stable. */
+@media (min-width: 600px) {
+  .meal-card,
+  [data-meal-card] {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 220px;
+    contain: layout paint style;
+  }
+}
+
+/* Wide shell: floating detached rail and centered diary column.
+   Keeps interactive chrome away from the monitor edge on 1280+ screens,
+   so reach stays inside the 1440 shell with 24px outer gutters. */
+@media (min-width: 900px) {
+  /* Soften the paper grid at wide where it can buzz at 24px repeat */
+  body {
+    background-size: 28px 28px;
+  }
+  /* Meal cards gain a calm hover without lifting off the paper */
+  .meal-card:hover {
+    border-color: var(--app-primary) !important;
+  }
+}
+@media (min-width: 1280px) {
+  body {
+    background-size: 32px 32px;
+  }
+}
+@media (min-width: 1440px) {
+  html {
+    scrollbar-gutter: stable both-edges;
+  }
+}
+
+/* Hide inactive tab screens kept mounted by React Navigation (z-index -1).
+   Without this, the inactive diary shows through the transparent empty area
+   of the active Stats/Settings page on web. Keep the paper grid visible by
+   keeping all screens transparent and hiding the inactive one via display. */
+div[style*="z-index: -1"] {
+  display: none !important;
+}
+
+/* Subtle view transition for diary date changes on supporting browsers */
+@supports (view-transition-name: diary) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.18s;
   }
 }
 

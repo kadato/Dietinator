@@ -132,14 +132,26 @@ export const tints = {
   overlay: 0.14,
 } as const
 
-/** Breakpoints and max widths for tablet / desktop / web layouts. */
+/** Breakpoints and max widths for tablet / desktop / web layouts.
+ * 600 is thumb-to-two-column, 900 is phone-to-desktop rail, 1280 is
+ * comfortable desktop where whitespace would otherwise pool. The 11px grid
+ * stays crisp at every width because Departure Mono snaps to 11px increments.
+ */
 export const layout = {
   breakpointMedium: 600,
   breakpointWide: 900,
+  breakpointLarge: 1280,
+  breakpointXl: 1440,
   maxWidthNarrow: 420,
   maxWidthContent: 720,
-  maxWidthWide: 1100,
-  sideTabWidth: 120,
+  maxWidthWide: 1160,
+  maxWidthXl: 1360,
+  /** Centered app shell for wide viewports so nothing rests on the screen edge. */
+  shellMaxWidth: 1440,
+  shellPadding: 24,
+  shellGap: 20,
+  sideTabWidth: 96,
+  sideTabItemWidth: 84,
   /** Fixed bottom tab bar height on phones, excluding the safe-area inset. */
   tabBarHeight: 56,
 }

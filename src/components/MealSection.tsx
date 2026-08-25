@@ -9,6 +9,7 @@ import { formatMacro } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { fonts } from "@/theme"
 
 type Props = {
@@ -32,12 +33,18 @@ export const MealSection = memo(function MealSection({
   onDelete,
 }: Props) {
   const { colors } = useTheme()
-  // Default to collapsed for a clean, compact diary overview
-  const [expanded, setExpanded] = useState(false)
+  const { isWide } = useLayout()
+  // On big screens meals are open by default so the diary is scannable without taps.
+  const [expanded, setExpanded] = useState(() => isWide)
   const [prevDateKey, setPrevDateKey] = useState(dateKey)
+  const [prevIsWide, setPrevIsWide] = useState(isWide)
   if (dateKey !== prevDateKey) {
     setPrevDateKey(dateKey)
-    setExpanded(false)
+    setExpanded(isWide)
+  }
+  if (isWide !== prevIsWide) {
+    setPrevIsWide(isWide)
+    if (isWide && entries.length > 0) setExpanded(true)
   }
   const handleEdit = useCallback((entryId: string) => onEdit(entryId), [onEdit])
   const handleDelete = useCallback((entryId: string) => onDelete(entryId), [onDelete])
@@ -53,7 +60,7 @@ export const MealSection = memo(function MealSection({
 
   return (
     <Box
-      className="mb-3 overflow-hidden rounded-none border bg-background-50 p-0"
+      className="meal-card mb-3 overflow-hidden rounded-none border bg-background-50 p-0"
       style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
     >
       <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />

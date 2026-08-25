@@ -47,7 +47,7 @@ export default function TodayScreen() {
   const { settings, yazioAvailable, authenticated } = useApp()
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide, width } = useLayout()
+  const { isWide, isLarge, width } = useLayout()
   // Phone metrics below the medium breakpoint. The date chrome, quick-adds
   // and dock are thumb-first. At 390, standard phone, the non-compact header
   // overflows and clips the streak badge against the viewport edge.
@@ -188,6 +188,8 @@ export default function TodayScreen() {
     }
   }, [])
 
+  const [showShortcuts, setShowShortcuts] = useState(false)
+
   // Desktop affordance: left and right arrows page through diary days, the
   // same contract the chevron buttons offer. Web-only, and inert while any
   // modal is up or a text field owns the keyboard.
@@ -285,6 +287,64 @@ export default function TodayScreen() {
     })()
   }, [dateKey, load, showError])
 
+  useEffect(() => {
+    if (Platform.OS !== "web") return
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (keyboardVisible) return
+      if (pickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
+        if (event.key === "Escape" && showShortcuts) setShowShortcuts(false)
+        return
+      }
+      if (event.key === "?" || (event.key === "/" && event.shiftKey)) {
+        event.preventDefault()
+        setShowShortcuts((v) => !v)
+        return
+      }
+      if (event.key === "Escape" && showShortcuts) {
+        setShowShortcuts(false)
+        return
+      }
+      if (showShortcuts) return
+      if (event.key === "n" || event.key === "N") {
+        event.preventDefault()
+        setLogSlotOpen(true)
+      } else if (event.key === "c" || event.key === "C") {
+        event.preventDefault()
+        onCopyPrevious()
+      } else if (event.key === "r" || event.key === "R") {
+        event.preventDefault()
+        void onRefresh()
+      } else if (event.key === "w" || event.key === "W") {
+        event.preventDefault()
+        setLogWaterOpen(true)
+      } else if (event.key === "e" || event.key === "E") {
+        event.preventDefault()
+        setLogWeightOpen(true)
+      } else if (event.key >= "1" && event.key <= "4") {
+        const meal = MEAL_TYPES[Number(event.key) - 1]
+        if (meal) {
+          event.preventDefault()
+          openAdd(meal)
+        }
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [
+    keyboardVisible,
+    pickerOpen,
+    logWeightOpen,
+    logWaterOpen,
+    logSlotOpen,
+    showShortcuts,
+    onCopyPrevious,
+    onRefresh,
+    openAdd,
+  ])
+
   const renderMealSections = (grid?: boolean) =>
     MEAL_TYPES.map((meal) => {
       const section = (
@@ -300,7 +360,7 @@ export default function TodayScreen() {
         />
       )
       return grid ? (
-        <View key={meal} className="min-w-[280px] grow basis-[48%]">
+        <View key={meal} className="min-w-0">
           {section}
         </View>
       ) : (
@@ -546,7 +606,7 @@ export default function TodayScreen() {
           protein={totals.protein}
           carbs={totals.carbs}
           fat={totals.fat}
-          size={isWide ? 168 : width < 380 ? 140 : 152}
+          size={isLarge ? 192 : isWide ? 168 : width < 380 ? 140 : 152}
         />
       </Box>
 
@@ -739,7 +799,7 @@ export default function TodayScreen() {
   )
 
   return (
-    <Box className="flex-1 bg-background-0">
+    <Box className="flex-1" style={{ backgroundColor: "transparent" }}>
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <ScrollView
@@ -750,7 +810,7 @@ export default function TodayScreen() {
               tintColor={colors.primary}
             />
           }
-          contentContainerClassName={`w-full p-2 ${isWide ? "self-stretch max-w-none px-6 pb-16" : width < layout.breakpointMedium ? "self-center pb-24" : "self-center pb-56"}`}
+          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-2 pb-24" : "max-w-[720px] self-center p-2 pb-56"}`}
           style={{ paddingTop: insets.top + spacing.xs }}
         >
           {isInitialLoading ? (
@@ -775,15 +835,92 @@ export default function TodayScreen() {
               </Text>
             </View>
           ) : isWide ? (
-            <Box className="w-full flex-row items-start gap-4">
-              <Box className="min-w-[340px] max-w-[460px] flex-[0.95] gap-0">
+            <Box className={`w-full flex-row items-start ${isLarge ? "gap-6" : "gap-5"}`}>
+              <Box
+                className={`${isLarge ? "w-[400px]" : "w-[380px]"} shrink-0 gap-4`}
+                style={
+                  isWide && Platform.OS === "web"
+                    ? ({ position: "sticky", top: 0, alignSelf: "flex-start" } as never)
+                    : undefined
+                }
+              >
                 {dateChrome}
                 {summaryCard}
                 {hydrationRow}
+                {isLarge ? (
+                  <Box
+                    className="hidden rounded-none border bg-background-50 p-3 lg:flex"
+                    style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                  >
+                    <Text
+                      size="2xs"
+                      bold
+                      className="font-mono uppercase tracking-widest text-typography-500"
+                      style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                    >
+                      Daily rhythm
+                    </Text>
+                    <Box className="mt-2.5 flex-row gap-2">
+                      <Box
+                        className="flex-1 items-center rounded-none border bg-background-0 py-2.5"
+                        style={{ borderWidth: 1, borderColor: colors.border }}
+                      >
+                        <Text size="lg" bold className="font-tabular text-typography-900">
+                          {Math.round(totals.kcal).toLocaleString()}
+                        </Text>
+                        <Text
+                          size="2xs"
+                          className="font-mono uppercase tracking-widest text-typography-500"
+                        >
+                          kcal logged
+                        </Text>
+                      </Box>
+                      <Box
+                        className="flex-1 items-center rounded-none border bg-background-0 py-2.5"
+                        style={{ borderWidth: 1, borderColor: colors.border }}
+                      >
+                        <Text
+                          size="lg"
+                          bold
+                          className="font-tabular"
+                          style={{
+                            color:
+                              totals.kcal > settings.calorie_goal && settings.calorie_goal > 0
+                                ? colors.danger
+                                : colors.primary,
+                          }}
+                        >
+                          {settings.calorie_goal > 0
+                            ? `${Math.max(settings.calorie_goal - totals.kcal, 0).toLocaleString()}`
+                            : "-"}
+                        </Text>
+                        <Text
+                          size="2xs"
+                          className="font-mono uppercase tracking-widest text-typography-500"
+                        >
+                          kcal left
+                        </Text>
+                      </Box>
+                    </Box>
+                  </Box>
+                ) : null}
               </Box>
-              <Box className="min-w-0 flex-[1.05]">
+              <Box className="min-w-0 flex-1">
                 {nutritionHeader}
-                <Box className="flex-row flex-wrap gap-2">{renderMealSections(true)}</Box>
+                <Box
+                  className={isLarge ? "gap-4" : "gap-3.5"}
+                  style={
+                    {
+                      display: "grid",
+                      gridTemplateColumns: isLarge
+                        ? "repeat(auto-fit, minmax(340px, 1fr))"
+                        : "repeat(auto-fit, minmax(320px, 1fr))",
+                      gap: isLarge ? 16 : 14,
+                    } as never
+                  }
+                >
+                  {renderMealSections(true)}
+                </Box>
               </Box>
             </Box>
           ) : (
@@ -804,6 +941,104 @@ export default function TodayScreen() {
           )}
         </ScrollView>
       </PageContainer>
+
+      {isWide && Platform.OS === "web" ? (
+        <Pressable
+          onPress={() => setShowShortcuts(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Show keyboard shortcuts"
+          style={{
+            position: "absolute",
+            bottom: isLarge ? 96 : 88,
+            right: 24,
+            borderWidth: 1.5,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Text
+            size="2xs"
+            bold
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.textMuted }}
+          >
+            ? Shortcuts
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {showShortcuts ? (
+        <Pressable
+          onPress={() => setShowShortcuts(false)}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Close shortcuts"
+        >
+          <Pressable
+            onPress={() => setShowShortcuts(false)}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              backgroundColor: colors.surface,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              padding: 16,
+              gap: 12,
+            }}
+          >
+            <Box className="flex-row items-center justify-between">
+              <Text size="sm" bold style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}>
+                Keyboard shortcuts
+              </Text>
+              <Feather name="x" size={16} color={colors.textMuted} />
+            </Box>
+            <Box className="gap-2">
+              {[
+                ["← →", "Previous / next day"],
+                ["N", "New entry"],
+                ["1 2 3 4", "Breakfast Lunch Dinner Snack"],
+                ["W", "Log water"],
+                ["E", "Log weight"],
+                ["C", "Copy previous day"],
+                ["R", "Refresh from YAZIO"],
+                ["?", "Toggle this help"],
+                ["Esc", "Close dialog"],
+              ].map(([k, v]) => (
+                <Box key={k} className="flex-row items-center justify-between gap-4">
+                  <Box
+                    className="rounded-none border bg-background-100 px-2 py-1"
+                    style={{ borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <Text size="xs" bold style={{ fontFamily: fonts.mono }}>
+                      {k}
+                    </Text>
+                  </Box>
+                  <Text size="xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
+                    {v}
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+            <Text size="2xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
+              Shortcuts work when no input is focused and no modal is open.
+            </Text>
+          </Pressable>
+        </Pressable>
+      ) : null}
 
       <DatePickerModal
         visible={pickerOpen}
@@ -841,7 +1076,8 @@ export default function TodayScreen() {
 
       {!keyboardVisible ? (
         <FabCluster
-          bottomOffset={isWide ? 20 : 8}
+          bottomOffset={isWide ? (isLarge ? 28 : 24) : 8}
+          insetX={isWide ? 24 : 20}
           right={
             <Fab
               size="md"

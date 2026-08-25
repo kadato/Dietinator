@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
+import { useLayout } from "@/hooks/useLayout"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -37,6 +38,7 @@ export function EmptyState({
   className = "",
 }: Props) {
   const { colors } = useTheme()
+  const { isWide } = useLayout()
   const tint = iconColor ?? colors.primary
 
   if (variant === "compact") {
@@ -59,7 +61,18 @@ export function EmptyState({
   }
 
   return (
-    <Box className={`items-center px-6 pb-10 ${className}`}>
+    <Box
+      className={`items-center px-6 pb-10 ${className} ${isWide ? "mx-auto w-full max-w-[720px] border bg-background-50 p-8" : ""}`}
+      style={
+        isWide
+          ? {
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+            }
+          : undefined
+      }
+    >
       <Box className="h-16 w-16 items-center justify-center rounded-none border bg-background-100">
         <Feather name={icon} size={28} color={tint} />
       </Box>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { ScrollView, View } from "react-native"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect } from "expo-router"
@@ -72,7 +72,7 @@ export default function StatsScreen() {
   const { settings } = useApp()
   const { showError, showUndo } = useToast()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isLarge } = useLayout()
   const insets = useSafeAreaInsets()
   const [range, setRange] = useState<RangeId>("1m")
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
@@ -143,6 +143,31 @@ export default function StatsScreen() {
     setEditWeightDate(null)
     setLogWeightOpen(true)
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
+      if (event.metaKey || event.ctrlKey) return
+      const idx = ["1", "2", "3", "4", "5"].indexOf(event.key)
+      if (idx !== -1) {
+        const r = RANGES[idx]
+        if (r) {
+          event.preventDefault()
+          setRange(r.id)
+        }
+      } else if (event.key === "r" || event.key === "R") {
+        event.preventDefault()
+        void load()
+      } else if (event.key === "w" || event.key === "W") {
+        event.preventDefault()
+        openLogWeight()
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [load, openLogWeight])
 
   // Derived aggregates (KPI cards)
   const adherence = useMemo(
@@ -277,9 +302,12 @@ export default function StatsScreen() {
   )
 
   return (
-    <Box className="flex-1 bg-background-0">
+    <Box className="flex-1" style={{ backgroundColor: "transparent" }}>
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
-        <Box className="px-3 pb-2" style={{ paddingTop: insets.top + spacing.md }}>
+        <Box
+          className={`w-full pb-2 ${isWide ? (isLarge ? "px-6" : "px-5") : "px-4"}`}
+          style={{ paddingTop: insets.top + spacing.md }}
+        >
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats
           </Text>
@@ -289,13 +317,35 @@ export default function StatsScreen() {
         </Box>
 
         <ScrollView
-          contentContainerClassName={`p-3 w-full ${isWide ? "self-stretch max-w-none px-6 pb-16" : "self-center pb-16"}`}
+          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : "max-w-[720px] self-center p-3 pb-16"}`}
         >
           <SegmentedControl
             value={range}
             options={RANGES.map((r) => ({ value: r.id, label: r.label }))}
             onChange={setRange}
           />
+          {isWide ? (
+            <Box className="mt-2 flex-row flex-wrap gap-2">
+              <Text
+                size="2xs"
+                className="font-mono uppercase tracking-widest text-typography-400"
+                style={{ fontFamily: "monospace", letterSpacing: 0.06 }}
+              >
+                Shortcuts:
+              </Text>
+              {["1·1W", "2·1M", "3·3M", "4·6M", "5·1Y", "W·Weight", "R·Refresh"].map((s) => (
+                <Box
+                  key={s}
+                  className="rounded-none border bg-background-50 px-1.5 py-0.5"
+                  style={{ borderWidth: 1, borderColor: colors.border }}
+                >
+                  <Text size="2xs" bold style={{ fontFamily: "monospace" }}>
+                    {s}
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+          ) : null}
 
           {loading ? (
             <View
@@ -325,9 +375,26 @@ export default function StatsScreen() {
               </Box>
             </Card>
           ) : (
-            <Box className="mt-4 gap-4">
-              {/* Consistency */}
-              <Card variant="elevated" className="p-4">
+            <Box
+              className={`mt-4 ${isWide ? "grid grid-cols-2 gap-4" : "gap-4"} ${isLarge ? "gap-5" : ""}`}
+              style={
+                isWide
+                  ? ({
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: isLarge ? 20 : 16,
+                      alignItems: "start",
+                      gridAutoRows: "auto",
+                    } as never)
+                  : undefined
+              }
+            >
+              {/* Consistency - spans full width on wide */}
+              <Card
+                variant="elevated"
+                className={`p-4 ${isWide ? "col-span-2" : ""}`}
+                style={isWide ? ({ gridColumn: "1 / -1" } as never) : undefined}
+              >
                 <Box className="flex-row items-center gap-2.5">
                   <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
                     <Feather name="activity" size={18} color={colors.primary} />

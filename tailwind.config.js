@@ -10,13 +10,34 @@ module.exports = {
   ],
   presets: [require("nativewind/preset")],
   important: "html",
+  // Performance: previous broad safelist generated ~800KB of unused CSS
+  // (every shade 0-950 for 9 palettes). Keep only what is used dynamically:
+  // meal tints for chip wells and the few background/primary greys that are
+  // assembled from strings. Everything else is covered by content scanning.
   safelist: [
     {
-      pattern:
-        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|muted|success|info|light|dark|primary)/,
+      pattern: /(bg|text|border|stroke|fill)-meal-(breakfast|lunch|dinner|snack)/,
     },
+    {
+      pattern: /(bg|text|border)-app-chrome/,
+    },
+    "bg-primary-500",
+    "bg-primary-600",
+    "bg-background-50",
+    "bg-background-100",
+    "border-outline-100",
+    "border-outline-200",
+    "text-typography-400",
+    "text-typography-500",
+    "text-typography-900",
   ],
   theme: {
+    screens: {
+      sm: "600px",
+      md: "900px",
+      lg: "1280px",
+      xl: "1536px",
+    },
     extend: {
       colors: {
         primary: {
@@ -202,6 +223,12 @@ module.exports = {
       },
       fontSize: {
         "2xs": "10px",
+        xs: "11px",
+        sm: "14px",
+        base: "14px",
+        lg: "16px",
+        xl: "22px",
+        "2xl": "33px",
       },
       borderRadius: {
         none: "0",

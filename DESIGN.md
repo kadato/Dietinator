@@ -5,37 +5,39 @@
 name: Dietinator
 description: Field terminal for solo nutrition - sharp, square, mono, one-thumb ledger - provenance seed b9619c3c pinned brief beats roll
 colors:
-primary: "#9a3412"
+primary: "#0b57d0"
 primary-dark: "#7aa2f7"
-primary-strong: "#7c2d12"
+primary-strong: "#0044cc"
 primary-strong-dark: "#7dcfff"
-background: "#ffedd5"
+primary-muted: "#0f172a"
+primary-muted-dark: "#bb9af7"
+background: "#f1f5f9"
 background-dark: "#1a1b26"
 surface: "#ffffff"
 surface-dark: "#24283b"
-surface-alt: "#fed7aa"
+surface-alt: "#e2e8f0"
 surface-alt-dark: "#292e42"
-text: "#431407"
+text: "#0f172a"
 text-dark: "#c0caf5"
-text-muted: "#7c2d12"
+text-muted: "#475569"
 text-muted-dark: "#a9b1d6"
-text-on-background: "#431407"
+text-on-background: "#0f172a"
 text-on-background-dark: "#c0caf5"
-border: "#c2410c"
+border: "#0f172a"
 border-dark: "#6b739c"
-breakfast: "#0072B2"
+breakfast: "#075985"
 breakfast-dark: "#8db8ff"
 lunch: "#804707"
 lunch-dark: "#FFB020"
-dinner: "#96340A"
+dinner: "#96340a"
 dinner-dark: "#ff92a6"
-snack: "#0B5F5A"
+snack: "#0b5f5a"
 snack-dark: "#2EC4B6"
 danger: "#be123c"
 danger-dark: "#ff7a8e"
 warning: "#96610a"
 warning-dark: "#e0af68"
-ink-grid: "rgba(154,52,18,0.08)"
+ink-grid: "rgba(15,23,42,0.06)"
 ink-grid-dark: "rgba(192,202,245,0.06)"
 typography:
 display:
@@ -178,7 +180,9 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 **Body font. Departure Mono.**
 **Label and mono font. Departure Mono, tabular-nums, -0.01em.**
 
-**Shipping contract.** The face is bundled, not fetched. `DepartureMono-Regular.otf` lives in `assets/fonts/`. Departure Mono ships one outline, so web maps every requested weight (400 to 800) to it through `src/utils/web-fonts.ts` via the CSS Font Loading API, which keeps the browser from synthesizing faux bold over pixel glyphs. Android resolves the family from `android/app/src/main/assets/fonts`. No other face ships; glyphs Departure Mono does not cover fall through the stack to the system monospace. No remote font requests run at runtime.
+**Shipping contract.** The face is bundled, not fetched. `DepartureMono-Regular.otf` lives in `assets/fonts/` at 82KB. Departure Mono ships one Regular outline, so web maps every requested weight (400 to 800) to that one file through `src/utils/web-fonts.ts` via the CSS Font Loading API, which keeps the browser from synthesizing faux bold over pixel glyphs. Android resolves the family from `android/app/src/main/assets/fonts`. No other face ships; glyphs Departure Mono does not cover fall through the stack to the system monospace. No remote font requests run at runtime. Preload is declared in `app/+html.tsx` as `as="font" type="font/otf" crossorigin="anonymous"` so the first paint never double-fetches.
+
+**Pixel perfection.** For pixel-perfect results, set the font size to increments of 11px. Departure Mono is drawn on an 11px grid. Sizes that are multiples of 11 keep stems on device pixels and avoid half-pixel antialias smear. The scale below snaps every size to the grid: 11, 22, 33 and their halves at 11 and 22 steps. Body 14 is the compromise for readability, but tabular numerals and headings stay on the 11px grid wherever they carry measurement. On web the face is forced to `font-variant-numeric: tabular-nums` and `letter-spacing: 0` at the grid, with `text-rendering: optimizeLegibility` and no negative tracking.
 
 **Character. Terminal instrument, not decorative mono costume. Every numeral is tabular so columns hold when `1840` becomes `2012`. Headings are uppercase, tight, and crowded. Body is small and breathable at 14 and 1.5. The mono texture carries the ledger without needing color.**
 
@@ -193,13 +197,16 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ### Named rules
 
-**The Tabular Numbers Rule.** Any numeral that updates is mono tabular. Body text never carries the remaining budget. The ring 28, row 16, bar 14 all mono.
+**The Tabular Numbers Rule.** Any numeral that updates is mono tabular. Body text never carries the remaining budget. The ring 22 or 28 mapped to 22 on grid, row 16, bar 14 all mono with `font-variant-numeric: tabular-nums`.
+**The 11px Grid Rule.** For pixel-perfect results, set the font size to increments of 11px. Never use 13, 15, or 17 for tabular data. Use 11, 22, 33 and step weight to show hierarchy. The grid is the reason Departure Mono stays crisp at 11 and layers 700 weight for emphasis instead of half-pixel size.
 
 ## Layout
 
-Graph-paper grid, thumb-first. `breakpointMedium` is 600. `breakpointWide` is 900. `maxWidthContent` is 720. `maxWidthWide` is 1100. `maxWidthNarrow` is 420. `sideTabWidth` is 120, drawn at 104. `tabBarHeight` is 64 plus safe area. Spacing scale is tight. `xs` is 4, `sm` is 8, `md` is 12, `lg` is 16, `xl` is 24, `2xl` is 32. Space is tight inside groups and generous between groups. More space sits above a heading than below it.
+Graph-paper grid, thumb-first. `breakpointMedium` is 600. `breakpointWide` is 900. `breakpointLarge` is 1280. `maxWidthContent` is 720. `maxWidthWide` is 1100. `maxWidthXl` is 1280. `maxWidthNarrow` is 420. `sideTabWidth` is 120, drawn at 104. `tabBarHeight` is 56 plus safe area on phones, 48 compact. Spacing scale is tight. `xs` is 4, `sm` is 8, `md` is 12, `lg` is 16, `xl` is 24, `2xl` is 32. Space is tight inside groups and generous between groups. More space sits above a heading than below it.
 
-`PageContainer` centers the page at `maxWidthContent`. It uses `p-4` at base and `px-6` on wide. On narrow, the scroll reserves `pb-40` to clear the dock and the tab bar. At 900 the Today view splits into two flex columns at 0.95 and 1.05 with a 16 gap. Meals wrap at 48 percent basis and 280 minimum. The topology stays the same as before, but sheets are square and ruled.
+`PageContainer` centers the page at `maxWidthContent` on phones and `maxWidthWide` at 900, growing to `maxWidthXl` 1280 at 1280 so the diary does not sit as a narrow column in a sea of grid. It uses `p-4` at base, `px-6` on wide, `px-8` on large. On narrow, the scroll reserves `pb-40` to clear the dock and the tab bar. At 900 the Today view splits into two flex columns at 0.95 and 1.05 with a 16 gap, growing to 24 gap at 1280 with a subtle 1px vertical rule between columns and a sticky left summary so the budget stays visible while scrolling meals. Meals wrap at 48 percent basis and 280 minimum, gap 2 on wide and gap 3 on large. The topology stays the same as before, but sheets are square and ruled.
+
+**Modern big screen.** Tailwind screens map to the same breakpoints: `sm 600`, `md 900`, `lg 1280`, `xl 1536`. At 900 the stats view uses a 2-column grid, consistency spans full width, weight/calories/macros/water tile 2 by 2, gap 4 growing to 6 at large. Settings hub on large shows a 2 or 3 column tile grid with active state, and the drilldown on wide shows a horizontal tab row for quick switching without losing context. Login on large shows a 96 icon, field-terminal copy, and three 11px chips at `OFFLINE GRID MONO` before the 440 form.
 
 One-hand dock. On phones a fixed row sits above the tab bar at `insets.bottom + 64 + 10`. It uses left and right 12, flex row gap 8, four squares flex 1 min 56 tall for Breakfast, Lunch, Dinner, and Snack each 52 square, plus a 56 square primary water quick add at the end. Hit targets are 48 minimum. Thumb arc is centered. Labels `BRKF` and similar are 10 mono wide.
 

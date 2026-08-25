@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   TextInput,
+  View,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -99,7 +99,8 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background-0"
+      className="flex-1"
+      style={{ backgroundColor: "transparent" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -108,273 +109,386 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <PageContainer
-          variant="narrow"
+          variant={isWide ? "wide" : "narrow"}
           contentClassName="px-6 justify-center"
           contentStyle={[
             { paddingTop: insets.top + 24, paddingBottom: 24 },
-            isWide ? { maxWidth: 480 } : undefined,
+            isWide ? { maxWidth: 720, alignSelf: "center", width: "100%" } : undefined,
           ]}
         >
-          <Box className="mb-8 items-center">
-            <Image
-              source={require("../assets/icon.png")}
-              style={{
-                width: 80,
-                height: 80,
-                marginBottom: 20,
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 0,
-              }}
-              resizeMode="cover"
-              accessibilityLabel="Dietinator app icon"
-            />
+          {isWide ? (
+            <Box className="mb-8 w-full max-w-[640px] flex-row items-center gap-6 self-center">
+              <View
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                accessibilityLabel="Dietinator app icon"
+              >
+                <Text
+                  style={{
+                    color: colors.onPrimary,
+                    fontFamily: "Departure Mono",
+                    fontSize: 44,
+                    lineHeight: 44,
+                    fontWeight: "700",
+                    textAlign: "center",
+                  }}
+                >
+                  D
+                </Text>
+              </View>
+              <Box className="flex-1 gap-2">
+                <Text
+                  size="4xl"
+                  bold
+                  className="uppercase tracking-widest text-typography-900"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                >
+                  Dietinator
+                </Text>
+                <Text
+                  size="xs"
+                  bold
+                  className="font-mono uppercase tracking-widest text-typography-500"
+                  style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+                >
+                  Track calories. No ads. Offline first.
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginTop: 8,
+                  }}
+                >
+                  {[
+                    { k: "OFFLINE", v: "SQLite first" },
+                    { k: "GRID", v: "24px ruled" },
+                    { k: "MONO", v: "Departure 11px" },
+                  ].map((chip) => (
+                    <Box
+                      key={chip.k}
+                      className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1.5"
+                      style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <Text
+                        size="2xs"
+                        bold
+                        style={{
+                          color: colors.primary,
+                          fontFamily: fonts.mono,
+                          letterSpacing: 0.06,
+                        }}
+                      >
+                        {chip.k}
+                      </Text>
+                      <Text size="2xs" style={{ color: colors.textMuted, fontFamily: fonts.mono }}>
+                        {chip.v}
+                      </Text>
+                    </Box>
+                  ))}
+                </View>
+              </Box>
+            </Box>
+          ) : null}
+          <Box className={`${isWide ? "mx-auto w-full max-w-[440px]" : ""} mb-8 items-center`}>
+            {isWide ? null : (
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  marginBottom: 20,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                accessibilityLabel="Dietinator app icon"
+              >
+                <Text
+                  style={{
+                    color: colors.onPrimary,
+                    fontFamily: "Departure Mono",
+                    fontSize: 33,
+                    lineHeight: 33,
+                    fontWeight: "700",
+                    textAlign: "center",
+                  }}
+                >
+                  D
+                </Text>
+              </View>
+            )}
             <Text
-              size={isWide ? "4xl" : "3xl"}
+              size={isWide ? "xl" : "3xl"}
               bold
-              className="text-center uppercase tracking-widest text-typography-900"
+              className={`${isWide ? "hidden" : ""} text-center uppercase tracking-widest text-typography-900`}
               style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
-              Dietinator
+              {isWide ? "Sign in" : "Dietinator"}
             </Text>
             <Text
               size="xs"
               bold
-              className="mt-2 max-w-[340px] text-center font-mono uppercase tracking-widest text-typography-500"
+              className={`${isWide ? "hidden" : ""} mt-2 max-w-[340px] text-center font-mono uppercase tracking-widest text-typography-500`}
               style={{ letterSpacing: 0.08 }}
             >
               Track calories. No ads.
             </Text>
+            {isWide ? (
+              <Text
+                size="xs"
+                bold
+                className="mt-2 text-center font-mono uppercase tracking-widest text-typography-500"
+                style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+              >
+                Sign in with YAZIO or try the demo
+              </Text>
+            ) : null}
           </Box>
 
-          <Card
-            variant="elevated"
-            className="gap-4 p-5"
-            style={{
-              borderWidth: 1.5,
-              borderColor: colors.border,
-              borderRadius: 0,
-              backgroundColor: colors.surface,
-              boxShadow: "none",
-              elevation: 0,
-            }}
-          >
-            <Input
-              size="lg"
-              variant="outline"
-              isDisabled={loading}
-              className="rounded-none border"
-              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            >
-              <InputField
-                placeholder="YAZIO email"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                textContentType="username"
-                autoComplete="email"
-                returnKeyType="next"
-                enterKeyHint="next"
-                blurOnSubmit={false}
-                value={email}
-                onChangeText={setEmail}
-                onSubmitEditing={() => passwordRef.current?.focus()}
-                style={{ fontFamily: fonts.mono }}
-              />
-            </Input>
-
-            <Input
-              size="lg"
-              variant="outline"
-              isDisabled={loading}
-              className="rounded-none border"
-              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
-            >
-              <InputField
-                ref={passwordRef as never}
-                placeholder="Password"
-                secureTextEntry={!passwordVisible}
-                textContentType="password"
-                autoComplete="password"
-                returnKeyType="go"
-                enterKeyHint="go"
-                value={password}
-                onChangeText={setPassword}
-                onSubmitEditing={handleLogin}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={{ fontFamily: fonts.mono }}
-              />
-              <Pressable
-                onPress={() => setPasswordVisible((visible) => !visible)}
-                onPressIn={togglePress.onPressIn}
-                onPressOut={togglePress.onPressOut}
-                accessibilityRole="button"
-                accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
-                accessibilityState={{ selected: passwordVisible }}
-                hitSlop={8}
-                className="mr-1.5 h-8 w-8 items-center justify-center rounded-none border"
-                style={[
-                  {
-                    borderWidth: 1.5,
-                    borderColor: passwordVisible ? colors.primary : colors.border,
-                    backgroundColor: passwordVisible
-                      ? withAlpha(colors.primary, 0.14)
-                      : "transparent",
-                    opacity: togglePress.pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <Feather
-                  name={passwordVisible ? "eye-off" : "eye"}
-                  size={16}
-                  color={passwordVisible ? colors.primary : colors.textMuted}
-                />
-              </Pressable>
-            </Input>
-
-            <Box className="flex-row items-center justify-between">
-              <Text
-                size="sm"
-                bold
-                className="font-mono uppercase tracking-widest text-typography-900"
-                style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
-              >
-                Remember me
-              </Text>
-              <Switch
-                value={rememberMe}
-                onValueChange={setRememberMe}
-                isDisabled={loading || demoLoading}
-                accessibilityLabel="Remember me"
-              />
-            </Box>
-
-            <Button
-              size="lg"
-              onPress={handleLogin}
-              isDisabled={loading || demoLoading}
-              className="mt-1 rounded-none border"
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.primary,
-                borderRadius: 0,
-                backgroundColor: colors.primary,
-              }}
-            >
-              {loading ? (
-                <ButtonSpinner color={colors.onPrimary} />
-              ) : (
-                <ButtonText
-                  style={{
-                    fontFamily: fonts.mono,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.06,
-                    color: colors.onPrimary,
-                  }}
-                >
-                  Sign in
-                </ButtonText>
-              )}
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              action="secondary"
-              isDisabled={loading || demoLoading}
-              className="rounded-none border"
+          <Box className={isWide ? "mx-auto w-full max-w-[440px]" : ""}>
+            <Card
+              variant="elevated"
+              className="gap-4 p-5"
               style={{
                 borderWidth: 1.5,
                 borderColor: colors.border,
                 borderRadius: 0,
                 backgroundColor: colors.surface,
-              }}
-              onPress={async () => {
-                setDemoLoading(true)
-                try {
-                  await seedDemoSession()
-                  await refreshSettings()
-                  await refreshAuth()
-                  router.replace("/(tabs)")
-                } catch (error) {
-                  showError(error, "Could not start the demo.")
-                } finally {
-                  setDemoLoading(false)
-                }
+                boxShadow: "none",
+                elevation: 0,
               }}
             >
-              {demoLoading ? (
-                <ButtonSpinner color={colors.primary} />
-              ) : (
-                <ButtonText
-                  style={{
-                    fontFamily: fonts.mono,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.06,
-                  }}
-                >
-                  Try the demo
-                </ButtonText>
-              )}
-            </Button>
-          </Card>
+              <Input
+                size="lg"
+                variant="outline"
+                isDisabled={loading}
+                className="rounded-none border"
+                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+              >
+                <InputField
+                  placeholder="YAZIO email"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  textContentType="username"
+                  autoComplete="email"
+                  returnKeyType="next"
+                  enterKeyHint="next"
+                  blurOnSubmit={false}
+                  value={email}
+                  onChangeText={setEmail}
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  style={{ fontFamily: fonts.mono }}
+                />
+              </Input>
 
-          <Card
-            variant="elevated"
-            className="mt-4 p-0"
-            style={{
-              borderWidth: 1.5,
-              borderColor: colors.border,
-              borderRadius: 0,
-              backgroundColor: colors.surface,
-              boxShadow: "none",
-              elevation: 0,
-            }}
-          >
-            <Pressable
-              className="flex-row items-center justify-between gap-2 p-4 active:opacity-80"
-              onPress={() => setGoogleHelpExpanded((expanded) => !expanded)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: googleHelpExpanded }}
-              accessibilityLabel="Registered with Google? Show instructions"
-            >
-              <Box className="flex-1 flex-row items-center gap-2">
-                <Feather name="help-circle" size={18} color={colors.textMuted} />
+              <Input
+                size="lg"
+                variant="outline"
+                isDisabled={loading}
+                className="rounded-none border"
+                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+              >
+                <InputField
+                  ref={passwordRef as never}
+                  placeholder="Password"
+                  secureTextEntry={!passwordVisible}
+                  textContentType="password"
+                  autoComplete="password"
+                  returnKeyType="go"
+                  enterKeyHint="go"
+                  value={password}
+                  onChangeText={setPassword}
+                  onSubmitEditing={handleLogin}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={{ fontFamily: fonts.mono }}
+                />
+                <Pressable
+                  onPress={() => setPasswordVisible((visible) => !visible)}
+                  onPressIn={togglePress.onPressIn}
+                  onPressOut={togglePress.onPressOut}
+                  accessibilityRole="button"
+                  accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
+                  accessibilityState={{ selected: passwordVisible }}
+                  hitSlop={8}
+                  className="mr-1.5 h-8 w-8 items-center justify-center rounded-none border"
+                  style={[
+                    {
+                      borderWidth: 1.5,
+                      borderColor: passwordVisible ? colors.primary : colors.border,
+                      backgroundColor: passwordVisible
+                        ? withAlpha(colors.primary, 0.14)
+                        : "transparent",
+                      opacity: togglePress.pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name={passwordVisible ? "eye-off" : "eye"}
+                    size={16}
+                    color={passwordVisible ? colors.primary : colors.textMuted}
+                  />
+                </Pressable>
+              </Input>
+
+              <Box className="flex-row items-center justify-between">
                 <Text
                   size="sm"
                   bold
-                  className="flex-1 font-mono uppercase tracking-widest text-typography-900"
+                  className="font-mono uppercase tracking-widest text-typography-900"
                   style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
                 >
-                  Registered with Google?
+                  Remember me
                 </Text>
+                <Switch
+                  value={rememberMe}
+                  onValueChange={setRememberMe}
+                  isDisabled={loading || demoLoading}
+                  accessibilityLabel="Remember me"
+                />
               </Box>
-              <Feather
-                name={googleHelpExpanded ? "chevron-up" : "chevron-down"}
-                size={18}
-                color={colors.textMuted}
-              />
-            </Pressable>
-            {googleHelpExpanded ? (
-              <Text
-                size="sm"
-                className="mt-1 px-4 pb-4 leading-5 text-typography-500"
-                style={{ fontFamily: fonts.mono }}
-              >
-                In the YAZIO app: sign out, select email login, tap &apos;Forgot password&apos;, and
-                set a password. Sign in here with it.
-              </Text>
-            ) : null}
-          </Card>
 
-          <Text
-            size="xs"
-            className="mt-8 px-2 text-center font-mono uppercase tracking-widest text-typography-500"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
-          >
-            Unofficial YAZIO API. For personal use only. Credentials are stored securely on this
-            device.
-          </Text>
+              <Button
+                size="lg"
+                onPress={handleLogin}
+                isDisabled={loading || demoLoading}
+                className="mt-1 rounded-none border"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
+                  borderRadius: 0,
+                  backgroundColor: colors.primary,
+                }}
+              >
+                {loading ? (
+                  <ButtonSpinner color={colors.onPrimary} />
+                ) : (
+                  <ButtonText
+                    style={{
+                      fontFamily: fonts.mono,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.06,
+                      color: colors.onPrimary,
+                    }}
+                  >
+                    Sign in
+                  </ButtonText>
+                )}
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                action="secondary"
+                isDisabled={loading || demoLoading}
+                className="rounded-none border"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 0,
+                  backgroundColor: colors.surface,
+                }}
+                onPress={async () => {
+                  setDemoLoading(true)
+                  try {
+                    await seedDemoSession()
+                    await refreshSettings()
+                    await refreshAuth()
+                    router.replace("/(tabs)")
+                  } catch (error) {
+                    showError(error, "Could not start the demo.")
+                  } finally {
+                    setDemoLoading(false)
+                  }
+                }}
+              >
+                {demoLoading ? (
+                  <ButtonSpinner color={colors.primary} />
+                ) : (
+                  <ButtonText
+                    style={{
+                      fontFamily: fonts.mono,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.06,
+                    }}
+                  >
+                    Try the demo
+                  </ButtonText>
+                )}
+              </Button>
+            </Card>
+
+            <Card
+              variant="elevated"
+              className="mt-4 p-0"
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 0,
+                backgroundColor: colors.surface,
+                boxShadow: "none",
+                elevation: 0,
+              }}
+            >
+              <Pressable
+                className="flex-row items-center justify-between gap-2 p-4 active:opacity-80"
+                onPress={() => setGoogleHelpExpanded((expanded) => !expanded)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: googleHelpExpanded }}
+                accessibilityLabel="Registered with Google? Show instructions"
+              >
+                <Box className="flex-1 flex-row items-center gap-2">
+                  <Feather name="help-circle" size={18} color={colors.textMuted} />
+                  <Text
+                    size="sm"
+                    bold
+                    className="flex-1 font-mono uppercase tracking-widest text-typography-900"
+                    style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                  >
+                    Registered with Google?
+                  </Text>
+                </Box>
+                <Feather
+                  name={googleHelpExpanded ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </Pressable>
+              {googleHelpExpanded ? (
+                <Text
+                  size="sm"
+                  className="mt-1 px-4 pb-4 leading-5 text-typography-500"
+                  style={{ fontFamily: fonts.mono }}
+                >
+                  In the YAZIO app: sign out, select email login, tap &apos;Forgot password&apos;,
+                  and set a password. Sign in here with it.
+                </Text>
+              ) : null}
+            </Card>
+
+            <Text
+              size="xs"
+              className="mt-8 px-2 text-center font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
+              Unofficial YAZIO API. For personal use only. Credentials are stored securely on this
+              device.
+            </Text>
+          </Box>
         </PageContainer>
       </ScrollView>
     </KeyboardAvoidingView>

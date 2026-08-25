@@ -30,6 +30,10 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b26" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+        <link rel="icon" type="image/png" href="/assets/favicon.png?v=4" sizes="48x48" />
+        <link rel="apple-touch-icon" href="/assets/icon.png?v=4" />
+        <link rel="preconnect" href="https://yzapi.yazio.com" crossOrigin="anonymous" />
         <ScrollViewStyleReset />
         {/*
           The app's height chain is html/body, then main, then #root. `main` has no

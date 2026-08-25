@@ -1201,7 +1201,7 @@ export default function SettingsScreen() {
   const { showSuccess, showError } = useToast()
   const { checking, checkForUpdates } = useUpdates()
   const { colors } = useTheme()
-  const { isWide } = useLayout()
+  const { isWide, isLarge } = useLayout()
   const insets = useSafeAreaInsets()
   const scrollRef = useRef<ScrollView>(null)
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
@@ -1306,7 +1306,8 @@ export default function SettingsScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background-0"
+      className="flex-1"
+      style={{ backgroundColor: "transparent" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -1319,8 +1320,8 @@ export default function SettingsScreen() {
         <PageContainer
           grow={false}
           contentStyle={[
-            { padding: spacing.md, paddingTop: insets.top + spacing.md },
-            isWide ? { maxWidth: 860 } : undefined,
+            { padding: spacing.lg, paddingTop: insets.top + spacing.lg },
+            isWide ? { maxWidth: isLarge ? 1360 : 1280 } : undefined,
           ]}
         >
           {activeSection === null ? (
@@ -1350,56 +1351,139 @@ export default function SettingsScreen() {
                 </Text>
               </Box>
 
-              <Card
-                variant="elevated"
-                className="overflow-hidden rounded-none border p-0"
-                style={{
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                  boxShadow: "none",
-                  elevation: 0,
-                }}
-              >
-                {SETTINGS_SECTIONS.map((section, index) => {
-                  const isLast = index === SETTINGS_SECTIONS.length - 1
-                  return (
-                    <Pressable
-                      key={section.id}
-                      onPress={() => {
-                        setActiveSection(section.id)
-                        scrollRef.current?.scrollTo({ y: 0, animated: false })
-                      }}
-                      className={`flex-row items-center gap-3.5 px-4 py-4 active:bg-background-100 ${
-                        !isLast ? "border-b border-outline-100" : ""
-                      }`}
-                      accessibilityRole="button"
-                      // No aria-label: visible label + subtitle is the
-                      // accessible name, which satisfies 2.5.3 label-in-name.
-                    >
-                      <Box
-                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"
-                        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+              {isWide ? (
+                <View
+                  style={
+                    {
+                      display: "grid",
+                      gridTemplateColumns: isLarge
+                        ? "repeat(3, minmax(0, 1fr))"
+                        : "repeat(2, minmax(0, 1fr))",
+                      gap: isLarge ? 20 : 16,
+                    } as never
+                  }
+                >
+                  {SETTINGS_SECTIONS.map((section) => {
+                    const isActive = activeSection === section.id
+                    return (
+                      <Pressable
+                        key={section.id}
+                        onPress={() => {
+                          setActiveSection(section.id)
+                          scrollRef.current?.scrollTo({ y: 0, animated: false })
+                        }}
+                        accessibilityRole="button"
+                        style={{
+                          borderWidth: 1.5,
+                          borderColor: isActive ? colors.primary : colors.border,
+                          backgroundColor: isActive ? `${colors.primary}10` : colors.surface,
+                          padding: 16,
+                          gap: 12,
+                          minHeight: 120,
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
                       >
-                        <Feather name={section.icon} size={22} color={colors.primary} />
-                      </Box>
-                      <Box className="min-w-0 flex-1">
-                        <Text size="md" bold className="text-typography-900">
-                          {section.label}
-                        </Text>
-                        {section.id === "goals" ? (
-                          <MacroGoalSubtitle settings={settings} colors={colors} />
-                        ) : (
-                          <Text size="xs" numberOfLines={1} className="mt-0.5 text-typography-500">
-                            {section.getSubtitle(settings, effectiveCountry)}
+                        <Box
+                          className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
+                          style={{
+                            borderWidth: 1.5,
+                            borderColor: colors.border,
+                            backgroundColor: isActive ? colors.primary : `${colors.primary}12`,
+                          }}
+                        >
+                          <Feather
+                            name={section.icon}
+                            size={22}
+                            color={isActive ? colors.onPrimary : colors.primary}
+                          />
+                        </Box>
+                        <Box className="w-full min-w-0">
+                          <Text size="md" bold className="text-typography-900">
+                            {section.label}
                           </Text>
-                        )}
-                      </Box>
-                      <Feather name="chevron-right" size={18} color={colors.textMuted} />
-                    </Pressable>
-                  )
-                })}
-              </Card>
+                          {section.id === "goals" ? (
+                            <MacroGoalSubtitle settings={settings} colors={colors} />
+                          ) : (
+                            <Text size="xs" numberOfLines={2} className="mt-1 text-typography-500">
+                              {section.getSubtitle(settings, effectiveCountry)}
+                            </Text>
+                          )}
+                        </Box>
+                        <Box className="flex-row items-center gap-1">
+                          <Text
+                            size="xs"
+                            bold
+                            style={{
+                              color: colors.primary,
+                              fontFamily: fonts.mono,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.06,
+                            }}
+                          >
+                            Open
+                          </Text>
+                          <Feather name="arrow-right" size={12} color={colors.primary} />
+                        </Box>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              ) : (
+                <Card
+                  variant="elevated"
+                  className="overflow-hidden rounded-none border p-0"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    borderRadius: 0,
+                    boxShadow: "none",
+                    elevation: 0,
+                  }}
+                >
+                  {SETTINGS_SECTIONS.map((section, index) => {
+                    const isLast = index === SETTINGS_SECTIONS.length - 1
+                    return (
+                      <Pressable
+                        key={section.id}
+                        onPress={() => {
+                          setActiveSection(section.id)
+                          scrollRef.current?.scrollTo({ y: 0, animated: false })
+                        }}
+                        className={`flex-row items-center gap-3.5 px-4 py-4 active:bg-background-100 ${
+                          !isLast ? "border-b border-outline-100" : ""
+                        }`}
+                        accessibilityRole="button"
+                      >
+                        <Box
+                          className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"
+                          style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                        >
+                          <Feather name={section.icon} size={22} color={colors.primary} />
+                        </Box>
+                        <Box className="min-w-0 flex-1">
+                          <Text size="md" bold className="text-typography-900">
+                            {section.label}
+                          </Text>
+                          {section.id === "goals" ? (
+                            <MacroGoalSubtitle settings={settings} colors={colors} />
+                          ) : (
+                            <Text
+                              size="xs"
+                              numberOfLines={1}
+                              className="mt-0.5 text-typography-500"
+                            >
+                              {section.getSubtitle(settings, effectiveCountry)}
+                            </Text>
+                          )}
+                        </Box>
+                        <Feather name="chevron-right" size={18} color={colors.textMuted} />
+                      </Pressable>
+                    )
+                  })}
+                </Card>
+              )}
 
               <Box className="mt-6">
                 <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
@@ -1413,7 +1497,20 @@ export default function SettingsScreen() {
             /* ========================================================== */
             <>
               {/* Section Title */}
-              <Box className="mb-4 pt-1">
+              <Box className="mb-2 flex-row items-center gap-3 pt-1">
+                <Pressable
+                  onPress={backToHub}
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to settings"
+                  className="h-9 w-9 items-center justify-center rounded-none border"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    backgroundColor: colors.surface,
+                  }}
+                >
+                  <Feather name="arrow-left" size={16} color={colors.text} />
+                </Pressable>
                 <Text
                   size="2xl"
                   bold
@@ -1427,6 +1524,66 @@ export default function SettingsScreen() {
                   {currentSection?.label}
                 </Text>
               </Box>
+
+              {isWide ? (
+                <View
+                  style={
+                    {
+                      display: "flex",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginBottom: 20,
+                      paddingBottom: 16,
+                      borderBottomWidth: 1.5,
+                      borderBottomColor: colors.border,
+                    } as never
+                  }
+                >
+                  {SETTINGS_SECTIONS.map((s) => {
+                    const active = s.id === activeSection
+                    return (
+                      <Pressable
+                        key={s.id}
+                        onPress={() => {
+                          setActiveSection(s.id)
+                          scrollRef.current?.scrollTo({ y: 0, animated: false })
+                        }}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderWidth: 1.5,
+                          borderColor: active ? colors.primary : colors.border,
+                          backgroundColor: active ? colors.primary : colors.surface,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <Feather
+                          name={s.icon}
+                          size={14}
+                          color={active ? colors.onPrimary : colors.textMuted}
+                        />
+                        <Text
+                          size="xs"
+                          bold
+                          style={{
+                            color: active ? colors.onPrimary : colors.text,
+                            fontFamily: fonts.mono,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.06,
+                          }}
+                        >
+                          {s.label}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              ) : null}
 
               {/* Goals and Nutrition */}
               {activeSection === "goals" ? <GoalsSettings settings={settings} /> : null}

@@ -3,11 +3,10 @@ import { useState } from "react"
 import { Tabs } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Pressable, View } from "react-native"
+import { Platform, Pressable, View } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useApp } from "@/context/AppContext"
-import { withAlpha } from "@/utils/color"
 import { layout } from "@/theme"
 import { Text } from "@ui/text"
 
@@ -35,41 +34,67 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   })
 
   if (isWide) {
+    // Floating detached rail: never touches the viewport edge. The outer shell
+    // centers the app at 1440 with 20px gutters, and this rail sits inside
+    // that shell with its own ink frame. Sticky on web so it stays reachable
+    // without chasing the top of a tall diary.
     return (
       <View
         accessibilityRole="tablist"
         style={{
-          width: 104,
+          width: layout.sideTabWidth,
+          alignSelf: "flex-start",
           backgroundColor: colors.surface,
-          borderRightWidth: 1,
-          borderRightColor: colors.border,
-          paddingTop: insets.top > 0 ? insets.top + 16 : 24,
-          paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24,
-          paddingLeft: insets.left,
-          paddingRight: insets.right > 0 ? 4 : 0,
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          paddingTop: insets.top > 0 ? 12 : 16,
+          paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 16,
+          paddingLeft: 8,
+          paddingRight: 8,
+          marginLeft: insets.left > 0 ? insets.left : 0,
+          marginRight: layout.shellGap,
           alignItems: "center",
           justifyContent: "flex-start",
-          gap: 10,
+          gap: 8,
+          flexShrink: 0,
+          ...(Platform.OS === "web"
+            ? {
+                position: "sticky" as never,
+                top: layout.shellPadding as never,
+                maxHeight: `calc(100vh - ${layout.shellPadding * 2}px)` as never,
+              }
+            : {}),
         }}
       >
-        {/* Brand Icon, square terminal */}
+        {/* Brand mark — square ink stamp */}
         <View
           style={{
             width: 44,
             height: 44,
-            borderRadius: 0,
             borderWidth: 1.5,
-            borderColor: colors.border,
-            backgroundColor: withAlpha(colors.primary, 0.12),
+            borderColor: colors.primary,
+            backgroundColor: colors.primary,
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 16,
+            marginBottom: 14,
           }}
+          accessibilityLabel="Dietinator"
         >
-          <Feather name="package" size={24} color={colors.primary} />
+          <Text
+            style={{
+              color: colors.onPrimary,
+              fontFamily: "Departure Mono",
+              fontSize: 22,
+              lineHeight: 22,
+              fontWeight: "700",
+              textAlign: "center",
+            }}
+          >
+            D
+          </Text>
         </View>
 
-        {/* Tab Items */}
+        {/* Rail items — compact square keys */}
         {visibleRoutes.map((route: (typeof state.routes)[number]) => {
           const { options } = descriptors[route.key]
           const isFocused = state.routes[state.index]?.key === route.key
@@ -115,7 +140,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               onHoverOut={() => setHoveredRoute(null)}
               style={({ pressed }) => [
                 {
-                  width: 88,
+                  width: layout.sideTabItemWidth,
                   paddingVertical: 10,
                   paddingHorizontal: 6,
                   borderRadius: 0,
@@ -125,7 +150,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 2,
+                  gap: 3,
                   backgroundColor: isFocused
                     ? colors.primary
                     : pressed
@@ -138,16 +163,16 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? colors.onPrimary : inactiveColor,
-                size: 22,
+                size: 20,
               })}
               <Text
                 size="xs"
                 bold={isFocused}
                 style={{
                   color: isFocused ? colors.onPrimary : inactiveColor,
-                  marginTop: 2,
-                  fontSize: 11,
-                  letterSpacing: 0.04,
+                  marginTop: 1,
+                  fontSize: 10,
+                  letterSpacing: 0.06,
                   textAlign: "center",
                   textTransform: "uppercase",
                   alignSelf: "center",
@@ -318,6 +343,88 @@ export default function TabLayout() {
   const { colors } = useTheme()
   const { isWide } = useLayout()
   const { settings } = useApp()
+
+  // Wide desktop: center the whole app in a padded shell so no chrome
+  // touches the viewport edge. The 1440 shell holds the 96px floating rail
+  // plus the diary column with a comfortable 20px gap inside.
+  if (isWide && Platform.OS === "web") {
+    return (
+      <View
+        style={{
+          flex: 1,
+          width: "100%",
+          backgroundColor: "transparent",
+        }}
+      >
+        <View
+          style={{
+            width: "100%",
+            maxWidth: layout.shellMaxWidth,
+            alignSelf: "center",
+            marginLeft: "auto" as never,
+            marginRight: "auto" as never,
+            padding: layout.shellPadding,
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          <Tabs
+            tabBar={(props) => <AppTabBar {...props} />}
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.textOnBackground,
+              headerShown: false,
+              tabBarPosition: "left",
+            }}
+          >
+            <Tabs.Screen
+              name="index"
+              options={{
+                title: "Today",
+                headerShown: false,
+                tabBarAccessibilityLabel: "Today",
+                tabBarIcon: ({ color, size }) => (
+                  <Feather name="calendar" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="ai"
+              options={{
+                title: "AI",
+                href: settings.ai_enabled === 1 ? "/(tabs)/ai" : null,
+                headerShown: false,
+                tabBarAccessibilityLabel: "AI Assistant",
+                tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
+              }}
+            />
+            <Tabs.Screen
+              name="stats"
+              options={{
+                title: "Stats",
+                headerShown: false,
+                tabBarAccessibilityLabel: "Stats",
+                tabBarIcon: ({ color, size }) => (
+                  <Feather name="bar-chart-2" size={size} color={color} />
+                ),
+              }}
+            />
+            <Tabs.Screen
+              name="settings"
+              options={{
+                title: "Settings",
+                headerShown: false,
+                tabBarAccessibilityLabel: "Settings",
+                tabBarIcon: ({ color, size }) => (
+                  <Feather name="settings" size={size} color={color} />
+                ),
+              }}
+            />
+          </Tabs>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <Tabs

@@ -55,15 +55,15 @@ export function FabCluster({
   gap = 12,
   insetX = 20,
 }: Props) {
+  const rightInset = insetX
+  const leftInset = insetX
+
   return (
     <>
       {left ? (
-        <View style={[styles.cluster, { left: insetX, bottom: bottomOffset, gap }]}>{left}</View>
+        <View style={[styles.cluster, { left: leftInset, bottom: bottomOffset, gap }]}>{left}</View>
       ) : null}
       {center ? (
-        // Prop form, not style: react-native-web drops `pointerEvents` from
-        // both inline and css-interop-processed styles, and a full-width
-        // center cluster would swallow every tap above it.
         <View
           pointerEvents="box-none"
           style={[styles.clusterCenter, { bottom: bottomOffset, gap }]}
@@ -76,7 +76,7 @@ export function FabCluster({
           style={[
             styles.cluster,
             styles.clusterRight,
-            { right: insetX, bottom: bottomOffset, gap },
+            { right: rightInset, bottom: bottomOffset, gap },
           ]}
         >
           {right}

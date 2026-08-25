@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   FlatList,
@@ -84,12 +84,36 @@ export default function AiScreen() {
   const { settings } = useApp()
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
-  const { width, isWide } = useLayout()
+  const { width, isWide, isLarge } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
+  const inputRef = useRef<TextInput>(null)
   const headerPress = usePressedState()
   const sendPress = usePressedState()
   const compact = width < 360
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) {
+        if (event.key === "Escape") (target as HTMLElement).blur()
+        return
+      }
+      if (event.key === "/" && !busy) {
+        event.preventDefault()
+        inputRef.current?.focus()
+      } else if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        inputRef.current?.focus()
+      } else if (event.key === "Escape" && busy) {
+        event.preventDefault()
+        stop()
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [busy, stop])
 
   const configured = settings.ai_enabled === 1
 
@@ -491,12 +515,12 @@ export default function AiScreen() {
   const canSend = draft.trim().length > 0 && !busy && configured
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View className="flex-1" style={{ backgroundColor: "transparent" }}>
       <View
         style={{
           flex: 1,
           width: "100%",
-          maxWidth: isWide ? 800 : undefined,
+          maxWidth: isLarge ? 1360 : isWide ? 1280 : undefined,
           alignSelf: "center",
         }}
       >
@@ -569,115 +593,421 @@ export default function AiScreen() {
 
         {!configured ? configBanner : null}
 
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-        >
-          {messages.length === 0 ? (
-            <FlatList
-              data={[]}
-              renderItem={null}
-              ListEmptyComponent={emptyState}
-              contentContainerClassName="flex-grow justify-center pb-24"
-              keyboardDismissMode="on-drag"
-              keyboardShouldPersistTaps="handled"
-            />
-          ) : (
-            <FlatList
-              data={reversedMessages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => String(item.id ?? item.created_at)}
-              inverted
-              contentContainerClassName="px-4 pb-20 pt-3"
-              keyboardDismissMode="on-drag"
-              keyboardShouldPersistTaps="handled"
-            />
-          )}
-
-          {confirmationCard}
-
-          <Box
-            className="border-t bg-background-0 px-3 pb-3 pt-2"
-            style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+        {isWide ? (
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              gap: isLarge ? 20 : 16,
+              padding: isLarge ? 20 : 16,
+              alignItems: "flex-start",
+            }}
           >
-            <Box className="flex-row items-end gap-2">
+            <View
+              style={{
+                width: isLarge ? 340 : 300,
+                flexShrink: 0,
+                gap: 12,
+                alignSelf: "stretch",
+              }}
+            >
               <Box
-                className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
+                className="rounded-none border bg-background-50 p-4"
                 style={{
-                  minHeight: 44,
                   borderWidth: 1.5,
                   borderColor: colors.border,
-                  borderRadius: 0,
                   backgroundColor: colors.surface,
-                  boxShadow: "none",
-                  elevation: 0,
                 }}
               >
-                <TextInput
-                  value={draft}
-                  onChangeText={setDraft}
-                  placeholder={
-                    configured ? "Ask about your diet…" : "Enable the assistant in Settings first"
-                  }
-                  placeholderTextColor={colors.textMuted}
-                  editable={configured}
-                  multiline={Platform.OS !== "web"}
-                  style={[styles.input, { color: colors.text, fontFamily: fonts.mono }]}
-                  selectionColor={colors.primary}
-                  accessibilityLabel="Message the AI assistant"
-                  returnKeyType="send"
-                  enterKeyHint="send"
-                  blurOnSubmit={false}
-                  onSubmitEditing={canSend ? submit : undefined}
-                />
+                <Box className="flex-row items-center gap-2.5">
+                  <Box
+                    className="h-9 w-9 items-center justify-center rounded-none border"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      backgroundColor: withAlpha(colors.primary, 0.12),
+                    }}
+                  >
+                    <Feather name="cpu" size={18} color={colors.primary} />
+                  </Box>
+                  <Box>
+                    <Text
+                      size="sm"
+                      bold
+                      className="font-mono uppercase tracking-widest text-typography-900"
+                      style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                    >
+                      Quick prompts
+                    </Text>
+                    <Text
+                      size="2xs"
+                      className="font-mono uppercase tracking-widest text-typography-500"
+                      style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                    >
+                      Tap to send
+                    </Text>
+                  </Box>
+                </Box>
+                <Box className="mt-3 gap-2">
+                  {suggestionPrompts.map((preset) => (
+                    <Pressable
+                      key={preset.id}
+                      onPress={() => runPreset(preset)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Preset: ${preset.title}`}
+                      className="rounded-none border bg-background-50 p-3 active:opacity-80"
+                      style={{
+                        borderWidth: 1.5,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <Box className="flex-row items-center gap-2">
+                        <Box
+                          className="h-7 w-7 items-center justify-center rounded-none border"
+                          style={{
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            backgroundColor: withAlpha(colors.primary, 0.1),
+                          }}
+                        >
+                          <Feather
+                            name={preset.icon as keyof typeof Feather.glyphMap}
+                            size={12}
+                            color={colors.primary}
+                          />
+                        </Box>
+                        <Text
+                          size="sm"
+                          bold
+                          className="flex-1 font-mono uppercase tracking-widest text-typography-900"
+                          style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                        >
+                          {preset.title}
+                        </Text>
+                      </Box>
+                      <Text
+                        size="xs"
+                        className="mt-1 font-mono leading-4 text-typography-500"
+                        style={{ fontFamily: fonts.mono }}
+                      >
+                        {preset.subtitle}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </Box>
               </Box>
-              {busy ? (
-                <Pressable
-                  onPress={stop}
-                  accessibilityRole="button"
-                  accessibilityLabel="Stop generating"
-                  className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
+
+              <Box
+                className="rounded-none border bg-background-50 p-3"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
+                <Text
+                  size="2xs"
+                  bold
+                  className="font-mono uppercase tracking-widest text-typography-500"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                >
+                  Shortcuts
+                </Text>
+                <Box className="mt-2 gap-1">
+                  {[
+                    ["Enter", "Send"],
+                    ["Esc", "Stop"],
+                    ["?", "Help"],
+                  ].map(([k, v]) => (
+                    <Box key={k} className="flex-row items-center justify-between">
+                      <Box
+                        className="rounded-none border bg-background-100 px-1.5 py-0.5"
+                        style={{ borderWidth: 1, borderColor: colors.border }}
+                      >
+                        <Text
+                          size="2xs"
+                          bold
+                          className="font-mono text-typography-700"
+                          style={{ fontFamily: fonts.mono }}
+                        >
+                          {k}
+                        </Text>
+                      </Box>
+                      <Text
+                        size="2xs"
+                        className="font-mono uppercase tracking-widest text-typography-500"
+                        style={{ fontFamily: fonts.mono }}
+                      >
+                        {v}
+                      </Text>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </View>
+
+            <View
+              style={{
+                flex: 1,
+                minWidth: 0,
+                alignSelf: "stretch",
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                flexDirection: "column",
+              }}
+            >
+              <KeyboardAvoidingView
+                className="flex-1"
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+              >
+                {messages.length === 0 ? (
+                  <FlatList
+                    data={[]}
+                    renderItem={null}
+                    ListEmptyComponent={
+                      <Box className="items-center px-6 py-12">
+                        <Box
+                          className="h-16 w-16 items-center justify-center rounded-none border"
+                          style={{
+                            borderWidth: 1.5,
+                            borderColor: colors.border,
+                            backgroundColor: withAlpha(colors.primary, 0.08),
+                          }}
+                        >
+                          <Feather name="cpu" size={24} color={colors.primary} />
+                        </Box>
+                        <Text
+                          size="md"
+                          bold
+                          className="mt-4 text-center font-mono uppercase tracking-widest text-typography-900"
+                          style={{ fontFamily: fonts.mono }}
+                        >
+                          How can I help you eat well?
+                        </Text>
+                        <Text
+                          size="sm"
+                          className="mt-2 max-w-[420px] text-center font-mono leading-5 text-typography-500"
+                          style={{ fontFamily: fonts.mono }}
+                        >
+                          Ask about your diary, log foods, or adjust goals. Data stays private,
+                          prompts run on the left.
+                        </Text>
+                      </Box>
+                    }
+                    contentContainerClassName="flex-grow justify-center"
+                    keyboardDismissMode="on-drag"
+                    keyboardShouldPersistTaps="handled"
+                  />
+                ) : (
+                  <FlatList
+                    data={reversedMessages}
+                    renderItem={renderMessage}
+                    keyExtractor={(item) => String(item.id ?? item.created_at)}
+                    inverted
+                    contentContainerClassName="px-4 pb-20 pt-3"
+                    keyboardDismissMode="on-drag"
+                    keyboardShouldPersistTaps="handled"
+                  />
+                )}
+
+                {confirmationCard}
+
+                <Box
+                  className="border-t bg-background-0 px-3 pb-3 pt-2"
+                  style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+                >
+                  <Box className="flex-row items-end gap-2">
+                    <Box
+                      className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
+                      style={{
+                        minHeight: 44,
+                        borderWidth: 1.5,
+                        borderColor: colors.border,
+                        borderRadius: 0,
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <TextInput
+                        ref={inputRef as never}
+                        value={draft}
+                        onChangeText={setDraft}
+                        placeholder={
+                          configured
+                            ? "Ask about your diet…"
+                            : "Enable the assistant in Settings first"
+                        }
+                        placeholderTextColor={colors.textMuted}
+                        editable={configured}
+                        multiline={Platform.OS !== "web"}
+                        style={[styles.input, { color: colors.text, fontFamily: fonts.mono }]}
+                        selectionColor={colors.primary}
+                        accessibilityLabel="Message the AI assistant"
+                        returnKeyType="send"
+                        enterKeyHint="send"
+                        blurOnSubmit={false}
+                        onSubmitEditing={canSend ? submit : undefined}
+                      />
+                    </Box>
+                    {busy ? (
+                      <Pressable
+                        onPress={stop}
+                        accessibilityRole="button"
+                        accessibilityLabel="Stop generating"
+                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border active:opacity-80"
+                        style={{
+                          borderWidth: 1.5,
+                          borderColor: colors.border,
+                          backgroundColor: colors.surface,
+                        }}
+                      >
+                        <Feather name="x" size={20} color={colors.danger} />
+                      </Pressable>
+                    ) : (
+                      <Pressable
+                        onPress={submit}
+                        disabled={!canSend}
+                        onPressIn={sendPress.onPressIn}
+                        onPressOut={sendPress.onPressOut}
+                        accessibilityRole="button"
+                        accessibilityLabel="Send message"
+                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
+                        style={[
+                          {
+                            backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
+                            borderWidth: 1.5,
+                            borderColor: canSend ? colors.primary : colors.border,
+                            borderRadius: 0,
+                          },
+                          ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
+                        ]}
+                      >
+                        <Feather
+                          name="arrow-up"
+                          size={20}
+                          color={canSend ? colors.onPrimary : colors.textMuted}
+                        />
+                      </Pressable>
+                    )}
+                  </Box>
+                </Box>
+              </KeyboardAvoidingView>
+            </View>
+          </View>
+        ) : (
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+          >
+            {messages.length === 0 ? (
+              <FlatList
+                data={[]}
+                renderItem={null}
+                ListEmptyComponent={emptyState}
+                contentContainerClassName="flex-grow justify-center pb-24"
+                keyboardDismissMode="on-drag"
+                keyboardShouldPersistTaps="handled"
+              />
+            ) : (
+              <FlatList
+                data={reversedMessages}
+                renderItem={renderMessage}
+                keyExtractor={(item) => String(item.id ?? item.created_at)}
+                inverted
+                contentContainerClassName="px-4 pb-20 pt-3"
+                keyboardDismissMode="on-drag"
+                keyboardShouldPersistTaps="handled"
+              />
+            )}
+
+            {confirmationCard}
+
+            <Box
+              className="border-t bg-background-0 px-3 pb-3 pt-2"
+              style={{ borderTopWidth: 1.5, borderTopColor: colors.border }}
+            >
+              <Box className="flex-row items-end gap-2">
+                <Box
+                  className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
                   style={{
+                    minHeight: 44,
                     borderWidth: 1.5,
                     borderColor: colors.border,
                     borderRadius: 0,
                     backgroundColor: colors.surface,
+                    boxShadow: "none",
+                    elevation: 0,
                   }}
                 >
-                  <Feather name="x" size={20} color={colors.danger} />
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={submit}
-                  disabled={!canSend}
-                  onPressIn={sendPress.onPressIn}
-                  onPressOut={sendPress.onPressOut}
-                  accessibilityRole="button"
-                  accessibilityLabel="Send message"
-                  className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
-                  style={[
-                    {
-                      backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                      borderWidth: 1.5,
-                      borderColor: canSend ? colors.primary : colors.border,
-                      borderRadius: 0,
-                      boxShadow: "none",
-                      elevation: 0,
-                    },
-                    ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
-                  ]}
-                >
-                  <Feather
-                    name="arrow-up"
-                    size={20}
-                    color={canSend ? colors.onPrimary : colors.textMuted}
+                  <TextInput
+                    ref={inputRef as never}
+                    value={draft}
+                    onChangeText={setDraft}
+                    placeholder={
+                      configured ? "Ask about your diet…" : "Enable the assistant in Settings first"
+                    }
+                    placeholderTextColor={colors.textMuted}
+                    editable={configured}
+                    multiline={Platform.OS !== "web"}
+                    style={[styles.input, { color: colors.text, fontFamily: fonts.mono }]}
+                    selectionColor={colors.primary}
+                    accessibilityLabel="Message the AI assistant"
+                    returnKeyType="send"
+                    enterKeyHint="send"
+                    blurOnSubmit={false}
+                    onSubmitEditing={canSend ? submit : undefined}
                   />
-                </Pressable>
-              )}
+                </Box>
+                {busy ? (
+                  <Pressable
+                    onPress={stop}
+                    accessibilityRole="button"
+                    accessibilityLabel="Stop generating"
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: 0,
+                      backgroundColor: colors.surface,
+                    }}
+                  >
+                    <Feather name="x" size={20} color={colors.danger} />
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={submit}
+                    disabled={!canSend}
+                    onPressIn={sendPress.onPressIn}
+                    onPressOut={sendPress.onPressOut}
+                    accessibilityRole="button"
+                    accessibilityLabel="Send message"
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
+                    style={[
+                      {
+                        backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
+                        borderWidth: 1.5,
+                        borderColor: canSend ? colors.primary : colors.border,
+                        borderRadius: 0,
+                        boxShadow: "none",
+                        elevation: 0,
+                      },
+                      ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
+                    ]}
+                  >
+                    <Feather
+                      name="arrow-up"
+                      size={20}
+                      color={canSend ? colors.onPrimary : colors.textMuted}
+                    />
+                  </Pressable>
+                )}
+              </Box>
             </Box>
-          </Box>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        )}
       </View>
     </View>
   )

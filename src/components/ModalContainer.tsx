@@ -45,7 +45,7 @@ export function ModalContainer({
   onDismiss,
   dismissable = true,
 }: Props) {
-  const { isWide } = useLayout()
+  const { isWide, isLarge } = useLayout()
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const safeBack = useSafeBack()
@@ -83,7 +83,9 @@ export function ModalContainer({
   }
 
   return (
-    <Box className="w-full flex-1 items-center justify-center px-6 py-10">
+    <Box
+      className={`w-full flex-1 items-center justify-center ${isLarge ? "px-10 py-12" : "px-6 py-10"}`}
+    >
       {dismissable ? (
         <Pressable
           onPress={handleDismiss}
