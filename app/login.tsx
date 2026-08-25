@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react"
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput } from "react-native"
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+} from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
@@ -15,13 +22,14 @@ import { toDateKey } from "@/utils/date"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { useTheme } from "@/hooks/useTheme"
+import { usePressedState } from "@/hooks/usePressedState"
 import { useLayout } from "@/hooks/useLayout"
 import { PageContainer } from "@/components/PageContainer"
 import { withAlpha } from "@/utils/color"
 import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { Input, InputField, InputSlot } from "@ui/input"
+import { Input, InputField } from "@ui/input"
 import { Button, ButtonSpinner, ButtonText } from "@ui/button"
 import { Switch } from "@ui/switch"
 import { Card } from "@ui/card"
@@ -40,6 +48,7 @@ export default function LoginScreen() {
   const [googleHelpExpanded, setGoogleHelpExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
+  const togglePress = usePressedState()
   const passwordRef = useRef<TextInput>(null)
 
   useEffect(() => {
@@ -107,17 +116,19 @@ export default function LoginScreen() {
           ]}
         >
           <Box className="mb-8 items-center">
-            <Box
-              className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
+            <Image
+              source={require("../assets/icon.png")}
               style={{
+                width: 80,
+                height: 80,
+                marginBottom: 20,
                 borderWidth: 1.5,
                 borderColor: colors.border,
                 borderRadius: 0,
-                backgroundColor: withAlpha(colors.primary, 0.12),
               }}
-            >
-              <Feather name="package" size={40} color={colors.primary} />
-            </Box>
+              resizeMode="cover"
+              accessibilityLabel="Dietinator app icon"
+            />
             <Text
               size={isWide ? "4xl" : "3xl"}
               bold
@@ -193,18 +204,32 @@ export default function LoginScreen() {
                 autoCorrect={false}
                 style={{ fontFamily: fonts.mono }}
               />
-              <InputSlot
+              <Pressable
                 onPress={() => setPasswordVisible((visible) => !visible)}
+                onPressIn={togglePress.onPressIn}
+                onPressOut={togglePress.onPressOut}
                 accessibilityRole="button"
                 accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
-                className="rounded-none"
+                accessibilityState={{ selected: passwordVisible }}
+                hitSlop={8}
+                className="mr-1.5 h-8 w-8 items-center justify-center rounded-none border"
+                style={[
+                  {
+                    borderWidth: 1.5,
+                    borderColor: passwordVisible ? colors.primary : colors.border,
+                    backgroundColor: passwordVisible
+                      ? withAlpha(colors.primary, 0.14)
+                      : "transparent",
+                    opacity: togglePress.pressed ? 0.7 : 1,
+                  },
+                ]}
               >
                 <Feather
                   name={passwordVisible ? "eye-off" : "eye"}
-                  size={20}
-                  color={colors.textMuted}
+                  size={16}
+                  color={passwordVisible ? colors.primary : colors.textMuted}
                 />
-              </InputSlot>
+              </Pressable>
             </Input>
 
             <Box className="flex-row items-center justify-between">
