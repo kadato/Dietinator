@@ -1,0 +1,10 @@
+# pnpm reads its settings from here since v11, even for a single-package repo.
+# .npmrc is auth/registry only since pnpm 11.
+allowBuilds:
+  unrs-resolver: true
+engineStrict: true
+# Metro and @babel/core resolve plugins from the project root. Expo's toolchain
+# relies on transitive deps (react-native-css-interop, @babel plugins), so keep
+# a flat node_modules like npm produced before the pnpm migration.
+publicHoistPattern:
+  - "*"
