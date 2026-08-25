@@ -64,7 +64,7 @@ textarea::placeholder {
   --app-border: #0f172a;
   --app-text: #0f172a;
   --bg: #f1f5f9;
-  --bg-grid: rgba(15, 23, 42, 0.06);
+  --bg-grid: rgba(15, 23, 42, 0.035);
   --surface: #ffffff;
   --surface-alt: #e2e8f0;
   --ink: #0f172a;
@@ -85,7 +85,7 @@ html.dark {
   --app-border: #6b739c;
   --app-text: #c0caf5;
   --bg: #1a1b26;
-  --bg-grid: rgba(192, 202, 245, 0.06);
+  --bg-grid: rgba(192, 202, 245, 0.035);
   --surface: #24283b;
   --surface-alt: #292e42;
   --ink: #c0caf5;
@@ -278,8 +278,8 @@ html.dark .bg-primary-500 {
 }
 /* paper grid. Tokyo Night graph. Tokenized via CSS variables — exact same as prototype board */
 :root {
-  --paper-grid: rgba(15, 23, 42, 0.06);
-  --paper-grid-dark: rgba(192, 202, 245, 0.06);
+  --paper-grid: rgba(15, 23, 42, 0.035);
+  --paper-grid-dark: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
 }
 html:not(.dark) body,

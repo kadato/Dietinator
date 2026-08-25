@@ -37,8 +37,8 @@ danger: "#be123c"
 danger-dark: "#ff7a8e"
 warning: "#96610a"
 warning-dark: "#e0af68"
-ink-grid: "rgba(15,23,42,0.06)"
-ink-grid-dark: "rgba(192,202,245,0.06)"
+ink-grid: "rgba(15,23,42,0.035)"
+ink-grid-dark: "rgba(192,202,245,0.035)"
 typography:
 display:
 fontFamily: "'Departure Mono', monospace"
@@ -137,8 +137,8 @@ This replacement world keeps product truth, content, function, and constraints, 
 
 - Square strict. Every card, button, input, bar, and tab is `0` radius with a 1.5px ink rule. Tinted chips use 1px interior rules not glows.
 - Mono ledger. Departure Mono everywhere. Tabular-nums forced. Headings uppercase at 0.04 to 0.08 tracking.
-- Paper grid system. 24px graph on `#ffedd5` light and 24px dotted void on `#1a1b26` dark. No gradients, no blur.
-- Harvest deep. Light is now deep amber paper #ffedd5, wells #fed7aa, ink #9a3412 burnt orange. Wong meals #0072B2 #E69F00 #D55E00 #009E73 carry macros colorblind-safe and very vibrant. Dark stays Tokyo Night.
+- Paper grid system. 24px graph on `#f1f5f9` light and 24px dotted void on `#1a1b26` dark at `0.035` alpha. No gradients, no blur.
+- Slate ledger. Light paper `#f1f5f9` with wells `#e2e8f0` ink `#0f172a` primary `#0b57d0`. Wong meals `075985 804707 96340a 2EC4B6` carry macros colorblind-safe at 4.5:1. Dark Tokyo Night `#1a1b26` stays.
 - Thumb-first density. Tight 4 to 12 rhythm. Generous separation between groups. Bottom dock of 52 square keys for one-hand logging.
 - Flat authority. No shadows. Elevation is border weight and invert. Pressed is `scale 0.98` not lift.
 
@@ -148,12 +148,12 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ### Primary
 
-- **Ink. The only chrome fill uses #9a3412 on light and #7aa2f7 on dark. Square primary buttons, active tab invert, and ledger rules use it. Light uses white `onPrimary` at 7.31:1. Dark uses `#1a1b26` on off-white at 16.2:1. Deep burnt orange, darker and more orange than before.**
-- **Ink strong. Uses #7c2d12 on light and #ffffff on dark. It gives hover and pressed depth. No mid tint, only ink or paper.**
+- **Ink. The only chrome fill uses #0b57d0 on light and #7aa2f7 on dark. Square primary buttons, active tab invert, and ledger rules use it. Light uses white `onPrimary` at 7.8:1. Dark uses `#1a1b26` on `#c0caf5` at 8.2:1. Slate blue, ledger ink.**
+- **Ink strong. Uses #0044cc on light and #7dcfff on dark. It gives hover and pressed depth.**
 
 ### Secondary
 
-- **Paper grid. Uses #ffedd5 on light and #1a1b26 on dark. Deep amber paper #ffedd5 with wells #fed7aa replaces pale cream, grid at rgba(154,52,18,0.08) more orange and darker. It is the ground that shows the 24px graph. It is not decoration, it is the ledger ruling.**
+- **Paper grid. Uses #f1f5f9 on light and #1a1b26 on dark at `0.035` alpha `--bg-grid`. Slate paper with wells `#e2e8f0` in light. It is the ground that shows the 24px graph. It is not decoration, it is the ledger ruling.**
 
 ### Tertiary
 
@@ -161,12 +161,12 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 
 ### Neutral
 
-- **Surface. Uses #ffffff on light and #141616 on dark. Sheets, cards, and modals use it. Each sheet carries a 1.5px `#9a3412` rule on light and `#414868` on dark.**
-- **Surface alt. Uses #fed7aa on light and #1e2122 on dark. Deeper amber well #fed7aa replaces peach. Wells, tracks, and chip grounds use it. Bar track background uses it.**
-- **Ink. Uses #431407 on light and #c0caf5 on dark. Body and numerals use it. Burnt umber 13.6:1 on #ffedd5, darker paper still holds.**
-- **Ink muted. Uses #7c2d12 on light and #a9b1d6 on dark. Darker terracotta, deeper and more orange. Secondary labels and helper use it.**
-- **Ink on background. Uses #431407 on light and #c0caf5 on dark. Section titles on the grid ground use it. Holds 13:1 on deeper amber.**
-- **Line. Uses #c2410c on light and #414868 on dark. Deeper burnt orange, more saturated than #ea580c. Every hairline and card edge is 1.5px on light and 1px on dark. Never hairline 1px on light because it disappears on the paper grid.**
+- **Surface. Uses #ffffff on light and #24283b on dark. Sheets, cards, and modals use it. Each sheet carries a 1.5px `#0f172a` rule on light and `#6b739c` on dark.**
+- **Surface alt. Uses #e2e8f0 on light and #292e42 on dark. Wells, tracks, and chip grounds use it. Bar track background uses it.**
+- **Ink. Uses #0f172a on light and #c0caf5 on dark. Body and numerals use it. 15.8:1 on #ffffff, 4.6:1 border on dark.**
+- **Ink muted. Uses #475569 on light and #a9b1d6 on dark. Secondary labels and helper use it.**
+- **Ink on background. Uses #0f172a on light and #c0caf5 on dark. Section titles on the grid ground use it.**
+- **Line. Uses #0f172a on light and #6b739c on dark. Every card edge is 1.5px. Hairline only for inner chip rules at 1px.**
 - **Alert. Danger uses #9f1239 on light and #f7768e on dark and is square. Warning uses #92400e on light and #e0af68 on dark and is square. Progress over budget flips to danger ink plus 12 percent tint. It never glows.**
 
 ### Named rules
