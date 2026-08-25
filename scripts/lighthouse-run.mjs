@@ -2,89 +2,103 @@
 /**
  * Lighthouse runner for the Dietinator web build.
  *
- * Audits the authenticated dashboard via the app's own `?demo=1` flow: the
+ * Audits the authenticated app via the app's own `?demo=1` flow: the
  * COOP/COEP headers that wa-sqlite requires partition localStorage per
  * browsing context group, so a browser profile's login can never be shared
  * into a Lighthouse audit tab. Demo mode is the app's supported, e2e-tested
  * way to reach the real dashboard without credentials.
  *
- * - Launches Chrome with a fresh per-audit profile
+ * - Auto-detects a Chrome/Chromium binary (CHROME_PATH overrides)
  * - Runs a Lighthouse audit per route in light AND dark color schemes
- *   (dark is driven via CDP Emulation.setEmulatedMedia, since the
- *   `--force-prefers-color-scheme` flag is ignored by modern headless Chrome)
- * - Optionally (REAL_LOGIN=1) logs in with the real YAZIO credentials from
- *   .env.local as a smoke check that the login flow works
+ *   (dark is driven via CDP Emulation.setEmulatedMedia)
+ * - One browser per scheme: warm-up seeds the demo DB once, then every route
+ *   is audited in that same profile so OPFS storage stays valid
  * - Saves HTML + JSON reports to lighthouse-reports/ and prints the score table
  *
  * Usage:
  *   npm run build:web
- *   node scripts/lighthouse-run.mjs [/search /settings ...]
+ *   node scripts/lighthouse-run.mjs [dashboard stats ...]   # default: all routes
  *
  * Env:
- *   BASE_URL    (default http://localhost:9082, because 8082 is excluded by Hyper-V
- *                on Windows, so 9082 works out of the box; point at a running
- *                `npm run serve:web` or let this script start one)
+ *   BASE_URL    (default http://localhost:9082; point at a running
+ *               `npm run serve:web` or let this script start one)
  *   PRESET      mobile (default) | desktop
- *   REAL_LOGIN  1 to smoke-check the real YAZIO login before auditing
- *   REPORT_DIR  (default lighthouse-reports/)
  *   THEME       light | dark | both (default both)
- *   LH_ROUTES   comma-separated route names (dashboard,stats,log-meal,ai,settings)
+ *   REPORT_DIR  (default lighthouse-reports/)
  */
-import { spawn, execFileSync } from "node:child_process"
-import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs"
+import { spawn } from "node:child_process"
+import { mkdirSync, writeFileSync, existsSync, rmSync, readdirSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import os from "node:os"
-import { launch } from "chrome-launcher"
-import { chromium } from "playwright"
-import puppeteer from "puppeteer-core"
+import { homedir, tmpdir } from "node:os"
+import { launch as launchChrome } from "puppeteer-core"
 import lighthouse from "lighthouse"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
 
-const envPath = join(ROOT, ".env.local")
-try {
-  for (const line of readFileSync(envPath, "utf8").split("\n")) {
-    const match = line.match(/^([A-Z0-9_]+)=(.*)$/)
-    if (match && process.env[match[1]] === undefined) process.env[match[1]] = match[2]
-  }
-} catch {
-  // .env.local may be absent, rely on process env
-}
-
-// 8082 is the historical default but Windows Hyper-V excludes 8081-8180.
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:9082"
 const PRESET = process.env.PRESET ?? "mobile"
-const REAL_LOGIN = process.env.REAL_LOGIN === "1"
 const THEME = process.env.THEME ?? "both"
-const CHROME_PATH =
-  process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 const OUT_DIR = process.env.REPORT_DIR ?? join(ROOT, "lighthouse-reports")
-const EMAIL = process.env.YAZIO_EMAIL
-const PASSWORD = process.env.YAZIO_PASSWORD
 
+/** Every page and modal in the app. Demo flag where the DB must be seeded. */
 const ROUTES = {
+  login: "/login",
   dashboard: "/?demo=1",
   stats: "/stats?demo=1",
-  "log-meal": "/log-meal?meal=lunch&demo=1",
   ai: "/ai?demo=1",
   settings: "/settings?demo=1",
+  "log-meal": "/log-meal?meal=lunch&demo=1",
+  "create-options": "/create-options?meal=lunch&demo=1",
+  "manual-entry": "/manual-entry?meal=lunch&demo=1",
+  "meal-builder": "/meal-builder?demo=1",
+  scan: "/scan?meal=lunch&demo=1",
+  "add-food": "/add-food?meal=lunch&demo=1",
 }
 
-const requested = process.argv.slice(2)
-const targets = requested.length ? requested : ["dashboard"]
-const LH_ROUTES = (process.env.LH_ROUTES ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean)
-  .filter((name) => ROUTES[name])
-const auditRoutes = LH_ROUTES.length > 0 ? LH_ROUTES : targets
+function findChrome() {
+  if (process.env.CHROME_PATH && existsSync(process.env.CHROME_PATH)) {
+    return process.env.CHROME_PATH
+  }
+  const candidates = []
+  // Playwright-managed Chromium first (same binary Playwright MCP uses).
+  // Newest version wins: older builds may lack the OPFS features wa-sqlite
+  // needs for the demo seed.
+  const pwDir = join(homedir(), ".cache", "ms-playwright")
+  try {
+    const versions = readdirSync(pwDir)
+      .filter((entry) => /^chromium-\d+$/.test(entry))
+      .map((entry) => Number(entry.split("-")[1]))
+      .sort((a, b) => b - a)
+    for (const v of versions) {
+      for (const sub of ["chrome-linux64/chrome", "chrome-linux/chrome"]) {
+        candidates.push(join(pwDir, `chromium-${v}`, sub))
+      }
+    }
+  } catch {
+    // No Playwright cache.
+  }
+  for (const name of ["google-chrome-stable", "google-chrome", "chromium", "chromium-browser"]) {
+    const bin = `/usr/bin/${name}`
+    const local = `/usr/local/bin/${name}`
+    candidates.push(local, bin)
+  }
+  return candidates.find((p) => existsSync(p)) ?? null
+}
+
 const schemes = THEME === "light" ? ["light"] : THEME === "dark" ? ["dark"] : ["light", "dark"]
+
+const requested = process.argv.slice(2).filter((a) => !a.startsWith("--"))
+const auditRoutes = requested.length
+  ? requested.filter((name) => ROUTES[name])
+  : Object.keys(ROUTES)
+
+const CATEGORIES = ["performance", "accessibility", "best-practices", "seo"]
 
 const lighthouseFlags = {
   output: ["html", "json"],
-  onlyCategories: ["performance", "accessibility", "best-practices", "seo"],
+  onlyCategories: CATEGORIES,
   disableStorageReset: true,
   maxWaitForLoad: 90_000,
   logLevel: "error",
@@ -112,7 +126,7 @@ function printTable(results) {
   const rows = results.map((r) => [
     r.name,
     r.scheme,
-    ...["performance", "accessibility", "best-practices", "seo"].map((id) => {
+    ...CATEGORIES.map((id) => {
       const category = r.categories[id]
       return !category || category.score === null || category.score === undefined
         ? "-"
@@ -120,88 +134,12 @@ function printTable(results) {
     }),
   ])
   const widths = header.map((_, i) =>
-    Math.max(header[i].length, ...rows.map((row) => row[i].length)),
+    Math.max(header[i].length, ...rows.map((row) => row[i]?.length ?? 0)),
   )
   console.log(header.map((cell, i) => cell.padEnd(widths[i])).join("  "))
   for (const row of rows) {
-    console.log(row.map((cell, i) => cell.padEnd(widths[i])).join("  "))
+    console.log(row.map((cell, i) => (cell ?? "").padEnd(widths[i])).join("  "))
   }
-}
-
-/** Smoke-check the real YAZIO login (optional; audits still use demo mode). */
-async function smokeCheckRealLogin() {
-  if (!EMAIL || !PASSWORD) {
-    console.error("REAL_LOGIN=1 but YAZIO_EMAIL / YAZIO_PASSWORD not set (see .env.local)")
-    return
-  }
-  const browser = await chromium.launch({ headless: true, channel: "chrome" })
-  const page = await browser.newPage()
-  page.setDefaultTimeout(120_000)
-  try {
-    await page.goto(BASE_URL + "/", { waitUntil: "domcontentloaded" })
-    await page.getByPlaceholder("YAZIO email").fill(EMAIL)
-    await page.getByPlaceholder("Password").fill(PASSWORD)
-    await page.getByRole("button", { name: /Sign in with YAZIO/i }).click()
-    await page.getByText("Meals", { exact: true }).waitFor({ timeout: 120_000 })
-    console.log("Real YAZIO login OK, dashboard visible.")
-  } finally {
-    await page.close()
-    await browser.close()
-  }
-}
-
-// Force-kill any Chrome processes still using the given profile dir. On
-// Windows, orphaned headless Chrome children keep the profile's SingletonLock
-// and make the next launch exit immediately (ECONNREFUSED on the debug port).
-function killChromeForProfile(dir) {
-  const ps = `Get-CimInstance Win32_Process -Filter \\"Name='chrome.exe'\\" | Where-Object { $_.CommandLine -like '*${dir}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`
-  try {
-    execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps], {
-      stdio: "ignore",
-    })
-  } catch {
-    // Best effort; removal below retries until the lock clears.
-  }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)
-}
-
-// Kill the whole Chrome process tree by browser PID (taskkill /T), much more
-// reliable than chrome-launcher's kill(), which can leave orphaned children.
-function killChromeTree(pid) {
-  if (!pid) return
-  try {
-    execFileSync("taskkill", ["/F", "/T", "/PID", String(pid)], { stdio: "ignore" })
-  } catch {
-    // Process already gone.
-  }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)
-}
-
-// Chrome holds the profile dir lock briefly after exit, which makes a naive
-// rmSync throw EPERM on Windows. Kill stragglers, then retry with backoff.
-function removeProfileDir(dir) {
-  if (!existsSync(dir)) return
-  killChromeForProfile(dir)
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
-      return
-    } catch {
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300)
-    }
-  }
-}
-
-async function waitForDashboard(page) {
-  // Demo data is loaded when the day's totals are on screen (the calendar
-  // button and meal rows are aria-labeled, so innerText won't see them).
-  await page.waitForFunction(
-    () => {
-      const body = document.body?.innerText ?? ""
-      return body.includes("kcal") && body.includes("Protein") && body.includes("Breakfast")
-    },
-    { timeout: 90_000 },
-  )
 }
 
 let server = null
@@ -229,68 +167,33 @@ async function ensureServer() {
   throw new Error(`Server on ${BASE_URL} did not start`)
 }
 
-async function runAuditOnce(scheme, route) {
+async function waitForDashboard(page) {
+  // Demo data is loaded when the day's totals are on screen (the calendar
+  // button and meal rows are aria-labeled, so innerText won't see them).
+  // Compare lowercased: labels render through CSS text-transform.
+  await page.waitForFunction(
+    () => {
+      const body = (document.body?.innerText ?? "").toLowerCase()
+      return body.includes("kcal") && body.includes("protein") && body.includes("breakfast")
+    },
+    { timeout: 90_000 },
+  )
+}
+
+/**
+ * Audit one route inside an already-running browser. A fresh page carries the
+ * emulated color scheme; Lighthouse drives its own navigation on that page.
+ */
+async function auditRoute(browser, debugPort, scheme, route) {
   const url = `${BASE_URL}${ROUTES[route]}`
-  const profileDir = join(os.tmpdir(), `dietinator-lh-${scheme}-${route}-${Date.now()}`)
-  mkdirSync(profileDir, { recursive: true })
-
-  const chrome = await launch({
-    chromePath: CHROME_PATH,
-    userDataDir: profileDir,
-    chromeFlags: [
-      "--headless=new",
-      "--no-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-extensions",
-      "--window-size=412,823",
-    ],
-  })
-
-  let browser = null
+  const page = await browser.newPage()
   try {
-    // Guard against a stale DevToolsActivePort file: verify the debug port is
-    // actually reachable before puppeteer connects.
-    let debugReady = false
-    for (let i = 0; i < 20; i++) {
-      try {
-        const res = await fetch(`http://127.0.0.1:${chrome.port}/json/version`)
-        if (res.ok) {
-          debugReady = true
-          break
-        }
-      } catch {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)
-      }
-    }
-    if (!debugReady) throw new Error(`Chrome debug port ${chrome.port} never came up`)
-
-    browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chrome.port}` })
-
-    // Seed demo DB + auth in a warm-up navigation on its own page, then CLOSE
-    // that page. Closing it terminates its SQLite worker and releases its OPFS
-    // access handles before the audited navigation starts. The audited load's
-    // fresh worker would otherwise occasionally fail its one-time VFS init by
-    // racing the old worker's teardown ("Invalid VFS state").
-    const warmupPage = await browser.newPage()
-    await warmupPage.goto(`${BASE_URL}/?demo=1`, { waitUntil: "networkidle2", timeout: 90_000 })
-    await waitForDashboard(warmupPage)
-    await new Promise((r) => setTimeout(r, 1500))
-    await warmupPage.close()
-    await new Promise((r) => setTimeout(r, 2000))
-
-    const page = await browser.newPage()
     const cdp = await page.createCDPSession()
     await cdp.send("Emulation.setEmulatedMedia", {
       features: [{ name: "prefers-color-scheme", value: scheme }],
     })
 
-    const runnerResult = await lighthouse(
-      url,
-      { ...lighthouseFlags, port: chrome.port },
-      null,
-      page,
-    )
+    const runnerResult = await lighthouse(url, { ...lighthouseFlags, port: debugPort }, null, page)
     if (!runnerResult) throw new Error(`Lighthouse produced no result for ${url}`)
     const lhr = runnerResult.lhr
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
@@ -303,44 +206,71 @@ async function runAuditOnce(scheme, route) {
     console.log(`Report saved to ${base}.html`)
     return { name: route, scheme, categories: lhr.categories }
   } finally {
-    if (browser) await browser.disconnect()
-    try {
-      await chrome.kill()
-    } catch {
-      // Fall through to the tree kill below.
-    }
-    killChromeTree(chrome.pid)
-    removeProfileDir(profileDir)
+    await page.close().catch(() => {})
   }
 }
 
-async function runAudit(scheme, route) {
-  // Headless Chrome startup is flaky on Windows (antivirus, port races); retry
-  // a few times before giving up.
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      return await runAuditOnce(scheme, route)
-    } catch (error) {
-      console.log(
-        `  attempt ${attempt} failed for ${route} (${scheme}): ${error.message?.slice(0, 120)}`,
-      )
-      if (attempt === 3) throw error
-      await new Promise((r) => setTimeout(r, 2000 * attempt))
+async function runScheme(chromePath, scheme, routes) {
+  const profileDir = join(tmpdir(), `dietinator-lh-${scheme}-${Date.now()}`)
+  mkdirSync(profileDir, { recursive: true })
+  const browser = await launchChrome({
+    executablePath: chromePath,
+    headless: true,
+    userDataDir: profileDir,
+    args: [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-extensions",
+      "--window-size=412,823",
+    ],
+  })
+  try {
+    // Seed demo DB + auth once per profile on a warm-up page, then CLOSE it.
+    // Closing terminates the SQLite worker and releases its OPFS handles
+    // before the audited navigations start ("Invalid VFS state" races
+    // otherwise).
+    const warmupPage = await browser.newPage()
+    await warmupPage.goto(`${BASE_URL}/?demo=1`, { waitUntil: "networkidle2", timeout: 90_000 })
+    await waitForDashboard(warmupPage)
+    await new Promise((r) => setTimeout(r, 1500))
+    await warmupPage.close()
+    await new Promise((r) => setTimeout(r, 2000))
+
+    const results = []
+    const debugPort = Number(new URL(browser.wsEndpoint()).port)
+    for (const route of routes) {
+      console.log(`Auditing ${route} (${scheme}, preset=${PRESET})...`)
+      results.push(await auditRoute(browser, debugPort, scheme, route))
+    }
+    return results
+  } finally {
+    await browser.close().catch(() => {})
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        rmSync(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+        break
+      } catch {
+        await new Promise((r) => setTimeout(r, 300))
+      }
     }
   }
 }
 
 async function main() {
-  await ensureServer()
-  if (REAL_LOGIN) await smokeCheckRealLogin()
-  const results = []
-  for (const route of auditRoutes) {
-    for (const scheme of schemes) {
-      console.log(`\nAuditing ${route} (${scheme}, preset=${PRESET})...`)
-      results.push(await runAudit(scheme, route))
-    }
+  const chromePath = findChrome()
+  if (!chromePath) {
+    throw new Error("No Chrome/Chromium found. Install one or point CHROME_PATH at the binary.")
   }
-  console.log("\n=== Lighthouse scores (preset=" + PRESET + ") ===")
+  console.log(`Using Chrome at ${chromePath}`)
+  await ensureServer()
+
+  const results = []
+  for (const scheme of schemes) {
+    results.push(...(await runScheme(chromePath, scheme, auditRoutes)))
+  }
+
+  console.log(`\n=== Lighthouse scores (preset=${PRESET}) ===`)
   printTable(results)
 }
 
