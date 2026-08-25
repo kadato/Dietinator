@@ -14,7 +14,7 @@ Dietinator is a local-first calorie tracker. Diary entries live in SQLite on you
 
 <div align="center">
 
-[![Live Demo — Try in browser](https://img.shields.io/badge/Live%20Demo-Try%20in%20browser-2dd4bf?style=for-the-badge)](https://dietinator.kadatodev.workers.dev/?demo=1)
+[![Live Demo — Try in browser](https://img.shields.io/badge/Live%20Demo-Try%20in%20browser-2dd4bf?style=for-the-badge)](https://dietinator.pages.dev/?demo=1)
 
 No install, no account. Or tap **Explore the demo** on the login screen.
 
