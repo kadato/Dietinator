@@ -188,9 +188,12 @@ function AiChatModalContent() {
       const hasToolCalls = (item.tool_calls?.length ?? 0) > 0
       const thinking = item.content === "" && !item.is_error && !hasToolCalls
       return (
-        <Box className={`mb-3 w-full flex-row gap-2.5 ${compact ? "pr-6" : "pr-12"}`}>
+        <Box
+          className={`mb-3 w-full flex-row gap-2.5 ${compact ? "pr-6" : "pr-12"}`}
+          style={{ alignItems: "flex-start" }}
+        >
           <Box
-            className="h-8 w-8 items-center justify-center rounded-none border"
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-none border"
             style={{
               backgroundColor: colors.surfaceAlt,
               borderWidth: 1.5,
@@ -203,8 +206,11 @@ function AiChatModalContent() {
             <Feather name="cpu" size={14} color={colors.primary} />
           </Box>
           <Box
-            className="max-w-full flex-1 rounded-none border px-3.5 py-2.5"
+            className="rounded-none border px-3.5 py-2.5"
             style={{
+              maxWidth: compact ? "82%" : "78%",
+              alignSelf: "flex-start",
+              flexShrink: 1,
               borderWidth: 1.5,
               borderColor: item.is_error ? withAlpha(colors.danger, 0.35) : colors.border,
               backgroundColor: item.is_error ? withAlpha(colors.danger, 0.08) : colors.surface,
@@ -309,21 +315,25 @@ function AiChatModalContent() {
 
       <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
         {[
-          { icon: "calendar" as const, label: "Review my day" },
-          { icon: "activity" as const, label: "Check protein" },
-          { icon: "shopping-bag" as const, label: "Plan dinner" },
-          { icon: "flag" as const, label: "Update goals" },
+          { icon: "calendar" as const, label: "Review my day", preset: "daily-review" },
+          { icon: "activity" as const, label: "Check protein", preset: "protein-check" },
+          { icon: "shopping-bag" as const, label: "Plan dinner", preset: "plan-dinner" },
+          { icon: "flag" as const, label: "Update goals", preset: "reset-goals" },
         ].map((chip) => (
-          <Box
+          <Pressable
             key={chip.label}
-            className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5"
+            onPress={() => {
+              const preset = suggestionPrompts.find((p) => p.id === chip.preset)
+              if (preset) runPreset(preset)
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={chip.label}
+            className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5 active:opacity-80"
             style={{
               borderWidth: 1.5,
               borderColor: colors.border,
               borderRadius: 0,
               backgroundColor: colors.surface,
-              boxShadow: "none",
-              elevation: 0,
             }}
           >
             <Feather name={chip.icon} size={12} color={colors.primary} />
@@ -339,7 +349,7 @@ function AiChatModalContent() {
             >
               {chip.label}
             </Text>
-          </Box>
+          </Pressable>
         ))}
       </Box>
 

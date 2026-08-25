@@ -9,7 +9,6 @@ import { formatMacro } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { useTheme } from "@/hooks/useTheme"
-import { useLayout } from "@/hooks/useLayout"
 import { fonts } from "@/theme"
 
 type Props = {
@@ -33,18 +32,14 @@ export const MealSection = memo(function MealSection({
   onDelete,
 }: Props) {
   const { colors } = useTheme()
-  const { isWide } = useLayout()
-  // On big screens meals are open by default so the diary is scannable without taps.
-  const [expanded, setExpanded] = useState(() => isWide)
+  // Collapsed by default on all devices so the diary is scannable.
+  // The user expands the meal they touched. Last expansion is per mount;
+  // date change resets to collapsed so every day starts at summary height.
+  const [expanded, setExpanded] = useState(() => false)
   const [prevDateKey, setPrevDateKey] = useState(dateKey)
-  const [prevIsWide, setPrevIsWide] = useState(isWide)
   if (dateKey !== prevDateKey) {
     setPrevDateKey(dateKey)
-    setExpanded(isWide)
-  }
-  if (isWide !== prevIsWide) {
-    setPrevIsWide(isWide)
-    if (isWide && entries.length > 0) setExpanded(true)
+    setExpanded(false)
   }
   const handleEdit = useCallback((entryId: string) => onEdit(entryId), [onEdit])
   const handleDelete = useCallback((entryId: string) => onDelete(entryId), [onDelete])
@@ -101,26 +96,9 @@ export const MealSection = memo(function MealSection({
             <Box className="flex-row items-baseline justify-between gap-2">
               <Box className="flex-row items-center gap-1.5">
                 <Text
-                  size="2xs"
-                  bold
-                  aria-hidden={true}
-                  style={{
-                    color: accent,
-                    fontFamily: fonts.mono,
-                    letterSpacing: 0.8,
-                  }}
-                >
-                  {mealType === "breakfast"
-                    ? "/01"
-                    : mealType === "lunch"
-                      ? "/02"
-                      : mealType === "dinner"
-                        ? "/03"
-                        : "/04"}
-                </Text>
-                <Text
                   size="md"
                   bold
+                  accessibilityRole="header"
                   className="text-[12px] uppercase tracking-widest text-typography-900"
                   style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
                 >
@@ -149,6 +127,10 @@ export const MealSection = memo(function MealSection({
             ) : null}
           </Box>
         </Pressable>
+
+        <View
+          style={{ width: 1.5, backgroundColor: colors.border, alignSelf: "stretch", opacity: 0.6 }}
+        />
 
         <Pressable
           className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none bg-primary-500 hover:bg-primary-600 active:opacity-80"
@@ -188,7 +170,7 @@ export const MealSection = memo(function MealSection({
             <Text
               size="xs"
               className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontSize: 11, letterSpacing: 0.06 }}
+              style={{ fontSize: 12, letterSpacing: 0.06 }}
             >
               Goal {Math.round(goal)} kcal
             </Text>
@@ -206,7 +188,7 @@ export const MealSection = memo(function MealSection({
                 bold
                 className="font-mono uppercase tracking-widest"
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   letterSpacing: 0.06,
                   color: overKcal ? colors.danger : accent,
                 }}
@@ -217,17 +199,64 @@ export const MealSection = memo(function MealSection({
               </Text>
             </View>
           </Box>
+          {overKcal ? (
+            <Text
+              size="xs"
+              className="font-mono tracking-widest text-typography-500"
+              style={{ fontSize: 11, letterSpacing: 0.04, fontFamily: fonts.mono }}
+            >
+              Adjust tomorrow
+            </Text>
+          ) : null}
         </Box>
       ) : null}
 
       {entries.length === 0 ? (
-        <Box className="px-3 pb-3 pt-1">
+        <Box className="flex-row items-center gap-1.5 px-3 pb-3 pt-1">
+          <Feather name="plus" size={10} color={colors.textMuted} />
           <Text size="xs" className="font-mono uppercase tracking-widest text-typography-400">
-            Nothing logged yet
+            Tap + to log
           </Text>
         </Box>
-      ) : !expanded && entries.length > 0 && !goal ? (
-        <Box className="px-3 pb-3" />
+      ) : !expanded && entries.length > 0 ? (
+        <Box className="gap-1 px-3 pb-3 pt-1">
+          {entries.slice(0, 2).map((entry) => (
+            <Box key={entry.id} className="flex-row items-center justify-between">
+              <Text
+                size="xs"
+                numberOfLines={1}
+                className="flex-1 font-mono text-typography-700"
+                style={{ fontFamily: fonts.mono, fontSize: 12 }}
+              >
+                {entry.food_name}
+              </Text>
+              <Text
+                size="xs"
+                className="ml-2 shrink-0 font-mono tabular-nums text-typography-500"
+                style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] as never }}
+              >
+                {Math.round(entry.kcal)} kcal
+              </Text>
+            </Box>
+          ))}
+          {entries.length > 2 ? (
+            <Text
+              size="xs"
+              className="font-mono uppercase tracking-widest text-typography-400"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
+              +{entries.length - 2} more · tap to expand
+            </Text>
+          ) : (
+            <Text
+              size="xs"
+              className="font-mono uppercase tracking-widest text-typography-400"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
+              Tap to expand
+            </Text>
+          )}
+        </Box>
       ) : null}
 
       {expanded && entries.length > 0 ? (

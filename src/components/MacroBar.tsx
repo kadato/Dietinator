@@ -64,6 +64,19 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
           ) : null}
         </View>
       </View>
+      {over > 0 ? (
+        <Text
+          style={{
+            fontSize: 11,
+            fontFamily: fonts.mono,
+            letterSpacing: 0.3,
+            color: colors.textMuted,
+            marginTop: 2,
+          }}
+        >
+          Adjust tomorrow
+        </Text>
+      ) : null}
 
       <View style={styles.barBg}>
         <View
@@ -203,7 +216,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     budgetBadgeText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],

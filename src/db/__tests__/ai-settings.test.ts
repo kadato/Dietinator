@@ -38,7 +38,7 @@ describe("ai-settings", () => {
     expect(AI_PROVIDER_PRESETS.openai.model).toBe("gpt-4o-mini")
     expect(AI_PROVIDER_PRESETS.openrouter.base_url).toBe("https://openrouter.ai/api/v1")
     expect(AI_PROVIDER_PRESETS.opencode.base_url).toBe("https://opencode.ai/zen/go/v1")
-    expect(AI_PROVIDER_PRESETS.opencode.model).toBe("deepseek-v4-flash")
+    expect(AI_PROVIDER_PRESETS.opencode.model).toBe("ox-alpha-free")
     expect(AI_PROVIDER_PRESETS.ollama.base_url).toBe("http://localhost:11434/v1")
     expect(AI_PROVIDER_PRESETS.ollama.model).toBe("llama3.2")
   })
@@ -95,7 +95,7 @@ describe("ai-settings", () => {
 
     const settings = await getAiProviderSettings()
     expect(settings.provider).toBe("opencode")
-    expect(settings.model).toBe("deepseek-v4-flash")
+    expect(settings.model).toBe("ox-alpha-free")
     expect(settings.base_url).toBe("https://opencode.ai/zen/go/v1")
     expect(settings.api_key).toBe("")
     expect(settings.enabled).toBe(false)

@@ -158,8 +158,8 @@ export const FoodListItem = memo(function FoodListItem({
             className="text-[15.5px] leading-5 text-typography-900"
             style={{
               fontFamily: fonts.mono,
-              textTransform: "uppercase",
-              letterSpacing: 0.4,
+              fontWeight: "600",
+              letterSpacing: 0,
               flexWrap: "wrap",
             }}
           >

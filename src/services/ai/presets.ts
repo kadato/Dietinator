@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons"
 import { toDateKey } from "@/utils/date"
 
 /**

@@ -152,13 +152,11 @@ const createStyles = (colors: ColorPalette) =>
     info: { flex: 1, minWidth: 0, gap: 2, overflow: "hidden" },
     name: {
       fontSize: 14,
-      fontWeight: "700",
+      fontWeight: "600",
       color: colors.text,
       lineHeight: 16,
       fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0,
     },
     macroRow: {
       flexDirection: "row",
@@ -169,12 +167,11 @@ const createStyles = (colors: ColorPalette) =>
       marginTop: 2,
     },
     amountLabel: {
-      fontSize: 11,
+      fontSize: 12,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.2,
     },
     macroDot: {
       fontSize: 11,
@@ -217,8 +214,7 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.2,
     },
     kcalUnit: {
       fontSize: 11,
@@ -226,8 +222,7 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.2,
     },
     actions: {
       flexDirection: "row",

@@ -7,7 +7,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { MacroPills } from "@/components/MacroPills"
-import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
+import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
 import { spacing, fonts, type ColorPalette } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
@@ -87,11 +87,6 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
   const insets = useSafeAreaInsets()
   const { isMedium } = useLayout()
 
-  const { proteinPct, carbsPct, fatPct } = computeMacroRatios(
-    nutrients.protein,
-    nutrients.carbs,
-    nutrients.fat,
-  )
   const netCarbs =
     nutrients.fiber !== undefined
       ? Math.max(0, Math.round((nutrients.carbs - nutrients.fiber) * 10) / 10)

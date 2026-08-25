@@ -116,6 +116,19 @@ export function CalorieRing({
           <Text style={[styles.remainingLabel, { fontSize: 12 * scale }]}>
             {over > 0 ? "kcal over" : "kcal left"}
           </Text>
+          {over > 0 ? (
+            <Text
+              style={{
+                fontSize: 10 * scale,
+                fontFamily: fonts.mono,
+                color: colors.textMuted,
+                letterSpacing: 0.3,
+                marginTop: 2,
+              }}
+            >
+              Adjust tomorrow
+            </Text>
+          ) : null}
         </View>
       </View>
 

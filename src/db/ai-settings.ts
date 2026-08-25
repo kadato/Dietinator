@@ -25,7 +25,7 @@ export const AI_PROVIDER_PRESETS: Record<
   opencode: {
     label: "OpenCode",
     base_url: "https://opencode.ai/zen/go/v1",
-    model: "deepseek-v4-flash",
+    model: "ox-alpha-free",
   },
   ollama: {
     label: "Ollama / Local",

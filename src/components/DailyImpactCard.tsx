@@ -230,9 +230,9 @@ export const DailyImpactCard = memo(function DailyImpactCard({
 
       <View style={styles.calorieHero}>
         <View style={styles.calorieTopRow}>
-          <View>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.heroLabel}>Daily Calories</Text>
-            <Text style={styles.heroTransition}>
+            <Text style={styles.heroTransition} numberOfLines={1} adjustsFontSizeToFit>
               {currentKcal.toLocaleString()} <Text style={styles.arrowText}>→</Text>{" "}
               <Text style={styles.heroProjected}>{projectedKcal.toLocaleString()}</Text>{" "}
               <Text style={styles.heroAdded}>[+{addedKcal.toLocaleString()} kcal]</Text>
@@ -510,7 +510,9 @@ const createStyles = (colors: ColorPalette) =>
     calorieTopRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+      flexWrap: "wrap",
     },
     heroLabel: {
       fontSize: 11,
@@ -552,6 +554,9 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1.5,
       boxShadow: "none",
       elevation: 0,
+      flexShrink: 0,
+      alignSelf: "flex-start",
+      maxWidth: "42%",
     },
     calorieBadgeText: {
       fontSize: 11,
@@ -589,7 +594,9 @@ const createStyles = (colors: ColorPalette) =>
     macroRowHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
+      gap: spacing.xs,
+      flexWrap: "wrap",
     },
     labelGroup: {
       flexDirection: "row",
@@ -624,6 +631,10 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
+      flexShrink: 1,
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+      maxWidth: "58%",
     },
     transitionText: {
       fontSize: 11,
