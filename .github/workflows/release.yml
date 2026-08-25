@@ -21,14 +21,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test:coverage
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test:coverage
 
   build-android:
     name: Build signed Android APK
@@ -37,10 +40,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -62,11 +68,11 @@ jobs:
           else
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           fi
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
       - name: Bake version into app.json
         run: node scripts/ci-set-version.cjs ${{ steps.version.outputs.version }}
       - name: Generate Android project
-        run: npx expo prebuild --platform android --no-install
+        run: pnpm exec expo prebuild --platform android --no-install
       - name: Raise Gradle JVM memory
         # The prebuild template caps Metaspace at 512m, which first-time Expo
         # builds exhaust. gradle.properties ends without a trailing newline, so
