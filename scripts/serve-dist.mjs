@@ -209,6 +209,15 @@ if (!existsSync(ROOT)) {
 function findWasmUrl() {
   const assetsDir = join(ROOT, "assets")
   if (!existsSync(assetsDir)) return null
+  // Prefer the clean copy at /assets/wa-sqlite.*.wasm (patched by fix-web-build.mjs
+  // to avoid the .pnpm dot path that Cloudflare Pages may not publish). Fall
+  // back to a recursive walk for older builds.
+  const shallow = readdirSync(assetsDir).filter(
+    (n) => n.startsWith("wa-sqlite") && n.endsWith(".wasm"),
+  )
+  if (shallow.length > 0) {
+    return "/assets/" + shallow[0]
+  }
   const walk = (dir) =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = join(dir, entry.name)
