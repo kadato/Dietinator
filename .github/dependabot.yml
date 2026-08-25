@@ -56,22 +56,6 @@ updates:
       all-actions:
         patterns: ["*"]
 
-  # Docker: web / Metro container image
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "04:00"
-      timezone: "Etc/UTC"
-    open-pull-requests-limit: 2
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "docker"
-
   # Dev Containers: VS Code / GitHub Codespaces environment
   - package-ecosystem: "devcontainers"
     directory: "/.devcontainer"

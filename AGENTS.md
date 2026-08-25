@@ -176,9 +176,7 @@ npm run test:e2e:dev # Playwright against a running `npm run dev:web` (fast loop
 
 **Iteration notes.** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials. Run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json`. Prefer it over hand-written selectors when driving the browser.
 
-**Dev Container.** `.devcontainer/devcontainer.json` has Node 22, `npm ci` on create, ports 8081/8082/19000+.
-
-**Docker Compose.** web-oriented reproducible build (`docker compose up --build`). Physical device Expo Go usually needs Metro on the **host** or tunnel.
+**Dev Container.** `.devcontainer/devcontainer.json` has Node 22, `pnpm install` on create, ports 8081/8082/19000+.
 
 ## Database (quick reference)
 

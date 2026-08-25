@@ -1,8 +1,0 @@
-node_modules
-.expo
-dist
-.git
-*.md
-Dockerfile
-docker-compose.yml
-.devcontainer

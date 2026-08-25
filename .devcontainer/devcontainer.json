@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
   "workspaceFolder": "/workspaces/dietinator",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/dietinator,type=bind",
-  "postCreateCommand": "npm ci",
+  "postCreateCommand": "pnpm install --frozen-lockfile",
   "forwardPorts": [8081, 8082, 19000, 19001, 19002],
   "portsAttributes": {
     "8081": { "label": "Metro" },
