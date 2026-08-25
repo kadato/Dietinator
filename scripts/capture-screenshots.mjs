@@ -5,8 +5,9 @@ import { join } from "node:path"
 
 // 8089 is inside the Hyper-V excluded range (8081-8180) on Windows dev
 // machines (same issue documented for the 9082 dev port), which makes
-// serve-dist.mjs fail with EACCES. Use 9089.
-const PORT = 9089
+// serve-dist.mjs fail with EACCES. Default is 9089. Set SCREENSHOTS_PORT
+// to override, for example when mirrored WSL networking holds 9089.
+const PORT = Number(process.env.SCREENSHOTS_PORT) || 9089
 const BASE_URL = `http://localhost:${PORT}`
 const OUT_DIR = join(process.cwd(), "docs", "screenshots")
 
