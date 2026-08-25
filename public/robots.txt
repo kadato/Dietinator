@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dietinator.kadatodev.workers.dev/sitemap.xml
+Sitemap: https://dietinator.pages.dev/sitemap.xml

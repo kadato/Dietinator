@@ -49,23 +49,17 @@ export default function Root({ children }: PropsWithChildren) {
           property="og:description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta
-          property="og:image"
-          content="https://dietinator.kadatodev.workers.dev/assets/icon.png"
-        />
+        <meta property="og:image" content="https://dietinator.pages.dev/assets/icon.png" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://dietinator.kadatodev.workers.dev/" />
+        <meta property="og:url" content="https://dietinator.pages.dev/" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Dietinator: calorie and macro tracker" />
         <meta
           name="twitter:description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta
-          name="twitter:image"
-          content="https://dietinator.kadatodev.workers.dev/assets/icon.png"
-        />
-        <link rel="canonical" href="https://dietinator.kadatodev.workers.dev/" />
+        <meta name="twitter:image" content="https://dietinator.pages.dev/assets/icon.png" />
+        <link rel="canonical" href="https://dietinator.pages.dev/" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
         <link rel="icon" type="image/png" href="/assets/favicon.png?v=4" sizes="48x48" />
