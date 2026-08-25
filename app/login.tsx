@@ -147,8 +147,7 @@ export default function LoginScreen() {
                 <Text
                   size="4xl"
                   bold
-                  accessibilityRole="heading"
-                  aria-level={1}
+                  accessibilityRole="header"
                   className="uppercase tracking-widest text-typography-900"
                   style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
                 >
@@ -236,8 +235,7 @@ export default function LoginScreen() {
             <Text
               size={isWide ? "xl" : "3xl"}
               bold
-              accessibilityRole="heading"
-              aria-level={1}
+              accessibilityRole="header"
               className={`${isWide ? "hidden" : ""} text-center uppercase tracking-widest text-typography-900`}
               style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >

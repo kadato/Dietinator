@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Keyboard, Platform, Pressable, RefreshControl, ScrollView, View } from "react-native"
-import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect, useRouter } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
