@@ -100,16 +100,35 @@ function serveStatic(req, res, urlPath) {
     res.end("Forbidden")
     return
   }
-  if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
+  // Resolve the request to a concrete file. SPA routes fall back to
+  // dist/index.html; direct .html misses are 404s.
+  const resolveFile = () => {
+    if (existsSync(filePath) && statSync(filePath).isFile()) return true
     if (urlPath === "/" || !filePath.endsWith(".html")) {
       const index = join(filePath, "index.html")
-      if (existsSync(index) && statSync(index).isFile()) filePath = index
-      else filePath = join(ROOT, "index.html")
-    } else {
-      res.statusCode = 404
-      res.end("Not found")
+      if (existsSync(index) && statSync(index).isFile()) {
+        filePath = index
+        return true
+      }
+      filePath = join(ROOT, "index.html")
+      return existsSync(filePath) && statSync(filePath).isFile()
+    }
+    return false
+  }
+  if (!resolveFile()) {
+    // dist/index.html itself is gone: a `build:web` wiped dist and has not
+    // written the shell yet. Answer 503 so pollers back off instead of
+    // getting stack traces and 502s.
+    if (filePath === join(ROOT, "index.html")) {
+      res.statusCode = 503
+      res.setHeader("Retry-After", "2")
+      res.setHeader("Content-Type", "text/plain")
+      res.end("Rebuild in progress")
       return
     }
+    res.statusCode = 404
+    res.end("Not found")
+    return
   }
 
   const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase()
