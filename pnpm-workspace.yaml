@@ -2,6 +2,8 @@
 # .npmrc is auth/registry only since pnpm 11.
 allowBuilds:
   unrs-resolver: true
+  esbuild: true
+  workerd: true
 engineStrict: true
 # Metro and @babel/core resolve plugins from the project root. Expo's toolchain
 # relies on transitive deps (react-native-css-interop, @babel plugins), so keep
