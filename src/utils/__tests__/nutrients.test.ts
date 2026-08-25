@@ -1,7 +1,9 @@
 import {
+  isBaseUnitServingLabel,
   isPerGramNutrients,
   isPerGramRawNutrients,
   normalizePerGramFood,
+  normalizedSearchAmount,
   nutrientsForAmount,
   nutrientsFromYazio,
   nutrientsReferenceAmount,
@@ -260,5 +262,43 @@ describe("named serving sizes (cup, each, serving, whole)", () => {
     const powder: FoodNutrients = { kcal: 120, protein: 24, carbs: 3, fat: 1.5 }
     const scoop = { serving: "1 scoop", amount: 25, serving_quantity: 1 }
     expect(nutrientsForAmount(powder, scoop, 50, "g").kcal).toBe(240)
+  })
+})
+
+describe("normalizedSearchAmount", () => {
+  it("normalizes weight and volume units to 100", () => {
+    expect(normalizedSearchAmount("g")).toBe(100)
+    expect(normalizedSearchAmount("ml")).toBe(100)
+  })
+
+  it("is case insensitive and tolerates whitespace", () => {
+    expect(normalizedSearchAmount(" G ")).toBe(100)
+    expect(normalizedSearchAmount("ML")).toBe(100)
+  })
+
+  it("falls back to 100 without a unit", () => {
+    expect(normalizedSearchAmount("")).toBe(100)
+    expect(normalizedSearchAmount(undefined)).toBe(100)
+  })
+
+  it("uses one whole item for countable base units", () => {
+    expect(normalizedSearchAmount("each")).toBe(1)
+    expect(normalizedSearchAmount("stück")).toBe(1)
+    expect(normalizedSearchAmount("portion")).toBe(1)
+  })
+})
+
+describe("isBaseUnitServingLabel", () => {
+  it("matches plain unit labels", () => {
+    expect(isBaseUnitServingLabel("g", "g")).toBe(true)
+    expect(isBaseUnitServingLabel("ml", "ml")).toBe(true)
+    expect(isBaseUnitServingLabel("Gram", "g")).toBe(true)
+    expect(isBaseUnitServingLabel(" each ", "each")).toBe(true)
+  })
+
+  it("rejects named portions", () => {
+    expect(isBaseUnitServingLabel("1 medium (118g)", "g")).toBe(false)
+    expect(isBaseUnitServingLabel("1 scoop", "g")).toBe(false)
+    expect(isBaseUnitServingLabel("", "g")).toBe(false)
   })
 })

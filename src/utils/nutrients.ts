@@ -128,6 +128,22 @@ function isBaseUnitServingLabelForRef(servingName: string, baseUnit: string): bo
   )
 }
 
+/** True when the serving name is the plain base unit, such as "g" or "ml", not a named portion like "1 medium". */
+export function isBaseUnitServingLabel(servingName: string, baseUnit = "g"): boolean {
+  return isBaseUnitServingLabelForRef(servingName, baseUnit)
+}
+
+/**
+ * The standard quick-add amount for search rows: 100 g or 100 ml so every
+ * result compares on the same basis, or 1 whole item for countable base units
+ * such as each or stück. Recents, frequents, and favorites keep their own
+ * last amounts instead.
+ */
+export function normalizedSearchAmount(baseUnit = "g"): number {
+  const unit = (baseUnit || "g").trim().toLowerCase()
+  return unit === "g" || unit === "ml" ? 100 : 1
+}
+
 export function nutrientsReferenceAmount(
   serving: Pick<FoodServing, "amount" | "serving_quantity"> & {
     serving?: string

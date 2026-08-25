@@ -37,7 +37,7 @@ import type {
   SearchFoodResult,
 } from "@/types"
 import { mergeFoodResults } from "@/utils/food-search"
-import { sumNutrients } from "@/utils/nutrients"
+import { normalizedSearchAmount, sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { displayUnit } from "@/utils/food-display"
 import { formatNumber } from "@/utils/format"
@@ -438,14 +438,23 @@ export default function LogMealScreen() {
           />
         )
       }
+      // Search results normalize to one comparable basis, 100 g or ml (1
+      // whole item for countable units). Favorites without a search query
+      // keep the last-used amount for one-tap logging.
+      const searching = Boolean(debounced.trim())
+      const quickAmount = searching ? normalizedSearchAmount(item.base_unit) : undefined
       return (
         <FoodListItem
           food={item}
+          amount={quickAmount}
           accentColor={accent}
           quickAddVariant="pill"
           onPress={() => openFood(item)}
-          onQuickAdd={() => handleQuickAdd(item)}
-          quickAdding={addingKey === item.product_id}
+          onQuickAdd={() => handleQuickAdd(item, quickAmount)}
+          quickAdding={
+            addingKey ===
+            (quickAmount != null ? `${item.product_id}:${quickAmount}` : item.product_id)
+          }
           isReordering={isReordering}
           canMoveUp={index > 0}
           canMoveDown={index < foods.length - 1}
