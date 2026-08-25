@@ -17,11 +17,11 @@ test.describe("demo mode", () => {
     })
     // Meal sections start collapsed. Expand Breakfast and Snacks to reveal
     // the seeded entries.
-    await page.getByRole("button", { name: /^Breakfast, / }).click()
+    await page.getByRole("button", { name: /Breakfast \d/i }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /^Snacks, / }).click()
+    await page.getByRole("button", { name: /Snacks \d/i }).click()
     await expect(page.getByText("Banana", { exact: false })).toBeVisible()
   })
 
@@ -31,7 +31,7 @@ test.describe("demo mode", () => {
       timeout: 60_000,
     })
     // Sections start collapsed. Expand Breakfast to reveal the oatmeal entry.
-    await page.getByRole("button", { name: /^Breakfast, / }).click()
+    await page.getByRole("button", { name: /Breakfast \d/i }).click()
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
@@ -50,14 +50,14 @@ test.describe("backup and restore (offline)", () => {
     await page.getByRole("textbox", { name: "Calories" }).fill("777")
     await page.getByRole("button", { name: "Add to diary" }).click()
     // The section stays collapsed. The header total proves the entry landed.
-    await expect(page.getByRole("button", { name: /^Snacks, 777/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Snacks 777/i })).toBeVisible({
       timeout: 15_000,
     })
 
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await expect(page.getByRole("button", { name: "Goals and Nutrition settings" })).toBeVisible()
-    await page.getByRole("button", { name: "Data and Backup settings" }).click()
+    await expect(page.getByRole("button", { name: "Goals and Nutrition" })).toBeVisible()
+    await page.getByRole("button", { name: "Data and Backup" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Back up all data" }).click(),
@@ -67,8 +67,8 @@ test.describe("backup and restore (offline)", () => {
 
     // Delete the entry locally.
     await page.getByRole("tab", { name: /Today/ }).click()
-    await page.getByRole("button", { name: /^Snacks, / }).click()
-    const row = page.getByRole("button", { name: /^Quick add, / })
+    await page.getByRole("button", { name: /Snacks \d/i }).click()
+    const row = page.getByRole("button", { name: /^Quick add.*777/i })
     await expect(row).toHaveCount(1)
     page.once("dialog", (dialog) => void dialog.accept())
     await page.getByRole("button", { name: "Delete Quick add" }).click()
@@ -91,7 +91,7 @@ test.describe("backup and restore (offline)", () => {
     // The entry is back on the dashboard (section state may reset between
     // tab switches, so assert the collapsed header total instead of a row).
     await page.getByRole("tab", { name: /Today/ }).click()
-    await expect(page.getByRole("button", { name: /^Snacks, 777/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Snacks 777/i })).toBeVisible({
       timeout: 15_000,
     })
   })

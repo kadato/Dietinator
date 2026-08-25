@@ -39,19 +39,19 @@ test.describe("food search (offline)", () => {
     await page.getByRole("tab", { name: "Settings" }).click()
 
     // The hub lists sections; the Goals row opens the goal form.
-    await page.getByRole("button", { name: "Goals and Nutrition settings" }).click()
+    await page.getByRole("button", { name: "Goals and Nutrition" }).click()
     await expect(page.getByText("Goals and Nutrition", { exact: true })).toBeVisible()
     await expect(page.getByText("Calories", { exact: true })).toBeVisible()
 
     // Sync section.
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "YAZIO Sync settings" }).click()
+    await page.getByRole("button", { name: "YAZIO Sync" }).click()
     // The drilldown header and the section label both read "YAZIO Sync".
     await expect(page.getByText("YAZIO Sync", { exact: true }).first()).toBeVisible()
 
     // About section hosts the sign-out button.
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "About and Account settings" }).click()
+    await page.getByRole("button", { name: "About and Account" }).click()
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible()
   })
 })

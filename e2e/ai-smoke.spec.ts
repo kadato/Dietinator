@@ -8,7 +8,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await expect(page.getByRole("tab", { name: "AI" })).toBeHidden()
 
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await page.getByRole("button", { name: "AI Assistant settings" }).click()
+    await page.getByRole("button", { name: "AI Assistant" }).click()
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
 
     // Now the AI tab is visible in navigation.
@@ -36,7 +36,7 @@ test.describe("AI assistant + FABs (offline)", () => {
     await page.getByRole("tab", { name: /Settings/ }).click()
 
     // AI settings live on the AI tab.
-    await page.getByRole("button", { name: "AI Assistant settings" }).click()
+    await page.getByRole("button", { name: "AI Assistant" }).click()
     await expect(page.getByText("AI Assistant", { exact: true }).first()).toBeVisible()
 
     // Toggle the assistant on.
@@ -45,7 +45,7 @@ test.describe("AI assistant + FABs (offline)", () => {
 
     // Agent API section lists the MCP tools on the About section (expand the row first).
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "About and Account settings" }).click()
+    await page.getByRole("button", { name: "About and Account" }).click()
     await expect(page.getByText("Agent API (MCP)", { exact: true }).first()).toBeVisible()
     await page.getByRole("button", { name: "Show Agent API details" }).click()
     await expect(page.getByText("get_diary", { exact: true })).toBeVisible()
@@ -53,7 +53,7 @@ test.describe("AI assistant + FABs (offline)", () => {
 
     // Turn it back off to leave a clean state for other specs.
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "AI Assistant settings" }).click()
+    await page.getByRole("button", { name: "AI Assistant" }).click()
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 

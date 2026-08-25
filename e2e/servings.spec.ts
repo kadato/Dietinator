@@ -38,7 +38,7 @@ test.describe("serving sizes (real account)", () => {
   async function openFood(page: Page, query: string, productName: string) {
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
     await page.getByPlaceholder("Search foods…").fill(query)
-    const row = page.locator(`[aria-label^="${productName}, "]`).first()
+    const row = page.locator(`[aria-label^="${productName} "]`).first()
     // Local cache rows can push remote results below the fold and FlatList
     // only renders visible rows, so scroll until the target row exists in DOM.
     await expect(row)

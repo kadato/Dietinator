@@ -45,7 +45,7 @@ test.describe("YAZIO (real account)", () => {
     await expect(searchBox).toBeVisible()
     await searchBox.fill(query)
 
-    const row = page.locator(`[aria-label^="${foodName}, "]`).first()
+    const row = page.locator(`[aria-label^="${foodName} "]`).first()
     await expect(row).toBeVisible({ timeout: 30_000 })
     await row.click()
 
@@ -94,10 +94,10 @@ test.describe("YAZIO (real account)", () => {
     // Back on the dashboard, the lunch card lists the entry. Wait for the
     // focus-reload to land before clicking. An empty section header navigates
     // to log-meal instead of expanding.
-    await expect(page.getByRole("button", { name: /^Lunch, [1-9]\d* kcal/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Lunch [1-9]\d* kcal/i })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /^Lunch, / }).click()
+    await page.getByRole("button", { name: /Lunch \d/i }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
   })
@@ -107,7 +107,7 @@ test.describe("YAZIO (real account)", () => {
 
     // Enable best-effort sync (lives in the YAZIO Sync settings section).
     await page.getByRole("tab", { name: /Settings/ }).click()
-    await page.getByRole("button", { name: "YAZIO Sync settings" }).click()
+    await page.getByRole("button", { name: "YAZIO Sync" }).click()
     await page.getByRole("switch", { name: "Sync diary to YAZIO" }).click()
     await expect(page.getByRole("switch", { name: "Sync diary to YAZIO" })).toBeChecked()
 
@@ -115,10 +115,10 @@ test.describe("YAZIO (real account)", () => {
     await logFoodViaSearch(page, "Dinner", "banane", "Banán")
 
     // Wait for the entry, then delete it (long-press → confirm).
-    await expect(page.getByRole("button", { name: /^Dinner, [1-9]\d* kcal/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Dinner [1-9]\d* kcal/i })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /^Dinner, / }).click()
+    await page.getByRole("button", { name: /Dinner \d/i }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
 

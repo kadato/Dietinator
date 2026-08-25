@@ -20,7 +20,7 @@ test.describe("ui rework geometry checks", () => {
     await page.getByRole("textbox", { name: "Calories" }).fill(kcal)
     await page.getByRole("button", { name: "Add to diary" }).click()
     // Sections start collapsed. Expand Snacks to reveal the entry.
-    await page.getByRole("button", { name: /^Snacks, / }).click()
+    await page.getByRole("button", { name: /Snacks \d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({ timeout: 15_000 })
   }
 

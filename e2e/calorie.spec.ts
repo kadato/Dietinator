@@ -23,7 +23,7 @@ async function openFoodPreview(
   await page.getByRole("button", { name: "Add food to Lunch" }).click()
   const searchBox = page.getByPlaceholder("Search foods…")
   await expect(searchBox).toBeVisible()
-  const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ kcal, / }).first()
+  const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ kcal / }).first()
   const suggestionLabel = namePattern ? null : await firstRow.getAttribute("aria-label")
   await searchBox.fill(query)
   // The modal shows live suggestions before the query results arrive, so wait
@@ -130,17 +130,17 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
 
     // Tomorrow's dashboard shows the entry; recorded kcal matches the preview
     // math (preview at 100 g × 1.2), so no conversion drift through the pipeline.
-    // The row selector demands the entry signature (macros then kcal), because
-    // meal headers like "Breakfast, 0 kcal," also contain a kcal figure.
-    await page.getByRole("button", { name: /^Lunch, / }).click()
+    // The row selector demands the entry signature (kcal then macros), because
+    // meal headers like "Breakfast 0 kcal" also contain a kcal figure.
+    await page.getByRole("button", { name: /Lunch \d/i }).click()
     const entryRow = page
-      .getByRole("button", { name: /, \d[\d.]*g \d[\d.]*g \d[\d.]*g, \d+ kcal/ })
+      .getByRole("button", { name: /\d+ kcal, \d[\d.]*g \d[\d.]*g \d[\d.]*g/ })
       .first()
     await expect(entryRow).toBeVisible({ timeout: 15_000 })
     const label = (await entryRow.getAttribute("aria-label")) ?? ""
-    const logged = Number(/, (\d+) kcal/.exec(label)?.[1] ?? 0)
+    const logged = Number(/(\d+) kcal,/.exec(label)?.[1] ?? 0)
     expect(Math.abs(logged - kcal100 * 1.2)).toBeLessThanOrEqual(15)
-    const name = label.replace(/, \d[\d.]*g.*$/, "")
+    const name = label.replace(/ \d+ kcal, .*$/, "")
 
     // Back to today: the same product must NOT appear there.
     await page.getByRole("button", { name: "Open calendar" }).click()

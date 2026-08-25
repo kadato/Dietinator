@@ -21,7 +21,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // Back on the dashboard, expand the snack card to reveal the entry.
-    await page.getByRole("button", { name: /^Snacks, / }).click()
+    await page.getByRole("button", { name: /Snacks \d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
@@ -40,7 +40,7 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // Expand the lunch card to reveal the new entry.
-    await page.getByRole("button", { name: /^Lunch, / }).click()
+    await page.getByRole("button", { name: /Lunch \d/i }).click()
     await expect(page.getByText("Homemade soup", { exact: true })).toBeVisible()
   })
 
@@ -55,11 +55,11 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // Expand the dinner section to reveal the entry, then verify the row.
-    await page.getByRole("button", { name: /^Dinner, / }).click()
+    await page.getByRole("button", { name: /Dinner \d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    const row = page.getByRole("button", { name: /^Quick add, / })
+    const row = page.getByRole("button", { name: /^Quick add.*180/i })
     await expect(row).toHaveCount(1)
 
     // Reject first. Nothing should change. The visible delete button is the
@@ -107,11 +107,11 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Add to diary" }).click()
 
     // The entry appears on tomorrow's dashboard (and the ring reflects 250 kcal).
-    await page.getByRole("button", { name: /^Snacks, 250/ }).click()
+    await page.getByRole("button", { name: /Snacks 250/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(page.getByRole("button", { name: /^Snacks, 250/ })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Snacks 250/i })).toBeVisible()
 
     // Today stays empty.
     await page.getByRole("button", { name: "Open calendar" }).click()

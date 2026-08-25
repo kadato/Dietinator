@@ -28,7 +28,10 @@ export async function bootAuthenticated(page: Page): Promise<void> {
 /**
  * Settings is a hub + drilldown, and tab screens stay mounted, so a drilldown
  * survives tab switches. Return to the hub (when a section is already open)
- * before opening another one.
+ * before opening another one. Section rows carry no aria-label (2.5.3
+ * label-in-name), so their accessible name is the visible "Title + subtitle";
+ * callers pass "Goals and Nutrition settings" style labels and the " settings"
+ * suffix is stripped here.
  */
 export async function openSettingsSection(page: Page, label: string): Promise<void> {
   await page.getByRole("tab", { name: /Settings/ }).click()
@@ -36,7 +39,7 @@ export async function openSettingsSection(page: Page, label: string): Promise<vo
   if ((await back.count()) > 0) {
     await back.click()
   }
-  await page.getByRole("button", { name: label }).click()
+  await page.getByRole("button", { name: label.replace(/ settings$/, "") }).click()
 }
 
 export const test = base
