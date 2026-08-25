@@ -43,6 +43,11 @@ export function formatServingOption(serving: FoodServing, baseUnit: string): str
   ) {
     return `${formatNumber(serving.amount)} ${unit}`
   }
+  // Names like "1 medium (118g)" already carry the amount. Appending it again
+  // would read "1 medium (118g) (118 g)".
+  if (new RegExp(`\\b${serving.amount}\\s*${unit}\\b`, "i").test(label)) {
+    return pretty
+  }
   return `${pretty} (${formatNumber(serving.amount)} ${unit})`
 }
 
