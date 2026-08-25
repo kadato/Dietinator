@@ -16,7 +16,7 @@ import {
   Share,
   View,
 } from "react-native"
-import { useRouter } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useApp } from "@/context/AppContext"
@@ -56,6 +56,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { confirmAction } from "@/utils/confirm"
 import { formatNumber } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
+import { routeParam } from "@/utils/route"
 import { spacing, fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -286,37 +287,29 @@ const SETTINGS_SECTIONS = [
       `${Math.round(s.calorie_goal)} kcal · ${Math.round(s.protein_goal)}g P · ${Math.round(s.carbs_goal)}g C · ${Math.round(s.fat_goal)}g F`,
   },
   {
-    id: "general",
-    label: "General and Preferences",
+    id: "device",
+    label: "Device and Preferences",
     icon: "sliders" as const,
     getSubtitle: (s: AppSettings, country: string) =>
       `Database: ${getFoodDatabaseCountryLabel(country)} · ${s.units === "imperial" ? "Imperial" : "Metric"} · Theme: ${s.theme_preference ?? "system"}`,
   },
   {
-    id: "ai",
-    label: "AI Assistant",
+    id: "data",
+    label: "Data and Sync",
+    icon: "folder" as const,
+    getSubtitle: (s: AppSettings) =>
+      s.yazio_sync_enabled === 1
+        ? "Local and YAZIO sync · Export and backup"
+        : "Local only · Export and backup",
+  },
+  {
+    id: "account",
+    label: "AI and Account",
     icon: "cpu" as const,
     getSubtitle: (s: AppSettings) =>
-      s.ai_enabled === 1 ? `Active (${s.ai_provider})` : "Disabled · Chat with diary",
-  },
-  {
-    id: "sync",
-    label: "YAZIO Sync",
-    icon: "repeat" as const,
-    getSubtitle: (s: AppSettings) =>
-      s.yazio_sync_enabled === 1 ? "Syncing enabled (best-effort)" : "Sync disabled (local only)",
-  },
-  {
-    id: "data",
-    label: "Data and Backup",
-    icon: "folder" as const,
-    getSubtitle: () => "Export diary (JSON/CSV) · Full backup and restore",
-  },
-  {
-    id: "about",
-    label: "About and Account",
-    icon: "info" as const,
-    getSubtitle: () => `Version ${getCurrentVersion()} · Agent API and Sign out`,
+      s.ai_enabled === 1
+        ? `AI active (${s.ai_provider}) · Agent API · Sign out`
+        : `AI disabled · Agent API · Sign out`,
   },
 ] as const
 
@@ -954,33 +947,42 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         </View>
 
         {fetchedModels.length > 0 ? (
-          <Box className="mt-2.5 flex-row flex-wrap gap-1.5">
-            {fetchedModels.slice(0, 10).map((model) => (
-              <Pressable
-                key={model}
-                onPress={() => setAiModel(model)}
-                className="rounded-none border px-2.5 py-1.5"
-                style={{
-                  borderWidth: 1.5,
-                  borderColor: aiModel === model ? colors.primary : colors.border,
-                  backgroundColor: aiModel === model ? `${colors.primary}20` : colors.surfaceAlt,
-                  borderRadius: 0,
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`Select model ${model}`}
-              >
-                <Text
-                  size="xs"
-                  bold={aiModel === model}
+          <Box className="mt-2.5 gap-2">
+            <Text
+              size="xs"
+              className="font-mono uppercase tracking-widest text-typography-500"
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            >
+              {fetchedModels.length} models available — tap to select
+            </Text>
+            <Box className="flex-row flex-wrap gap-1.5">
+              {fetchedModels.map((model) => (
+                <Pressable
+                  key={model}
+                  onPress={() => setAiModel(model)}
+                  className="rounded-none border px-2.5 py-1.5"
                   style={{
-                    color: aiModel === model ? colors.primary : colors.text,
-                    fontFamily: fonts.mono,
+                    borderWidth: 1.5,
+                    borderColor: aiModel === model ? colors.primary : colors.border,
+                    backgroundColor: aiModel === model ? `${colors.primary}20` : colors.surfaceAlt,
+                    borderRadius: 0,
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select model ${model}`}
                 >
-                  {model}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    size="xs"
+                    bold={aiModel === model}
+                    style={{
+                      color: aiModel === model ? colors.primary : colors.text,
+                      fontFamily: fonts.mono,
+                    }}
+                  >
+                    {model}
+                  </Text>
+                </Pressable>
+              ))}
+            </Box>
           </Box>
         ) : null}
       </SettingsField>
@@ -1208,24 +1210,67 @@ export default function SettingsScreen() {
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
   const [mcpExpanded, setMcpExpanded] = useState(false)
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null)
+  const searchParams = useLocalSearchParams<{ section?: string }>()
+  const sectionParam = (routeParam(searchParams.section) ?? null) as SettingsSectionId | null
+  const effectiveSectionId =
+    isWide && activeSection === null ? SETTINGS_SECTIONS[0].id : activeSection
+
+  useEffect(() => {
+    if (
+      sectionParam &&
+      SETTINGS_SECTIONS.some((s) => s.id === sectionParam) &&
+      sectionParam !== activeSection
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- deep link sync
+      setActiveSection(sectionParam)
+    }
+  }, [sectionParam, activeSection])
+
+  // On wide, default to the first tab instead of the hub cards
+  useEffect(() => {
+    if (isWide && activeSection === null && !sectionParam) {
+      const first = SETTINGS_SECTIONS[0].id
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- wide default
+      setActiveSection(first)
+      router.setParams({ section: first } as never)
+    }
+  }, [isWide, activeSection, sectionParam, router])
+
+  const openSection = useCallback(
+    (id: SettingsSectionId) => {
+      setActiveSection(id)
+      scrollRef.current?.scrollTo({ y: 0, animated: false })
+      router.setParams({ section: id } as never)
+    },
+    [router],
+  )
 
   // One shared pop-to-hub for the header button and hardware Back alike.
+  // On wide the hub cards are not used, so back stays on the first tab.
   const backToHub = useCallback(() => {
+    if (isWide) {
+      const first = SETTINGS_SECTIONS[0].id
+      setActiveSection(first)
+      scrollRef.current?.scrollTo({ y: 0, animated: false })
+      router.setParams({ section: first } as never)
+      return
+    }
     setActiveSection(null)
     scrollRef.current?.scrollTo({ y: 0, animated: false })
-  }, [])
+    router.setParams({ section: undefined } as never)
+  }, [router, isWide])
 
   // The drilldown lives in component state, invisible to the navigation
   // stack. Without this handler, system Back from any subsection exits the
   // whole app on Android.
   useEffect(() => {
-    if (Platform.OS === "web" || activeSection === null) return
+    if (Platform.OS === "web" || effectiveSectionId === null) return
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       backToHub()
       return true
     })
     return () => sub.remove()
-  }, [activeSection, backToHub])
+  }, [effectiveSectionId, backToHub])
 
   useEffect(() => {
     // The profile lookup only makes sense signed in; signed-out mounts were
@@ -1302,7 +1347,7 @@ export default function SettingsScreen() {
     }
   }
 
-  const currentSection = SETTINGS_SECTIONS.find((s) => s.id === activeSection)
+  const currentSection = SETTINGS_SECTIONS.find((s) => s.id === effectiveSectionId)
 
   return (
     <KeyboardAvoidingView
@@ -1324,7 +1369,7 @@ export default function SettingsScreen() {
             isWide ? { maxWidth: isLarge ? 1360 : 1280 } : undefined,
           ]}
         >
-          {activeSection === null ? (
+          {effectiveSectionId === null ? (
             /* ========================================================== */
             /* 1. MASTER SETTINGS HUB OVERVIEW                            */
             /* ========================================================== */
@@ -1364,14 +1409,11 @@ export default function SettingsScreen() {
                   }
                 >
                   {SETTINGS_SECTIONS.map((section) => {
-                    const isActive = activeSection === section.id
+                    const isActive = effectiveSectionId === section.id
                     return (
                       <Pressable
                         key={section.id}
-                        onPress={() => {
-                          setActiveSection(section.id)
-                          scrollRef.current?.scrollTo({ y: 0, animated: false })
-                        }}
+                        onPress={() => openSection(section.id)}
                         accessibilityRole="button"
                         style={{
                           borderWidth: 1.5,
@@ -1447,10 +1489,7 @@ export default function SettingsScreen() {
                     return (
                       <Pressable
                         key={section.id}
-                        onPress={() => {
-                          setActiveSection(section.id)
-                          scrollRef.current?.scrollTo({ y: 0, animated: false })
-                        }}
+                        onPress={() => openSection(section.id)}
                         className={`flex-row items-center gap-3.5 px-4 py-4 active:bg-background-100 ${
                           !isLast ? "border-b border-outline-100" : ""
                         }`}
@@ -1484,12 +1523,6 @@ export default function SettingsScreen() {
                   })}
                 </Card>
               )}
-
-              <Box className="mt-6">
-                <Button size="lg" variant="outline" action="negative" onPress={handleLogout}>
-                  <ButtonText>Sign out of YAZIO</ButtonText>
-                </Button>
-              </Box>
             </>
           ) : (
             /* ========================================================== */
@@ -1541,14 +1574,11 @@ export default function SettingsScreen() {
                   }
                 >
                   {SETTINGS_SECTIONS.map((s) => {
-                    const active = s.id === activeSection
+                    const active = s.id === effectiveSectionId
                     return (
                       <Pressable
                         key={s.id}
-                        onPress={() => {
-                          setActiveSection(s.id)
-                          scrollRef.current?.scrollTo({ y: 0, animated: false })
-                        }}
+                        onPress={() => openSection(s.id)}
                         accessibilityRole="button"
                         accessibilityState={{ selected: active }}
                         style={{
@@ -1586,10 +1616,10 @@ export default function SettingsScreen() {
               ) : null}
 
               {/* Goals and Nutrition */}
-              {activeSection === "goals" ? <GoalsSettings settings={settings} /> : null}
+              {effectiveSectionId === "goals" ? <GoalsSettings settings={settings} /> : null}
 
-              {/* General and Preferences */}
-              {activeSection === "general" ? (
+              {/* Device and Preferences */}
+              {effectiveSectionId === "device" ? (
                 <>
                   <SettingsSection title="Preferences">
                     <SettingsRow
@@ -1693,35 +1723,8 @@ export default function SettingsScreen() {
                 </>
               ) : null}
 
-              {/* AI Assistant */}
-              {activeSection === "ai" ? (
-                <SettingsSection title="AI Assistant">
-                  <SettingsRow
-                    icon="cpu"
-                    title="Enable AI Assistant"
-                    subtitle="Chat with your diary. Your API key and diary data stay on your device"
-                    right={
-                      <Switch
-                        value={settings.ai_enabled === 1}
-                        accessibilityLabel="Enable AI assistant"
-                        onValueChange={async (v) => {
-                          try {
-                            await updateSettings({ ai_enabled: v ? 1 : 0 })
-                          } catch (error) {
-                            showError(error, "Could not update AI setting.")
-                          }
-                        }}
-                      />
-                    }
-                    last={settings.ai_enabled !== 1}
-                  />
-
-                  {settings.ai_enabled === 1 ? <AiSettingsForm settings={settings} /> : null}
-                </SettingsSection>
-              ) : null}
-
-              {/* YAZIO Sync */}
-              {activeSection === "sync" ? (
+              {/* YAZIO Sync — now under Data and Sync */}
+              {effectiveSectionId === "data" ? (
                 <SettingsSection title="YAZIO Cloud Sync">
                   {/* Connectivity Status Banner */}
                   <View
@@ -1877,7 +1880,7 @@ export default function SettingsScreen() {
               ) : null}
 
               {/* Data and Backup */}
-              {activeSection === "data" ? (
+              {effectiveSectionId === "data" ? (
                 <SettingsSection title="Data and Storage">
                   <SettingsRow
                     icon="download"
@@ -1936,9 +1939,72 @@ export default function SettingsScreen() {
                 </SettingsSection>
               ) : null}
 
-              {/* About and Account */}
-              {activeSection === "about" ? (
+              {/* Account and About — includes AI config, previously its own tile */}
+              {effectiveSectionId === "account" ? (
                 <>
+                  <SettingsSection title="AI Assistant">
+                    <SettingsRow
+                      icon="cpu"
+                      title="Enable AI Assistant"
+                      subtitle="Chat with your diary. Key and data stay on this device. Full config in the AI tab."
+                      right={
+                        <Switch
+                          value={settings.ai_enabled === 1}
+                          accessibilityLabel="Enable AI assistant"
+                          onValueChange={async (v) => {
+                            try {
+                              await updateSettings({ ai_enabled: v ? 1 : 0 })
+                            } catch (error) {
+                              showError(error, "Could not update AI setting.")
+                            }
+                          }}
+                        />
+                      }
+                      last={settings.ai_enabled !== 1}
+                      onPress={() => {
+                        if (settings.ai_enabled === 1) return
+                        void updateSettings({ ai_enabled: 1 }).catch((e) =>
+                          showError(e, "Could not update AI setting."),
+                        )
+                      }}
+                    />
+                    {settings.ai_enabled === 1 ? (
+                      <>
+                        <AiSettingsForm settings={settings} />
+                        <View className="border-t border-outline-100 p-4">
+                          <Text size="xs" className="text-typography-500">
+                            AI provider config below. Also open chat in the AI tab.
+                          </Text>
+                          <Pressable
+                            onPress={() => router.push("/(tabs)/ai")}
+                            className="mt-3 flex-row items-center justify-center gap-2 rounded-none border px-4 py-3 active:opacity-80"
+                            style={{
+                              backgroundColor: `${colors.primary}14`,
+                              borderColor: colors.primary,
+                              borderWidth: 1.5,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open AI chat"
+                          >
+                            <Feather name="message-square" size={16} color={colors.primary} />
+                            <Text
+                              size="xs"
+                              bold
+                              style={{
+                                color: colors.primary,
+                                fontFamily: fonts.mono,
+                                textTransform: "uppercase",
+                                letterSpacing: 0.06,
+                              }}
+                            >
+                              Open AI Chat
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </>
+                    ) : null}
+                  </SettingsSection>
+
                   {Platform.OS === "web" ? (
                     <SettingsSection title="Agent API (MCP)">
                       <SettingsRow
@@ -2048,7 +2114,7 @@ export default function SettingsScreen() {
         </PageContainer>
       </ScrollView>
 
-      {activeSection !== null ? (
+      {effectiveSectionId !== null && !isWide ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
           left={

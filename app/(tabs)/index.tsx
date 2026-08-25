@@ -229,11 +229,11 @@ export default function TodayScreen() {
     [dateKey, router],
   )
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true)
     await load({ force: true })
     setRefreshing(false)
-  }
+  }, [load])
 
   const onDeleteEntry = useCallback(
     (id: string) => {
@@ -789,7 +789,7 @@ export default function TodayScreen() {
 
   const nutritionHeader = (
     <Box className="mb-3 flex-row items-center justify-between px-1">
-      <Text size="xl" bold style={{ color: colors.textOnBackground }}>
+      <Text accessibilityRole="header" size="xl" bold style={{ color: colors.textOnBackground }}>
         MEALS
       </Text>
       {/* No header-level log button here. Every meal card carries its own
@@ -907,6 +907,28 @@ export default function TodayScreen() {
               </Box>
               <Box className="min-w-0 flex-1">
                 {nutritionHeader}
+                {entries.length === 0 && !isInitialLoading ? (
+                  <Box
+                    className="mb-3 flex-row items-center gap-2 border px-4 py-3"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.primary,
+                      backgroundColor: `${colors.primary}10`,
+                      borderRadius: 0,
+                    }}
+                    accessibilityRole="text"
+                    accessibilityLabel="Your diary is empty. Tap Log food to start"
+                  >
+                    <Feather name="arrow-up" size={14} color={colors.primary} />
+                    <Text
+                      size="xs"
+                      bold
+                      style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                    >
+                      Your diary is empty. Tap Log food or a + on Breakfast to start
+                    </Text>
+                  </Box>
+                ) : null}
                 <Box
                   className={isLarge ? "gap-4" : "gap-3.5"}
                   style={
@@ -929,6 +951,28 @@ export default function TodayScreen() {
               {summaryCard}
               {hydrationRow}
               {nutritionHeader}
+              {entries.length === 0 && !isInitialLoading ? (
+                <Box
+                  className="mb-3 flex-row items-center gap-2 border px-4 py-3"
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: colors.primary,
+                    backgroundColor: `${colors.primary}10`,
+                    borderRadius: 0,
+                  }}
+                  accessibilityRole="text"
+                  accessibilityLabel="Your diary is empty. Tap Log food to start"
+                >
+                  <Feather name="arrow-down" size={14} color={colors.primary} />
+                  <Text
+                    size="xs"
+                    bold
+                    style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                  >
+                    Your diary is empty. Tap Log food to start
+                  </Text>
+                </Box>
+              ) : null}
               {/* Medium band (600-899): two meal columns fit, so sections
                   share rows instead of stacking full width. The wrap parent
                   is required: 48%-basis children do nothing in a column. */}
@@ -1082,6 +1126,7 @@ export default function TodayScreen() {
             <Fab
               size="md"
               icon="plus"
+              label="Log food"
               onPress={() => setLogSlotOpen(true)}
               accessibilityLabel="Log food into diary"
             />

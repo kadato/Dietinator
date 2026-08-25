@@ -28,19 +28,19 @@ const OPTIONS: CreateOption[] = [
   {
     id: "quick-add",
     title: "Quick Add",
-    description: "Log calories, no item saved",
+    description: "Log kcal and macros, no food saved",
     icon: "zap",
   },
   {
     id: "manual-food",
     title: "New food",
-    description: "Single item without barcode",
+    description: "Create a food with nutrients for search",
     icon: "plus-circle",
   },
   {
     id: "meal",
     title: "New meal",
-    description: "Foods you eat together",
+    description: "Combine foods you eat together",
     icon: "shopping-bag",
   },
 ]

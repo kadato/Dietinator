@@ -361,7 +361,10 @@ export default function StatsScreen() {
           ) : loadError ? (
             <Card variant="elevated" className="mt-4 p-4">
               <Box className="flex-row items-center gap-2.5">
-                <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                <Box
+                  className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                  style={{ borderWidth: 1.5, borderColor: colors.border }}
+                >
                   <Feather name="cloud-off" size={18} color={colors.danger} />
                 </Box>
                 <Box className="min-w-0 flex-1">
@@ -396,7 +399,10 @@ export default function StatsScreen() {
                 style={isWide ? ({ gridColumn: "1 / -1" } as never) : undefined}
               >
                 <Box className="flex-row items-center gap-2.5">
-                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                  <Box
+                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
@@ -410,7 +416,10 @@ export default function StatsScreen() {
                 </Box>
 
                 <Box className="mt-3 flex-row gap-3">
-                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                  <Box
+                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Box className="flex-row items-center gap-1">
                       <Feather name="zap" size={14} color={colors.warning} />
                       <Text size="lg" bold className="font-tabular text-typography-900">
@@ -421,7 +430,10 @@ export default function StatsScreen() {
                       Day streak
                     </Text>
                   </Box>
-                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                  <Box
+                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.loggedDays}
                     </Text>
@@ -429,7 +441,10 @@ export default function StatsScreen() {
                       Logged days
                     </Text>
                   </Box>
-                  <Box className="flex-1 items-center rounded-xl border border-outline-100 bg-background-50 py-3">
+                  <Box
+                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "No data"}
                     </Text>
@@ -443,7 +458,10 @@ export default function StatsScreen() {
               {/* Body weight */}
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
-                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                  <Box
+                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
@@ -517,7 +535,8 @@ export default function StatsScreen() {
                       ) : null}
                     </Box>
                     <View
-                      className="h-2 overflow-hidden rounded-full bg-background-100"
+                      className="h-2 overflow-hidden rounded-none border bg-background-100"
+                      style={{ borderWidth: 1, borderColor: colors.border }}
                       accessibilityRole="progressbar"
                       accessibilityLabel="Goal progress"
                       accessibilityValue={{
@@ -527,7 +546,7 @@ export default function StatsScreen() {
                       }}
                     >
                       <View
-                        className="h-full rounded-full"
+                        className="h-full rounded-none"
                         style={{
                           width: `${Math.round(goalProgress * 100)}%`,
                           backgroundColor: colors.primary,
@@ -556,7 +575,10 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedWeight ? (
-                  <Box className="mt-3 flex-row flex-wrap items-center gap-2 rounded-xl border border-outline-100 bg-background-50 px-3 py-2.5">
+                  <Box
+                    className="mt-3 flex-row flex-wrap items-center gap-2 rounded-none border bg-background-50 px-3 py-2.5"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Feather name="map-pin" size={15} color={colors.primary} />
                     <Box className="min-w-[120px] flex-1">
                       <Text size="xs" bold className="text-typography-900">
@@ -623,7 +645,10 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
-                    <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Box
+                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                      style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    >
                       <Feather name="zap" size={18} color={colors.primary} />
                     </Box>
                     <Box>
@@ -676,7 +701,10 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
-                    <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                    <Box
+                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                      style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    >
                       <Feather name="pie-chart" size={18} color={colors.primary} />
                     </Box>
                     <Box>
@@ -751,8 +779,12 @@ export default function StatsScreen() {
                     </Text>
                     <Box className="flex-row gap-2">
                       <Box
-                        className="flex-1 items-center rounded-2xl p-2.5"
-                        style={{ backgroundColor: `${colors.breakfast}15` }}
+                        className="flex-1 items-center rounded-none border p-2.5"
+                        style={{
+                          borderWidth: 1.5,
+                          borderColor: colors.border,
+                          backgroundColor: `${colors.breakfast}15`,
+                        }}
                       >
                         <Text size="xs" bold style={{ color: colors.breakfast }}>
                           Protein
@@ -765,8 +797,12 @@ export default function StatsScreen() {
                         </Text>
                       </Box>
                       <Box
-                        className="flex-1 items-center rounded-2xl p-2.5"
-                        style={{ backgroundColor: `${colors.lunch}15` }}
+                        className="flex-1 items-center rounded-none border p-2.5"
+                        style={{
+                          borderWidth: 1.5,
+                          borderColor: colors.border,
+                          backgroundColor: `${colors.lunch}15`,
+                        }}
                       >
                         <Text size="xs" bold style={{ color: colors.lunch }}>
                           Carbs
@@ -779,8 +815,12 @@ export default function StatsScreen() {
                         </Text>
                       </Box>
                       <Box
-                        className="flex-1 items-center rounded-2xl p-2.5"
-                        style={{ backgroundColor: `${colors.dinner}15` }}
+                        className="flex-1 items-center rounded-none border p-2.5"
+                        style={{
+                          borderWidth: 1.5,
+                          borderColor: colors.border,
+                          backgroundColor: `${colors.dinner}15`,
+                        }}
                       >
                         <Text size="xs" bold style={{ color: colors.dinner }}>
                           Fat
@@ -800,7 +840,10 @@ export default function StatsScreen() {
               {/* Water */}
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
-                  <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10">
+                  <Box
+                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  >
                     <Feather name="droplet" size={18} color={colors.primary} />
                   </Box>
                   <Box className="min-w-0 flex-1">

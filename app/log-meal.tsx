@@ -185,7 +185,7 @@ export default function LogMealScreen() {
     if (prevDayKcalRef.current !== dayTotals.kcal) {
       prevDayKcalRef.current = dayTotals.kcal
       setBudgetBadgeFlash(true)
-      const timer = setTimeout(() => setBudgetBadgeFlash(false), 450)
+      const timer = setTimeout(() => setBudgetBadgeFlash(false), 900)
       return () => clearTimeout(timer)
     }
   }, [dayTotals.kcal])
@@ -766,6 +766,19 @@ export default function LogMealScreen() {
               size="xs"
             />
           </View>
+          {dayOverKcal > 0 ? (
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: fonts.mono,
+                color: colors.textMuted,
+                letterSpacing: 0.3,
+                marginTop: 4,
+              }}
+            >
+              Adjust tomorrow
+            </Text>
+          ) : null}
         </View>
 
         {/* Always visible quick-switch tabs: Frequent, Recent, Favorites, Meals */}
