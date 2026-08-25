@@ -23,6 +23,7 @@ import {
 import { getDiaryEntryById } from "@/db/diary"
 import type { DiaryEntry, FoodServing, MealType, SearchFoodResult } from "@/types"
 import {
+  isBaseUnitServingLabel,
   normalizePerGramFood,
   nutrientsForAmount,
   resolveNutrientsRefAmount,
@@ -305,6 +306,22 @@ export default function AddFoodScreen() {
     return nutrientsForAmount(food.nutrients, food.serving, amt, food.base_unit)
   }, [food, amount])
 
+  /**
+   * Stepper step follows the selected serving. A named portion such as
+   * "1 medium (118g)" steps whole portions, so every press adds the same
+   * per-portion value, 118, 236, 354. Plain g or ml servings step 10,
+   * countable base units such as each step 1.
+   */
+  const stepperStep = useMemo(() => {
+    const baseUnit = food?.base_unit || "g"
+    if (!(baseUnit === "g" || baseUnit === "ml")) return 1
+    const name = food?.serving.serving ?? ""
+    if (name && !isBaseUnitServingLabel(name, baseUnit)) {
+      return food?.serving.amount || 10
+    }
+    return 10
+  }, [food])
+
   const selectServing = useCallback(
     (option: FoodServing) => {
       if (!food) return
@@ -537,7 +554,7 @@ export default function AddFoodScreen() {
                     setAmount(text)
                   }}
                   onSubmit={() => void handleSave()}
-                  step={unit === "g" || unit === "ml" ? 10 : 1}
+                  step={stepperStep}
                   decimals={1}
                   accessibilityLabel={`Amount in ${displayUnit(unit)}`}
                 />
