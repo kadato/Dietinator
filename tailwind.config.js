@@ -175,10 +175,10 @@ module.exports = {
         },
         meal: {
           // Single source: src/theme.ts light+dark - keep in sync when palette changes
-          breakfast: "#0072B2",
-          lunch: "#E69F00",
-          dinner: "#D55E00",
-          snack: "#009E73",
+          breakfast: "#075985",
+          lunch: "#804707",
+          dinner: "#96340A",
+          snack: "#0B5F5A",
         },
         app: {
           chrome: "#ffedd5",

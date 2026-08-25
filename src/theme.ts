@@ -58,12 +58,14 @@ export const darkColors: ColorPalette = {
   onWarning: "#1a1b26",
   border: "#6b739c",
   // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito.
-  // Blue for protein and breakfast, amber for carbs and lunch, vermillion for fat and dinner
-  // remain distinct under deuteranopia, protanopia, or tritanopia. Snack keeps
-  // a teal that is luminance-separated from the three.
-  breakfast: "#6aa8ff",
+  // Blue for protein and breakfast, amber for carbs and lunch, vermillion for
+  // fat and dinner remain distinct under deuteranopia, protanopia, or
+  // tritanopia. Snack keeps a teal that is luminance-separated from the three.
+  // Breakfast and dinner are lifted past the Okabe-Ito originals until they
+  // clear 4.5 to 1 as text on their own tinted chip wells.
+  breakfast: "#8db8ff",
   lunch: "#FFB020",
-  dinner: "#ff7a92",
+  dinner: "#ff92a6",
   snack: "#2EC4B6",
 }
 
@@ -71,23 +73,29 @@ export const lightColors: ColorPalette = {
   background: "#f1f5f9",
   surface: "#ffffff",
   surfaceAlt: "#e2e8f0",
-  primary: "#0066ff",
+  primary: "#0b57d0",
   primaryStrong: "#0044cc",
   primaryMuted: "#0f172a",
   onPrimary: "#ffffff",
   onPrimaryMuted: "#f1f5f9",
-  primaryOverlay: "rgba(0,102,255,0.14)",
+  primaryOverlay: "rgba(11,87,208,0.14)",
   text: "#0f172a",
   textMuted: "#475569",
   textOnBackground: "#0f172a",
-  danger: "#e11d48",
-  warning: "#d97706",
+  danger: "#be123c",
+  warning: "#96610a",
   onWarning: "#ffffff",
   border: "#0f172a",
-  breakfast: "#0072b2",
-  lunch: "#e69f00",
-  dinner: "#d55e00",
-  snack: "#009e73",
+  // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito
+  // darkened until every value clears 4.5 to 1 as text on white, the page
+  // background, and its own tinted chip well. Blue for protein and breakfast,
+  // amber for carbs and lunch, vermillion for fat and dinner remain distinct
+  // under deuteranopia, protanopia, or tritanopia. Snack keeps a teal that is
+  // luminance-separated from the three.
+  breakfast: "#075985",
+  lunch: "#804707",
+  dinner: "#96340a",
+  snack: "#0b5f5a",
 }
 
 export function getColors(scheme: string | null | undefined): ColorPalette {

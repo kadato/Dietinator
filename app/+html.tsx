@@ -26,7 +26,8 @@ export default function Root({ children }: PropsWithChildren) {
           name="description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta name="theme-color" content="#9a3412" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b26" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
         <ScrollViewStyleReset />
@@ -44,7 +45,7 @@ export default function Root({ children }: PropsWithChildren) {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #ffedd5;
+            background: #f1f5f9;
           }
           @media (prefers-color-scheme: dark) {
             #app-shell {
@@ -56,12 +57,12 @@ export default function Root({ children }: PropsWithChildren) {
             width: 32px;
             height: 32px;
             border-radius: 0;
-            border: 2px solid #fed7aa;
+            border: 2px solid #cbd5e1;
           }
           .app-shell-spinner::after {
             content: "";
             position: absolute;
-            background: #9a3412;
+            background: #0b57d0;
             animation: edge-march 0.64s steps(1, end) infinite;
           }
           @keyframes edge-march {
