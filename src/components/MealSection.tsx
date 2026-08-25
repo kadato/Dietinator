@@ -5,7 +5,7 @@ import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
-import { formatNumber } from "@/utils/format"
+import { formatMacro } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { useTheme } from "@/hooks/useTheme"
@@ -68,18 +68,14 @@ export const MealSection = memo(function MealSection({
           }}
           className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3"
           accessibilityRole="button"
-          accessibilityLabel={`${MEAL_LABELS[mealType]}, ${Math.round(totalKcal)} kcal, ${
-            goal
-              ? `of ${Math.round(goal)} kcal goal, ${
-                  overKcal
-                    ? `+${Math.round(overKcal)} over`
-                    : `${Math.round(remainingKcal ?? 0)} left`
-                }, `
+          // Explicit label mirrors the visible header text ("Breakfast 441 kcal
+          // 22.5g 33.9g 22.8g", single-spaced) so it satisfies 2.5.3
+          // label-in-name while staying stable for assistive tech; the raw
+          // content name carries icon glyphs and doubled spaces.
+          accessibilityLabel={`${MEAL_LABELS[mealType]} ${Math.round(totalKcal)} kcal${
+            entries.length > 0
+              ? ` ${formatMacro(totalProtein)}g ${formatMacro(totalCarbs)}g ${formatMacro(totalFat)}g`
               : ""
-          }${
-            entries.length === 0
-              ? "Nothing logged yet"
-              : `${formatNumber(totalProtein)}g ${formatNumber(totalCarbs)}g ${formatNumber(totalFat)}g`
           }`}
         >
           <Box
@@ -100,6 +96,7 @@ export const MealSection = memo(function MealSection({
                 <Text
                   size="2xs"
                   bold
+                  aria-hidden={true}
                   style={{
                     color: accent,
                     fontFamily: fonts.mono,

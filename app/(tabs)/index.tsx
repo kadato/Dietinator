@@ -373,7 +373,7 @@ export default function TodayScreen() {
             hitSlop={6}
             className="min-w-0 flex-1"
             accessibilityRole="button"
-            accessibilityLabel={`Selected date: ${formatHeaderDate(dateKey)}. Tap to open calendar.`}
+            accessibilityLabel={`${compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}. Tap to open calendar.`}
           >
             {({ pressed }) => (
               <Box
@@ -654,8 +654,14 @@ export default function TodayScreen() {
         className={`min-w-0 flex-1 cursor-pointer rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
         style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
         accessibilityRole="button"
-        accessibilityLabel={`Log weight, ${
-          displayedWeight != null ? `${formatWeight(displayedWeight, settings.units)} weight` : ""
+        accessibilityLabel={`Log weight: ${
+          displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "-"
+        } ${
+          weightHistory.length > 1
+            ? `${weightHistory.length} weigh-ins`
+            : weightHistory.length === 1
+              ? "1 weigh-in"
+              : "Tap to log"
         }`}
       >
         <View className="w-full flex-row items-center gap-2">

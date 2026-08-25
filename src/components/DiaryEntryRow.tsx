@@ -40,7 +40,9 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
         className="cursor-pointer hover:opacity-90"
         accessibilityRole="button"
-        accessibilityLabel={`${entry.food_name}, ${amountLabel.trim()}, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g, ${Math.round(entry.kcal)} kcal`}
+        // Accessible name: the exact visible row text (2.5.3 label-in-name),
+        // then the macro breakdown as data for assistive tech summaries.
+        accessibilityLabel={`${entry.food_name} ${amountLabel.trim()} ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
         accessibilityHint="Tap to edit"
       >
         <View

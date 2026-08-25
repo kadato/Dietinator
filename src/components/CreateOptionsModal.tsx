@@ -149,7 +149,8 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                   key={option.id}
                   onPress={() => onSelect(option)}
                   accessibilityRole="button"
-                  accessibilityLabel={option.title}
+                  // No aria-label: the visible title + description is the
+                  // accessible name, which satisfies 2.5.3 label-in-name.
                   style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                 >
                   <Box

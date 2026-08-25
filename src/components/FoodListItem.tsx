@@ -104,6 +104,16 @@ export const FoodListItem = memo(function FoodListItem({
 
   const prefix = food.producer?.trim() ? `${food.producer.trim()}, ` : ""
 
+  // Accessible name: the exact visible row text (2.5.3 label-in-name), then
+  // the calorie figure as data. When showKcal renders "{kcal} Cal" on the
+  // right it is already part of the visible text, so it joins with a space;
+  // otherwise it is appended after a comma as extra context.
+  const macroText = `${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g`
+  const kcalText = `${Math.round(nutrients.kcal)} Cal`
+  const rowText = subtitle
+    ? `${food.name} ${subtitle}`
+    : `${food.name} ${prefix}${portion}, ${Math.round(nutrients.kcal)} kcal ${macroText}`
+
   return (
     <Box
       className="mx-3 mb-2 flex-row items-center rounded-none bg-background-50 px-3 py-2.5"
@@ -122,7 +132,7 @@ export const FoodListItem = memo(function FoodListItem({
         className="min-w-0 flex-1 flex-row items-center active:opacity-80"
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${food.name}, ${prefix.trim()} ${portion}, ${Math.round(nutrients.kcal)} kcal, ${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g, ${Math.round(nutrients.kcal)} Cal`}
+        accessibilityLabel={showKcal ? `${rowText} ${kcalText}` : `${rowText}, ${kcalText}`}
       >
         <Box
           className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-none bg-background-100"

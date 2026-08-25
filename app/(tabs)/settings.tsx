@@ -1374,7 +1374,8 @@ export default function SettingsScreen() {
                         !isLast ? "border-b border-outline-100" : ""
                       }`}
                       accessibilityRole="button"
-                      accessibilityLabel={`${section.label} settings`}
+                      // No aria-label: visible label + subtitle is the
+                      // accessible name, which satisfies 2.5.3 label-in-name.
                     >
                       <Box
                         className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"

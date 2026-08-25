@@ -44,7 +44,9 @@ export function SegmentedControl<T extends string>({
               borderWidth: 1.5,
               borderColor: active ? accent : "transparent",
               borderRadius: 0,
-              opacity: active ? 1 : 0.85,
+              // No opacity dimming on inactive segments: it dragged the
+              // textMuted label under 4.5:1 on surfaceAlt. The accent fill
+              // and border already mark the active segment.
               // Fixed 44 height, not minHeight: stacked SettingsRows stretch
               // children vertically, which inflated segments to row height.
               // Deterministic height keeps labels dead-center everywhere.

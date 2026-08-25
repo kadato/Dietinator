@@ -227,7 +227,7 @@ const createStyles = (colors: ColorPalette) =>
     separator: {
       fontSize: 18,
       fontWeight: "700",
-      color: colors.border,
+      color: colors.textMuted,
       fontFamily: fonts.mono,
     },
     dot: {

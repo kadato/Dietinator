@@ -4,6 +4,7 @@ import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { fonts, borders, radii } from "@/theme"
 import { chipTint } from "@/theme.helpers"
+import { formatNumber } from "@/utils/format"
 
 type Props = {
   protein: number
@@ -14,8 +15,7 @@ type Props = {
 }
 
 function formatMacro(value: number): string {
-  const rounded = Math.round(value * 10) / 10
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+  return formatNumber(value, 1)
 }
 
 export const MacroPills = memo(function MacroPills({

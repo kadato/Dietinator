@@ -9,3 +9,9 @@ export function formatNumber(value: number, maxDecimals = 2): string {
   const fixed = value.toFixed(maxDecimals)
   return fixed.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
 }
+
+/** One-decimal gram formatting used by macro pills and accessible names. */
+export function formatMacro(value: number): string {
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+}

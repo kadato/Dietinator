@@ -538,9 +538,9 @@ export default function LogMealScreen() {
           }}
           accessibilityRole="button"
           accessibilityState={{ expanded: isLoggedExpanded }}
-          accessibilityLabel={`${isLoggedExpanded ? "Hide" : "Show"} ${loggedEntries.length} ${
+          accessibilityLabel={`Logged in ${MEAL_LABELS[mealType]} · ${loggedEntries.length} ${
             loggedEntries.length === 1 ? "item" : "items"
-          } logged in ${MEAL_LABELS[mealType]}, ${mealKcal} kcal`}
+          } · ${mealKcal} kcal. Tap to ${isLoggedExpanded ? "collapse" : "expand"}.`}
         >
           <Feather
             name={isLoggedExpanded ? "chevron-up" : "chevron-down"}
