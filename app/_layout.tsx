@@ -140,7 +140,7 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  // Register the bundled JetBrainsMono NFM faces on web before first paint
+  // Register the bundled Departure Mono faces on web before first paint
   // settles; native resolves the family from the Android assets folder.
   useBundledTerminalFont()
 

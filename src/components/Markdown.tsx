@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { Linking, Pressable } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
+import { fonts } from "@/theme"
 import type { ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -212,8 +213,8 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
               <Text
                 key={index}
                 style={{
-                  fontFamily: "JetBrainsMono NFM, JetBrains Mono, monospace",
-                  fontSize: 12.5,
+                  fontFamily: fonts.mono,
+                  fontSize: 13,
                   backgroundColor: colors.surfaceAlt,
                   paddingHorizontal: 4,
                   paddingVertical: 1,
@@ -283,10 +284,10 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
         <Box className="rounded-lg border border-outline-100 bg-background-100 px-3 py-2">
           <Text
             style={{
-              fontFamily: "JetBrains Mono, JetBrainsMono Nerd Font, monospace",
-              fontSize: 12,
+              fontFamily: fonts.mono,
+              fontSize: 13,
               color: colors.text,
-              lineHeight: 18,
+              lineHeight: 19,
             }}
           >
             {block.code}

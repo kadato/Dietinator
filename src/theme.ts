@@ -145,16 +145,16 @@ export const layout = {
 }
 
 /**
- * Terminal face: Chakra Petch with JetBrainsMono fallback.
+ * Terminal face: Departure Mono everywhere, single bundled face.
  * Web: registered from assets/fonts by src/utils/web-fonts.ts.
  * Native: resolved verbatim from android/app/src/main/assets/fonts
- * as Chakra Petch per RN font manager rules.
+ * as Departure Mono per RN font manager rules.
  */
-const CHAKRA_WEB = "'Chakra Petch', 'JetBrainsMono NFM', monospace"
-const CHAKRA_NATIVE = "Chakra Petch"
+const DEPARTURE_WEB = "'Departure Mono', monospace"
+const DEPARTURE_NATIVE = "Departure Mono"
 
 export const fonts = {
-  mono: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
-  sans: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
-  display: Platform.OS === "web" ? CHAKRA_WEB : CHAKRA_NATIVE,
+  mono: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
+  sans: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
+  display: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
 }

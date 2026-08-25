@@ -1,7 +1,7 @@
 /*
- * Cyberpunk Brutalist face: Chakra Petch with JetBrainsMono NFM fallback.
+ * Cyberpunk Brutalist face: Departure Mono, the one bundled face.
  * Registered at runtime by src/utils/web-fonts.ts, which
- * requires the TTFs through Metro so dev and exported builds both serve them.
+ * requires the binary through Metro so dev and exported builds both serve it.
  */
 
 @tailwind base;
@@ -13,25 +13,19 @@
  */
 html,
 body {
-  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: "Departure Mono", monospace;
+  /* Pixel face: neutral tracking and default subpixel smoothing keep the
+   * glyph grids even; antialiasing or negative tracking smears them. */
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
   touch-action: manipulation;
   background: var(--app-background);
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 html.dark,
 html.dark body {
   background: var(--app-background);
-}
-@media (min-resolution: 1.5dppx) {
-  html,
-  body {
-    -webkit-font-smoothing: antialiased;
-  }
 }
 
 input,
@@ -94,18 +88,18 @@ html:not(.dark) {
 }
 
 /*
- * Typography Utilities: Chakra Petch / JetBrains Mono for tabular numeric data
+ * Typography Utilities: Departure Mono for tabular numeric data
  */
 .font-tabular,
 .font-mono,
 .font-jetbrains {
-  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace !important;
+  font-family: "Departure Mono", monospace !important;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .font-heading {
-  font-family: "Chakra Petch", "JetBrainsMono NFM", "JetBrains Mono", monospace;
+  font-family: "Departure Mono", monospace;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
