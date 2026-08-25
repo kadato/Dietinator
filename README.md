@@ -8,15 +8,21 @@
 [![Expo SDK 56](https://img.shields.io/badge/Expo-SDK%2056-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A local-first calorie tracker. Diary entries live in on-device SQLite, food search uses the YAZIO database, and sync back to your account is optional and best-effort. No account required.
+Dietinator is a local-first calorie tracker. Diary entries live in SQLite on your device. Food search and optional sync use the YAZIO database. No account needed. Works offline.
 
 </div>
 
-> **Try it.** Open `/?demo=1` or tap **Explore the demo** on the login screen to seed a local session without an account.
+<div align="center">
+
+[![Live Demo — Try in browser](https://img.shields.io/badge/Live%20Demo-Try%20in%20browser-2dd4bf?style=for-the-badge)](https://dietinator.kadatodev.workers.dev/?demo=1)
+
+No install, no account. Or tap **Explore the demo** on the login screen.
+
+</div>
 
 ## Download
 
-**Android.** Install the latest signed build directly:
+**Android.** Install the latest signed APK:
 
 <div align="center">
 
@@ -24,9 +30,7 @@ A local-first calorie tracker. Diary entries live in on-device SQLite, food sear
 
 </div>
 
-- The link points to the latest release. Every tagged release triggers a signed APK build via `.github/workflows/release.yml`.
-- On first install, enable **Install unknown apps** for your browser when prompted.
-- The app checks for new GitHub releases on startup and displays an update prompt in Settings. Updates preserve local SQLite data.
+Every `v*` tag builds a signed APK via `.github/workflows/release.yml`. On first install, allow **Install unknown apps** for your browser. Updates keep your local SQLite data. The app checks GitHub releases on start and shows an update prompt in Settings.
 
 ## Preview
 
@@ -85,118 +89,54 @@ A local-first calorie tracker. Diary entries live in on-device SQLite, food sear
 
 ## Features
 
-- **Local-first diary.** Immediate writes to on-device SQLite with WAL mode. Operates fully offline with local food caching.
-- **Daily dashboard.** Calorie ring, macronutrient budget bars, meal sections, hydration logging, body weight tracking, and a "Copy previous day" action.
-- **Live daily budget impact.** Real-time recalculation of remaining calories, macronutrients, and daily goals before confirming a food entry.
-- **Micronutrient tracking.** Breakdown of vitamins and minerals, including fiber, sugar, saturated fat, sodium, potassium, calcium, and iron, from the dashboard and food detail views.
-- **Food search and category icons.** Debounced search with multilingual food category icons, pinned favorites, recent items, and SQLite caching.
-- **Serving sizes and portions.** Named portions, such as cup, whole, or piece, and gram amounts with prefilled quantities from previous logs.
-- **Numeric steppers.** Increment and decrement controls on numeric fields with press-and-hold repeat.
-- **Meal builder and Quick Add.** Save reusable food combinations with automatic nutrition aggregation, or log calories and macros directly.
-- **Meal slot budgets.** Real-time meal budget tracking, daily totals, quick-add actions, and inline entry editing.
-- **Barcode scanning.** Camera-based EAN or UPC barcode scanner on mobile devices with local cache lookup.
-- **Hydration and weight tracking.** Log water intake with presets and record body weight with BMI calculation and trend charts.
-- **AI assistant.** In-app assistant supporting OpenAI, OpenRouter, Ollama, and custom OpenAI-compatible endpoints. It streams responses, runs on-device SQLite tools, asks for confirmation before destructive actions, and keeps history in SQLite.
-- **Agent API.** Model Context Protocol endpoint at `/mcp` exposing real-time diary snapshots and tool execution to external agents, including Claude Desktop and Cursor.
-- **Backup, export, and restore.** Export diary entries to CSV or JSON, with on-device SQLite database backup and restore.
-- **In-app updates on Android.** Automatic GitHub release checks on startup with background APK download and direct package installation.
-- **Demo mode.** Instant session with populated sample data, no account required.
-- **Light and dark themes.** System theme detection, manual override, and responsive layouts across mobile and desktop.
+- **Local-first diary.** Writes to `diary_entries` in `expo-sqlite` with WAL. Works fully offline. Food cache keeps past searches.
+- **Dashboard.** Calorie ring, macro bars, meal sections, water and weight quick-add, copy previous day, pull to refresh from YAZIO when online.
+- **Food search.** Debounced YAZIO lookup, category icons, favorites and recents, serving sizes with remembered amounts, amount steppers with hold repeat, live budget impact before you save.
+- **Meals.** Builder for reusable combos with auto nutrition math, plus Quick Add for direct kcal and macros. Per-meal budgets and inline entry edit.
+- **Barcode.** Camera scan for EAN and UPC on device with cache lookup. Limited on web.
+- **Weight and water.** Log water with presets, track weight with BMI and trend charts.
+- **Micronutrients.** Fiber, sugar, saturated fat, sodium, potassium, calcium, iron on the dashboard and food detail.
+- **AI assistant.** Optional, in Settings. Supports OpenAI, OpenRouter, Ollama and any OpenAI-compatible endpoint. Streams answers, runs tools against your local SQLite, asks before destructive writes, keeps history in SQLite. See [ARCHITECTURE.md](ARCHITECTURE.md) for the MCP endpoint at `/mcp`.
+- **Backup and export.** JSON or CSV export, full SQLite backup and restore. All user initiated.
+- **Demo mode.** `/?demo=1` loads sample data, no account. Light and dark themes, system or manual.
 
 ## Tech stack
 
-| Area          | Choice                                                                         |
-| ------------- | ------------------------------------------------------------------------------ |
-| Framework     | Expo SDK 56, React Native, expo-router                                         |
-| Database      | expo-sqlite, WAL journal mode, migrations in `src/db/database.ts`              |
-| UI            | gluestack-ui v3 and NativeWind v4                                              |
-| Sync          | unofficial `yazio` npm client, `withRetry`, offline-first                      |
-| AI chat       | OpenAI-compatible streaming client under `src/services/ai/`, tools over SQLite |
-| Agent API     | MCP server in `scripts/mcp-server.cjs`, served by Metro and `serve:web`        |
-| Updates       | expo-intent-launcher, GitHub releases pipeline                                 |
-| Auth and data | expo-secure-store, React Context                                               |
-| Tests         | Jest unit tests, Playwright e2e on the web build                               |
-| Quality       | TypeScript strict, ESLint, Prettier, husky, coverage gates, gitleaks           |
+| Area      | Choice                                                              |
+| --------- | ------------------------------------------------------------------- |
+| Runtime   | Node 22, see `.nvmrc`, `packageManager` is `pnpm@11.22.0`           |
+| Framework | Expo SDK 56, React 19.2, React Native 0.85, `expo-router` in `app/` |
+| DB        | `expo-sqlite` WAL, migrations in `src/db/database.ts`               |
+| UI        | `gluestack-ui` v3 and `NativeWind` v4, `global.css`                 |
+| Sync      | `yazio` npm client, `withRetry` on 5xx and 429, offline-first       |
+| Tests     | Jest and jest-expo, Playwright on the web build                     |
 
-## Getting started
+## Get started
 
 ```bash
-nvm use            # Node 22 (.nvmrc)
-npm install
-npm start          # Metro: scan the QR with Expo Go
-npm run web        # or run in the browser
+nvm use            # 22, see .nvmrc
+pnpm install
+pnpm start         # Metro on port 9082, scan QR with Expo Go
+pnpm run web       # or run in the browser
 ```
 
-Development scripts pin port **9082** (`--port 9082`) to avoid Windows Hyper-V reserved port collisions on 8081. To use a different port: `npm start -- --port 9090`.
+Port `9082` avoids Windows Hyper-V collisions on `8081`. To use another port, run `pnpm start -- --port 9090`.
 
-Useful: `npm run test:coverage`, `npm run test:e2e`, `npm run build:web`,
-`npm run typecheck`, `npm run lint`
+Other commands:
 
-## Testing and CI
-
-Jest unit tests cover the pure logic: date math, nutrient conversions, retry
-policy, backup round-trip, DB migrations, AI streaming and tools, MCP server
-and agent bridge. Playwright e2e drives the web build at phone dimensions
-through boot, demo mode, diary CRUD, offline search, backup and restore, and
-the AI chat surface. CI runs typecheck, lint, format, coverage, e2e and a
-secret scan on every push.
-
-## AI assistant and agent API
-
-### In-app chat
-
-Enable **AI Assistant** in Settings and select a provider preset: OpenAI,
-OpenRouter, OpenCode, Ollama, or a custom OpenAI-compatible endpoint. The preset
-fills the base URL and a default model. Enter an API key. Keys are stored in the
-device keystore, prefixed `localStorage` on web, and transmitted only to the
-configured provider endpoint. Use **Fetch models** to query supported models or
-**Test connection** to validate the endpoint.
-
-The assistant reads the local diary, queries foods, logs entries, manages meals,
-and updates goals via on-device tools. Destructive operations require confirmation
-before execution. Built-in prompts include daily reviews, protein checks, meal
-plans, and goal adjustments. Conversation history is persisted in SQLite across
-app restarts.
-
-### Agent API (`/mcp`)
-
-The web host, Metro dev server or `npm run serve:web`, mounts a stateless
-Model Context Protocol server at `/mcp` plus a same-origin snapshot bridge at
-`/api/agent/*`:
-
-1. The web app pushes a snapshot of the last 14 diary days, goals, water, weight, meals,
-   and favorites on boot and after every data change. The snapshot lives in memory only.
-   Nothing touches disk.
-2. Any MCP client, such as Claude Desktop, Cursor, or MCP Inspector, connects to
-   `http://localhost:9082/mcp`, the default port, and exposes these tools:
-   `get_diary`, `get_diary_stats`, `get_water`, `get_weight`, `get_meals`,
-   `get_favorite_foods`, `get_goals`, `get_settings`, `get_health_summary`,
-   `log_food`, `log_water`, `log_weight`, `log_meal`, `save_meal`,
-   `update_food_entry`, `delete_food_entry`, `delete_water`, `delete_weight`,
-   `delete_meal`, `toggle_favorite`, `set_goals`, `set_units`, `set_profile`.
-   Write tools mirror changes into the memory snapshot immediately, so multi-step
-   agent workflows can reference recent updates without re-fetching.
-3. The endpoint queues agent changes as a revisioned change log. The app pulls
-   and applies them into SQLite on the next dashboard focus.
-
-Protect the endpoint with an API key: `MCP_API_KEY=… npm run serve:web`.
-Clients send `X-Api-Key` or `Authorization: Bearer`. In production mode the
-key is mandatory. Browser-based MCP clients can be permitted via
-`MCP_CORS_ORIGINS=…`.
-
-Validate the MCP integration with a model:
-`OPENCODE_API_KEY=sk-… npm run test:mcp`. This command boots `/mcp`, executes an
-agent loop across all tools, and verifies the change log.
+```bash
+pnpm run typecheck
+pnpm run lint
+pnpm run format:check
+pnpm test
+pnpm run test:e2e  # builds dist/ and runs Playwright at phone size
+pnpm run build:web # writes dist/
+```
 
 ## More
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) covers the data model, local-first flow
-  and release pipeline.
-- [CHANGELOG.md](CHANGELOG.md) documents version history. `npm run release`
-  automates tagging.
-- Releases build a signed Android APK via `.github/workflows/release.yml`.
-  See [Download](#download) for APK installation and in-app update details.
+- [ARCHITECTURE.md](ARCHITECTURE.md) - data model, local-first flow, release pipeline and the MCP bridge
+- [CHANGELOG.md](CHANGELOG.md) - version history. `pnpm run release` tags `vX.Y.Z`
+- [CONTRIBUTING.md](CONTRIBUTING.md) - ground rules and quality gates
 
-> **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. For personal
-> use only. The API may change or become unavailable without notice. Local-first
-> architecture keeps all offline features functional.
+> **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. Use it for yourself only. The API can change without notice. The local-first design keeps the diary and cache working when it does.

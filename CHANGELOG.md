@@ -2,7 +2,7 @@
 
 All notable changes to Dietinator. Format follows
 [Keep a Changelog](https://keepachangelog.com/) and versioning follows
-[semver](https://semver.org/). Releases are cut with `npm run release`
+[semver](https://semver.org/). Releases are cut with `pnpm run release`
 (see `scripts/release.cjs`), which tags `vX.Y.Z`; the release pipeline then
 builds the signed APK and posts the changelog to the GitHub release.
 

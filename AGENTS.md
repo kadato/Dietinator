@@ -156,25 +156,25 @@ Test both targets when touching storage, camera, or native modules.
 
 ```bash
 nvm use              # Node 22 from .nvmrc
-npm install          # or npm ci in CI/container
-npm start            # Metro + Expo
-npm run android
-npm run ios
-npm run web
-npm run typecheck    # tsc --noEmit after substantive TS changes
-npm run lint         # ESLint (eslint-config-expo flat config)
-npm run format       # Prettier, write across the repo
-npm run format:check # Prettier, verify (runs in CI)
-npm test             # Jest unit tests (utils, services, migrations)
-npm run build:web    # production web export to dist/
-npm run serve:web    # serve dist/ with COEP/COOP + YAZIO proxy (needs build first)
-npm run test:e2e     # build + Playwright (phone viewport, offline/local-first flows)
-npm run test:e2e:dev # Playwright against a running `npm run dev:web` (fast loop)
+pnpm install         # or pnpm install --frozen-lockfile in CI
+pnpm start           # Metro + Expo
+pnpm run android
+pnpm run ios
+pnpm run web
+pnpm run typecheck   # tsc --noEmit after substantive TS changes
+pnpm run lint        # ESLint (eslint-config-expo flat config)
+pnpm run format      # Prettier, write across the repo
+pnpm run format:check # Prettier, verify (runs in CI)
+pnpm test            # Jest unit tests (utils, services, migrations)
+pnpm run build:web   # production web export to dist/
+pnpm run serve:web   # serve dist/ with COEP/COOP + YAZIO proxy (needs build first)
+pnpm run test:e2e    # build + Playwright (phone viewport, offline/local-first flows)
+pnpm run test:e2e:dev # Playwright against a running `pnpm run dev:web` (fast loop)
 ```
 
-**Quality gates.** husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). CI (`.github/workflows/ci.yml`) runs typecheck, lint, `format:check`, e2e, and a gitleaks secret scan on every push/PR. Dependabot updates npm + GitHub Actions weekly (`yazio` is ignored as an unofficial API, pin it manually).
+**Quality gates.** husky pre-commit runs `lint-staged` (eslint --fix + prettier on staged files). CI (`.github/workflows/ci.yml`) runs typecheck, lint, `format:check`, e2e, and a gitleaks secret scan on every push/PR. Dependabot updates pnpm + GitHub Actions weekly (`yazio` is ignored as an unofficial API, pin it manually).
 
-**Iteration notes.** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `npm run dev:web` + `npm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials. Run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json`. Prefer it over hand-written selectors when driving the browser.
+**Iteration notes.** Expo SDK 56 is Metro-only (no Vite). For web UI iteration use `pnpm run dev:web` + `pnpm run test:e2e:dev`. E2E tests seed a fake local session in localStorage and never need YAZIO credentials. Run the local-first path only. Playwright MCP is configured in `.opencode/opencode.json`. Prefer it over hand-written selectors when driving the browser.
 
 **Dev Container.** `.devcontainer/devcontainer.json` has Node 22, `pnpm install` on create, ports 8081/8082/19000+.
 
@@ -188,7 +188,7 @@ Schema changes: update `migrate()` in `src/db/database.ts` only (no separate mig
 
 ## Testing and quality
 
-- **Unit tests.** Jest + jest-expo in `src/**/__tests__/` (`npm test`) cover utils, diary/backup services (mocked DB), and the migration contract. Add tests for new pure logic.
+- **Unit tests.** Jest + jest-expo in `src/**/__tests__/` (`pnpm test`) cover utils, diary/backup services (mocked DB), and the migration contract. Add tests for new pure logic.
 - Manual smoke: log in, search food, add an entry, check the dashboard, optionally sync, add an offline entry with a cached food, then scan a barcode on device.
 
 ## Useful files for common tasks
@@ -208,7 +208,7 @@ Schema changes: update `migrate()` in `src/db/database.ts` only (no separate mig
 1. Read relevant `src/services` and `src/db` modules before editing screens.
 2. Preserve local-first behavior and offline paths.
 3. Match import style: `@/…` for `src`, relative only within same feature if already done.
-4. Run `npm start` or typecheck via `npx tsc --noEmit` after substantive TS changes.
+4. Run `pnpm start` or typecheck via `pnpm exec tsc --noEmit` after substantive TS changes.
 5. Do not commit unless the user asks.
 6. Keep diffs minimal. No drive-by refactors.
 

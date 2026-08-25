@@ -98,12 +98,8 @@ Schema changes go through `migrate()` in `src/db/database.ts` only, as additive
 
 ## Release pipeline
 
-- `npm run release [major|minor|patch]` bumps `app.json`
+- `pnpm run release [major|minor|patch]` bumps `app.json`
   (version and deterministic versionCode), commits, and tags `vX.Y.Z`.
-- Tag push triggers `.github/workflows/release.yml`: typecheck + e2e, signed
-  APK build, GitHub release with changelog from conventional commits.
-- The Android app checks GitHub releases on startup and offers an in-app
-  update with the rendered changelog.
-- EAS (`eas.json`) is the alternative mobile path. It has development, preview, and
-  production profiles. Production uses `autoIncrement` and `expo-updates`
-  channels for OTA updates once EAS Update is configured.
+- Tag push triggers `.github/workflows/release.yml`: typecheck, lint, coverage and an APK build, then a GitHub release with a changelog from conventional commits.
+- The Android app checks GitHub releases on start and offers an in-app update with the changelog.
+- Web deploys live at [dietinator.kadatodev.workers.dev](https://dietinator.kadatodev.workers.dev). Cloudflare Pages builds `dist/` from `master`. The YAZIO proxy lives in `functions/api/yazio/[[path]].js`.
