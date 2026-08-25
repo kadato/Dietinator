@@ -57,7 +57,7 @@ test.describe("backup and restore (offline)", () => {
     // Export: intercept the browser download.
     await page.getByRole("tab", { name: /Settings/ }).click()
     await expect(page.getByRole("button", { name: "Goals and Nutrition" })).toBeVisible()
-    await page.getByRole("button", { name: "Data and Backup" }).click()
+    await page.getByRole("button", { name: "Data and Sync" }).click()
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Back up all data" }).click(),
@@ -77,7 +77,7 @@ test.describe("backup and restore (offline)", () => {
     // Restore from the downloaded file: confirm dialog, then file picker.
     // (Tab screens stay mounted, so the drilldown may still be open. The
     // helper returns to the hub first.)
-    await openSettingsSection(page, "Data and Backup settings")
+    await openSettingsSection(page, "Data and Sync settings")
     page.once("dialog", (dialog) => void dialog.accept())
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser"),

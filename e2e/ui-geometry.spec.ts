@@ -40,9 +40,10 @@ test.describe("ui rework geometry checks", () => {
     // Exactly one Log weight button (empty-state copy only).
     await expect(page.getByRole("button", { name: "Log weight" })).toHaveCount(1)
 
-    // Calorie chart draws SVG bars (auto-waiting first, then count).
-    await expect(page.locator("svg rect").first()).toBeVisible()
-    const barCount = await page.locator("svg rect").count()
+    // Calorie chart draws SVG bars. Skip the hidden CalorieRing rect that stays
+    // mounted from the Today tab and count only visible bars.
+    await expect(page.locator("svg rect:visible").first()).toBeVisible()
+    const barCount = await page.locator("svg rect:visible").count()
     expect(barCount).toBeGreaterThan(0)
 
     // The x axis is range-based: today is always the last tick and the axis
@@ -106,7 +107,7 @@ test.describe("ui rework geometry checks", () => {
     await bootAuthenticated(page)
 
     // Enable the assistant so the AI tab appears with a live composer.
-    await openSettingsSection(page, "AI Assistant settings")
+    await openSettingsSection(page, "AI and Account settings")
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
     await page.getByRole("tab", { name: "AI" }).click()
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeVisible()
@@ -122,7 +123,7 @@ test.describe("ui rework geometry checks", () => {
     expect(box!.height).toBeLessThanOrEqual(46)
 
     // Leave AI disabled for other specs.
-    await openSettingsSection(page, "AI Assistant settings")
+    await openSettingsSection(page, "AI and Account settings")
     await page.getByRole("switch", { name: "Enable AI assistant" }).click()
   })
 })

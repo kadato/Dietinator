@@ -43,15 +43,14 @@ test.describe("food search (offline)", () => {
     await expect(page.getByText("Goals and Nutrition", { exact: true })).toBeVisible()
     await expect(page.getByText("Calories", { exact: true })).toBeVisible()
 
-    // Sync section.
+    // Sync section lives under Data and Sync.
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "YAZIO Sync" }).click()
-    // The drilldown header and the section label both read "YAZIO Sync".
-    await expect(page.getByText("YAZIO Sync", { exact: true }).first()).toBeVisible()
+    await page.getByRole("button", { name: "Data and Sync" }).click()
+    await expect(page.getByText("YAZIO Cloud Sync", { exact: true }).first()).toBeVisible()
 
-    // About section hosts the sign-out button.
+    // About section hosts the sign-out button (now under AI and Account).
     await page.getByRole("button", { name: "Back to all settings" }).click()
-    await page.getByRole("button", { name: "About and Account" }).click()
+    await page.getByRole("button", { name: "AI and Account" }).click()
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible()
   })
 })
