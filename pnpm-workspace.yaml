@@ -4,7 +4,7 @@ allowBuilds:
   unrs-resolver: true
   esbuild: true
   workerd: true
-engineStrict: true
+engineStrict: false
 # Metro and @babel/core resolve plugins from the project root. Expo's toolchain
 # relies on transitive deps (react-native-css-interop, @babel plugins), so keep
 # a flat node_modules like npm produced before the pnpm migration.
