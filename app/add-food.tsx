@@ -615,16 +615,24 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm,
     },
     titleBlock: { flex: 1 },
-    title: { fontSize: 20, fontWeight: "700", color: colors.text, letterSpacing: -0.2 },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.text,
+      letterSpacing: -0.2,
+      fontFamily: fonts.mono,
+    },
     producer: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
       marginTop: 2,
+      fontFamily: fonts.mono,
     },
     subtitle: {
       fontSize: 12,
       color: colors.textMuted,
       marginTop: 3,
+      fontFamily: fonts.mono,
     },
     mealSection: {
       marginBottom: 2,
@@ -636,6 +644,7 @@ const createStyles = (colors: ColorPalette) =>
       textTransform: "uppercase",
       letterSpacing: 0.5,
       marginBottom: 6,
+      fontFamily: fonts.mono,
     },
     mealRow: {
       flexDirection: "row",
@@ -658,9 +667,11 @@ const createStyles = (colors: ColorPalette) =>
       fontSize: 12,
       color: colors.text,
       fontWeight: "600",
+      fontFamily: fonts.mono,
     },
     mealChipTextSelected: {
       color: colors.onPrimary,
+      fontFamily: fonts.mono,
     },
     nutritionSection: {
       gap: spacing.xs,
@@ -680,15 +691,17 @@ const createStyles = (colors: ColorPalette) =>
       marginBottom: 2,
     },
     portionTitle: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
       color: colors.text,
       letterSpacing: 0.2,
+      fontFamily: fonts.mono,
     },
     unitBadge: {
       fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
+      fontFamily: fonts.mono,
     },
     servingBlock: {
       marginBottom: 2,
@@ -711,7 +724,7 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.primary,
     },
     chipText: {
-      fontSize: 13,
+      fontSize: 14,
       color: colors.text,
       fontWeight: "500",
       fontFamily: fonts.mono,
