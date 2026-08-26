@@ -281,13 +281,20 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
       )
     case "code":
       return (
-        <Box className="rounded-lg border border-outline-100 bg-background-100 px-3 py-2">
+        <Box
+          className="rounded-lg border border-outline-100 bg-background-100 px-3 py-2"
+          style={{ flexShrink: 1 }}
+        >
           <Text
             style={{
               fontFamily: fonts.mono,
               fontSize: 13,
               color: colors.text,
               lineHeight: 19,
+              flexShrink: 1,
+              // web: break the 64-char sha256 line that has no spaces
+              // @ts-ignore wordBreak is web-only but RN ignores unknown styles
+              wordBreak: "break-all",
             }}
           >
             {block.code}

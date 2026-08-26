@@ -1,9 +1,18 @@
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native"
 import { Feather } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import type { GitHubRelease } from "@/services/updates"
 import { getApkAsset } from "@/services/updates"
 import { Markdown } from "@/components/Markdown"
-import { ModalContainer } from "@/components/ModalContainer"
+import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useTheme } from "@/hooks/useTheme"
 import { spacing, fonts } from "@/theme"
 import { Box } from "@ui/box"
@@ -41,13 +50,25 @@ export function UpdateDialog({
   onDownload,
 }: Props) {
   const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
   const apk = getApkAsset(release)
   const published = formatReleaseDate(release.publishedAt)
+
+  useEscapeToClose(true, onClose)
 
   const progressLabel =
     downloading && downloadProgress !== null
       ? `Downloading ${Math.round(downloadProgress * 100)}%`
       : "Downloading"
+
+  // Keep the whole dialog inside the safe viewport. Outer 16px margin plus
+  // the device insets guarantees the 1.5px ink rule never clips behind a
+  // notch, gesture bar, or status bar, and the 45vh-class is replaced with
+  // a real pixel cap so the header and footer stay visible on 5-inch phones.
+  const effectiveHeight = windowHeight > 100 ? windowHeight : 800
+  const dialogMaxHeight = Math.min(effectiveHeight - insets.top - insets.bottom - 24, 640)
+  const scrollMaxHeight = Math.min(effectiveHeight * 0.38, 320)
 
   return (
     <Modal
@@ -68,12 +89,30 @@ export function UpdateDialog({
         />
         <View
           accessibilityViewIsModal={true}
-          style={{ flex: 1, justifyContent: "center", pointerEvents: "box-none" as const }}
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingTop: Math.max(insets.top, 12) + 8,
+            paddingBottom: Math.max(insets.bottom, 12) + 8,
+            paddingLeft: Math.max(insets.left, 16),
+            paddingRight: Math.max(insets.right, 16),
+            pointerEvents: "box-none" as const,
+          }}
         >
-          <ModalContainer
-            hug
-            maxWidth={560}
-            outerClassName="bg-background-50 mx-4 my-auto overflow-hidden rounded-none border"
+          <Box
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              maxHeight: dialogMaxHeight,
+              backgroundColor: colors.surface,
+              borderWidth: 1.5,
+              borderColor: colors.border,
+              overflow: "hidden",
+              flexShrink: 1,
+              boxShadow: "none",
+              elevation: 0,
+            }}
           >
             <Box
               className="flex-row items-center gap-3 px-5 pb-3"
@@ -143,8 +182,8 @@ export function UpdateDialog({
             </Box>
 
             <ScrollView
-              className="max-h-[45vh]"
-              contentContainerClassName="px-5 pb-3"
+              style={{ maxHeight: scrollMaxHeight, flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}
               showsVerticalScrollIndicator
             >
               <Text
@@ -267,7 +306,7 @@ export function UpdateDialog({
                 </Text>
               </Pressable>
             </Box>
-          </ModalContainer>
+          </Box>
         </View>
       </View>
     </Modal>
