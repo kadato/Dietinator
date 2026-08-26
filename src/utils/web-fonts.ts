@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Platform } from "react-native"
+import * as Font from "expo-font"
 
 /**
  * Bundled terminal face: Departure Mono, a single-weight pixel monospace.
@@ -9,53 +10,75 @@ import { Platform } from "react-native"
  *
  * Web registers each weight through the CSS Font Loading API with its exact
  * file; Metro serves the binary in dev and bundles it into dist/ on export.
- * Native resolves the family from android/app/src/main/assets/fonts instead,
- * so this hook is a no-op there.
- *
- * No bundled fallback: glyphs Departure Mono does not cover fall through the
- * CSS stack to the system monospace.
+ * Native loads the file via expo-font so the family resolves on Android
+ * and iOS without needing android/app/src/main/assets/fonts.
  */
 const FAMILY_DEPARTURE = "Departure Mono"
+
+const FONT_SOURCE = require("../../assets/fonts/DepartureMono-Regular.otf")
 
 const FONT_FILES = (["400", "500", "600", "700", "800"] as const).map((weight) => ({
   family: FAMILY_DEPARTURE,
   weight,
-  src: require("../../assets/fonts/DepartureMono-Regular.otf"),
+  src: FONT_SOURCE,
 }))
 
-/**
- * True once the faces are registered for this web session. Module scope on
- * purpose: document.fonts.check() cannot guard here because it returns true
- * for unknown families (the matcher falls through to the default font), so a
- * check-based guard would skip loading forever. Fast refresh re-mounts the
- * component but keeps module state, so this flag deduplicates registration.
- */
 let registered = false
+let nativeLoaded = false
 
-/** Starts the font load once per web session; returns when faces are ready. */
+/** Starts the font load once per session; returns when faces are ready. */
 export function useBundledTerminalFont(): boolean {
-  const [loaded, setLoaded] = useState(() => Platform.OS !== "web" || registered)
+  const [loaded, setLoaded] = useState(() => {
+    if (Platform.OS === "web") return registered
+    return nativeLoaded
+  })
 
   useEffect(() => {
-    if (Platform.OS !== "web" || registered) return
-    registered = true
-    let cancelled = false
-    Promise.all(
-      FONT_FILES.map(async ({ family, weight, src }) => {
-        const face = new FontFace(family, `url(${String(src)})`, {
-          weight,
-          display: "swap",
+    if (Platform.OS === "web") {
+      if (registered) return
+      registered = true
+      let cancelled = false
+      // Resolve the asset URI correctly on web. Metro's require can return
+      // a numeric ID or an object, so use expo-asset to get the real URL.
+      let assetUri: string
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const Asset = require("expo-asset").Asset
+        assetUri = Asset.fromModule(FONT_SOURCE).uri
+      } catch {
+        assetUri = String(FONT_SOURCE)
+      }
+      Promise.all(
+        FONT_FILES.map(async ({ family, weight }) => {
+          const face = new FontFace(family, `url(${assetUri})`, {
+            weight,
+            display: "swap",
+          })
+          await face.load()
+          document.fonts.add(face)
+        }),
+      )
+        .catch(() => undefined)
+        .finally(() => {
+          if (!cancelled) setLoaded(true)
         })
-        await face.load()
-        document.fonts.add(face)
-      }),
-    )
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setLoaded(true)
-      })
-    return () => {
-      cancelled = true
+      return () => {
+        cancelled = true
+      }
+    } else {
+      if (nativeLoaded) return
+      let cancelled = false
+      Font.loadAsync({ [FAMILY_DEPARTURE]: FONT_SOURCE })
+        .then(() => {
+          nativeLoaded = true
+          if (!cancelled) setLoaded(true)
+        })
+        .catch(() => {
+          if (!cancelled) setLoaded(true)
+        })
+      return () => {
+        cancelled = true
+      }
     }
   }, [])
 

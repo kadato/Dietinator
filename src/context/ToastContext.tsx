@@ -36,6 +36,8 @@ type ToastContextValue = {
   showInfo: (message: string, title?: string) => void
   showWarning: (message: string, title?: string) => void
   showUndo: (message: string, onUndo: () => void) => void
+  /** Undo FAB only, no toast banner. Use for quick-add where the toast covers the FAB. */
+  showUndoFab: (message: string, onUndo: () => void) => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
@@ -305,9 +307,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setUndo({ id: undoIdRef.current, message, onUndo })
   }, [])
 
+  const showUndoFab = useCallback((message: string, onUndo: () => void) => {
+    undoIdRef.current += 1
+    setUndo({ id: undoIdRef.current, message, onUndo })
+  }, [])
+
   const value = useMemo(
-    () => ({ showToast, showSuccess, showError, showInfo, showWarning, showUndo }),
-    [showToast, showSuccess, showError, showInfo, showWarning, showUndo],
+    () => ({ showToast, showSuccess, showError, showInfo, showWarning, showUndo, showUndoFab }),
+    [showToast, showSuccess, showError, showInfo, showWarning, showUndo, showUndoFab],
   )
 
   return (

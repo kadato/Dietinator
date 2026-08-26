@@ -141,7 +141,7 @@ export default function ManualEntryScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ModalContainer hug maxWidth={520} outerClassName="bg-background-50">
+      <ModalContainer maxWidth={520} outerClassName="bg-background-50">
         <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border"
@@ -267,7 +267,7 @@ export default function ManualEntryScreen() {
 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, justifyContent: "flex-end" },
+    container: { flex: 1, backgroundColor: colors.background },
     label: {
       color: colors.textMuted,
       fontSize: 11,

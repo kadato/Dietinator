@@ -57,10 +57,11 @@ export function UpdateDialog({
 
   useEscapeToClose(true, onClose)
 
-  const progressLabel =
-    downloading && downloadProgress !== null
+  const progressLabel = downloading
+    ? downloadProgress !== null
       ? `Downloading ${Math.round(downloadProgress * 100)}%`
-      : "Downloading"
+      : "Downloading\u2026"
+    : "Download"
 
   // Keep the whole dialog inside the safe viewport. Outer 16px margin plus
   // the device insets guarantees the 1.5px ink rule never clips behind a
@@ -240,12 +241,13 @@ export function UpdateDialog({
                   size="md"
                   variant="outline"
                   action="secondary"
-                  className="flex-1"
+                  className="min-w-0 flex-1"
                   onPress={onClose}
                   isDisabled={downloading}
                   style={{ borderRadius: 0, borderWidth: 1.5, borderColor: colors.border }}
                 >
                   <ButtonText
+                    numberOfLines={1}
                     style={{
                       fontFamily: fonts.mono,
                       textTransform: "uppercase",
@@ -258,7 +260,7 @@ export function UpdateDialog({
                 {apk ? (
                   <Button
                     size="md"
-                    className="flex-1"
+                    className="min-w-0 flex-1"
                     onPress={onDownload}
                     isDisabled={downloading}
                     style={{
@@ -267,14 +269,21 @@ export function UpdateDialog({
                       borderColor: colors.primary,
                       boxShadow: "none",
                       elevation: 0,
+                      minWidth: 0,
+                      flexShrink: 1,
                     }}
                   >
-                    {downloading ? <ButtonSpinner /> : null}
+                    {downloading ? <ButtonSpinner style={{ flexShrink: 0 }} /> : null}
                     <ButtonText
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
                       style={{
                         fontFamily: fonts.mono,
                         textTransform: "uppercase",
                         letterSpacing: 0.4,
+                        flexShrink: 1,
                       }}
                     >
                       {progressLabel}

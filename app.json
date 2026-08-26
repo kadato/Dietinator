@@ -17,6 +17,7 @@
     "android": {
       "package": "com.personal.dietinator",
       "permissions": ["CAMERA", "REQUEST_INSTALL_PACKAGES"],
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#1a1b26",
         "foregroundImage": "./assets/android-icon-foreground.png",

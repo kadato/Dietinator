@@ -194,8 +194,8 @@ function ThemedApp() {
   const gluestackMode = isDark ? "dark" : "light"
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <GluestackUIProvider mode={gluestackMode}>
           <NetworkProvider>
             <ToastProvider>
@@ -208,8 +208,8 @@ function ThemedApp() {
             </ToastProvider>
           </NetworkProvider>
         </GluestackUIProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   )
 }
 

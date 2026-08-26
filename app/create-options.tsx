@@ -84,8 +84,8 @@ export default function CreateOptionsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "flex-end" }}>
-      <ModalContainer hug maxWidth={560} outerClassName="bg-background-50">
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ModalContainer maxWidth={560} outerClassName="bg-background-50">
         <Box className="px-6 pb-2 pt-4">
           <Text
             size="2xl"

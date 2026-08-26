@@ -104,7 +104,7 @@ export default function LogMealScreen() {
   const mealType = (routeParam(params.meal) ?? "lunch") as MealType
   const date = routeParam(params.date) ?? toDateKey()
   const { settings, yazioAvailable } = useApp()
-  const { showError, showWarning, showSuccess, showUndo } = useToast()
+  const { showError, showWarning, showSuccess, showUndoFab } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const { width } = useLayout()
@@ -305,11 +305,8 @@ export default function LogMealScreen() {
           amount: targetAmount,
         })
         await loadLoggedEntries()
-        // Receipt with an exit. Every silent write gets a named undo.
-        // No refresh here. The foods list stays live underneath the
-        // logged section, so re-querying favorites or recents would flash the
-        // whole FlatList and push the search field down on every tap.
-        showUndo(`${food.name} added · ${Math.round(entry.kcal)} kcal`, () => {
+        // Show only the small Undo FAB, no huge toast banner that covers the dock.
+        showUndoFab(`${food.name} added`, () => {
           deleteFoodEntry(entry.id)
             .then(() => {
               void loadLoggedEntries()
@@ -322,7 +319,7 @@ export default function LogMealScreen() {
         setAddingKey(null)
       }
     },
-    [addingKey, date, loadLoggedEntries, mealType, showError, showUndo],
+    [addingKey, date, loadLoggedEntries, mealType, showError, showUndoFab],
   )
 
   const openEdit = useCallback(
