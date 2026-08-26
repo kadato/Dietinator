@@ -67,10 +67,9 @@ export function FilterDropdown<T extends string>({
         <Pressable
           onPress={handleOpen}
           hitSlop={6}
-          style={({ pressed }) => [
+          style={[
             styles.trigger,
             { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            pressed && styles.triggerPressed,
           ]}
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? `${title ?? "Filter"}: ${current?.label}`}
@@ -104,10 +103,9 @@ export function FilterDropdown<T extends string>({
                     onChange(opt.value)
                     setOpen(false)
                   }}
-                  style={({ pressed }) => [
+                  style={[
                     styles.optionRow,
                     isSelected && { backgroundColor: `${accent}14`, borderColor: accent },
-                    pressed && styles.optionPressed,
                   ]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}

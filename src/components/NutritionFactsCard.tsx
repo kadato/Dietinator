@@ -140,7 +140,7 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
       {micros.length > 0 ? (
         <View style={styles.microSection}>
           <Pressable
-            style={({ pressed }) => [styles.expandToggle, pressed && styles.expandTogglePressed]}
+            style={[styles.expandToggle]}
             onPress={() => setExpanded(!expanded)}
             accessibilityRole="button"
             accessibilityLabel={

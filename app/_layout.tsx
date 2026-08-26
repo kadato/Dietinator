@@ -8,6 +8,7 @@ import Head from "expo-router/head"
 import { useEffect, useMemo } from "react"
 import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
+import * as SplashScreen from "expo-splash-screen"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { AppErrorBoundary } from "@/components/AppErrorBoundary"
 import { AppProvider, useApp } from "@/context/AppContext"
@@ -26,6 +27,8 @@ import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
 import "../global.css"
 
 import { AiChatModal } from "@/components/AiChatModal"
+
+void SplashScreen.preventAutoHideAsync().catch(() => undefined)
 
 // Module-level silencing: must run before first render so the initial
 // mount does not flash warnings. The deprecation is intentional (style
@@ -66,6 +69,7 @@ function RootNavigator() {
   const styles = useMemo(() => createStyles(colors), [colors])
   const segments = useSegments()
   const router = useRouter()
+  const fontsLoaded = useBundledTerminalFont()
 
   // React Navigation paints the screen container with its own theme. Without
   // this, the light DefaultTheme (background #f2f2f2) flashes behind the app
@@ -114,7 +118,29 @@ function RootNavigator() {
     }
   }, [ready, authenticated, segments, router])
 
-  if (!ready) {
+  useEffect(() => {
+    if (ready && fontsLoaded) {
+      void SplashScreen.hideAsync().catch(() => undefined)
+    }
+  }, [ready, fontsLoaded])
+
+  if (!ready || !fontsLoaded) {
+    return (
+      <View style={styles.loading}>
+        <LoadingSpinner size={32} />
+      </View>
+    )
+  }
+
+  const inAuth = segments[0] === "login"
+  if (!authenticated && !inAuth) {
+    return (
+      <View style={styles.loading}>
+        <LoadingSpinner size={32} />
+      </View>
+    )
+  }
+  if (authenticated && inAuth) {
     return (
       <View style={styles.loading}>
         <LoadingSpinner size={32} />
@@ -142,10 +168,6 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  // Register the bundled Departure Mono faces on web before first paint
-  // settles; native resolves the family from the Android assets folder.
-  useBundledTerminalFont()
-
   useEffect(() => {
     // Once React has painted, swap the inlined pre-JS shell for the real app
     // and register the service worker for offline + instant repeat loads.

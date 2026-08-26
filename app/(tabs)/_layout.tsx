@@ -19,7 +19,9 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   // Desktop affordance: the rail item's rule tints toward ink on hover.
   // Pressable's style callback has no hovered flag in core RN types, so the
   // rail tracks it via hover events (web-only, no-op on touch).
+  // Fabric on Android drops Pressable style functions, so press is tracked via state.
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
+  const [pressedRoute, setPressedRoute] = useState<string | null>(null)
 
   const visibleRoutes = state.routes.filter((route: (typeof state.routes)[number]) => {
     const descriptor = descriptors[route.key]
@@ -138,7 +140,9 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               onLongPress={onLongPress}
               onHoverIn={() => setHoveredRoute(route.key)}
               onHoverOut={() => setHoveredRoute(null)}
-              style={({ pressed }) => [
+              onPressIn={() => setPressedRoute(route.key)}
+              onPressOut={() => setPressedRoute(null)}
+              style={[
                 {
                   width: layout.sideTabItemWidth,
                   paddingVertical: 10,
@@ -153,7 +157,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   gap: 3,
                   backgroundColor: isFocused
                     ? colors.primary
-                    : pressed
+                    : pressedRoute === route.key
                       ? colors.surfaceAlt
                       : colors.surface,
                   cursor: "pointer",
@@ -259,8 +263,10 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             onLongPress={onLongPress}
             onHoverIn={() => setHoveredRoute(route.key)}
             onHoverOut={() => setHoveredRoute(null)}
+            onPressIn={() => setPressedRoute(route.key)}
+            onPressOut={() => setPressedRoute(null)}
             hitSlop={4}
-            style={({ pressed }) => ({
+            style={{
               flex: 1,
               minHeight: tabBarHeight,
               flexDirection: "column",
@@ -270,12 +276,12 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               paddingVertical: 3,
               backgroundColor: isFocused
                 ? colors.primary
-                : pressed
+                : pressedRoute === route.key
                   ? colors.surfaceAlt
                   : "transparent",
               borderWidth: 0,
               borderRadius: 0,
-            })}
+            }}
           >
             <View
               style={{

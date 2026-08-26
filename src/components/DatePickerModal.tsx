@@ -10,6 +10,7 @@ import { spacing, fonts, type ColorPalette } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
+import { usePressedState } from "@/hooks/usePressedState"
 
 type Props = {
   visible: boolean
@@ -41,6 +42,9 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
   const styles = useThemedStyles(createStyles)
+  const prevPress = usePressedState()
+  const nextPress = usePressedState()
+  const todayPress = usePressedState()
   const selected = parseDateKey(dateKey)
   const [view, setView] = useState({ year: selected.getFullYear(), month: selected.getMonth() })
   const todayKey = toDateKey()
@@ -96,7 +100,9 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
               <Pressable
                 onPress={() => shiftMonth(-1)}
                 hitSlop={10}
-                style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
+                onPressIn={prevPress.onPressIn}
+                onPressOut={prevPress.onPressOut}
+                style={[styles.navBtn, prevPress.pressed && styles.navBtnPressed]}
                 accessibilityRole="button"
                 accessibilityLabel="Previous month"
               >
@@ -106,7 +112,9 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
               <Pressable
                 onPress={() => shiftMonth(1)}
                 hitSlop={10}
-                style={({ pressed }) => [styles.navBtn, pressed && styles.navBtnPressed]}
+                onPressIn={nextPress.onPressIn}
+                onPressOut={nextPress.onPressOut}
+                style={[styles.navBtn, nextPress.pressed && styles.navBtnPressed]}
                 accessibilityRole="button"
                 accessibilityLabel="Next month"
               >
@@ -162,7 +170,9 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.todayBtn, pressed && styles.todayBtnPressed]}
+              onPressIn={todayPress.onPressIn}
+              onPressOut={todayPress.onPressOut}
+              style={[styles.todayBtn, todayPress.pressed && styles.todayBtnPressed]}
               onPress={() => {
                 onSelect(todayKey)
                 onClose()

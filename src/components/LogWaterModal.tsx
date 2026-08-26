@@ -162,7 +162,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           keyboardShouldPersistTaps="handled"
         >
           <Pressable
-            style={({ pressed }) => [styles.dateRow, pressed && styles.pressed]}
+            style={[styles.dateRow, datePress.pressed && styles.pressed]}
             onPress={() => setPickerOpen(true)}
             onPressIn={datePress.onPressIn}
             onPressOut={datePress.onPressOut}

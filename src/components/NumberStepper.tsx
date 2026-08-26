@@ -11,6 +11,7 @@ import {
 import { Feather } from "@expo/vector-icons"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
+import { usePressedState } from "@/hooks/usePressedState"
 import { spacing, fonts, type ColorPalette } from "@/theme"
 
 type NumberStepperProps = {
@@ -48,6 +49,8 @@ export function NumberStepper({
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const sm = size === "sm"
+  const minusPress = usePressedState()
+  const plusPress = usePressedState()
 
   const parsed = Number(value)
   const current = Number.isFinite(parsed) ? parsed : 0
@@ -119,14 +122,18 @@ export function NumberStepper({
       <Pressable
         onPress={() => stepBy(-1)}
         onLongPress={() => startRepeat(-1)}
-        onPressOut={stopRepeat}
+        onPressIn={minusPress.onPressIn}
+        onPressOut={() => {
+          minusPress.onPressOut()
+          stopRepeat()
+        }}
         disabled={minusDisabled}
         hitSlop={sm ? 8 : 4}
-        style={({ pressed }) => [
+        style={[
           styles.btn,
           sm && styles.btnSm,
           minusDisabled && styles.btnDisabled,
-          pressed && !minusDisabled && styles.btnPressed,
+          minusPress.pressed && !minusDisabled && styles.btnPressed,
         ]}
         accessibilityRole="button"
         accessibilityLabel="Decrease value"
@@ -162,9 +169,13 @@ export function NumberStepper({
       <Pressable
         onPress={() => stepBy(1)}
         onLongPress={() => startRepeat(1)}
-        onPressOut={stopRepeat}
+        onPressIn={plusPress.onPressIn}
+        onPressOut={() => {
+          plusPress.onPressOut()
+          stopRepeat()
+        }}
         hitSlop={sm ? 8 : 4}
-        style={({ pressed }) => [styles.btn, sm && styles.btnSm, pressed && styles.btnPressed]}
+        style={[styles.btn, sm && styles.btnSm, plusPress.pressed && styles.btnPressed]}
         accessibilityRole="button"
         accessibilityLabel="Increase value"
         accessibilityHint={`Increase ${accessibilityLabel}`}

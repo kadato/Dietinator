@@ -297,7 +297,7 @@ export function UpdateDialog({
                 hitSlop={8}
                 disabled={downloading}
                 className="items-center justify-center py-1"
-                style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+                style={[]}
                 accessibilityRole="button"
                 accessibilityLabel="Don't ask again"
               >

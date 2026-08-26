@@ -61,7 +61,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
           <Pressable
             onPress={onClose}
             hitSlop={12}
-            style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
+            style={[styles.closeBtn]}
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
@@ -91,11 +91,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
             const selected = item.code === normalizedSelected
             return (
               <Pressable
-                style={({ pressed }) => [
-                  styles.row,
-                  selected && styles.rowSelected,
-                  pressed && styles.pressed,
-                ]}
+                style={[styles.row, selected && styles.rowSelected]}
                 onPress={() => {
                   onSelect(item.code)
                   setFilter("")

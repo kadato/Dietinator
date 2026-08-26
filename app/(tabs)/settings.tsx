@@ -1811,12 +1811,12 @@ export default function SettingsScreen() {
                         }
                       }}
                       className="flex-row items-center justify-center gap-2 rounded-none border px-4 py-3 active:opacity-80"
-                      style={({ pressed }) => ({
-                        backgroundColor: pressed ? colors.surfaceAlt : `${colors.primary}18`,
+                      style={{
+                        backgroundColor: `${colors.primary}18`,
                         borderColor: colors.primary,
                         borderWidth: 1.5,
                         borderRadius: 0,
-                      })}
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel="Sync pending entries now"
                     >
@@ -1859,12 +1859,12 @@ export default function SettingsScreen() {
                         }
                       }}
                       className="flex-row items-center justify-center gap-2 rounded-none border px-4 py-3 active:opacity-80"
-                      style={({ pressed }) => ({
-                        backgroundColor: pressed ? colors.surfaceAlt : `${colors.lunch}18`,
+                      style={{
+                        backgroundColor: `${colors.lunch}18`,
                         borderColor: colors.lunch,
                         borderWidth: 1.5,
                         borderRadius: 0,
-                      })}
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel="Import today from YAZIO"
                     >

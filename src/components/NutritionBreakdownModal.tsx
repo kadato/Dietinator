@@ -108,7 +108,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
         <Pressable
           onPress={onClose}
           hitSlop={8}
-          style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
+          style={[styles.closeBtn]}
           accessibilityRole="button"
           accessibilityLabel="Close nutrition breakdown"
         >

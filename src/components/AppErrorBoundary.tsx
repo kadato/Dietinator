@@ -49,11 +49,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
         <ScrollView style={styles.details}>
           <Text style={styles.detailText}>{String(this.state.error.message)}</Text>
         </ScrollView>
-        <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-          onPress={this.handleReload}
-          accessibilityRole="button"
-        >
+        <Pressable style={[styles.button]} onPress={this.handleReload} accessibilityRole="button">
           <Text style={styles.buttonText}>Try again</Text>
         </Pressable>
       </View>

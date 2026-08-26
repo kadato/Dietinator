@@ -151,7 +151,7 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                   accessibilityRole="button"
                   // No aria-label: the visible title + description is the
                   // accessible name, which satisfies 2.5.3 label-in-name.
-                  style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                  style={[{ opacity: 1 }]}
                 >
                   <Box
                     className="flex-row items-center gap-3.5 rounded-none border p-3.5"

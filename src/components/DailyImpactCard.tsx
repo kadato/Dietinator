@@ -334,7 +334,7 @@ export const DailyImpactCard = memo(function DailyImpactCard({
         <View style={styles.microsAccordion}>
           <Pressable
             onPress={() => setShowMicros((v) => !v)}
-            style={({ pressed }) => [styles.accordionBtn, pressed && styles.accordionPressed]}
+            style={[styles.accordionBtn]}
             accessibilityRole="button"
             accessibilityLabel="Toggle micronutrient impact"
           >

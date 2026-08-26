@@ -164,7 +164,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
         >
           <Text style={styles.label}>Date</Text>
           <Pressable
-            style={({ pressed }) => [styles.dateRow, pressed && styles.pressed]}
+            style={[styles.dateRow, datePress.pressed && styles.pressed]}
             onPress={() => setPickerOpen(true)}
             onPressIn={datePress.onPressIn}
             onPressOut={datePress.onPressOut}

@@ -231,11 +231,10 @@ function SortableItem({
             onPress={() => onMoveOne(index, -1)}
             disabled={index === 0}
             hitSlop={6}
-            style={({ pressed }) => [
+            style={[
               styles.moveBtn,
               { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
               index === 0 && styles.disabledBtn,
-              pressed && index !== 0 && styles.moveBtnPressed,
             ]}
             accessibilityRole="button"
             accessibilityLabel={`Move ${item.name} up`}
@@ -250,11 +249,10 @@ function SortableItem({
             onPress={() => onMoveOne(index, 1)}
             disabled={index === totalItems - 1}
             hitSlop={6}
-            style={({ pressed }) => [
+            style={[
               styles.moveBtn,
               { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
               index === totalItems - 1 && styles.disabledBtn,
-              pressed && index !== totalItems - 1 && styles.moveBtnPressed,
             ]}
             accessibilityRole="button"
             accessibilityLabel={`Move ${item.name} down`}

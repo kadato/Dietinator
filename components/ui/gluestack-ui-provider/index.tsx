@@ -22,8 +22,11 @@ export function GluestackUIProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode])
 
+  const vars =
+    (config as Record<string, typeof config.light>)[mode] ?? config[colorScheme!] ?? config.light
+
   return (
-    <View style={[config[colorScheme!], { flex: 1, height: "100%", width: "100%" }, props.style]}>
+    <View style={[vars, { flex: 1, height: "100%", width: "100%" }, props.style]}>
       <OverlayProvider>
         <ToastProvider>{props.children}</ToastProvider>
       </OverlayProvider>

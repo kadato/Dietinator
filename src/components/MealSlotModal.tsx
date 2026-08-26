@@ -11,6 +11,7 @@ import { formatDisplayDate, shiftDateKey, toDateKey } from "@/utils/date"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 import type { MealType } from "@/types"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { usePressedState } from "@/hooks/usePressedState"
 import { fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -33,6 +34,10 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lastVisible, setLastVisible] = useState(false)
+  const prevPress = usePressedState()
+  const calPress = usePressedState()
+  const nextPress = usePressedState()
+  const [pressedSlot, setPressedSlot] = useState<MealType | null>(null)
 
   // Every open resets the target day. "Log into today" is the default,
   // handled as a render-adjustment pattern so the reset happens in one commit.
@@ -81,88 +86,88 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
           <Box className="mb-3 flex-row items-center justify-between gap-2 px-1">
             <Pressable
               onPress={() => setDateKey((current) => shiftDateKey(current, -1))}
+              onPressIn={prevPress.onPressIn}
+              onPressOut={prevPress.onPressOut}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Previous day"
             >
-              {({ pressed }) => (
-                <Box
-                  className="items-center justify-center"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderWidth: 1.5,
-                    borderColor: colors.border,
-                    borderStyle: "solid",
-                    borderRadius: 0,
-                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
-                  }}
-                >
-                  <Feather name="chevron-left" size={20} color={colors.text} />
-                </Box>
-              )}
+              <Box
+                className="items-center justify-center"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: prevPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="chevron-left" size={20} color={colors.text} />
+              </Box>
             </Pressable>
 
             <Pressable
               onPress={() => setPickerOpen(true)}
+              onPressIn={calPress.onPressIn}
+              onPressOut={calPress.onPressOut}
               className="min-w-0 flex-1"
               accessibilityRole="button"
               accessibilityLabel="Choose date"
             >
-              {({ pressed }) => (
-                <Box
-                  className="w-full flex-row items-center justify-center"
+              <Box
+                className="w-full flex-row items-center justify-center"
+                style={{
+                  height: 40,
+                  paddingHorizontal: 12,
+                  gap: 6,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: calPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="calendar" size={15} color={colors.primary} />
+                <Text
+                  size="sm"
+                  bold
+                  numberOfLines={1}
+                  className="text-typography-900"
                   style={{
-                    height: 40,
-                    paddingHorizontal: 12,
-                    gap: 6,
-                    borderWidth: 1.5,
-                    borderColor: colors.border,
-                    borderStyle: "solid",
-                    borderRadius: 0,
-                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.04,
                   }}
                 >
-                  <Feather name="calendar" size={15} color={colors.primary} />
-                  <Text
-                    size="sm"
-                    bold
-                    numberOfLines={1}
-                    className="text-typography-900"
-                    style={{
-                      fontFamily: fonts.mono,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.04,
-                    }}
-                  >
-                    {formatDisplayDate(dateKey)}
-                  </Text>
-                </Box>
-              )}
+                  {formatDisplayDate(dateKey)}
+                </Text>
+              </Box>
             </Pressable>
 
             <Pressable
               onPress={() => setDateKey((current) => shiftDateKey(current, 1))}
+              onPressIn={nextPress.onPressIn}
+              onPressOut={nextPress.onPressOut}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Next day"
             >
-              {({ pressed }) => (
-                <Box
-                  className="items-center justify-center"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderWidth: 1.5,
-                    borderColor: colors.border,
-                    borderStyle: "solid",
-                    borderRadius: 0,
-                    backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
-                  }}
-                >
-                  <Feather name="chevron-right" size={20} color={colors.text} />
-                </Box>
-              )}
+              <Box
+                className="items-center justify-center"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderStyle: "solid",
+                  borderRadius: 0,
+                  backgroundColor: nextPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                }}
+              >
+                <Feather name="chevron-right" size={20} color={colors.text} />
+              </Box>
             </Pressable>
           </Box>
 
@@ -171,13 +176,15 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
               <Pressable
                 key={slot}
                 onPress={() => onSelect(slot, dateKey)}
+                onPressIn={() => setPressedSlot(slot)}
+                onPressOut={() => setPressedSlot(null)}
                 className="flex-row items-center gap-3.5 rounded-none border px-3 py-3"
-                style={({ pressed }) => ({
+                style={{
                   borderWidth: 1.5,
                   borderColor: colors.border,
                   borderRadius: 0,
-                  backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-                })}
+                  backgroundColor: pressedSlot === slot ? colors.surfaceAlt : colors.surface,
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
               >
