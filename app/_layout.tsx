@@ -19,6 +19,7 @@ import { ThemeProvider } from "@/context/ThemeContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useBundledTerminalFont } from "@/utils/web-fonts"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
+import { SafeAreaProvider } from "react-native-safe-area-context"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import { fonts, type ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
@@ -194,18 +195,20 @@ function ThemedApp() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <GluestackUIProvider mode={gluestackMode}>
-        <NetworkProvider>
-          <ToastProvider>
-            <UpdateProvider>
-              <AiChatModalProvider>
-                <RootNavigator />
-                <AiChatModal />
-              </AiChatModalProvider>
-            </UpdateProvider>
-          </ToastProvider>
-        </NetworkProvider>
-      </GluestackUIProvider>
+      <SafeAreaProvider>
+        <GluestackUIProvider mode={gluestackMode}>
+          <NetworkProvider>
+            <ToastProvider>
+              <UpdateProvider>
+                <AiChatModalProvider>
+                  <RootNavigator />
+                  <AiChatModal />
+                </AiChatModalProvider>
+              </UpdateProvider>
+            </ToastProvider>
+          </NetworkProvider>
+        </GluestackUIProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   )
 }

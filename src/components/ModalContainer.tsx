@@ -66,8 +66,7 @@ export function ModalContainer({
   if (!isWide) {
     return (
       <Box
-        // @ts-expect-error dialog is valid for web but not in RN types
-        accessibilityRole="dialog"
+        {...(Platform.OS === "web" ? ({ accessibilityRole: "dialog" } as never) : {})}
         accessibilityViewIsModal
         aria-modal={true}
         className={`w-full ${hug ? "" : "flex-1"} ${outerClassName ?? ""}`}
@@ -105,8 +104,7 @@ export function ModalContainer({
         />
       ) : null}
       <Box
-        // @ts-expect-error dialog is valid for web but not in RN types
-        accessibilityRole="dialog"
+        {...(Platform.OS === "web" ? ({ accessibilityRole: "dialog" } as never) : {})}
         accessibilityViewIsModal
         aria-modal={true}
         className={`w-full ${hug ? "" : "flex-1"} overflow-hidden rounded-none`}
