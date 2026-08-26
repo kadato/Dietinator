@@ -112,7 +112,12 @@ function RootNavigator() {
     const inAuth = segments[0] === "login"
 
     if (!authenticated && !inAuth) {
-      router.replace("/login")
+      const demoSuffix =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("demo") === "1"
+          ? "?demo=1"
+          : ""
+      ;(router.replace as unknown as (path: string) => void)(`/login${demoSuffix}`)
     } else if (authenticated && inAuth) {
       router.replace("/(tabs)")
     }
