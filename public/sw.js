@@ -6,9 +6,11 @@
  *   boots when offline. The local-first engine keeps working in SQLite.
  * - The YAZIO proxy (`/api/*`) always hits the network. Never cached.
  *
- * Bump VERSION to invalidate old caches after an app update.
+ * Single-user build. No version bump needed. Hard refresh clears the two
+ * caches below. If you need to force a clean for a cached HTML that was
+ * stored as wasm or font, change the names once or clear site data.
  */
-const VERSION = 'dietinator-v3';
+const VERSION = 'dietinator';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -21,7 +23,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => !key.startsWith(VERSION))
+            .filter((key) => key !== `${VERSION}-static` && key !== `${VERSION}-shell`)
             .map((key) => caches.delete(key)),
         ),
       )

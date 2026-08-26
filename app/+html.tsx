@@ -32,14 +32,13 @@ export default function Root({ children }: PropsWithChildren) {
               "try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)').matches;var t=null;try{t=localStorage.getItem('calorie_tracker_theme_preference')||localStorage.getItem('theme')}catch(e){}var dark=t==='dark'||((!t||t==='system')&&m);if(dark){d.classList.add('dark');d.style.colorScheme='dark'}else{d.classList.remove('dark');d.style.colorScheme='light'}}catch(e){}",
           }}
         />
-        <link
-          rel="preload"
-          href="/assets/fonts/DepartureMono-Regular.otf"
-          as="font"
-          type="font/otf"
-          crossOrigin="anonymous"
-        />
-        <style>{`@font-face{font-family:"Departure Mono";src:url("/assets/fonts/DepartureMono-Regular.otf") format("opentype");font-weight:400 800;font-style:normal;font-display:swap;size-adjust:100%;ascent-override:95%;descent-override:25%}`}</style>
+        {/*
+          Departure Mono is loaded at runtime via src/utils/web-fonts.ts
+          using the CSS Font Loading API with the Metro-hashed asset URL.
+          Do not hardcode /assets/fonts/...otf here. The export writes the
+          file to /assets/assets/fonts/DepartureMono-Regular.<hash>.otf and the
+          unhashed preload would 404 to HTML via the SPA fallback.
+        */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b26" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
