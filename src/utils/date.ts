@@ -29,21 +29,31 @@ export function toDateKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`
 }
 
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const
+const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
+
 function shortMonthDay(dateKey: string): string {
-  const [y, m, d] = dateKey.split("-").map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  })
+  const [, m, d] = dateKey.split("-").map(Number)
+  return `${MONTHS_SHORT[m - 1]} ${d}`
 }
 
 function shortDisplayDate(dateKey: string): string {
   const [y, m, d] = dateKey.split("-").map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  })
+  const weekday = WEEKDAYS_SHORT[new Date(y, m - 1, d).getDay()]
+  return `${weekday}, ${MONTHS_SHORT[m - 1]} ${d}`
 }
 
 export function formatDisplayDate(dateKey: string): string {

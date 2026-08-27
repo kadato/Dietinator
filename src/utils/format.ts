@@ -15,3 +15,19 @@ export function formatMacro(value: number): string {
   const rounded = Math.round(value * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
+
+/** Locale-free thousands separator: 1234 -> "1,234". Avoids Intl on Android. */
+export function formatThousands(value: number): string {
+  if (!Number.isFinite(value)) return "0"
+  const int = String(Math.round(value))
+  return int.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
+
+/** Format an ISO date as HH:MM (24h) without Intl. */
+export function formatTimeHM(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ""
+  const h = String(date.getHours()).padStart(2, "0")
+  const m = String(date.getMinutes()).padStart(2, "0")
+  return `${h}:${m}`
+}
