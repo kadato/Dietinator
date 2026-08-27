@@ -64,9 +64,15 @@ export function ModalContainer({
   useEscapeToClose(dismissable, handleDismiss)
 
   if (!isWide) {
-    const safeTop =
+    const baseTop =
       insets.top > 0 ? insets.top : Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0
     const safeBottom = insets.bottom
+    // Thumb reach: phone modals were flush to the status bar / viewport top,
+    // hard to hit with one hand. Add a consistent 28px breathing room above
+    // the first content so native and web phone show the same lowered header.
+    // safeTop already includes the status bar / notch, the extra is visibly
+    // inside the safe area so both platforms end up 28px lower than before.
+    const thumbTop = baseTop + 28
     return (
       <Box
         {...(Platform.OS === "web" ? ({ accessibilityRole: "dialog" } as never) : {})}
@@ -76,7 +82,7 @@ export function ModalContainer({
         style={[
           surface ? { backgroundColor: colors.surface } : undefined,
           {
-            paddingTop: safeTop,
+            paddingTop: thumbTop,
             paddingBottom: safeBottom,
             paddingLeft: insets.left,
             paddingRight: insets.right,

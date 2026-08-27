@@ -190,7 +190,8 @@ export default function MealBuilderScreen() {
     )
   }
 
-  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+  const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+  const safeTop = baseTop + 28
   const safeBottom = insets.bottom
 
   return (
