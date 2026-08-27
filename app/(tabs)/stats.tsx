@@ -32,7 +32,7 @@ import { computeAdherence, computeLogStreak } from "@/utils/adherence"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { confirmAction } from "@/utils/confirm"
 import type { WeightEntry } from "@/types"
-import { spacing } from "@/theme"
+import { spacing, fonts } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -345,7 +345,7 @@ export default function StatsScreen() {
               <Text
                 size="2xs"
                 className="font-mono uppercase tracking-widest text-typography-400"
-                style={{ fontFamily: "monospace", letterSpacing: 0.06 }}
+                style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
               >
                 Shortcuts:
               </Text>
@@ -355,7 +355,7 @@ export default function StatsScreen() {
                   className="rounded-none border bg-background-50 px-1.5 py-0.5"
                   style={{ borderWidth: 1, borderColor: colors.border }}
                 >
-                  <Text size="2xs" bold style={{ fontFamily: "monospace" }}>
+                  <Text size="2xs" bold style={{ fontFamily: fonts.mono }}>
                     {s}
                   </Text>
                 </Box>
