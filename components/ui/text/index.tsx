@@ -1,7 +1,8 @@
 import React from "react"
 
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
-import { Text as RNText } from "react-native"
+import { StyleSheet, Text as RNText } from "react-native"
+import { fonts } from "@/theme"
 import { textStyle } from "./styles"
 
 type ITextProps = React.ComponentProps<typeof RNText> & VariantProps<typeof textStyle>
@@ -17,6 +18,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, ITextProps>(fun
     sub,
     italic,
     highlight,
+    style,
     ...props
   },
   ref,
@@ -34,6 +36,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, ITextProps>(fun
         highlight: highlight as boolean,
         class: className,
       })}
+      style={StyleSheet.flatten([{ fontFamily: fonts.mono }, style as object])}
       {...props}
       ref={ref}
     />
