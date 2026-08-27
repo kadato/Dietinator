@@ -124,11 +124,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           {
             width: "100%",
             maxWidth: 420,
-            maxHeight: "90%",
+            maxHeight: "75%",
             borderRadius: 0,
             borderWidth: 1.5,
             borderColor: colors.border,
             elevation: 0,
+            flexShrink: 1,
           },
         ]}
       >
@@ -155,8 +156,8 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           </Text>
         </Box>
         <ScrollView
-          className="flex-1"
-          contentContainerClassName="px-5 pb-4"
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >

@@ -68,28 +68,35 @@ export function useBundledTerminalFont(): boolean {
     } else {
       if (nativeLoaded) return
       let cancelled = false
-      // Give slow devices more time. 5s is enough even on low-end Android
-      // after a cold start. We only mark nativeLoaded on success so a
-      // failure can be retried on next launch instead of permanently falling
-      // back to the system font.
       const fallback = setTimeout(() => {
         if (!cancelled) {
           console.warn("[fonts] Departure Mono load timed out after 5s, showing fallback")
           setLoaded(true)
         }
       }, 5000)
-      Font.loadAsync({ [FAMILY_DEPARTURE]: FONT_SOURCE })
-        .then(() => {
+      ;(async () => {
+        try {
+          // Ensure the asset is downloaded first (important on first install).
+          try {
+            const Asset = require("expo-asset").Asset
+            await Asset.loadAsync(FONT_SOURCE)
+          } catch {}
+          // Register under both spaced and unspaced names - some Android
+          // ROMs normalize the family, so both must resolve.
+          await Font.loadAsync({
+            [FAMILY_DEPARTURE]: FONT_SOURCE,
+            DepartureMono: FONT_SOURCE,
+          })
           nativeLoaded = true
+          console.log("[fonts] Departure Mono loaded")
           if (!cancelled) setLoaded(true)
-        })
-        .catch((error) => {
+        } catch (error) {
           console.warn("[fonts] Departure Mono failed to load", String(error))
           if (!cancelled) setLoaded(true)
-        })
-        .finally(() => {
+        } finally {
           clearTimeout(fallback)
-        })
+        }
+      })()
       return () => {
         cancelled = true
         clearTimeout(fallback)
