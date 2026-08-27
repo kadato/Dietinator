@@ -731,5 +731,10 @@ export async function seedDemoSession(): Promise<void> {
 
 export function isDemoQuery(): boolean {
   if (typeof window === "undefined") return false
-  return new URLSearchParams(window.location.search).get("demo") === "1"
+  if (typeof window.location === "undefined" || !window.location?.search) return false
+  try {
+    return new URLSearchParams(window.location.search).get("demo") === "1"
+  } catch {
+    return false
+  }
 }

@@ -6,7 +6,7 @@ import {
 } from "expo-router"
 import Head from "expo-router/head"
 import { useEffect, useMemo, useState } from "react"
-import { LogBox, Platform, Pressable, StyleSheet, Text, View } from "react-native"
+import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import * as SplashScreen from "expo-splash-screen"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
@@ -114,6 +114,8 @@ function RootNavigator() {
     if (!authenticated && !inAuth) {
       const demoSuffix =
         typeof window !== "undefined" &&
+        typeof window.location !== "undefined" &&
+        window.location?.search &&
         new URLSearchParams(window.location.search).get("demo") === "1"
           ? "?demo=1"
           : ""
@@ -197,15 +199,17 @@ function RootNavigator() {
   )
 }
 
-function BootDiagnostics() {
-  const [visible, setVisible] = useState(false)
+export default function RootLayout() {
   useEffect(() => {
-    const t = setTimeout(() => {
-      setVisible(true)
-      void SplashScreen.hideAsync().catch(() => undefined)
-    }, 7000)
-    return () => clearTimeout(t)
+    // Once React has painted, swap the inlined pre-JS shell for the real app
+    // and register the service worker for offline + instant repeat loads.
+    hideWebShell()
+    registerWebServiceWorker()
   }, [])
+
+  // Top-level splash hide that runs even if AppProvider or RootNavigator
+  // crashes. Previous hides were inside RootNavigator which never mounted
+  // when the window.location bug crashed JS before navigation.
   useEffect(() => {
     const t1 = setTimeout(() => void SplashScreen.hideAsync().catch(() => undefined), 3500)
     const t2 = setTimeout(() => void SplashScreen.hideAsync().catch(() => undefined), 6000)
@@ -213,98 +217,6 @@ function BootDiagnostics() {
       clearTimeout(t1)
       clearTimeout(t2)
     }
-  }, [])
-  if (!visible) return null
-  return (
-    <View
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "#1a1b26",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        gap: 16,
-        zIndex: 9999,
-      }}
-      pointerEvents="box-none"
-    >
-      <View
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          backgroundColor: "#24283b",
-          borderWidth: 1.5,
-          borderColor: "#6b739c",
-          padding: 16,
-          gap: 12,
-        }}
-      >
-        <View style={{ gap: 4 }}>
-          <Text
-            style={{
-              color: "#c0caf5",
-              fontFamily: "Departure Mono",
-              fontSize: 14,
-              fontWeight: "700",
-            }}
-          >
-            Diagnostics
-          </Text>
-          <Text
-            style={{ color: "#a9b1d6", fontFamily: "Departure Mono", fontSize: 11, lineHeight: 16 }}
-          >
-            JS started but the app is still on the splash. This screen proves JS is running. Tap
-            Hide to force close the OS splash, or wait for the app to load.
-          </Text>
-        </View>
-        <View style={{ gap: 8 }}>
-          <Pressable
-            onPress={() => void SplashScreen.hideAsync().catch(() => undefined)}
-            style={{
-              backgroundColor: "#7aa2f7",
-              borderWidth: 1.5,
-              borderColor: "#7aa2f7",
-              paddingVertical: 12,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: "#1a1b26",
-                fontFamily: "Departure Mono",
-                fontSize: 12,
-                fontWeight: "700",
-              }}
-            >
-              Hide splash
-            </Text>
-          </Pressable>
-          <Text
-            style={{
-              color: "#6b739c",
-              fontFamily: "Departure Mono",
-              fontSize: 9,
-              textAlign: "center",
-            }}
-          >
-            If this appears, the bundle loaded. The hang is in DB or font. Build 1.8.11+
-          </Text>
-        </View>
-      </View>
-    </View>
-  )
-}
-
-export default function RootLayout() {
-  useEffect(() => {
-    // Once React has painted, swap the inlined pre-JS shell for the real app
-    // and register the service worker for offline + instant repeat loads.
-    hideWebShell()
-    registerWebServiceWorker()
   }, [])
 
   // Presenting a modal marks the screen behind it aria-hidden. If the button
@@ -335,7 +247,6 @@ export default function RootLayout() {
           </ThemeProvider>
         </AppProvider>
       </AppErrorBoundary>
-      <BootDiagnostics />
     </>
   )
 }
