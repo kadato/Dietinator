@@ -408,7 +408,7 @@ export default function AddFoodScreen() {
 
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 28
+  const safeTop = baseTop + 80
 
   return (
     <KeyboardAvoidingView
@@ -496,23 +496,7 @@ export default function AddFoodScreen() {
               </View>
             ) : null}
 
-            {preview && (
-              <View style={styles.nutritionSection}>
-                <NutritionFactsCard
-                  nutrients={preview}
-                  servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
-                  baseAmount={Number(amount) || 100}
-                  baseUnit={food.base_unit || "g"}
-                />
-                <DailyImpactCard
-                  currentDayNutrients={currentDayNutrients}
-                  itemNutrients={preview}
-                  settings={settings}
-                />
-              </View>
-            )}
-
-            {/* Compact Portion and Serving Controls (Bottom) */}
+            {/* Compact Portion and Serving Controls - above the fold for thumb reach */}
             <View style={styles.portionCard}>
               <View style={styles.portionHeaderRow}>
                 <Text style={styles.portionTitle}>Portion and Serving</Text>
@@ -585,6 +569,22 @@ export default function AddFoodScreen() {
                 ))}
               </View>
             </View>
+
+            {preview && (
+              <View style={styles.nutritionSection}>
+                <NutritionFactsCard
+                  nutrients={preview}
+                  servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+                  baseAmount={Number(amount) || 100}
+                  baseUnit={food.base_unit || "g"}
+                />
+                <DailyImpactCard
+                  currentDayNutrients={currentDayNutrients}
+                  itemNutrients={preview}
+                  settings={settings}
+                />
+              </View>
+            )}
           </PageContainer>
         </ScrollView>
       </ModalContainer>
