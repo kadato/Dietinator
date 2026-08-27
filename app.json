@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dietinator",
     "slug": "dietinator",
-    "version": "1.8.10",
+    "version": "1.8.11",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -30,7 +30,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 10810
+      "versionCode": 10811
     },
     "web": {
       "output": "static",
