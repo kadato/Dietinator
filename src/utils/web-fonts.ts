@@ -82,11 +82,53 @@ export function useBundledTerminalFont(): boolean {
             await Asset.loadAsync(FONT_SOURCE)
           } catch {}
           // Register under both spaced and unspaced names - some Android
-          // ROMs normalize the family, so both must resolve.
-          await Font.loadAsync({
-            [FAMILY_DEPARTURE]: FONT_SOURCE,
-            DepartureMono: FONT_SOURCE,
-          })
+          // ROMs normalize the family, so both must resolve. Also register
+          // weight-specific aliases pointing to the same Regular file: on
+          // Android a Text with fontFamily "Departure Mono" and fontWeight
+          // "700" would otherwise fall back to Roboto because no bold file
+          // exists. By providing the same OTF under every weight key the
+          // family resolves for any requested weight, and the pixel glyphs
+          // stay crisp without faux-bold synthesis (handled on web via
+          // FontFace weight descriptors).
+          const weightAliases: Record<string, number> = {}
+          const families = [FAMILY_DEPARTURE, "DepartureMono"] as const
+          const weights = ["400", "500", "600", "700", "800"] as const
+          const suffixes = [
+            "",
+            "-Regular",
+            "_Regular",
+            "-400",
+            "_400",
+            "-500",
+            "_500",
+            "-600",
+            "_600",
+            "-700",
+            "_700",
+            "-800",
+            "_800",
+            "-Bold",
+            "_Bold",
+            "-Medium",
+            "_Medium",
+            "-SemiBold",
+            "_SemiBold",
+          ] as const
+          for (const family of families) {
+            weightAliases[family] = FONT_SOURCE as unknown as number
+            // Explicit weight keys: e.g. "Departure Mono_700" - some RN
+            // internals concatenate family + "_" + weight
+            for (const w of weights) {
+              weightAliases[`${family}_${w}`] = FONT_SOURCE as unknown as number
+              weightAliases[`${family}-${w}`] = FONT_SOURCE as unknown as number
+            }
+            // Common style suffixes that Android font resolution may probe
+            for (const sfx of suffixes) {
+              if (!sfx) continue
+              weightAliases[`${family}${sfx}`] = FONT_SOURCE as unknown as number
+            }
+          }
+          await Font.loadAsync(weightAliases)
           nativeLoaded = true
           console.log("[fonts] Departure Mono loaded")
           if (!cancelled) setLoaded(true)

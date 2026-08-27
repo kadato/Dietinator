@@ -24,9 +24,12 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import { hideWebShell, registerWebServiceWorker } from "@/utils/web-shell"
 import { fonts, type ColorPalette } from "@/theme"
 import { GluestackUIProvider } from "@ui/gluestack-ui-provider"
+import { applyFontPatch } from "@/utils/font-patch"
 import "../global.css"
 
 import { AiChatModal } from "@/components/AiChatModal"
+
+applyFontPatch()
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined)
 
