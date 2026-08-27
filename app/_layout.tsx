@@ -5,7 +5,7 @@ import {
   useSegments,
 } from "expo-router"
 import Head from "expo-router/head"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import * as SplashScreen from "expo-splash-screen"
@@ -134,12 +134,20 @@ function RootNavigator() {
   // 4s. The JS loader continues to show the spinner but the OS splash
   // never looks frozen.
   useEffect(() => {
-    if (ready && fontsLoaded) return
     const t = setTimeout(() => {
       void SplashScreen.hideAsync().catch(() => undefined)
     }, 4000)
     return () => clearTimeout(t)
-  }, [ready, fontsLoaded])
+  }, [])
+
+  // Unconditional escape: even if JS is stuck, never leave the OS splash
+  // visible forever. After 6s force hide.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void SplashScreen.hideAsync().catch(() => undefined)
+    }, 6000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Also hide as soon as the app is ready even if fonts still load: the
   // fallback system monospace is readable, a frozen logo is not.
@@ -151,7 +159,13 @@ function RootNavigator() {
     return () => clearTimeout(t)
   }, [ready, fontsLoaded])
 
-  if (!ready || !fontsLoaded) {
+  const [forceShow, setForceShow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setForceShow(true), 5500)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (!forceShow && (!ready || !fontsLoaded)) {
     return (
       <View style={styles.loading}>
         <LoadingSpinner size={32} />
@@ -159,21 +173,10 @@ function RootNavigator() {
     )
   }
 
-  const inAuth = segments[0] === "login"
-  if (!authenticated && !inAuth) {
-    return (
-      <View style={styles.loading}>
-        <LoadingSpinner size={32} />
-      </View>
-    )
-  }
-  if (authenticated && inAuth) {
-    return (
-      <View style={styles.loading}>
-        <LoadingSpinner size={32} />
-      </View>
-    )
-  }
+  // Don't block render on auth/segments – render the stack and let the
+  // redirect effect handle it. Blocking here caused a dead lock when
+  // segments was still [] on first frame and router.replace hadn't fired yet.
+  // Keeping a spinner here forever looked like a frozen splash.
 
   return (
     <NavigationThemeProvider value={navTheme}>

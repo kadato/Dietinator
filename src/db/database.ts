@@ -4,14 +4,29 @@ import { Platform } from "react-native"
 /** Single in-flight open. Avoids duplicate OPFS access handles on web. Covers Strict Mode and parallel boot. */
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null
 
+function dbWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("DB timeout")), ms)
+    promise
+      .then((v) => {
+        clearTimeout(t)
+        resolve(v)
+      })
+      .catch((e) => {
+        clearTimeout(t)
+        reject(e)
+      })
+  })
+}
+
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
-    dbPromise = openDatabase().catch((error) => {
+    dbPromise = dbWithTimeout(openDatabase(), 3000).catch((error) => {
       dbPromise = null
       throw error
     })
   }
-  return dbPromise
+  return dbWithTimeout(dbPromise, 3500)
 }
 
 function isVfsInitError(error: unknown): boolean {
