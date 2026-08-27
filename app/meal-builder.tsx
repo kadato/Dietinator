@@ -200,10 +200,7 @@ export default function MealBuilderScreen() {
       keyboardVerticalOffset={safeTop}
     >
       <ModalContainer maxWidth={640}>
-        <Box
-          className="flex-row items-center justify-between px-3 pb-2"
-          style={{ paddingTop: safeTop > 0 ? safeTop + 8 : 16 }}
-        >
+        <Box className="flex-row items-center justify-between px-3 pb-2 pt-3">
           <Box className="w-10" />
           <Text
             size="xl"

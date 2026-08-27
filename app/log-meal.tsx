@@ -692,9 +692,7 @@ export default function LogMealScreen() {
     >
       <ModalContainer surface>
         {/* Compact Merged Header: Meal Icon + Title + Kcal + 3-Dot More Menu */}
-        <View
-          style={[styles.header, { paddingTop: safeTop > 0 ? safeTop + spacing.xs : spacing.sm }]}
-        >
+        <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={[styles.mealIconBox, { backgroundColor: `${accent}20` }]}>
               <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />

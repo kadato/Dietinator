@@ -420,7 +420,7 @@ export default function AddFoodScreen() {
           style={styles.scroll}
           contentContainerStyle={[
             styles.content,
-            { paddingTop: safeTop + spacing.sm, paddingBottom: safeBottom + 96 },
+            { paddingTop: spacing.sm, paddingBottom: safeBottom + 96 },
           ]}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"

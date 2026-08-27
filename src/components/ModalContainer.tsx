@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import type { ReactNode } from "react"
-import { Platform, Pressable } from "react-native"
+import { Platform, Pressable, StatusBar } from "react-native"
 import { Box } from "@ui/box"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
@@ -64,9 +64,8 @@ export function ModalContainer({
   useEscapeToClose(dismissable, handleDismiss)
 
   if (!isWide) {
-    // On Android with opaque nav bar the insets are 0 at first frame.
-    // Use a small fallback so content never sits under the status bar or nav bar.
-    const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 0 : 0
+    const safeTop =
+      insets.top > 0 ? insets.top : Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0
     const safeBottom = insets.bottom
     return (
       <Box
