@@ -406,17 +406,21 @@ export default function AddFoodScreen() {
   const unit = food.base_unit || "g"
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`
 
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={safeTop}
     >
       <ModalContainer maxWidth={560}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
             styles.content,
-            { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + 96 },
+            { paddingTop: safeTop + spacing.sm, paddingBottom: safeBottom + 96 },
           ]}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -586,7 +590,7 @@ export default function AddFoodScreen() {
 
       {!keyboardOpen ? (
         <FabCluster
-          bottomOffset={insets.bottom + 20}
+          bottomOffset={safeBottom + 20}
           left={
             <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
           }

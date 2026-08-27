@@ -136,10 +136,14 @@ export default function ManualEntryScreen() {
     }
   }
 
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={safeTop}
     >
       <ModalContainer maxWidth={520} outerClassName="bg-background-50">
         <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
@@ -248,7 +252,7 @@ export default function ManualEntryScreen() {
       </ModalContainer>
 
       <FabCluster
-        bottomOffset={insets.bottom + 20}
+        bottomOffset={safeBottom + 20}
         left={
           <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
         }

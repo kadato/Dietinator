@@ -29,15 +29,26 @@ type Props = {
   onDownload: () => void
 }
 
+const RELEASE_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const
+
 function formatReleaseDate(publishedAt: string | null): string {
   if (!publishedAt) return ""
   const date = new Date(publishedAt)
   if (Number.isNaN(date.getTime())) return ""
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  return `${RELEASE_MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
 }
 
 export function UpdateDialog({

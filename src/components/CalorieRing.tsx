@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from "react-native"
 import Svg, { Rect } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { formatThousands } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { spacing, fonts, type ColorPalette } from "@/theme"
 
@@ -111,7 +112,7 @@ export function CalorieRing({
               { fontSize: 28 * scale },
             ]}
           >
-            {over > 0 ? Math.round(over).toLocaleString() : Math.round(remaining).toLocaleString()}
+            {over > 0 ? formatThousands(Math.round(over)) : formatThousands(Math.round(remaining))}
           </Text>
           <Text style={[styles.remainingLabel, { fontSize: 12 * scale }]}>
             {over > 0 ? "kcal over" : "kcal left"}
@@ -134,12 +135,12 @@ export function CalorieRing({
 
       <View style={styles.statsRow}>
         <View style={styles.statPill}>
-          <Text style={styles.statValue}>{Math.round(consumed).toLocaleString()}</Text>
+          <Text style={styles.statValue}>{formatThousands(Math.round(consumed))}</Text>
           <Text style={styles.statLabel}>EATEN</Text>
         </View>
         <Text style={styles.separator}>·</Text>
         <View style={styles.statPill}>
-          <Text style={styles.statValue}>{Math.round(goal).toLocaleString()}</Text>
+          <Text style={styles.statValue}>{formatThousands(Math.round(goal))}</Text>
           <Text style={styles.statLabel}>GOAL</Text>
         </View>
       </View>

@@ -47,9 +47,11 @@ async function buildSystemPrompt(): Promise<string> {
   const customInstructions = settings.ai_system_prompt?.trim()
     ? `\n\nCustom Instructions:\n${settings.ai_system_prompt.trim()}`
     : ""
+  const hh = String(now.getHours()).padStart(2, "0")
+  const mm = String(now.getMinutes()).padStart(2, "0")
   return [
     "You are Dietinator AI, an assistant inside Dietinator, a local-first calorie, macro, water, and weight tracker.",
-    `Current date: ${now.toISOString()} (local time ${now.toLocaleTimeString()})`,
+    `Current date: ${now.toISOString()} (local time ${hh}:${mm})`,
     `Daily goals: ${settings.calorie_goal} kcal, ${settings.protein_goal} g protein, ${settings.carbs_goal} g carbs, ${settings.fat_goal} g fat, ${settings.water_goal_ml || 2500} ml water.`,
     settings.target_weight_kg > 0 ? `Target weight: ${settings.target_weight_kg} kg.` : "",
     settings.height_cm > 0 ? `Height: ${settings.height_cm} cm.` : "",

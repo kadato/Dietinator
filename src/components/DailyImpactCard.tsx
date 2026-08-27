@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { formatThousands } from "@/utils/format"
 import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { AppSettings, FoodNutrients } from "@/types"
 import { spacing, fonts, type ColorPalette } from "@/theme"
@@ -233,9 +234,9 @@ export const DailyImpactCard = memo(function DailyImpactCard({
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.heroLabel}>Daily Calories</Text>
             <Text style={styles.heroTransition} numberOfLines={1} adjustsFontSizeToFit>
-              {currentKcal.toLocaleString()} <Text style={styles.arrowText}>→</Text>{" "}
-              <Text style={styles.heroProjected}>{projectedKcal.toLocaleString()}</Text>{" "}
-              <Text style={styles.heroAdded}>[+{addedKcal.toLocaleString()} kcal]</Text>
+              {formatThousands(currentKcal)} <Text style={styles.arrowText}>→</Text>{" "}
+              <Text style={styles.heroProjected}>{formatThousands(projectedKcal)}</Text>{" "}
+              <Text style={styles.heroAdded}>[+{formatThousands(addedKcal)} kcal]</Text>
             </Text>
           </View>
 
@@ -268,8 +269,8 @@ export const DailyImpactCard = memo(function DailyImpactCard({
                 ]}
               >
                 {overKcal
-                  ? `+${overKcal.toLocaleString()} kcal over`
-                  : `${remainingKcal?.toLocaleString()} kcal left`}
+                  ? `+${formatThousands(overKcal)} kcal over`
+                  : `${formatThousands(remainingKcal ?? 0)} kcal left`}
               </Text>
             </View>
           ) : null}

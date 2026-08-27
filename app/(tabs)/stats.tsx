@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ScrollView, View } from "react-native"
+import { Platform, ScrollView, View } from "react-native"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect } from "expo-router"
 import { Feather } from "@expo/vector-icons"
@@ -58,14 +58,28 @@ const MACRO_METRICS: { value: MacroMetric; label: string }[] = [
 /** Shared chart height so all four trend cards stay aligned. */
 const CHART_HEIGHT = 170
 
+const AXIS_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const
+
 function formatAxisDate(dateKey: string, range: RangeId): string {
-  const [y, m, d] = dateKey.split("-").map(Number)
-  const date = new Date(y, m - 1, d)
-  if (Number.isNaN(date.getTime())) return ""
+  const [, m, d] = dateKey.split("-").map(Number)
+  if (!m || !d) return ""
   if (range === "1y") {
-    return date.toLocaleDateString(undefined, { month: "short" })
+    return AXIS_MONTHS[m - 1] ?? ""
   }
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  return `${AXIS_MONTHS[m - 1]} ${d}`
 }
 
 export default function StatsScreen() {
@@ -145,7 +159,7 @@ export default function StatsScreen() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (Platform.OS !== "web") return
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
@@ -301,12 +315,14 @@ export default function StatsScreen() {
     />
   )
 
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+
   return (
     <Box className="flex-1" style={{ backgroundColor: "transparent" }}>
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <Box
           className={`w-full pb-2 ${isWide ? (isLarge ? "px-6" : "px-5") : "px-4"}`}
-          style={{ paddingTop: insets.top + spacing.md }}
+          style={{ paddingTop: safeTop + spacing.md }}
         >
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats
@@ -379,9 +395,9 @@ export default function StatsScreen() {
             </Card>
           ) : (
             <Box
-              className={`mt-4 ${isWide ? "grid grid-cols-2 gap-4" : "gap-4"} ${isLarge ? "gap-5" : ""}`}
+              className={`mt-4 ${isWide ? "gap-4" : "gap-4"} ${isLarge ? "gap-5" : ""}`}
               style={
-                isWide
+                Platform.OS === "web" && isWide
                   ? ({
                       display: "grid",
                       gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -396,7 +412,9 @@ export default function StatsScreen() {
               <Card
                 variant="elevated"
                 className={`p-4 ${isWide ? "col-span-2" : ""}`}
-                style={isWide ? ({ gridColumn: "1 / -1" } as never) : undefined}
+                style={
+                  Platform.OS === "web" && isWide ? ({ gridColumn: "1 / -1" } as never) : undefined
+                }
               >
                 <Box className="flex-row items-center gap-2.5">
                   <Box

@@ -20,6 +20,7 @@ import { useLayout } from "@/hooks/useLayout"
 import { usePressedState } from "@/hooks/usePressedState"
 import { withAlpha } from "@/utils/color"
 import { confirmAction } from "@/utils/confirm"
+import { formatTimeHM } from "@/utils/format"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
@@ -28,9 +29,7 @@ import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
 function formatTime(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ""
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return formatTimeHM(iso)
 }
 
 function summaryOf(pending: PendingConfirmation[]): string {
@@ -777,7 +776,7 @@ export default function AiScreen() {
             >
               <KeyboardAvoidingView
                 className="flex-1"
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
               >
                 {messages.length === 0 ? (
@@ -916,7 +915,7 @@ export default function AiScreen() {
         ) : (
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
           >
             {messages.length === 0 ? (

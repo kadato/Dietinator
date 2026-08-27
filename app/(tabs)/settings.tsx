@@ -1348,12 +1348,14 @@ export default function SettingsScreen() {
   }
 
   const currentSection = SETTINGS_SECTIONS.find((s) => s.id === effectiveSectionId)
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
 
   return (
     <KeyboardAvoidingView
       className="flex-1"
       style={{ backgroundColor: "transparent" }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={safeTop}
     >
       <ScrollView
         ref={scrollRef}

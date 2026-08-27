@@ -276,11 +276,16 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     </>
   )
 
+  // Android edgeToEdge may report 0 inset inside Modal; fall back to 16 so
+  // the sheet and FABs never sit under the gesture bar on installed APKs.
+  const rawBottom = insets.bottom
+  const safeBottom = rawBottom > 0 ? rawBottom : Platform.OS === "android" ? 16 : 0
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType={Platform.OS === "web" ? "none" : "slide"}
+      animationType={Platform.OS === "web" ? "none" : "fade"}
       onRequestClose={onClose}
       {...(Platform.OS === "android"
         ? { statusBarTranslucent: true, hardwareAccelerated: true }
@@ -304,17 +309,18 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               shell.dialogWrap,
               {
                 justifyContent: "flex-end",
-                paddingBottom: insets.bottom + 84,
+                paddingBottom: safeBottom + 84,
               },
             ]}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={safeBottom}
           >
             {form}
           </KeyboardAvoidingView>
         )}
 
         <FabCluster
-          bottomOffset={insets.bottom + 16}
+          bottomOffset={safeBottom + 16}
           left={<Fab tone="surface" icon="x" onPress={onClose} accessibilityLabel="Cancel" />}
           right={
             <Fab

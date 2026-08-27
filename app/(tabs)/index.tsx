@@ -33,6 +33,7 @@ import { confirmAction } from "@/utils/confirm"
 import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
+import { formatThousands } from "@/utils/format"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
@@ -627,7 +628,7 @@ export default function TodayScreen() {
             className="font-mono uppercase tracking-widest text-typography-600"
             style={{ letterSpacing: 0.06 }}
           >
-            {summary.steps.toLocaleString()} steps
+            {formatThousands(summary.steps)} steps
           </Text>
           <Text size="2xs" className="font-mono uppercase tracking-widest text-typography-400">
             · today
@@ -806,7 +807,10 @@ export default function TodayScreen() {
             />
           }
           contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-2 pb-24" : "max-w-[720px] self-center p-2 pb-56"}`}
-          style={{ paddingTop: insets.top + spacing.xs }}
+          style={{
+            paddingTop:
+              (insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0) + spacing.xs,
+          }}
         >
           {isWide ? (
             <Box className={`w-full flex-row items-start ${isLarge ? "gap-6" : "gap-5"}`}>
@@ -840,7 +844,7 @@ export default function TodayScreen() {
                         style={{ borderWidth: 1, borderColor: colors.border }}
                       >
                         <Text size="lg" bold className="font-tabular text-typography-900">
-                          {Math.round(totals.kcal).toLocaleString()}
+                          {formatThousands(Math.round(totals.kcal))}
                         </Text>
                         <Text
                           size="2xs"
@@ -865,7 +869,7 @@ export default function TodayScreen() {
                           }}
                         >
                           {settings.calorie_goal > 0
-                            ? `${Math.max(settings.calorie_goal - totals.kcal, 0).toLocaleString()}`
+                            ? formatThousands(Math.max(settings.calorie_goal - totals.kcal, 0))
                             : "-"}
                         </Text>
                         <Text
@@ -906,13 +910,15 @@ export default function TodayScreen() {
                 <Box
                   className={isLarge ? "gap-4" : "gap-3.5"}
                   style={
-                    {
-                      display: "grid",
-                      gridTemplateColumns: isLarge
-                        ? "repeat(auto-fit, minmax(340px, 1fr))"
-                        : "repeat(auto-fit, minmax(320px, 1fr))",
-                      gap: isLarge ? 16 : 14,
-                    } as never
+                    Platform.OS === "web"
+                      ? ({
+                          display: "grid",
+                          gridTemplateColumns: isLarge
+                            ? "repeat(auto-fit, minmax(340px, 1fr))"
+                            : "repeat(auto-fit, minmax(320px, 1fr))",
+                          gap: isLarge ? 16 : 14,
+                        } as never)
+                      : undefined
                   }
                 >
                   {renderMealSections(true)}

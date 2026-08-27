@@ -681,18 +681,19 @@ export default function LogMealScreen() {
       </View>
     ) : null
 
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={safeTop}
     >
       <ModalContainer surface>
         {/* Compact Merged Header: Meal Icon + Title + Kcal + 3-Dot More Menu */}
         <View
-          style={[
-            styles.header,
-            { paddingTop: insets.top > 0 ? insets.top + spacing.xs : spacing.sm },
-          ]}
+          style={[styles.header, { paddingTop: safeTop > 0 ? safeTop + spacing.xs : spacing.sm }]}
         >
           <View style={styles.headerLeft}>
             <View style={[styles.mealIconBox, { backgroundColor: `${accent}20` }]}>
@@ -1003,7 +1004,7 @@ export default function LogMealScreen() {
       </ModalContainer>
 
       <FabCluster
-        bottomOffset={insets.bottom + (compact ? 12 : 16)}
+        bottomOffset={safeBottom + (compact ? 12 : 16)}
         insetX={compact ? 12 : 20}
         left={
           <Fab

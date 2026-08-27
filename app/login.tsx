@@ -97,11 +97,15 @@ export default function LoginScreen() {
     }
   }
 
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+
   return (
     <KeyboardAvoidingView
       className="flex-1"
       style={{ backgroundColor: "transparent" }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={safeTop}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
@@ -112,7 +116,7 @@ export default function LoginScreen() {
           variant={isWide ? "wide" : "narrow"}
           contentClassName="px-6 justify-center"
           contentStyle={[
-            { paddingTop: insets.top + 24, paddingBottom: 24 },
+            { paddingTop: safeTop + 24, paddingBottom: safeBottom + 24 },
             isWide ? { maxWidth: 720, alignSelf: "center", width: "100%" } : undefined,
           ]}
         >

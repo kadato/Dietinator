@@ -380,11 +380,14 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
     </>
   )
 
+  const rawBottom = insets.bottom
+  const safeBottom = rawBottom > 0 ? rawBottom : Platform.OS === "android" ? 16 : 0
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType={Platform.OS === "web" ? "none" : "slide"}
+      animationType={Platform.OS === "web" ? "none" : "fade"}
       onRequestClose={onClose}
       {...(Platform.OS === "android"
         ? { statusBarTranslucent: true, hardwareAccelerated: true }
@@ -408,17 +411,18 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               shell.dialogWrap,
               {
                 justifyContent: "flex-end",
-                paddingBottom: insets.bottom + 84,
+                paddingBottom: safeBottom + 84,
               },
             ]}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={safeBottom}
           >
             {form}
           </KeyboardAvoidingView>
         )}
 
         <FabCluster
-          bottomOffset={insets.bottom + 16}
+          bottomOffset={safeBottom + 16}
           left={
             <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close water modal" />
           }

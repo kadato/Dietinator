@@ -19,12 +19,7 @@ type Props = {
   onClose: () => void
 }
 
-const WEEKDAYS = Array.from({ length: 7 }, (_, index) => {
-  const label = new Date(2024, 0, 8 + index).toLocaleDateString(undefined, {
-    weekday: "short",
-  })
-  return label.slice(0, 2).charAt(0).toUpperCase() + label.slice(1, 2).toLowerCase()
-})
+const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const
 
 function monthGrid(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1)
@@ -41,6 +36,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   const { colors } = useTheme()
   const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
   const styles = useThemedStyles(createStyles)
   const prevPress = usePressedState()
   const nextPress = usePressedState()
@@ -50,10 +46,21 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   const todayKey = toDateKey()
 
   const cells = useMemo(() => monthGrid(view.year, view.month), [view])
-  const monthLabel = new Date(view.year, view.month, 1).toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  })
+  const MONTHS_LONG = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ] as const
+  const monthLabel = `${MONTHS_LONG[view.month]} ${view.year}`
 
   const shiftMonth = (delta: number) => {
     setView(({ year, month }) => {
@@ -91,7 +98,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
             styles.centerWrap,
             {
               justifyContent: isMedium ? "center" : "flex-end",
-              paddingBottom: isMedium ? 24 : insets.bottom + 84,
+              paddingBottom: isMedium ? 24 : safeBottom + 84,
             },
           ]}
         >
@@ -186,7 +193,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
         </View>
 
         <FabCluster
-          bottomOffset={insets.bottom + 16}
+          bottomOffset={safeBottom + 16}
           left={
             <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close date picker" />
           }

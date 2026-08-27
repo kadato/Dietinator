@@ -24,6 +24,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { usePressedState } from "@/hooks/usePressedState"
 import { withAlpha } from "@/utils/color"
+import { formatTimeHM } from "@/utils/format"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
@@ -33,9 +34,7 @@ import { fonts } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 function formatTime(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ""
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return formatTimeHM(iso)
 }
 
 function summaryOf(pending: PendingConfirmation[]): string {
@@ -110,6 +109,8 @@ function AiChatModalContent() {
   const { colors } = useTheme()
   const shell = createModalShellStyles(colors)
   const insets = useSafeAreaInsets()
+  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
   const { width, isWide } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
@@ -579,7 +580,7 @@ function AiChatModalContent() {
       <Box
         style={{
           backgroundColor: colors.primary,
-          paddingTop: insets.top + 12,
+          paddingTop: safeTop + 12,
           paddingLeft: insets.left + 16,
           paddingRight: insets.right + 16,
         }}
@@ -680,7 +681,7 @@ function AiChatModalContent() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         {messages.length === 0 ? (
@@ -709,7 +710,7 @@ function AiChatModalContent() {
         <Box
           className="border-t bg-background-0 px-3 pt-2"
           style={{
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: safeBottom + 12,
             borderTopWidth: 1.5,
             borderTopColor: colors.border,
             borderRadius: 0,
@@ -867,7 +868,7 @@ function AiChatModalContent() {
 
         {isWide ? (
           <FabCluster
-            bottomOffset={insets.bottom + 24}
+            bottomOffset={safeBottom + 24}
             left={<Fab tone="surface" icon="x" onPress={closeAiChat} accessibilityLabel="Cancel" />}
           />
         ) : null}

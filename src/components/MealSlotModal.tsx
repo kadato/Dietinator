@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Modal, Pressable, View } from "react-native"
+import { Modal, Platform, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
@@ -31,6 +31,7 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
   const { colors } = useTheme()
   const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
+  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lastVisible, setLastVisible] = useState(false)
@@ -55,7 +56,7 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
           justifyContent: isMedium ? "center" : "flex-end",
           alignItems: "center",
           paddingHorizontal: 20,
-          paddingBottom: isMedium ? 24 : insets.bottom + 84,
+          paddingBottom: isMedium ? 24 : safeBottom + 84,
         }}
       >
         <Pressable
@@ -226,7 +227,7 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
         </Box>
 
         <FabCluster
-          bottomOffset={insets.bottom + 16}
+          bottomOffset={safeBottom + 16}
           left={
             <Fab
               icon="x"
