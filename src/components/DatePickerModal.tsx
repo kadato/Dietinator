@@ -36,7 +36,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
   const { colors } = useTheme()
   const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
-  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = insets.bottom
   const styles = useThemedStyles(createStyles)
   const prevPress = usePressedState()
   const nextPress = usePressedState()
@@ -225,7 +225,6 @@ const createStyles = (colors: ColorPalette) =>
       width: "100%",
       maxWidth: 380,
       alignSelf: "center",
-      boxShadow: "none",
       elevation: 0,
     },
     monthRow: {
@@ -243,7 +242,6 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1.5,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
-      boxShadow: "none",
       elevation: 0,
     },
     navBtnPressed: {
@@ -287,7 +285,6 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: 0,
       borderWidth: 1.5,
       borderColor: "transparent",
-      boxShadow: "none",
       elevation: 0,
     },
     dayText: {
@@ -308,7 +305,6 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1.5,
       borderColor: colors.primary,
       backgroundColor: colors.primary,
-      boxShadow: "none",
       elevation: 0,
     },
     todayBtnPressed: {

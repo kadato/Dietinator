@@ -127,7 +127,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             borderRadius: 0,
             borderWidth: 1.5,
             borderColor: colors.border,
-            boxShadow: "none",
             elevation: 0,
           },
           isMedium ? styles.dialogBodyWide : { maxHeight: "90%" },
@@ -140,7 +139,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               borderWidth: 1.5,
               borderColor: colors.border,
               borderRadius: 0,
-              boxShadow: "none",
               elevation: 0,
             }}
           >
@@ -187,7 +185,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               borderWidth: 1.5,
               borderColor: colors.border,
               borderRadius: 0,
-              boxShadow: "none",
               elevation: 0,
             }}
           >
@@ -240,7 +237,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   borderColor: colors.primary,
                   borderRadius: 0,
                   backgroundColor: colors.primary,
-                  boxShadow: "none",
                   elevation: 0,
                 }}
               >
@@ -286,7 +282,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 borderColor: colors.primary,
                 borderRadius: 0,
                 opacity: saving || !(Number(customMl) > 0) ? 0.5 : 1,
-                boxShadow: "none",
                 elevation: 0,
               }}
             >
@@ -303,7 +298,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   borderColor: colors.border,
                   borderRadius: 0,
                   backgroundColor: colors.surfaceAlt,
-                  boxShadow: "none",
                   elevation: 0,
                 }}
               >
@@ -334,7 +328,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                     borderColor: colors.border,
                     borderRadius: 0,
                     backgroundColor: colors.surface,
-                    boxShadow: "none",
                     elevation: 0,
                   }}
                 >
@@ -356,7 +349,6 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                       borderWidth: 1.5,
                       borderColor: colors.border,
                       borderRadius: 0,
-                      boxShadow: "none",
                       elevation: 0,
                     }}
                     accessibilityRole="button"
@@ -381,7 +373,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   )
 
   const rawBottom = insets.bottom
-  const safeBottom = rawBottom > 0 ? rawBottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = rawBottom
 
   return (
     <Modal
@@ -414,8 +406,8 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 paddingBottom: safeBottom + 84,
               },
             ]}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={safeBottom}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? safeBottom : 0}
           >
             {form}
           </KeyboardAvoidingView>
@@ -458,7 +450,6 @@ const createStyles = (colors: ColorPalette) =>
       padding: spacing.md,
       borderWidth: 1.5,
       borderColor: colors.border,
-      boxShadow: "none",
       elevation: 0,
     },
     pressed: {
@@ -473,7 +464,6 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: 1.5,
       borderColor: colors.border,
       overflow: "hidden",
-      boxShadow: "none",
       elevation: 0,
     },
     progressFill: {

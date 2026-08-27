@@ -128,7 +128,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             borderRadius: 0,
             borderWidth: 1.5,
             borderColor: colors.border,
-            boxShadow: "none",
             elevation: 0,
           },
         ]}
@@ -141,7 +140,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               borderColor: colors.border,
               borderRadius: 0,
               backgroundColor: `${colors.primary}14`,
-              boxShadow: "none",
               elevation: 0,
             }}
           >
@@ -217,7 +215,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
                 borderWidth: 1.5,
                 borderColor: colors.border,
                 borderRadius: 0,
-                boxShadow: "none",
                 elevation: 0,
               }}
             >
@@ -276,10 +273,10 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
     </>
   )
 
-  // Android edgeToEdge may report 0 inset inside Modal; fall back to 16 so
-  // the sheet and FABs never sit under the gesture bar on installed APKs.
+  // With edgeToEdge disabled the nav bar is opaque, so no fallback is needed.
+  // Keep the raw inset so the sheet sits directly above the bar.
   const rawBottom = insets.bottom
-  const safeBottom = rawBottom > 0 ? rawBottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = rawBottom
 
   return (
     <Modal
@@ -312,8 +309,8 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
                 paddingBottom: safeBottom + 84,
               },
             ]}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={safeBottom}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? safeBottom : 0}
           >
             {form}
           </KeyboardAvoidingView>
@@ -357,7 +354,6 @@ const createStyles = (colors: ColorPalette) =>
       padding: spacing.md,
       borderWidth: 1.5,
       borderColor: colors.border,
-      boxShadow: "none",
       elevation: 0,
     },
     pressed: {

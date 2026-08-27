@@ -64,6 +64,10 @@ export function ModalContainer({
   useEscapeToClose(dismissable, handleDismiss)
 
   if (!isWide) {
+    // On Android with opaque nav bar the insets are 0 at first frame.
+    // Use a small fallback so content never sits under the status bar or nav bar.
+    const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 0 : 0
+    const safeBottom = insets.bottom
     return (
       <Box
         {...(Platform.OS === "web" ? ({ accessibilityRole: "dialog" } as never) : {})}
@@ -73,8 +77,8 @@ export function ModalContainer({
         style={[
           surface ? { backgroundColor: colors.surface } : undefined,
           {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
+            paddingTop: safeTop,
+            paddingBottom: safeBottom,
             paddingLeft: insets.left,
             paddingRight: insets.right,
           },
@@ -113,7 +117,6 @@ export function ModalContainer({
           backgroundColor: colors.surface,
           borderWidth: 1.5,
           borderColor: colors.border,
-          boxShadow: "none",
           elevation: 0,
         }}
       >

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Modal, Platform, Pressable, View } from "react-native"
+import { Modal, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
@@ -31,14 +31,21 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
   const { colors } = useTheme()
   const { isMedium } = useLayout()
   const insets = useSafeAreaInsets()
-  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = insets.bottom
   const [dateKey, setDateKey] = useState(initialDateKey ?? toDateKey())
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lastVisible, setLastVisible] = useState(false)
   const prevPress = usePressedState()
   const calPress = usePressedState()
   const nextPress = usePressedState()
-  const [pressedSlot, setPressedSlot] = useState<MealType | null>(null)
+  // Per-slot press tracking so the pressed tint never sticks if a gesture
+  // cancels without sending onPressOut (seen on Android Fabric).
+  const pressedSlots: Record<MealType, ReturnType<typeof usePressedState>> = {
+    breakfast: usePressedState(),
+    lunch: usePressedState(),
+    dinner: usePressedState(),
+    snack: usePressedState(),
+  }
 
   // Every open resets the target day. "Log into today" is the default,
   // handled as a render-adjustment pattern so the reset happens in one commit.
@@ -173,56 +180,59 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
           </Box>
 
           <Box className="gap-2">
-            {MEAL_TYPES.map((slot) => (
-              <Pressable
-                key={slot}
-                onPress={() => onSelect(slot, dateKey)}
-                onPressIn={() => setPressedSlot(slot)}
-                onPressOut={() => setPressedSlot(null)}
-                className="flex-row items-center gap-3.5 rounded-none border px-3 py-3"
-                style={{
-                  borderWidth: 1.5,
-                  borderColor: colors.border,
-                  borderRadius: 0,
-                  backgroundColor: pressedSlot === slot ? colors.surfaceAlt : colors.surface,
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
-              >
-                <Box
-                  className="h-10 w-10 items-center justify-center rounded-none border"
+            {MEAL_TYPES.map((slot) => {
+              const press = pressedSlots[slot]
+              return (
+                <Pressable
+                  key={slot}
+                  onPress={() => onSelect(slot, dateKey)}
+                  onPressIn={press.onPressIn}
+                  onPressOut={press.onPressOut}
+                  className="flex-row items-center gap-3.5 rounded-none border px-3 py-3"
                   style={{
-                    backgroundColor: `${colors[slot]}22`,
-                    borderColor: `${colors[slot]}55`,
                     borderWidth: 1.5,
+                    borderColor: colors.border,
                     borderRadius: 0,
+                    backgroundColor: press.pressed ? colors.surfaceAlt : colors.surface,
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Log into ${MEAL_LABELS[slot]}`}
                 >
-                  <MaterialCommunityIcons
-                    name={
-                      slot === "breakfast"
-                        ? "coffee"
-                        : slot === "lunch"
-                          ? "silverware-fork-knife"
-                          : slot === "dinner"
-                            ? "weather-night"
-                            : "cookie"
-                    }
-                    size={20}
-                    color={colors[slot]}
-                  />
-                </Box>
-                <Text
-                  size="md"
-                  bold
-                  className="flex-1 uppercase tracking-widest text-typography-900"
-                  style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
-                >
-                  {MEAL_LABELS[slot]}
-                </Text>
-                <Feather name="chevron-right" size={18} color={colors.textMuted} />
-              </Pressable>
-            ))}
+                  <Box
+                    className="h-10 w-10 items-center justify-center rounded-none border"
+                    style={{
+                      backgroundColor: `${colors[slot]}22`,
+                      borderColor: `${colors[slot]}55`,
+                      borderWidth: 1.5,
+                      borderRadius: 0,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={
+                        slot === "breakfast"
+                          ? "coffee"
+                          : slot === "lunch"
+                            ? "silverware-fork-knife"
+                            : slot === "dinner"
+                              ? "weather-night"
+                              : "cookie"
+                      }
+                      size={20}
+                      color={colors[slot]}
+                    />
+                  </Box>
+                  <Text
+                    size="md"
+                    bold
+                    className="flex-1 uppercase tracking-widest text-typography-900"
+                    style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                  >
+                    {MEAL_LABELS[slot]}
+                  </Text>
+                  <Feather name="chevron-right" size={18} color={colors.textMuted} />
+                </Pressable>
+              )
+            })}
           </Box>
         </Box>
 
