@@ -75,9 +75,6 @@ const TABS: TabOption[] = [
 
 const ZERO_TOTALS: FoodNutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
 
-let rememberedCategory: FoodCategory = "foods"
-let rememberedListMode: ListMode = "frequent"
-
 type FoodRow = SearchFoodResult | RecentFoodUsage
 
 function isUsageRow(row: FoodRow): row is RecentFoodUsage {
@@ -113,25 +110,15 @@ export default function LogMealScreen() {
 
   const accent = colors[mealType]
 
-  const [category, setCategoryState] = useState<FoodCategory>(rememberedCategory)
+  const [category, setCategory] = useState<FoodCategory>("foods")
   const [query, setQuery] = useState("")
   const searchInputRef = useRef<TextInput>(null)
   const debounced = useDebounce(query, 200)
-  const [listMode, setListModeState] = useState<ListMode>(rememberedListMode)
+  const [listMode, setListMode] = useState<ListMode>("frequent")
   const [meals, setMeals] = useState<Meal[]>([])
   const [loggingMealId, setLoggingMealId] = useState<string | null>(null)
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [reorderFavorites, setReorderFavorites] = useState(false)
-
-  const setCategory = useCallback((cat: FoodCategory) => {
-    rememberedCategory = cat
-    setCategoryState(cat)
-  }, [])
-
-  const setListMode = useCallback((mode: ListMode) => {
-    rememberedListMode = mode
-    setListModeState(mode)
-  }, [])
 
   const activeTab: ActiveTab = category === "meals" ? "meals" : listMode
 

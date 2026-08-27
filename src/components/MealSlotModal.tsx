@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Modal, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -47,12 +47,21 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
     snack: usePressedState(),
   }
 
-  // Every open resets the target day. "Log into today" is the default,
-  // handled as a render-adjustment pattern so the reset happens in one commit.
+  // Every open resets the target day. Pressed tints are cleared on close
+  // via effect so a sheet that closed before onPressOut does not stay highlighted.
   if (visible !== lastVisible) {
     setLastVisible(visible)
     if (visible) setDateKey(initialDateKey ?? toDateKey())
   }
+
+  useEffect(() => {
+    if (!visible) {
+      pressedSlots.breakfast.onPressOut()
+      pressedSlots.lunch.onPressOut()
+      pressedSlots.dinner.onPressOut()
+      pressedSlots.snack.onPressOut()
+    }
+  }, [visible, pressedSlots.breakfast, pressedSlots.dinner, pressedSlots.lunch, pressedSlots.snack])
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
