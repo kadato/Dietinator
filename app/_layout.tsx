@@ -129,6 +129,28 @@ function RootNavigator() {
     }
   }, [ready, fontsLoaded])
 
+  // Safety: if fonts never resolve (for example a bundled asset miss on a
+  // release APK after a storage clear), still hide the native splash after
+  // 4s. The JS loader continues to show the spinner but the OS splash
+  // never looks frozen.
+  useEffect(() => {
+    if (ready && fontsLoaded) return
+    const t = setTimeout(() => {
+      void SplashScreen.hideAsync().catch(() => undefined)
+    }, 4000)
+    return () => clearTimeout(t)
+  }, [ready, fontsLoaded])
+
+  // Also hide as soon as the app is ready even if fonts still load: the
+  // fallback system monospace is readable, a frozen logo is not.
+  useEffect(() => {
+    if (!ready) return
+    const t = setTimeout(() => {
+      if (!fontsLoaded) void SplashScreen.hideAsync().catch(() => undefined)
+    }, 1200)
+    return () => clearTimeout(t)
+  }, [ready, fontsLoaded])
+
   if (!ready || !fontsLoaded) {
     return (
       <View style={styles.loading}>

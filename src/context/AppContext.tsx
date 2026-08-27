@@ -59,14 +59,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
+    let timeout: ReturnType<typeof setTimeout> | null = null
     ;(async () => {
+      // Hard fallback: boot must finish even if SQLite or SecureStore hangs
+      // after a storage clear. 3.5s is enough for a cold start but short
+      // enough that a stuck splash never looks frozen.
+      timeout = setTimeout(() => {
+        if (!cancelled) setReady(true)
+      }, 3500)
       try {
-        // All three reads are local, so boot takes as long as the slowest one.
-        await Promise.all([getDatabase(), refreshSettings(), refreshAuth()])
+        // Run each init with its own catch so one failure does not block the others.
+        // getDatabase must settle first: settings and auth read from it, so await
+        // it alone before running the other two in parallel.
+        try {
+          await getDatabase()
+        } catch {}
+        await Promise.all([
+          refreshSettings().catch(() => undefined),
+          refreshAuth().catch(() => undefined),
+        ])
       } catch {
         // Boot must never hang on a failure. A spinner with no recovery is worse
         // than starting up with local-only state.
       } finally {
+        if (timeout) clearTimeout(timeout)
         if (!cancelled) setReady(true)
       }
     })()
@@ -75,6 +91,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     pushSnapshot().catch(() => undefined)
     return () => {
       cancelled = true
+      if (timeout) clearTimeout(timeout)
     }
   }, [refreshAuth, refreshSettings])
 

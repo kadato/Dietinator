@@ -68,16 +68,27 @@ export function useBundledTerminalFont(): boolean {
     } else {
       if (nativeLoaded) return
       let cancelled = false
+      let fallbackFired = false
+      const fallback = setTimeout(() => {
+        fallbackFired = true
+        if (!cancelled) setLoaded(true)
+      }, 2500)
       Font.loadAsync({ [FAMILY_DEPARTURE]: FONT_SOURCE })
         .then(() => {
           nativeLoaded = true
           if (!cancelled) setLoaded(true)
         })
         .catch(() => {
+          nativeLoaded = true
           if (!cancelled) setLoaded(true)
+        })
+        .finally(() => {
+          clearTimeout(fallback)
+          if (fallbackFired) nativeLoaded = true
         })
       return () => {
         cancelled = true
+        clearTimeout(fallback)
       }
     }
   }, [])
