@@ -97,22 +97,37 @@ export function useBundledTerminalFont(): boolean {
             "",
             "-Regular",
             "_Regular",
+            " Regular",
             "-400",
             "_400",
+            " 400",
             "-500",
             "_500",
+            " 500",
             "-600",
             "_600",
+            " 600",
             "-700",
             "_700",
+            " 700",
             "-800",
             "_800",
+            " 800",
             "-Bold",
             "_Bold",
+            " Bold",
+            "-bold",
+            "_bold",
+            " bold",
             "-Medium",
             "_Medium",
+            " Medium",
             "-SemiBold",
             "_SemiBold",
+            " SemiBold",
+            "-Normal",
+            "_Normal",
+            " Normal",
           ] as const
           for (const family of families) {
             weightAliases[family] = FONT_SOURCE as unknown as number
@@ -121,12 +136,20 @@ export function useBundledTerminalFont(): boolean {
             for (const w of weights) {
               weightAliases[`${family}_${w}`] = FONT_SOURCE as unknown as number
               weightAliases[`${family}-${w}`] = FONT_SOURCE as unknown as number
+              weightAliases[`${family} ${w}`] = FONT_SOURCE as unknown as number
             }
             // Common style suffixes that Android font resolution may probe
             for (const sfx of suffixes) {
               if (!sfx) continue
               weightAliases[`${family}${sfx}`] = FONT_SOURCE as unknown as number
             }
+            // String weight aliases like "Departure Mono_bold"
+            weightAliases[`${family}_bold`] = FONT_SOURCE as unknown as number
+            weightAliases[`${family}-bold`] = FONT_SOURCE as unknown as number
+            weightAliases[`${family} bold`] = FONT_SOURCE as unknown as number
+            weightAliases[`${family}_normal`] = FONT_SOURCE as unknown as number
+            weightAliases[`${family}-normal`] = FONT_SOURCE as unknown as number
+            weightAliases[`${family} normal`] = FONT_SOURCE as unknown as number
           }
           await Font.loadAsync(weightAliases)
           nativeLoaded = true

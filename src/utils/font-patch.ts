@@ -31,48 +31,79 @@ export function applyFontPatch() {
   // into a single object before painting. This catches every Text, TextInput
   // and any component that goes through StyleSheet, including NativeWind
   // generated styles (className="font-mono" etc) and gluestack Text.
+  const ICON_FAMILIES = [
+    "Ionicons",
+    "Feather",
+    "MaterialCommunityIcons",
+    "MaterialIcons",
+    "FontAwesome",
+    "AntDesign",
+    "Entypo",
+    "EvilIcons",
+    "Fontisto",
+    "Foundation",
+    "Octicons",
+    "SimpleLineIcons",
+    "Zocial",
+    "Expo",
+    "vector-icons",
+  ] as const
+  const isIconFamily = (s: string) => ICON_FAMILIES.some((f) => s.includes(f))
   ;(StyleSheet as unknown as { flatten: (style: unknown) => unknown }).flatten = ((
     style: unknown,
   ) => {
     const result = originalFlatten(style as never) as Record<string, unknown> | undefined
     if (!result || typeof result !== "object") return result as never
 
-    const hasTextHint =
-      "fontSize" in result ||
-      "fontWeight" in result ||
-      "color" in result ||
-      "letterSpacing" in result ||
-      "lineHeight" in result ||
-      "fontFamily" in result ||
-      "textAlign" in result ||
-      "textTransform" in result
+    const family = result.fontFamily
+    const familyStr = Array.isArray(family) ? String((family as string[])[0]) : String(family ?? "")
 
-    // If this looks like a text style and has no family, give it mono.
-    // Avoid overriding icon fonts (Ionicons, Feather, MaterialCommunityIcons)
-    // which always carry an explicit family.
-    if (hasTextHint && (result.fontFamily == null || result.fontFamily === "")) {
+    // Every text style without a family should be Departure Mono. Previous
+    // version only patched when hasTextHint was true, leaving bare <Text>
+    // (no fontSize/color) on the system font. Now patch unconditionally
+    // unless it is an icon font which always carries an explicit family.
+    if (result.fontFamily == null || result.fontFamily === "") {
       result.fontFamily = fonts.mono
+    } else if (!isIconFamily(familyStr)) {
+      const isDeparture =
+        familyStr.includes("Departure Mono") ||
+        familyStr.includes("DepartureMono") ||
+        familyStr === fonts.mono
+      // Force every non-icon family to Departure Mono. The app is mono
+      // everywhere by design; "System", "Roboto", "sans-serif" etc all fall
+      // back to the pixel face. This matches web where html,body sets the
+      // family globally and every RN Text inherits.
+      if (!isDeparture) {
+        result.fontFamily = fonts.mono
+      }
     }
 
     // Normalize Departure families: any requested weight must resolve to the
     // single Regular file we bundled. Coerce bold-ish weights to 400.
-    const family = result.fontFamily
-    const familyStr = Array.isArray(family) ? String((family as string[])[0]) : String(family ?? "")
-    const isDeparture =
-      familyStr.includes("Departure Mono") ||
-      familyStr.includes("DepartureMono") ||
-      familyStr === fonts.mono
-    if (isDeparture) {
-      // Flatten may give numeric weight 700 etc; normalize both forms.
+    const finalFamilyStr = Array.isArray(result.fontFamily)
+      ? String((result.fontFamily as string[])[0])
+      : String(result.fontFamily ?? "")
+    const isDepartureFinal =
+      finalFamilyStr.includes("Departure Mono") ||
+      finalFamilyStr.includes("DepartureMono") ||
+      finalFamilyStr === fonts.mono
+    if (isDepartureFinal) {
       const rawWeight = result.fontWeight
       if (rawWeight != null) {
-        const weightStr = String(rawWeight)
-        if (weightStr !== "400" && weightStr !== "normal" && weightStr !== "Regular") {
+        const weightStr = String(rawWeight).toLowerCase()
+        if (
+          weightStr !== "400" &&
+          weightStr !== "normal" &&
+          weightStr !== "regular" &&
+          weightStr !== "400.0"
+        ) {
           result.fontWeight = "400"
         }
       }
       // Ensure family is the spaced canonical form that we registered
       result.fontFamily = fonts.mono
+      // Also kill synthetic italic on a pixel face
+      if (result.fontStyle === "italic") result.fontStyle = "normal"
     }
 
     return result as never
