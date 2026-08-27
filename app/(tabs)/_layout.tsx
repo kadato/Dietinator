@@ -201,10 +201,10 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   // Single source: theme.layout.tabBarHeight, so the constant cannot drift
   // from the real bar again. Compact phones get a shorter bar.
   const tabBarHeight = compactBar ? 48 : layout.tabBarHeight
-  // On Android gesture nav the system reports bottom inset 0, but the bar
-  // still needs to clear the gesture handle. Use an 8px fallback so the
-  // ink rule never sits under the handle on installed APKs.
-  const bottomInset = Platform.OS === "android" && insets.bottom === 0 ? 8 : insets.bottom
+  // With edgeToEdge disabled the system nav bar is opaque, so the tab
+  // bar sits directly above it and needs no extra inset. When the provider
+  // still reports 0 (first frame), keep 0 so no strip appears below.
+  const bottomInset = insets.bottom
   return (
     <View
       accessibilityRole="tablist"

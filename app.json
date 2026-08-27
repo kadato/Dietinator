@@ -18,7 +18,7 @@
     "android": {
       "package": "com.personal.dietinator",
       "permissions": ["CAMERA", "REQUEST_INSTALL_PACKAGES"],
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "navigationBar": {
         "backgroundColor": "#1a1b26",
         "barStyle": "light-content"
@@ -30,7 +30,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 10808
+      "versionCode": 10809
     },
     "web": {
       "output": "static",
