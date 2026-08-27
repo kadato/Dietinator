@@ -1354,7 +1354,7 @@ export default function SettingsScreen() {
     <KeyboardAvoidingView
       className="flex-1"
       style={{ backgroundColor: "transparent" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
       <ScrollView

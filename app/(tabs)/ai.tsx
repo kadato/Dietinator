@@ -776,7 +776,7 @@ export default function AiScreen() {
             >
               <KeyboardAvoidingView
                 className="flex-1"
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
               >
                 {messages.length === 0 ? (
@@ -915,7 +915,7 @@ export default function AiScreen() {
         ) : (
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
           >
             {messages.length === 0 ? (

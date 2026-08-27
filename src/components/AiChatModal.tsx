@@ -110,7 +110,7 @@ function AiChatModalContent() {
   const shell = createModalShellStyles(colors)
   const insets = useSafeAreaInsets()
   const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = insets.bottom
   const { width, isWide } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
@@ -681,7 +681,7 @@ function AiChatModalContent() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         {messages.length === 0 ? (

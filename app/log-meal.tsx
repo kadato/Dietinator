@@ -681,13 +681,13 @@ export default function LogMealScreen() {
       </View>
     ) : null
 
-  const safeBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === "android" ? 16 : 0
+  const safeBottom = insets.bottom
   const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
       <ModalContainer surface>
