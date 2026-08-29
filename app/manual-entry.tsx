@@ -136,9 +136,10 @@ export default function ManualEntryScreen() {
     }
   }
 
+  const TOP_OFFSET = 44
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 80
+  const safeTop = baseTop + TOP_OFFSET
 
   return (
     <KeyboardAvoidingView
@@ -146,7 +147,7 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
-      <ModalContainer maxWidth={520} outerClassName="bg-background-50">
+      <ModalContainer maxWidth={520} outerClassName="bg-background-50" topOffset={TOP_OFFSET}>
         <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border"

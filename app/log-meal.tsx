@@ -670,7 +670,7 @@ export default function LogMealScreen() {
 
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 80
+  const safeTop = baseTop + 12
 
   return (
     <KeyboardAvoidingView

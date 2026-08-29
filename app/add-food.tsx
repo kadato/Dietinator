@@ -406,9 +406,10 @@ export default function AddFoodScreen() {
   const unit = food.base_unit || "g"
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`
 
+  const TOP_OFFSET = 44
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 80
+  const safeTop = baseTop + TOP_OFFSET
 
   return (
     <KeyboardAvoidingView
@@ -416,7 +417,7 @@ export default function AddFoodScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
-      <ModalContainer maxWidth={560}>
+      <ModalContainer maxWidth={560} topOffset={TOP_OFFSET}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
