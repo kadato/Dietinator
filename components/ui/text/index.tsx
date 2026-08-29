@@ -23,11 +23,21 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, ITextProps>(fun
   },
   ref,
 ) {
+  const flatStyle = StyleSheet.flatten([{ fontFamily: fonts.mono }, style as object]) as
+    Record<string, unknown> | undefined
+  if (
+    flatStyle &&
+    flatStyle.fontWeight &&
+    flatStyle.fontWeight !== "400" &&
+    flatStyle.fontWeight !== "normal"
+  ) {
+    flatStyle.fontWeight = "400"
+  }
   return (
     <RNText
       className={textStyle({
         isTruncated: isTruncated as boolean,
-        bold: bold as boolean,
+        bold: false,
         underline: underline as boolean,
         strikeThrough: strikeThrough as boolean,
         size,
@@ -36,7 +46,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, ITextProps>(fun
         highlight: highlight as boolean,
         class: className,
       })}
-      style={StyleSheet.flatten([{ fontFamily: fonts.mono }, style as object])}
+      style={flatStyle}
       {...props}
       ref={ref}
     />

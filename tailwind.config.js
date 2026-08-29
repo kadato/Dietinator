@@ -219,7 +219,16 @@ module.exports = {
         "space-mono": ["var(--font-space-mono)"],
       },
       fontWeight: {
-        extrablack: "950",
+        thin: "400",
+        extralight: "400",
+        light: "400",
+        normal: "400",
+        medium: "400",
+        semibold: "400",
+        bold: "400",
+        extrabold: "400",
+        black: "400",
+        extrablack: "400",
       },
       fontSize: {
         "2xs": "10px",

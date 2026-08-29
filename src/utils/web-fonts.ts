@@ -78,6 +78,7 @@ export function useBundledTerminalFont(): boolean {
         try {
           // Ensure the asset is downloaded first (important on first install).
           try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
             const Asset = require("expo-asset").Asset
             await Asset.loadAsync(FONT_SOURCE)
           } catch {}

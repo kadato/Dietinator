@@ -119,7 +119,7 @@ const buttonStyle = tva({
 })
 
 const buttonTextStyle = tva({
-  base: "text-typography-0 font-mono font-semibold web:select-none uppercase tracking-widest",
+  base: "text-typography-0 font-mono font-normal web:select-none uppercase tracking-widest",
   parentVariants: {
     action: {
       primary:

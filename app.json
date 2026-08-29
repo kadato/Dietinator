@@ -38,6 +38,12 @@
     },
     "plugins": [
       [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/DepartureMono-Regular.otf"]
+        }
+      ],
+      [
         "expo-router",
         {
           "headers": {
