@@ -3,6 +3,36 @@ import { fonts } from "@/theme"
 
 let patched = false
 
+const ICON_PATTERNS = [
+  "antdesign",
+  "anticon",
+  "entypo",
+  "evilicons",
+  "feather",
+  "fontawesome",
+  "fontcustom",
+  "fontello",
+  "fontisto",
+  "foundation",
+  "glyph",
+  "icomoon",
+  "icon",
+  "ionicons",
+  "material",
+  "octicons",
+  "simplelineicons",
+  "symbols",
+  "vector",
+  "zocial",
+] as const
+
+export function isIconFamily(s: unknown): boolean {
+  if (!s || typeof s !== "string") return false
+  const clean = s.toLowerCase().replace(/[^a-z0-9]/g, "")
+  if (!clean) return false
+  return ICON_PATTERNS.some((pattern) => clean.includes(pattern))
+}
+
 /**
  * Ensure Departure Mono shows everywhere on native, matching web where
  * html,body sets font-family globally.
@@ -22,28 +52,6 @@ export function applyFontPatch() {
   if (Platform.OS === "web") return
   if (patched) return
   patched = true
-
-  const ICON_FAMILIES = [
-    "Ionicons",
-    "Feather",
-    "MaterialCommunityIcons",
-    "MaterialIcons",
-    "FontAwesome",
-    "AntDesign",
-    "Entypo",
-    "EvilIcons",
-    "Fontisto",
-    "Foundation",
-    "Octicons",
-    "SimpleLineIcons",
-    "Zocial",
-    "Expo",
-    "vector-icons",
-  ] as const
-  const isIconFamily = (s: unknown) => {
-    if (!s || typeof s !== "string") return false
-    return ICON_FAMILIES.some((f) => s.includes(f))
-  }
 
   // 1. Register StyleSheet style attribute preprocessors (Fabric & Paper)
   try {
