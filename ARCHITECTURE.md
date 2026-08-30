@@ -102,4 +102,4 @@ Schema changes go through `migrate()` in `src/db/database.ts` only, as additive
   (version and deterministic versionCode), commits, and tags `vX.Y.Z`.
 - Tag push triggers `.github/workflows/release.yml`: typecheck, lint, coverage and an APK build, then a GitHub release with a changelog from conventional commits.
 - The Android app checks GitHub releases on start and offers an in-app update with the changelog.
-- Web deploys live at [dietinator.pages.dev](https://dietinator.pages.dev). Cloudflare Pages builds `dist/` from `master`. The YAZIO proxy lives in `functions/api/yazio/[[path]].js`.
+- Web deploys live at [dietinator.pages.dev](https://dietinator.pages.dev). Cloudflare Pages builds `dist/` from `main`. The YAZIO proxy lives in `functions/api/yazio/[[path]].js`.
