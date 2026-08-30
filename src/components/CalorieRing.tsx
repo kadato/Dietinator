@@ -71,6 +71,8 @@ export function CalorieRing({
     return { ...seg, offset: o }
   })
 
+  const innerSize = Math.max(size - 2 * strokeWidth - 6, 0)
+
   return (
     <View style={styles.container}>
       <View style={[styles.ringWrap, { width: size, height: size }]}>
@@ -103,22 +105,29 @@ export function CalorieRing({
           ))}
         </Svg>
 
-        <View style={[styles.ringCenter, { width: size * 0.72, height: size * 0.72 }]}>
+        <View style={[styles.ringCenter, { width: innerSize, height: innerSize }]}>
           <Text
-            maxFontSizeMultiplier={1.2}
+            maxFontSizeMultiplier={1.15}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.65}
             style={[
               styles.remainingValue,
               over > 0 && { color: colors.danger },
-              { fontSize: 28 * scale },
+              { fontSize: Math.min(26 * scale, 30) },
             ]}
           >
             {over > 0 ? formatThousands(Math.round(over)) : formatThousands(Math.round(remaining))}
           </Text>
-          <Text style={[styles.remainingLabel, { fontSize: 12 * scale }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.remainingLabel, { fontSize: Math.max(Math.round(11 * scale), 10) }]}
+          >
             {over > 0 ? "kcal over" : "kcal left"}
           </Text>
           {over > 0 ? (
             <Text
+              numberOfLines={1}
               style={{
                 fontSize: 10 * scale,
                 fontFamily: fonts.mono,
@@ -189,13 +198,14 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     remainingValue: {
-      fontSize: 28,
+      fontSize: 26,
       fontWeight: "800",
       color: colors.text,
       letterSpacing: 0.4,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
+      textAlign: "center",
     },
     remainingLabel: {
       fontSize: 11,

@@ -840,26 +840,35 @@ export default function TodayScreen() {
                     </Text>
                     <Box className="mt-2.5 flex-row gap-2">
                       <Box
-                        className="flex-1 items-center rounded-none border bg-background-0 py-2.5"
+                        className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
                         style={{ borderWidth: 1, borderColor: colors.border }}
                       >
-                        <Text size="lg" bold className="font-tabular text-typography-900">
+                        <Text
+                          size="lg"
+                          bold
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          className="font-tabular text-typography-900"
+                        >
                           {formatThousands(Math.round(totals.kcal))}
                         </Text>
                         <Text
                           size="2xs"
+                          numberOfLines={1}
                           className="font-mono uppercase tracking-widest text-typography-500"
                         >
                           kcal logged
                         </Text>
                       </Box>
                       <Box
-                        className="flex-1 items-center rounded-none border bg-background-0 py-2.5"
+                        className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
                         style={{ borderWidth: 1, borderColor: colors.border }}
                       >
                         <Text
                           size="lg"
                           bold
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
                           className="font-tabular"
                           style={{
                             color:
@@ -874,6 +883,7 @@ export default function TodayScreen() {
                         </Text>
                         <Text
                           size="2xs"
+                          numberOfLines={1}
                           className="font-mono uppercase tracking-widest text-typography-500"
                         >
                           kcal left
