@@ -29,6 +29,11 @@ const inFlightSyncs = new Map<string, Promise<boolean>>()
 const importCache = new Map<string, { at: number; result: DiaryImportResult }>()
 const IMPORT_TTL_MS = 2 * 60_000
 
+export function clearImportCache(): void {
+  importCache.clear()
+  inFlightSyncs.clear()
+}
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function syncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
