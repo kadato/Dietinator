@@ -33,8 +33,23 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
     italic,
     highlight,
     numberOfLines,
+    // React Native prop with no DOM equivalent. Stripped before spreading to <span>
+    // to avoid "React does not recognize the `adjustsFontSizeToFit` prop" on web.
+    adjustsFontSizeToFit: _adjustsFontSizeToFit,
+    minimumFontScale: _minimumFontScale,
+    allowFontScaling: _allowFontScaling,
+    selectable: _selectable,
+    suppressHighlighting: _suppressHighlighting,
+    ellipsizeMode: _ellipsizeMode,
     ...props
-  }: { className?: string } & ITextProps,
+  }: { className?: string } & ITextProps & {
+      adjustsFontSizeToFit?: boolean
+      minimumFontScale?: number
+      allowFontScaling?: boolean
+      selectable?: boolean
+      suppressHighlighting?: boolean
+      ellipsizeMode?: string
+    },
   ref,
 ) {
   const clampClass = lineClampClass(numberOfLines)

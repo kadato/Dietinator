@@ -42,6 +42,7 @@ LogBox.ignoreLogs([
   "props.pointerEvents is deprecated",
   "React does not recognize the `accessibilityRole`",
   '"barcode-scan" is not a valid icon name',
+  "Reduced motion setting is enabled",
 ])
 if (Platform.OS === "web" && typeof window !== "undefined") {
   const origError = console.error
@@ -51,7 +52,8 @@ if (Platform.OS === "web" && typeof window !== "undefined") {
     return (
       text.includes("props.pointerEvents is deprecated") ||
       text.includes("accessibilityRole") ||
-      text.includes("is not a valid icon name")
+      text.includes("is not a valid icon name") ||
+      text.includes("Reduced motion setting is enabled")
     )
   }
 
