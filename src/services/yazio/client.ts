@@ -116,6 +116,10 @@ export async function loginWithCredentials(username: string, password: string): 
   if (!stored) {
     throw new Error("Authentication succeeded but no token was stored.")
   }
+  // Per-user isolation: a different YAZIO account (or demo -> YAZIO) must not
+  // inherit the previous account's diary, weight, water, meals or streaks.
+  const { ensureAccountDataIsolation } = await import("@/services/account")
+  await ensureAccountDataIsolation(username)
   await saveCredentials({ username, password })
   client = yazio
   return yazio

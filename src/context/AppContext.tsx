@@ -2,8 +2,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { getDatabase } from "@/db/database"
 import { getSettings, updateSettings } from "@/db/settings"
 import type { AppSettings } from "@/types"
-import { isLoggedIn } from "@/services/yazio/auth-storage"
+import { getCredentials, isLoggedIn } from "@/services/yazio/auth-storage"
 import { initYazioClient as setupClient } from "@/services/yazio/client"
+import { healLeakedDemoDataIfNeeded, initializeActiveAccountFromAuth } from "@/services/account"
 import { pushSnapshot } from "@/services/agent-bridge"
 
 type AppContextValue = {
@@ -78,6 +79,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           refreshSettings().catch(() => undefined),
           refreshAuth().catch(() => undefined),
         ])
+        // Stamp the active account for per-user isolation without wiping.
+        // Existing installs had no tracking, so infer from the stored auth.
+        try {
+          await initializeActiveAccountFromAuth(getCredentials, isLoggedIn)
+        } catch {}
+        try {
+          await healLeakedDemoDataIfNeeded()
+        } catch {}
       } catch {
         // Boot must never hang on a failure. A spinner with no recovery is worse
         // than starting up with local-only state.

@@ -373,6 +373,8 @@ const ALL_DEMO_FOODS: SearchFoodResult[] = [
  * All IDs are stable (`demo-*`) so re-seeding never duplicates rows.
  */
 export async function seedDemoSession(): Promise<void> {
+  const { ensureAccountDataIsolation } = await import("@/services/account")
+  await ensureAccountDataIsolation("demo")
   const db = await getDatabase()
   await setDemoLoggedIn()
 
