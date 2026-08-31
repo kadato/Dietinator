@@ -88,3 +88,24 @@ export async function clearAuth(): Promise<void> {
 export async function setDemoLoggedIn(): Promise<void> {
   await setSecureItem(LOGGED_IN_KEY, "1")
 }
+
+const ACTIVE_ACCOUNT_KEY = "yazio_active_account"
+
+export function normalizeAccountId(id: string): string {
+  return id.trim().toLowerCase()
+}
+
+export async function getActiveAccountId(): Promise<string | null> {
+  const raw = await getSecureItem(ACTIVE_ACCOUNT_KEY)
+  if (!raw) return null
+  const trimmed = raw.trim()
+  return trimmed ? trimmed.toLowerCase() : null
+}
+
+export async function setActiveAccountId(id: string): Promise<void> {
+  await setSecureItem(ACTIVE_ACCOUNT_KEY, normalizeAccountId(id))
+}
+
+export async function clearActiveAccountId(): Promise<void> {
+  await deleteSecureItem(ACTIVE_ACCOUNT_KEY)
+}
