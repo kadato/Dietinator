@@ -82,9 +82,47 @@ async function proxyYazioRequest(req, res) {
 // SharedArrayBuffer requires cross-origin isolation headers.
 config.server.enhanceMiddleware = (middleware) => {
   const agentMiddleware = createAgentMiddleware(createSnapshotStore())
+  const fs = require("fs")
+  const path = require("path")
+  const publicDir = path.join(__dirname, "public")
   return (req, res, next) => {
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+
+    // Dev PWA assets: manifest icon at /assets/icon.png lives in public/assets.
+    // Metro's asset pipeline serves hashed Expo assets, not the plain public file,
+    // so the browser's manifest fetch would 404 without this static fallback.
+    try {
+      const urlPath = req.url?.split("?")[0]?.split("#")[0]
+      if (
+        urlPath &&
+        urlPath !== "/" &&
+        !urlPath.startsWith("/api/") &&
+        !urlPath.startsWith("/_expo/")
+      ) {
+        const filePath = path.join(publicDir, urlPath)
+        if (
+          filePath.startsWith(publicDir) &&
+          fs.existsSync(filePath) &&
+          fs.statSync(filePath).isFile()
+        ) {
+          const ext = path.extname(filePath).toLowerCase()
+          const mime =
+            ext === ".png"
+              ? "image/png"
+              : ext === ".json"
+                ? "application/json"
+                : ext === ".ico"
+                  ? "image/x-icon"
+                  : ext === ".js"
+                    ? "application/javascript"
+                    : "application/octet-stream"
+          res.setHeader("Content-Type", mime)
+          fs.createReadStream(filePath).pipe(res)
+          return
+        }
+      }
+    } catch {}
 
     // Agent API, then YAZIO proxy, then Metro. Only when nothing above handled it.
     const fallback = (innerReq, innerRes) => {
