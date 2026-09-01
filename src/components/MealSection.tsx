@@ -55,20 +55,18 @@ export const MealSection = memo(function MealSection({
 
   return (
     <Box
-      className="meal-card mb-3 overflow-hidden rounded-none border bg-background-50 p-0"
+      className="meal-card mb-2.5 overflow-hidden rounded-none border bg-background-50 p-0"
       style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
     >
-      <View style={{ height: 4, backgroundColor: accent, width: "100%" }} />
-      {/* Header: icon + title on one line, kcal + add on the right. The icon
-          is top-aligned to the title baseline, not centered to the whole card,
-          so a tall goal bar below does not pull the icon down. */}
-      <Box className="flex-row items-start justify-between gap-3 px-4 py-4">
+      <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />
+      {/* Header: icon + title on one line, kcal + add on the right. */}
+      <Box className="flex-row items-center justify-between gap-2.5 px-3 py-2.5">
         <Pressable
           onPress={() => {
             if (entries.length === 0) onAdd(mealType)
             else setExpanded((v) => !v)
           }}
-          className="min-w-0 flex-1 cursor-pointer flex-row items-start gap-3"
+          className="min-w-0 flex-1 cursor-pointer flex-row items-center gap-2.5"
           accessibilityRole="button"
           accessibilityLabel={`${MEAL_LABELS[mealType].toUpperCase()} ${Math.round(totalKcal)} kcal${
             entries.length > 0
@@ -77,7 +75,7 @@ export const MealSection = memo(function MealSection({
           }`}
         >
           <Box
-            className="h-14 w-14 shrink-0 items-center justify-center rounded-none border"
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
             style={{
               backgroundColor: `${accent}14`,
               borderColor: colors.border,
@@ -85,39 +83,39 @@ export const MealSection = memo(function MealSection({
               borderRadius: 0,
             }}
           >
-            <Feather name={MEAL_ICONS[mealType]} size={24} color={accent} />
+            <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />
           </Box>
 
-          <Box className="min-w-0 flex-1 gap-1.5">
+          <Box className="min-w-0 flex-1 gap-1">
             <Box className="flex-row items-baseline justify-between gap-2">
-              <Box className="flex-row items-center gap-1.5">
+              <Box className="flex-row items-center gap-1">
                 <Text
-                  size="md"
+                  size="sm"
                   bold
-                  className="text-[15px] uppercase tracking-widest text-typography-900"
-                  style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+                  className="text-[13px] uppercase tracking-wider text-typography-900"
+                  style={{ letterSpacing: 0.06, fontFamily: fonts.mono }}
                 >
                   {MEAL_LABELS[mealType]}
                 </Text>
                 {entries.length > 0 ? (
                   <Feather
                     name={expanded ? "chevron-up" : "chevron-down"}
-                    size={14}
+                    size={12}
                     color={colors.textMuted}
                   />
                 ) : null}
               </Box>
-              <Text size="sm" bold className="font-tabular text-[18px] text-typography-900">
+              <Text size="sm" bold className="font-tabular text-[15px] text-typography-900">
                 {Math.round(totalKcal)}{" "}
-                <Text size="xs" className="font-normal tracking-widest text-typography-500">
+                <Text size="2xs" className="font-normal tracking-wider text-typography-500">
                   kcal
                 </Text>
               </Text>
             </Box>
 
             {entries.length > 0 ? (
-              <View style={{ marginTop: 4 }}>
-                <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="sm" />
+              <View style={{ marginTop: 2 }}>
+                <MacroPills protein={totalProtein} carbs={totalCarbs} fat={totalFat} size="xs" />
               </View>
             ) : null}
           </Box>
@@ -128,27 +126,26 @@ export const MealSection = memo(function MealSection({
         />
 
         <Pressable
-          className="h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-none bg-primary-500 hover:bg-primary-600 active:opacity-80"
+          className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none bg-primary-500 hover:bg-primary-600 active:opacity-80"
           onPress={() => onAdd(mealType)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
-          <Feather name="plus" size={22} color={colors.onPrimary} />
+          <Feather name="plus" size={18} color={colors.onPrimary} />
         </Pressable>
       </Box>
 
-      {/* Goal track spans the full card width below the header, not the
-          middle column, so it reads as the card's budget. */}
+      {/* Goal track spans the full card width below the header */}
       {goal ? (
-        <Box className="mt-2 gap-2 px-4 pb-4">
+        <Box className="mt-0.5 gap-1.5 px-3 pb-2.5">
           <View
             className="w-full overflow-hidden rounded-none border bg-background-100"
             style={{
               borderWidth: 1.5,
               borderColor: colors.border,
               borderRadius: 0,
-              height: 12,
+              height: 6,
             }}
           >
             <View
@@ -163,14 +160,14 @@ export const MealSection = memo(function MealSection({
           </View>
           <Box className="flex-row items-center justify-between">
             <Text
-              size="sm"
-              className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontSize: 14, letterSpacing: 0.06, fontFamily: fonts.mono }}
+              size="2xs"
+              className="font-mono uppercase tracking-wider text-typography-500"
+              style={{ fontSize: 11, letterSpacing: 0.04, fontFamily: fonts.mono }}
             >
               Goal {Math.round(goal)} kcal
             </Text>
             <View
-              className="rounded-none border px-3 py-1"
+              className="rounded-none border px-2 py-0.5"
               style={{
                 borderWidth: 1.5,
                 borderColor: overKcal ? colors.danger : accent,
@@ -179,12 +176,12 @@ export const MealSection = memo(function MealSection({
               }}
             >
               <Text
-                size="sm"
+                size="2xs"
                 bold
-                className="font-mono uppercase tracking-widest"
+                className="font-mono uppercase tracking-wider"
                 style={{
-                  fontSize: 14,
-                  letterSpacing: 0.06,
+                  fontSize: 11,
+                  letterSpacing: 0.04,
                   color: overKcal ? colors.danger : accent,
                   fontFamily: fonts.mono,
                 }}
@@ -197,9 +194,9 @@ export const MealSection = memo(function MealSection({
           </Box>
           {overKcal ? (
             <Text
-              size="xs"
-              className="font-mono tracking-widest text-typography-500"
-              style={{ fontSize: 12, letterSpacing: 0.04, fontFamily: fonts.mono }}
+              size="2xs"
+              className="font-mono tracking-wider text-typography-500"
+              style={{ fontSize: 10, letterSpacing: 0.02, fontFamily: fonts.mono }}
             >
               Adjust tomorrow
             </Text>
@@ -208,35 +205,35 @@ export const MealSection = memo(function MealSection({
       ) : null}
 
       {entries.length === 0 ? (
-        <Box className="flex-row items-center gap-1.5 px-4 pb-4 pt-1">
-          <Feather name="plus" size={14} color={colors.textMuted} />
+        <Box className="flex-row items-center gap-1 px-3 pb-2.5 pt-0">
+          <Feather name="plus" size={11} color={colors.textMuted} />
           <Text
-            size="sm"
-            className="font-mono uppercase tracking-widest text-typography-400"
-            style={{ fontFamily: fonts.mono }}
+            size="2xs"
+            className="font-mono uppercase tracking-wider text-typography-400"
+            style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.04 }}
           >
             Tap + to log
           </Text>
         </Box>
       ) : !expanded && entries.length > 0 ? (
-        <Box className="gap-1.5 px-4 pb-4 pt-1">
+        <Box className="gap-1 px-3 pb-2.5 pt-0">
           {entries.slice(0, 2).map((entry) => (
             <Box key={entry.id} className="flex-row items-center justify-between">
               <Text
-                size="sm"
+                size="xs"
                 numberOfLines={1}
                 className="flex-1 font-mono text-typography-700"
-                style={{ fontFamily: fonts.mono, fontSize: 15 }}
+                style={{ fontFamily: fonts.mono, fontSize: 12 }}
               >
                 {entry.food_name}
               </Text>
               <Text
-                size="sm"
+                size="xs"
                 className="ml-2 shrink-0 font-mono tabular-nums text-typography-500"
                 style={{
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"] as never,
-                  fontSize: 14,
+                  fontSize: 12,
                 }}
               >
                 {Math.round(entry.kcal)} kcal
@@ -245,17 +242,17 @@ export const MealSection = memo(function MealSection({
           ))}
           {entries.length > 2 ? (
             <Text
-              size="sm"
-              className="font-mono uppercase tracking-widest text-typography-400"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              size="2xs"
+              className="font-mono uppercase tracking-wider text-typography-400"
+              style={{ fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.04 }}
             >
               +{entries.length - 2} more · tap to expand
             </Text>
           ) : (
             <Text
-              size="sm"
-              className="font-mono uppercase tracking-widest text-typography-400"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              size="2xs"
+              className="font-mono uppercase tracking-wider text-typography-400"
+              style={{ fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.04 }}
             >
               Tap to expand
             </Text>
