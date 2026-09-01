@@ -844,6 +844,8 @@ export default function AiScreen() {
                         borderColor: colors.border,
                         borderRadius: 0,
                         backgroundColor: colors.surface,
+                        boxShadow: "none",
+                        elevation: 0,
                       }}
                     >
                       <TextInput
@@ -872,11 +874,14 @@ export default function AiScreen() {
                         onPress={stop}
                         accessibilityRole="button"
                         accessibilityLabel="Stop generating"
-                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border active:opacity-80"
+                        className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
                         style={{
                           borderWidth: 1.5,
                           borderColor: colors.border,
+                          borderRadius: 0,
                           backgroundColor: colors.surface,
+                          boxShadow: "none",
+                          elevation: 0,
                         }}
                       >
                         <Feather name="x" size={20} color={colors.danger} />
@@ -896,6 +901,8 @@ export default function AiScreen() {
                             borderWidth: 1.5,
                             borderColor: canSend ? colors.primary : colors.border,
                             borderRadius: 0,
+                            boxShadow: "none",
+                            elevation: 0,
                           },
                           ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
                         ]}
@@ -1034,8 +1041,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     maxHeight: 110,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: Platform.select({ ios: 10, android: 8, default: 11 }),
+    paddingBottom: Platform.select({ ios: 10, android: 8, default: 11 }),
+    paddingHorizontal: 0,
     fontFamily: fonts.mono,
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
 })

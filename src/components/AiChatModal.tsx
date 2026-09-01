@@ -882,8 +882,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     maxHeight: 110,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: Platform.select({ ios: 10, android: 8, default: 11 }),
+    paddingBottom: Platform.select({ ios: 10, android: 8, default: 11 }),
+    paddingHorizontal: 0,
     fontFamily: fonts.mono,
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
 })
