@@ -21,17 +21,19 @@ function dbWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
-    dbPromise = dbWithTimeout(openDatabase(), 3000).catch((error) => {
+    dbPromise = dbWithTimeout(openDatabase(), 15000).catch((error) => {
       dbPromise = null
       throw error
     })
   }
-  return dbWithTimeout(dbPromise, 3500)
+  return dbWithTimeout(dbPromise, 16000)
 }
 
 function isVfsInitError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
-  return /VFS|access handle|Failed to initialize/i.test(message)
+  return /VFS|access handle|Failed to initialize|unable to open database file|cannot create file|error code 14|SQLITE_CANTOPEN/i.test(
+    message,
+  )
 }
 
 async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
@@ -65,10 +67,12 @@ async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
 const RELOAD_KEY = "dietinator-db-reloaded"
 
 export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
-  // WAL uses extra OPFS files. Web OPFS allows only one sync handle per file.
-  const journalMode = Platform.OS === "web" ? "DELETE" : "WAL"
+  // WAL uses extra OPFS files. Web OPFS allows only one sync handle per file,
+  // so MEMORY journal mode avoids creating/locking -journal rollback files on web.
+  const journalMode = Platform.OS === "web" ? "MEMORY" : "WAL"
   await database.execAsync(`
     PRAGMA journal_mode = ${journalMode};
+    PRAGMA temp_store = MEMORY;
 
     CREATE TABLE IF NOT EXISTS diary_entries (
       id TEXT PRIMARY KEY NOT NULL,
