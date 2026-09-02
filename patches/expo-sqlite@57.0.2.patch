@@ -1,0 +1,13 @@
+diff --git a/web/SQLiteModule.ts b/web/SQLiteModule.ts
+index a25679db42bf8b72896ea277be378e2a1a13d957..8e60e30a1d60c23f6f3e5e4ad9ddb8f88002ff6f 100644
+--- a/web/SQLiteModule.ts
++++ b/web/SQLiteModule.ts
+@@ -20,7 +20,7 @@ let nextNativeSessionId = 0;
+ 
+ function getWorker(): Worker {
+   if (!worker) {
+-    worker = new Worker(new URL('./worker', window.location.href));
++    worker = new Worker('/worker.js');
+     worker.addEventListener('message', (event) => {
+       if (event.data.type === 'onDatabaseChange') {
+         // @ts-expect-error EventEmitter type for NativeModule is not inferred correctly on web.

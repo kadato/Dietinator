@@ -19,8 +19,21 @@ config.resolver.useWatchman = true
 // On Windows, pnpm deep node_modules plus the per-process file-handle
 // limit, about 8K on this machine, can trigger EMFILE during Metro crawl and
 // concurrent dev SSR renders. Capping workers keeps peak concurrent file
-// opens low. Transforms are still fast with 2.
-config.maxWorkers = 2
+// opens low. On Linux/macOS the limit is higher, so use all cores minus one
+// for faster transforms and HMR.
+if (process.platform === "win32") {
+  config.maxWorkers = 2
+} else {
+  const { cpus } = require("node:os")
+  const count = cpus().length
+  config.maxWorkers = count > 1 ? count - 1 : 2
+}
+
+// Expo SDK 57 `new Worker(new URL('./worker', import.meta.url))` for
+// expo-sqlite web requires async chunk support.
+config.transformer.unstable_allowRequireContext = true
+// @ts-ignore metro-experimental
+config.resolver.unstable_enablePackageExports = true
 
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push("wasm")

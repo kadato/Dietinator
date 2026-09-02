@@ -25,6 +25,8 @@ module.exports = defineConfig([
       ".expo/*",
       "playwright-report/*",
       "test-results/*",
+      "public/worker.js",
+      "public/*.wasm",
     ],
   },
 ])

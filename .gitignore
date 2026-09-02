@@ -65,3 +65,7 @@ docs/screenshots/verification-*/
 
 # Local AI design-review tooling state
 .impeccable/
+
+# Generated expo-sqlite web worker (built on postinstall)
+public/worker.js
+public/wa-sqlite-*.wasm

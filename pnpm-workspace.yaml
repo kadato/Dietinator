@@ -5,6 +5,25 @@ allowBuilds:
   esbuild: true
   workerd: true
 engineStrict: false
+minimumReleaseAgeExclude:
+  - "@expo/cli@57.0.21"
+  - "@expo/fingerprint@0.20.12"
+  - "@expo/router-server@57.0.9"
+  - babel-preset-expo@57.0.10
+  - expo-asset@57.0.16
+  - expo-constants@57.0.17
+  - expo-font@57.0.3
+  - expo-modules-core@57.0.15
+  - expo-modules-jsi@57.0.7
+  - expo@57.0.19
+  - "@expo/metro-runtime@57.0.15"
+  - "@expo/ui@57.0.15"
+  - expo-linking@57.0.9
+  - expo-router@57.0.18
+  - expo-secure-store@57.0.3
+  - expo-sharing@57.0.17
+patchedDependencies:
+  expo-sqlite@57.0.2: patches/expo-sqlite@57.0.2.patch
 # Metro and @babel/core resolve plugins from the project root. Expo's toolchain
 # relies on transitive deps (react-native-css-interop, @babel plugins), so keep
 # a flat node_modules like npm produced before the pnpm migration.

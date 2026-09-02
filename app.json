@@ -18,11 +18,6 @@
     "android": {
       "package": "com.personal.dietinator",
       "permissions": ["CAMERA", "REQUEST_INSTALL_PACKAGES"],
-      "edgeToEdgeEnabled": false,
-      "navigationBar": {
-        "backgroundColor": "#1a1b26",
-        "barStyle": "light-content"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#1a1b26",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -67,7 +62,10 @@
           "resizeMode": "contain",
           "backgroundColor": "#1a1b26"
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-sharing",
+      "expo-status-bar"
     ]
   }
 }
