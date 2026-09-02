@@ -416,58 +416,175 @@ export default function StatsScreen() {
                   Platform.OS === "web" && isWide ? ({ gridColumn: "1 / -1" } as never) : undefined
                 }
               >
-                <Box className="flex-row items-center gap-2.5">
-                  <Box
-                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
-                  >
-                    <Feather name="activity" size={18} color={colors.primary} />
-                  </Box>
-                  <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900">
-                      Consistency
-                    </Text>
-                    <Text size="xs" className="text-typography-500">
-                      Logging streak and calorie adherence
-                    </Text>
-                  </Box>
-                </Box>
-
-                <Box className="mt-3 flex-row gap-3">
-                  <Box
-                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
-                  >
-                    <Box className="flex-row items-center gap-1">
-                      <Feather name="zap" size={14} color={colors.warning} />
-                      <Text size="lg" bold className="font-tabular text-typography-900">
-                        {logStreak}
+                <Box className="flex-row items-center justify-between gap-2.5">
+                  <Box className="flex-row items-center gap-2.5">
+                    <Box
+                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    >
+                      <Feather name="activity" size={18} color={colors.primary} />
+                    </Box>
+                    <Box>
+                      <Text size="md" bold className="text-typography-900">
+                        Consistency
+                      </Text>
+                      <Text size="xs" className="text-typography-500">
+                        {RANGES.find((r) => r.id === range)?.days} days · {adherence.loggedDays}{" "}
+                        logged
                       </Text>
                     </Box>
-                    <Text size="xs" className="mt-0.5 text-typography-500">
-                      Day streak
-                    </Text>
                   </Box>
-                  <Box
-                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
-                  >
-                    <Text size="lg" bold className="font-tabular text-typography-900">
-                      {adherence.loggedDays}
-                    </Text>
-                    <Text size="xs" className="mt-0.5 text-typography-500">
-                      Logged days
-                    </Text>
+                  {logStreak > 2 ? (
+                    <Box
+                      className="flex-row items-center gap-1 rounded-none border px-2 py-1"
+                      style={{
+                        borderWidth: borders.widthThin,
+                        borderColor: colors.warning,
+                        backgroundColor: `${colors.warning}14`,
+                      }}
+                    >
+                      <Feather name="zap" size={12} color={colors.warning} />
+                      <Text
+                        size="xs"
+                        bold
+                        style={{ color: colors.warning, fontFamily: fonts.mono }}
+                      >
+                        {logStreak} day streak
+                      </Text>
+                    </Box>
+                  ) : null}
+                </Box>
+
+                <Box className="mt-3 gap-3">
+                  <Box className="flex-row gap-3">
+                    <Box
+                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    >
+                      <Box className="flex-row items-center justify-between">
+                        <Text
+                          size="2xs"
+                          bold
+                          className="font-mono uppercase tracking-widest text-typography-500"
+                          style={{ letterSpacing: 0.06 }}
+                        >
+                          Streak
+                        </Text>
+                        <Feather name="zap" size={12} color={colors.warning} />
+                      </Box>
+                      <Text size="xl" bold className="font-tabular text-typography-900">
+                        {logStreak}
+                        <Text size="xs" className="font-mono font-normal text-typography-500">
+                          {" "}
+                          days
+                        </Text>
+                      </Text>
+                      <Text size="2xs" className="font-mono text-typography-500">
+                        {logStreak === 0
+                          ? "Log today to start"
+                          : logStreak === 1
+                            ? "Keep going"
+                            : "On fire"}
+                      </Text>
+                    </Box>
+                    <Box
+                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    >
+                      <Box className="flex-row items-center justify-between">
+                        <Text
+                          size="2xs"
+                          bold
+                          className="font-mono uppercase tracking-widest text-typography-500"
+                          style={{ letterSpacing: 0.06 }}
+                        >
+                          Logged
+                        </Text>
+                        <Feather name="check" size={12} color={colors.primary} />
+                      </Box>
+                      <Text size="xl" bold className="font-tabular text-typography-900">
+                        {adherence.loggedDays}
+                        <Text size="xs" className="font-mono font-normal text-typography-500">
+                          {" "}
+                          / {RANGES.find((r) => r.id === range)?.days}
+                        </Text>
+                      </Text>
+                      <View
+                        className="mt-1 h-1.5 overflow-hidden rounded-none border bg-background-100"
+                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                      >
+                        <View
+                          style={{
+                            width: `${Math.round((adherence.loggedDays / (RANGES.find((r) => r.id === range)?.days ?? 1)) * 100)}%`,
+                            height: "100%",
+                            backgroundColor: colors.primary,
+                          }}
+                        />
+                      </View>
+                    </Box>
+                    <Box
+                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    >
+                      <Box className="flex-row items-center justify-between">
+                        <Text
+                          size="2xs"
+                          bold
+                          className="font-mono uppercase tracking-widest text-typography-500"
+                          style={{ letterSpacing: 0.06 }}
+                        >
+                          On target
+                        </Text>
+                        <Feather name="target" size={12} color={colors.primary} />
+                      </Box>
+                      <Text size="xl" bold className="font-tabular text-typography-900">
+                        {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "—"}
+                      </Text>
+                      {adherence.onTargetPct !== null ? (
+                        <View
+                          className="mt-1 h-1.5 overflow-hidden rounded-none border bg-background-100"
+                          style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                        >
+                          <View
+                            style={{
+                              width: `${adherence.onTargetPct}%`,
+                              height: "100%",
+                              backgroundColor:
+                                adherence.onTargetPct >= 70 ? colors.primary : colors.warning,
+                            }}
+                          />
+                        </View>
+                      ) : (
+                        <Text size="2xs" className="font-mono text-typography-500">
+                          No data in range
+                        </Text>
+                      )}
+                    </Box>
                   </Box>
-                  <Box
-                    className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
-                  >
-                    <Text size="lg" bold className="font-tabular text-typography-900">
-                      {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "No data"}
-                    </Text>
-                    <Text size="xs" className="mt-0.5 text-typography-500">
-                      On target
+                  <Box className="flex-row items-center gap-1.5 pt-1">
+                    <View
+                      style={{
+                        width: 6,
+                        height: 6,
+                        backgroundColor:
+                          adherence.onTargetPct !== null && adherence.onTargetPct >= 80
+                            ? colors.primary
+                            : colors.warning,
+                        borderWidth: borders.widthThin,
+                        borderColor: colors.border,
+                      }}
+                    />
+                    <Text
+                      size="2xs"
+                      className="font-mono uppercase tracking-widest text-typography-400"
+                    >
+                      {adherence.onTargetPct !== null
+                        ? adherence.onTargetPct >= 80
+                          ? "Great adherence"
+                          : adherence.onTargetPct >= 50
+                            ? "Steady, aim for 80%"
+                            : "Log more to see pattern"
+                        : "Start logging to see adherence"}
                     </Text>
                   </Box>
                 </Box>

@@ -4,6 +4,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
+import { useApp } from "@/context/AppContext"
+import { formatNumber } from "@/utils/format"
 import { layout, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
 
@@ -36,6 +38,7 @@ type Props = {
  */
 export function MealDock({ onSelectMeal, onQuickWater }: Props) {
   const { colors } = useTheme()
+  const { settings } = useApp()
   const insets = useSafeAreaInsets()
   const reduceMotion = useReduceMotion()
   // Per-key pressed state mirrors Fab: state-driven static styles survive
@@ -92,7 +95,11 @@ export function MealDock({ onSelectMeal, onQuickWater }: Props) {
           onPressOut={() => setPressedKey(null)}
           className="cursor-pointer"
           accessibilityRole="button"
-          accessibilityLabel="Quick add 250 milliliters of water"
+          accessibilityLabel={
+            settings.units === "imperial"
+              ? `Quick add ${formatNumber(250 * 0.033814)} fluid ounces of water`
+              : "Quick add 250 milliliters of water"
+          }
           style={[
             styles.key,
             styles.waterKey,

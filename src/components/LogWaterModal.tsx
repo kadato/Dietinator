@@ -224,40 +224,49 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             ) : null}
           </Box>
 
-          <Text style={styles.label}>Quick add (ml)</Text>
+          <Text style={styles.label}>
+            Quick add ({settings.units === "imperial" ? "fl oz" : "ml"})
+          </Text>
           <Box className="mb-3 flex-row flex-wrap gap-2">
-            {QUICK_AMOUNTS.map((amount) => (
-              <Pressable
-                key={amount}
-                onPress={() => handleAdd(amount)}
-                disabled={saving}
-                accessibilityRole="button"
-                accessibilityLabel={`Add ${amount} ml of water`}
-                className="min-w-[76px] flex-1 items-center rounded-none border bg-primary-500 px-3 py-2.5 active:opacity-80"
-                style={{
-                  borderWidth: borders.width,
-                  borderColor: colors.primary,
-                  borderRadius: radii.none,
-                  backgroundColor: colors.primary,
-                  elevation: 0,
-                }}
-              >
-                <Text
-                  size="sm"
-                  bold
-                  className="font-tabular"
+            {QUICK_AMOUNTS.map((amount) => {
+              const isImperial = settings.units === "imperial"
+              const label = isImperial
+                ? `+${formatWaterAmount(amount, settings.units)}`
+                : `+${amount}`
+              const a11y = isImperial ? formatWaterAmount(amount, settings.units) : `${amount} ml`
+              return (
+                <Pressable
+                  key={amount}
+                  onPress={() => handleAdd(amount)}
+                  disabled={saving}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Add ${a11y} of water`}
+                  className="min-w-[76px] flex-1 items-center rounded-none border bg-primary-500 px-3 py-2.5 active:opacity-80"
                   style={{
-                    color: colors.onPrimary,
-                    fontFamily: fonts.mono,
-                    fontVariant: ["tabular-nums"],
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
+                    borderWidth: borders.width,
+                    borderColor: colors.primary,
+                    borderRadius: radii.none,
+                    backgroundColor: colors.primary,
+                    elevation: 0,
                   }}
                 >
-                  +{amount}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    size="sm"
+                    bold
+                    className="font-tabular"
+                    style={{
+                      color: colors.onPrimary,
+                      fontFamily: fonts.mono,
+                      fontVariant: ["tabular-nums"],
+                      textTransform: "uppercase",
+                      letterSpacing: 0.4,
+                    }}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
           </Box>
 
           <Text style={styles.label}>Custom amount</Text>

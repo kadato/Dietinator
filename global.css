@@ -616,7 +616,7 @@ html {
 }
 
 /*
- * Scrollbars: hidden on thumb-driven phones, thin ledger line from 600
+ * Scrollbars: hidden everywhere, ledger stays clean
  */
 *::-webkit-scrollbar {
   display: none;
@@ -624,30 +624,6 @@ html {
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
-}
-@media (min-width: 600px) {
-  *::-webkit-scrollbar {
-    display: block;
-    width: 6px;
-    height: 6px;
-  }
-  *::-webkit-scrollbar-thumb {
-    background: var(--app-primary);
-    border-radius: 0;
-  }
-  html.dark *::-webkit-scrollbar-thumb {
-    background: var(--app-primary);
-  }
-  *::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--app-primary) transparent;
-  }
-  html.dark * {
-    scrollbar-color: var(--app-primary) transparent;
-  }
 }
 
 /* Browser surfaces. Tokyo Night ink */
@@ -747,16 +723,6 @@ html.dark .app-grid {
 }
 html.dark [class*="border-outline"] {
   border-color: var(--app-border) !important;
-}
-/* scrollbar Tokyo Night square */
-@media (min-width: 600px) {
-  *::-webkit-scrollbar-thumb {
-    background: var(--app-primary);
-    border-radius: 0;
-  }
-  html.dark *::-webkit-scrollbar-thumb {
-    background: var(--app-primary);
-  }
 }
 
 /* Big screen performance: content-visibility for long diaries and stats.

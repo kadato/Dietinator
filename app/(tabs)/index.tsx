@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react"
-import { Keyboard, Platform, Pressable, RefreshControl, ScrollView, View } from "react-native"
+import {
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -9,6 +18,7 @@ import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { CopyFromDateModal } from "@/components/CopyFromDateModal"
 import { LogWeightModal } from "@/components/LogWeightModal"
 import { LogWaterModal } from "@/components/LogWaterModal"
 import { MealSlotModal } from "@/components/MealSlotModal"
@@ -20,10 +30,11 @@ import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
 import type { DiaryEntry, MealType, WeightEntry } from "@/types"
 import {
-  copyEntriesToDate,
+  copyDiaryEntries,
   deleteFoodEntry,
   getDiaryEntriesForDate,
   restoreFoodEntry,
+  updateDiaryEntry,
 } from "@/services/diary"
 import { getLatestWeightEntry, getRecentWeightEntries } from "@/db/weight"
 import { addWaterEntry, deleteWaterEntry, getWaterTotalForDate } from "@/db/water"
@@ -33,7 +44,7 @@ import { confirmAction } from "@/utils/confirm"
 import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
-import { formatThousands } from "@/utils/format"
+import { formatNumber, formatThousands } from "@/utils/format"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
@@ -59,6 +70,7 @@ export default function TodayScreen() {
   const [mealGoals, setMealGoals] = useState<MealGoals>({})
   const [summary, setSummary] = useState<YazioDailySummary | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [copyPickerOpen, setCopyPickerOpen] = useState(false)
   const [streak, setStreak] = useState(0)
   const [localWeight, setLocalWeight] = useState<WeightEntry | null>(null)
   const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([])
@@ -209,7 +221,7 @@ export default function TodayScreen() {
     const handler = (event: KeyboardEvent) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
       if (keyboardVisible) return
-      if (pickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
+      if (pickerOpen || copyPickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
         return
       }
       const target = event.target as HTMLElement | null
@@ -218,7 +230,15 @@ export default function TodayScreen() {
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [keyboardVisible, pickerOpen, logWeightOpen, logWaterOpen, logSlotOpen, setDateKeyTransition])
+  }, [
+    keyboardVisible,
+    pickerOpen,
+    copyPickerOpen,
+    logWeightOpen,
+    logWaterOpen,
+    logSlotOpen,
+    setDateKeyTransition,
+  ])
 
   const openAdd = useCallback(
     (mealType: MealType) => {
@@ -273,30 +293,45 @@ export default function TodayScreen() {
     [entries, load, showError, showUndo],
   )
 
-  const onCopyPrevious = useCallback(() => {
-    const sourceDate = shiftDateKey(dateKey, -1)
-    void (async () => {
-      const sourceEntries = await getDiaryEntriesForDate(sourceDate, { remote: false })
-      const count = sourceEntries.length
-      confirmAction({
-        title: "Copy previous day?",
-        message:
-          count === 0
-            ? `Nothing was logged on ${formatDisplayDate(sourceDate)}, so there is nothing to copy.`
-            : `Add ${count === 1 ? "1 item" : `${count} items`} from ${formatDisplayDate(sourceDate)} to ${formatDisplayDate(dateKey)}?`,
-        confirmLabel: count > 0 ? "Copy" : "OK",
-        onConfirm: async () => {
-          if (count === 0) return
-          try {
-            await copyEntriesToDate(sourceDate, dateKey)
-            await load({ quiet: true })
-          } catch (error) {
-            showError(error, "Could not copy entries.")
-          }
-        },
-      })
-    })()
-  }, [dateKey, load, showError])
+  const handleCopyFromPreview = useCallback(
+    async (sourceDate: string, selectedIds: Set<string>) => {
+      if (sourceDate === dateKey) {
+        showWarning("Pick a different day than the current one.", "Same day")
+        return
+      }
+      if (selectedIds.size === 0) {
+        showWarning("Select at least one item to copy.", "Nothing selected")
+        return
+      }
+      try {
+        const sourceEntries = await getDiaryEntriesForDate(sourceDate, { remote: false })
+        const filtered = sourceEntries.filter((e) => selectedIds.has(e.id))
+        const count = await copyDiaryEntries(filtered, dateKey)
+        if (count === 0) {
+          showWarning(`Nothing was logged on ${formatDisplayDate(sourceDate)}.`, "Nothing to copy")
+        } else {
+          await load({ quiet: true })
+        }
+      } catch (error) {
+        showError(error, "Could not copy entries.")
+      }
+    },
+    [dateKey, load, showError, showWarning],
+  )
+
+  const handleInlineUpdate = useCallback(
+    async (id: string, amount: number) => {
+      const entry = entries.find((e) => e.id === id)
+      if (!entry) return
+      try {
+        await updateDiaryEntry({ id, amount, mealType: entry.meal_type })
+        await load({ quiet: true })
+      } catch (error) {
+        showError(error, "Could not update entry.")
+      }
+    },
+    [entries, load, showError],
+  )
 
   useEffect(() => {
     if (Platform.OS !== "web") return
@@ -305,7 +340,7 @@ export default function TodayScreen() {
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (keyboardVisible) return
-      if (pickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
+      if (pickerOpen || copyPickerOpen || logWeightOpen || logWaterOpen || logSlotOpen) {
         if (event.key === "Escape" && showShortcuts) setShowShortcuts(false)
         return
       }
@@ -324,7 +359,7 @@ export default function TodayScreen() {
         setLogSlotOpen(true)
       } else if (event.key === "c" || event.key === "C") {
         event.preventDefault()
-        onCopyPrevious()
+        setCopyPickerOpen(true)
       } else if (event.key === "r" || event.key === "R") {
         event.preventDefault()
         void onRefresh()
@@ -347,11 +382,11 @@ export default function TodayScreen() {
   }, [
     keyboardVisible,
     pickerOpen,
+    copyPickerOpen,
     logWeightOpen,
     logWaterOpen,
     logSlotOpen,
     showShortcuts,
-    onCopyPrevious,
     onRefresh,
     openAdd,
   ])
@@ -368,6 +403,7 @@ export default function TodayScreen() {
           onAdd={openAdd}
           onEdit={openEdit}
           onDelete={onDeleteEntry}
+          onUpdateAmount={handleInlineUpdate}
         />
       )
       return grid ? (
@@ -571,11 +607,11 @@ export default function TodayScreen() {
       </View>
 
       <Pressable
-        onPress={onCopyPrevious}
+        onPress={() => setCopyPickerOpen(true)}
         hitSlop={8}
         className="mt-2.5 w-full"
         accessibilityRole="button"
-        accessibilityLabel="Copy previous day's meals"
+        accessibilityLabel="Copy from another date"
       >
         {({ pressed }) => (
           <Box
@@ -598,7 +634,7 @@ export default function TodayScreen() {
               className="font-mono uppercase tracking-widest text-typography-900"
               style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
             >
-              Copy previous day
+              Copy from date
             </Text>
           </Box>
         )}
@@ -703,7 +739,7 @@ export default function TodayScreen() {
             borderRadius: radii.none,
           }}
           accessibilityRole="button"
-          accessibilityLabel="Quick add 250ml water"
+          accessibilityLabel={`Quick add ${settings.units === "imperial" ? `${formatNumber(250 * 0.033814)} fl oz` : "250ml"} water`}
         >
           <Text
             size="2xs"
@@ -711,14 +747,14 @@ export default function TodayScreen() {
             className="font-mono uppercase leading-none tracking-widest"
             style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
           >
-            +250
+            +{settings.units === "imperial" ? formatNumber(250 * 0.033814) : "250"}
           </Text>
           <Text
             size="2xs"
             className="font-mono uppercase leading-none tracking-widest"
             style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
           >
-            ml
+            {settings.units === "imperial" ? "oz" : "ml"}
           </Text>
         </Pressable>
       </Box>
@@ -914,24 +950,51 @@ export default function TodayScreen() {
                 {nutritionHeader}
                 {entries.length === 0 && !isInitialLoading ? (
                   <Box
-                    className="mb-3 flex-row items-center gap-2 border px-4 py-3"
+                    className="mb-3 gap-2 border px-4 py-3"
                     style={{
                       borderWidth: borders.width,
                       borderColor: colors.primary,
                       backgroundColor: `${colors.primary}10`,
                       borderRadius: radii.none,
                     }}
-                    accessibilityRole="text"
-                    accessibilityLabel="Your diary is empty. Tap Log food to start"
                   >
-                    <Feather name="arrow-up" size={14} color={colors.primary} />
-                    <Text
-                      size="xs"
-                      bold
-                      style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                    <Box className="flex-row items-center gap-2">
+                      <Feather name="arrow-up" size={14} color={colors.primary} />
+                      <Text
+                        size="xs"
+                        bold
+                        style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                      >
+                        Your diary is empty. Tap Log food or a + on Breakfast to start
+                      </Text>
+                    </Box>
+                    <Pressable
+                      onPress={() => setLogSlotOpen(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Log food to start diary"
+                      className="mt-1 flex-row items-center justify-center gap-1.5 self-start px-4 active:opacity-80"
+                      style={{
+                        backgroundColor: colors.primary,
+                        borderWidth: borders.width,
+                        borderColor: colors.primary,
+                        borderRadius: radii.none,
+                        paddingVertical: 8,
+                      }}
                     >
-                      Your diary is empty. Tap Log food or a + on Breakfast to start
-                    </Text>
+                      <Feather name="plus" size={14} color={colors.onPrimary} />
+                      <Text
+                        size="xs"
+                        bold
+                        style={{
+                          color: colors.onPrimary,
+                          fontFamily: fonts.mono,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.06,
+                        }}
+                      >
+                        Log food
+                      </Text>
+                    </Pressable>
                   </Box>
                 ) : null}
                 <Box
@@ -960,24 +1023,51 @@ export default function TodayScreen() {
               {nutritionHeader}
               {entries.length === 0 && !isInitialLoading ? (
                 <Box
-                  className="mb-3 flex-row items-center gap-2 border px-4 py-3"
+                  className="mb-3 gap-2 border px-4 py-3"
                   style={{
                     borderWidth: borders.width,
                     borderColor: colors.primary,
                     backgroundColor: `${colors.primary}10`,
                     borderRadius: radii.none,
                   }}
-                  accessibilityRole="text"
-                  accessibilityLabel="Your diary is empty. Tap Log food to start"
                 >
-                  <Feather name="arrow-down" size={14} color={colors.primary} />
-                  <Text
-                    size="xs"
-                    bold
-                    style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                  <Box className="flex-row items-center gap-2">
+                    <Feather name="arrow-down" size={14} color={colors.primary} />
+                    <Text
+                      size="xs"
+                      bold
+                      style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
+                    >
+                      Your diary is empty. Tap Log food to start
+                    </Text>
+                  </Box>
+                  <Pressable
+                    onPress={() => setLogSlotOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Log food to start diary"
+                    className="mt-1 flex-row items-center justify-center gap-1.5 self-start px-4 active:opacity-80"
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderWidth: borders.width,
+                      borderColor: colors.primary,
+                      borderRadius: radii.none,
+                      paddingVertical: 8,
+                    }}
                   >
-                    Your diary is empty. Tap Log food to start
-                  </Text>
+                    <Feather name="plus" size={14} color={colors.onPrimary} />
+                    <Text
+                      size="xs"
+                      bold
+                      style={{
+                        color: colors.onPrimary,
+                        fontFamily: fonts.mono,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.06,
+                      }}
+                    >
+                      Log food
+                    </Text>
+                  </Pressable>
                 </Box>
               ) : null}
               {/* Medium band (600-899): two meal columns fit, so sections
@@ -1022,82 +1112,99 @@ export default function TodayScreen() {
         </Pressable>
       ) : null}
 
-      {showShortcuts ? (
-        <Pressable
-          onPress={() => setShowShortcuts(false)}
+      <Modal
+        visible={showShortcuts}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowShortcuts(false)}
+        {...(Platform.OS === "android"
+          ? { statusBarTranslucent: true, hardwareAccelerated: true }
+          : {})}
+      >
+        <View
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            flex: 1,
             backgroundColor: "rgba(0,0,0,0.45)",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
           }}
-          accessibilityRole="button"
-          accessibilityLabel="Close shortcuts"
         >
           <Pressable
+            style={StyleSheet.absoluteFill}
             onPress={() => setShowShortcuts(false)}
             accessibilityRole="button"
-            accessibilityLabel="Close shortcuts dialog"
-            style={{
-              width: "100%",
-              maxWidth: 420,
-              backgroundColor: colors.surface,
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              padding: 16,
-              gap: 12,
-            }}
-          >
-            <Box className="flex-row items-center justify-between">
-              <Text size="sm" bold style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}>
-                Keyboard shortcuts
-              </Text>
-              <Feather name="x" size={16} color={colors.textMuted} />
-            </Box>
-            <Box className="gap-2">
-              {[
-                ["← →", "Previous / next day"],
-                ["N", "New entry"],
-                ["1 2 3 4", "Breakfast Lunch Dinner Snack"],
-                ["W", "Log water"],
-                ["E", "Log weight"],
-                ["C", "Copy previous day"],
-                ["R", "Refresh from YAZIO"],
-                ["?", "Toggle this help"],
-                ["Esc", "Close dialog"],
-              ].map(([k, v]) => (
-                <Box key={k} className="flex-row items-center justify-between gap-4">
-                  <Box
-                    className="rounded-none border bg-background-100 px-2 py-1"
-                    style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
-                  >
-                    <Text size="xs" bold style={{ fontFamily: fonts.mono }}>
-                      {k}
+            accessibilityLabel="Close shortcuts"
+          />
+          <View style={{ width: "100%", maxWidth: 420 }}>
+            <Pressable
+              onPress={() => setShowShortcuts(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close shortcuts dialog"
+              style={{
+                width: "100%",
+                maxWidth: 420,
+                backgroundColor: colors.surface,
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                padding: 16,
+                gap: 12,
+              }}
+            >
+              <Box className="flex-row items-center justify-between">
+                <Text size="sm" bold style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}>
+                  Keyboard shortcuts
+                </Text>
+                <Feather name="x" size={16} color={colors.textMuted} />
+              </Box>
+              <Box className="gap-2">
+                {[
+                  ["← →", "Previous / next day"],
+                  ["N", "New entry"],
+                  ["1 2 3 4", "Breakfast Lunch Dinner Snack"],
+                  ["W", "Log water"],
+                  ["E", "Log weight"],
+                  ["C", "Copy from date"],
+                  ["R", "Refresh from YAZIO"],
+                  ["?", "Toggle this help"],
+                  ["Esc", "Close dialog"],
+                ].map(([k, v]) => (
+                  <Box key={k} className="flex-row items-center justify-between gap-4">
+                    <Box
+                      className="rounded-none border bg-background-100 px-2 py-1"
+                      style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                    >
+                      <Text size="xs" bold style={{ fontFamily: fonts.mono }}>
+                        {k}
+                      </Text>
+                    </Box>
+                    <Text size="xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
+                      {v}
                     </Text>
                   </Box>
-                  <Text size="xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
-                    {v}
-                  </Text>
-                </Box>
-              ))}
-            </Box>
-            <Text size="2xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
-              Shortcuts work when no input is focused and no modal is open.
-            </Text>
-          </Pressable>
-        </Pressable>
-      ) : null}
+                ))}
+              </Box>
+              <Text size="2xs" style={{ fontFamily: fonts.mono, color: colors.textMuted }}>
+                Shortcuts work when no input is focused and no modal is open.
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <DatePickerModal
         visible={pickerOpen}
         dateKey={dateKey}
         onSelect={(key) => setDateKeyTransition(key)}
         onClose={() => setPickerOpen(false)}
+      />
+
+      <CopyFromDateModal
+        visible={copyPickerOpen}
+        targetDateKey={dateKey}
+        initialDateKey={shiftDateKey(dateKey, -1)}
+        onCopy={handleCopyFromPreview}
+        onClose={() => setCopyPickerOpen(false)}
       />
 
       <LogWeightModal
