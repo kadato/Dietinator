@@ -195,17 +195,20 @@ module.exports = {
           error: "rgb(var(--color-indicator-error)/<alpha-value>)",
         },
         meal: {
-          // Single source: src/theme.ts light+dark - keep in sync when palette changes
-          breakfast: "#075985",
-          lunch: "#804707",
-          dinner: "#96340A",
-          snack: "#0B5F5A",
+          // Theme-aware via global.css --meal-* vars. Single source: src/theme/themes.ts + src/theme/css.ts.
+          // Using var() lets the same class switch light/dark via html.dark.
+          breakfast: "var(--meal-b)",
+          lunch: "var(--meal-l)",
+          dinner: "var(--meal-d)",
+          snack: "var(--meal-s)",
         },
         app: {
           chrome: "#ffedd5",
         },
       },
       fontFamily: {
+        // Single face: Departure Mono. Aliases kept for compat, all point to the same mono.
+        // Add a new face by updating src/theme/tokens.ts fonts.* and this map together.
         heading: ["Departure Mono", "monospace"],
         body: ["Departure Mono", "monospace"],
         sans: ["Departure Mono", "monospace"],
@@ -213,12 +216,13 @@ module.exports = {
         jetbrains: ["Departure Mono", "monospace"],
         jakarta: ["Departure Mono", "monospace"],
         geist: ["Departure Mono", "monospace"],
-        roboto: ["var(--font-roboto)"],
         code: ["Departure Mono", "monospace"],
+        roboto: ["var(--font-roboto)"],
         inter: ["var(--font-inter)"],
         "space-mono": ["var(--font-space-mono)"],
       },
       fontWeight: {
+        // Departure Mono ships one Regular at 400; every Tailwind weight maps there to prevent faux bold.
         thin: "400",
         extralight: "400",
         light: "400",

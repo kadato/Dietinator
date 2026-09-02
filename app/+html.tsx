@@ -10,6 +10,10 @@ import type { PropsWithChildren } from "react"
  * NOTE: do not add a `public/index.html`. With static output the dev server
  * serves that file raw (no bundle script, no placeholder substitution), which
  * leaves the app shell spinning forever.
+ *
+ * Theme note: hard-coded hex here (#f1f5f9 / #1a1b26 / #0b57d0 / #7aa2f7) mirrors
+ * `src/theme/themes.ts` light/dark for the first paint before JS/CSS loads.
+ * Keep in sync with `src/theme/css.ts` lightCssVars/darkCssVars when palette changes.
  */
 export default function Root({ children }: PropsWithChildren) {
   return (
@@ -29,7 +33,7 @@ export default function Root({ children }: PropsWithChildren) {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)').matches;var t=null;try{t=localStorage.getItem('calorie_tracker_theme_preference')||localStorage.getItem('theme')}catch(e){}var dark=t==='dark'||((!t||t==='system')&&m);if(dark){d.classList.add('dark');d.style.colorScheme='dark'}else{d.classList.remove('dark');d.style.colorScheme='light'}}catch(e){}",
+              "try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)').matches;var t=null;try{t=localStorage.getItem('calorie_tracker_theme_preference')||localStorage.getItem('theme')}catch(e){}var darkThemes={dark:1,'vscode-dark':1,dracula:1,monokai:1,nord:1,'solarized-dark':1,'one-dark-pro':1,'github-dark':1,'material-palenight':1,'tokyo-night':1,'tokyo-night-storm':1,'tokyo-night-moon':1};var lightThemes={light:1,'vscode-light':1,'solarized-light':1,'github-light':1,'tokyo-night-light':1};if(t&&t!=='system'&&t!=='light'&&t!=='dark'){var isDark=!!darkThemes[t];d.classList.add('theme-'+t);if(isDark)d.classList.add('dark');else d.classList.remove('dark');d.style.colorScheme=isDark?'dark':'light';}else{var dark=t==='dark'||((!t||t==='system')&&m);if(dark){d.classList.add('dark');d.style.colorScheme='dark'}else{d.classList.remove('dark');d.style.colorScheme='light'}};d.classList.forEach(function(c){if(c.indexOf('theme-')===0&&c!=='theme-'+t)d.classList.remove(c)});}catch(e){}",
           }}
         />
         {/*

@@ -1,6 +1,18 @@
 "use client"
 import { vars } from "nativewind"
 
+/**
+ * Gluestack UI token scales. These are NativeWind CSS vars consumed by
+ * `bg-primary-500`, `border-outline-200` etc. The app's canonical palette
+ * lives in `src/theme/themes.ts`; this file mirrors it for gluestack.
+ * Key surfaces (card border, primary button) are overridden in `global.css`
+ * to `var(--app-border)` / `var(--app-primary)` so drift is not visible,
+ * but keep primary-500 and outline-200 close to the theme when editing.
+ *
+ * To add a theme: extend `src/theme/themes.ts` + `src/theme/css.ts` + `global.css`
+ * and add a matching block here if gluestack components need that theme's vars.
+ * Or generate this file from `src/theme/css.ts` in a build step.
+ */
 export const config = {
   light: vars({
     "--color-primary-0": "225 226 231",

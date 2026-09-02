@@ -1,172 +1,73 @@
 /**
  * Single source of truth for the field-terminal visual world.
  *
- * Change the palette, spacing, borders or mono stack here and the whole
- * app follows - native via `useTheme()` / `getColors()` and web via
+ * This file is now a compatibility shim. The modular definitions live in
+ * `src/theme/*` so future themes can be added without editing a monolith:
+ *
+ *   src/theme/palette.ts  - ColorPalette type
+ *   src/theme/tokens.ts   - spacing, borders, radii, tints, layout, fonts
+ *   src/theme/themes.ts   - light/dark palettes, registry, getColors
+ *   src/theme/helpers.ts  - chipTint, cardStyle and other shared helpers
+ *   src/theme/css.ts      - CSS variable generation for global.css
+ *   src/theme/typography.ts - mono presets
+ *   src/theme/styles.ts   - flat/card/well primitives
+ *   src/theme/index.ts    - barrel re-export
+ *
+ * Change the palette, spacing, borders or mono stack via those modules and
+ * the whole app follows - native via `useTheme()` / `getColors()` and web via
  * `global.css` CSS variables that mirror these values. Keep `DESIGN.md`,
  * `tailwind.config.js` meal tokens and `app/+html.tsx` shell in sync;
- * they are derived, not independent.
+ * they are derived, not independent. For a new theme, see `src/theme/themes.ts`
+ * and `src/theme/css.ts`.
  *
  * To retune contrast, edit `lightColors` / `darkColors` only. Chip tints
- * use `tints.chip` (0.14) via `chipTint()` in `src/theme.helpers.ts`.
+ * use `tints.chip` (0.14) via `chipTint()` in `src/theme/helpers.ts`.
  * To change chrome weight, edit `borders.width` once.
  */
-import { Platform } from "react-native"
 
-export type ColorPalette = {
-  background: string
-  surface: string
-  surfaceAlt: string
-  primary: string
-  /** Deeper shade for text and icons on tinted primary backgrounds, such as tab rails. */
-  primaryStrong: string
-  primaryMuted: string
-  onPrimary: string
-  /** Secondary text on primary surfaces, headers and bubbles, clears 4.5 to 1 in both themes. */
-  onPrimaryMuted: string
-  /** Translucent chip/avatar surface laid on top of primary backgrounds. */
-  primaryOverlay: string
-  text: string
-  textMuted: string
-  /** Section titles and chrome on the page background, not on cards. */
-  textOnBackground: string
-  danger: string
-  warning: string
-  onWarning: string
-  border: string
-  breakfast: string
-  lunch: string
-  dinner: string
-  snack: string
-}
-
-export const darkColors: ColorPalette = {
-  background: "#1a1b26",
-  surface: "#24283b",
-  surfaceAlt: "#292e42",
-  primary: "#7aa2f7",
-  primaryStrong: "#7dcfff",
-  primaryMuted: "#bb9af7",
-  onPrimary: "#1a1b26",
-  onPrimaryMuted: "#24283b",
-  primaryOverlay: "rgba(122,162,247,0.14)",
-  text: "#c0caf5",
-  textMuted: "#a9b1d6",
-  textOnBackground: "#c0caf5",
-  danger: "#ff7a8e",
-  warning: "#e0af68",
-  onWarning: "#1a1b26",
-  border: "#6b739c",
-  // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito.
-  // Blue for protein and breakfast, amber for carbs and lunch, vermillion for
-  // fat and dinner remain distinct under deuteranopia, protanopia, or
-  // tritanopia. Snack keeps a teal that is luminance-separated from the three.
-  // Breakfast and dinner are lifted past the Okabe-Ito originals until they
-  // clear 4.5 to 1 as text on their own tinted chip wells.
-  breakfast: "#8db8ff",
-  lunch: "#FFB020",
-  dinner: "#ff92a6",
-  snack: "#2EC4B6",
-}
-
-export const lightColors: ColorPalette = {
-  background: "#f1f5f9",
-  surface: "#ffffff",
-  surfaceAlt: "#e2e8f0",
-  primary: "#0b57d0",
-  primaryStrong: "#0044cc",
-  primaryMuted: "#0f172a",
-  onPrimary: "#ffffff",
-  onPrimaryMuted: "#f1f5f9",
-  primaryOverlay: "rgba(11,87,208,0.14)",
-  text: "#0f172a",
-  textMuted: "#475569",
-  textOnBackground: "#0f172a",
-  danger: "#be123c",
-  warning: "#96610a",
-  onWarning: "#ffffff",
-  border: "#0f172a",
-  // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito
-  // darkened until every value clears 4.5 to 1 as text on white, the page
-  // background, and its own tinted chip well. Blue for protein and breakfast,
-  // amber for carbs and lunch, vermillion for fat and dinner remain distinct
-  // under deuteranopia, protanopia, or tritanopia. Snack keeps a teal that is
-  // luminance-separated from the three.
-  breakfast: "#075985",
-  lunch: "#804707",
-  dinner: "#96340a",
-  snack: "#0b5f5a",
-}
-
-export function getColors(scheme: string | null | undefined): ColorPalette {
-  return scheme === "light" ? lightColors : darkColors
-}
-
-export const spacing = {
-  "2xs": 2,
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  "2xl": 32,
-}
-
-export const borders = {
-  width: 1.5,
-  widthThin: 1,
-  radius: 0,
-} as const
-
-export const radii = {
-  none: 0,
-} as const
-
-/**
- * Chip tint alpha - centralizes the 14% rule so contrast can be tuned once.
- * Update here and every meal pill, budget badge and icon well follows.
- */
-export const tints = {
-  chip: 0.14,
-  chipStrong: 0.2,
-  overlay: 0.14,
-} as const
-
-/** Breakpoints and max widths for tablet / desktop / web layouts.
- * 600 is thumb-to-two-column, 900 is phone-to-desktop rail, 1280 is
- * comfortable desktop where whitespace would otherwise pool. The 11px grid
- * stays crisp at every width because Departure Mono snaps to 11px increments.
- */
-export const layout = {
-  breakpointMedium: 600,
-  breakpointWide: 900,
-  breakpointLarge: 1280,
-  breakpointXl: 1440,
-  maxWidthNarrow: 420,
-  maxWidthContent: 720,
-  maxWidthWide: 1160,
-  maxWidthXl: 1360,
-  /** Centered app shell for wide viewports so nothing rests on the screen edge. */
-  shellMaxWidth: 1440,
-  shellPadding: 24,
-  shellGap: 20,
-  sideTabWidth: 96,
-  sideTabItemWidth: 84,
-  /** Fixed bottom tab bar height on phones, excluding the safe-area inset. */
-  tabBarHeight: 56,
-}
-
-/**
- * Terminal face: Departure Mono everywhere, single bundled face.
- * Web: registered from assets/fonts by src/utils/web-fonts.ts.
- * Native: resolved verbatim from android/app/src/main/assets/fonts
- * as Departure Mono per RN font manager rules.
- */
-const DEPARTURE_WEB = "'Departure Mono', monospace"
-const DEPARTURE_NATIVE = "Departure Mono"
-
-export const fonts = {
-  mono: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
-  sans: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
-  display: Platform.OS === "web" ? DEPARTURE_WEB : DEPARTURE_NATIVE,
-}
+export type { ColorPalette, MealType } from "./theme/palette"
+export {
+  darkColors,
+  lightColors,
+  getColors,
+  themes,
+  getTheme,
+  getThemeOrFallback,
+  registerCustomTheme,
+  getCustomTheme,
+  listThemes,
+  listThemeOptions,
+} from "./theme/themes"
+export type {
+  ThemeName,
+  BuiltinThemeName,
+  VscodeThemeName,
+  ThemePreference,
+  ThemeDefinition,
+} from "./theme/themes"
+export { spacing, borders, radii, tints, overlays, layout, fonts, typography } from "./theme/tokens"
+export {
+  lightCssVars,
+  darkCssVars,
+  cssVarsForTheme,
+  generateThemeCss,
+  generateAllThemesCss,
+} from "./theme/css"
+export { vscodePresets } from "./theme/presets/vscode"
+export {
+  chipTint,
+  cardStyle,
+  borderStyle,
+  iconBoxStyle,
+  wellStyle,
+  inputStyle,
+  chipStyle,
+  chipBorder,
+  surfaceWellStyle,
+  pressedStyle,
+  barTrackStyle,
+  barHighlight,
+  flat,
+} from "./theme/helpers"
+export { presets as textPresets, monoTabular, monoUppercase } from "./theme/typography"
+export { borderBase, cardBase, wellBase, thinBorder } from "./theme/styles"
