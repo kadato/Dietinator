@@ -52,16 +52,27 @@ export function ThemePicker({ visible, selected, onClose, onSelect }: Props) {
   const insets = useSafeAreaInsets()
 
   // Group themes for the picker: System first, then Dietinator, then VSCode, etc.
-  const all = [
-    { name: "system", label: "System", group: "System", isDark: false, colors: colors } as any,
-    ...listThemes(),
-  ]
+  type PickerItem = {
+    name: string
+    label: string
+    group: string
+    isDark: boolean
+    colors: ColorPalette
+  }
+  const systemEntry: PickerItem = {
+    name: "system",
+    label: "System",
+    group: "System",
+    isDark: false,
+    colors,
+  }
+  const all: PickerItem[] = [systemEntry, ...listThemes()]
   // Build groups
-  const grouped: Record<string, typeof all> = {}
+  const grouped: Record<string, PickerItem[]> = {}
   for (const t of all) {
-    const g = (t as any).group ?? "Other"
+    const g = t.group ?? "Other"
     if (!grouped[g]) grouped[g] = []
-    grouped[g].push(t as any)
+    grouped[g].push(t)
   }
   // Keep System at top
   const orderedGroups = Object.entries(grouped).sort(([a], [b]) => {
@@ -100,7 +111,7 @@ export function ThemePicker({ visible, selected, onClose, onSelect }: Props) {
               {orderedGroups.map(([group, items]) => (
                 <View key={group} style={styles.group}>
                   <Text style={styles.groupLabel}>{group.toUpperCase()}</Text>
-                  {items.map((t: any) => {
+                  {items.map((t) => {
                     const isSelected = selected === t.name
                     const palette: ColorPalette | undefined = t.colors
                     return (

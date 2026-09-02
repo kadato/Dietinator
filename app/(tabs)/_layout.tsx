@@ -118,7 +118,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             // mounted, so the param survives tab switches. Tapping the tab (whether it is
             // already focused or not) should land on the hub, not the previous drilldown.
             if (route.name === "settings") {
-              ;(navigation as any).navigate(route.name, { section: undefined })
+              navigation.navigate(route.name, { section: undefined })
               return
             }
             if (!isFocused) {
@@ -246,7 +246,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           })
           if (event.defaultPrevented) return
           if (route.name === "settings") {
-            ;(navigation as any).navigate(route.name, { section: undefined })
+            navigation.navigate(route.name, { section: undefined })
             return
           }
           if (!isFocused) {

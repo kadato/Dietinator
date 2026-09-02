@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react"
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from "react-native"
+import type { TextStyle } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
 import { Fab } from "@/components/Fab"
@@ -181,7 +182,7 @@ function ToastHost({ toast, onDismiss }: { toast: ToastState | null; onDismiss: 
             {toast.title ? <Text style={styles.title}>{toast.title}</Text> : null}
             <Text style={styles.message}>{toast.message}</Text>
           </View>
-          <Feather name="x" size={14} color={colors.textMuted} style={styles.closeIcon as any} />
+          <Feather name="x" size={14} color={colors.textMuted} style={styles.closeIcon} />
         </Pressable>
         <View style={styles.progressTrack}>
           <Animated.View
@@ -417,7 +418,7 @@ const createToastStyles = (colors: ColorPalette) =>
       boxShadow: "none",
       elevation: 0,
     },
-    closeIcon: { flexShrink: 0 },
+    closeIcon: { flexShrink: 0 } as TextStyle,
     textWrap: { flex: 1, gap: 2 },
     title: {
       color: colors.text,
