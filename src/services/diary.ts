@@ -285,6 +285,11 @@ export async function restoreFoodEntry(entry: DiaryEntry): Promise<void> {
 export async function copyEntriesToDate(sourceDate: string, targetDate: string): Promise<number> {
   if (sourceDate === targetDate) return 0
   const entries = await diaryDb.getDiaryEntriesForDate(sourceDate)
+  return copyDiaryEntries(entries, targetDate)
+}
+
+export async function copyDiaryEntries(entries: DiaryEntry[], targetDate: string): Promise<number> {
+  if (entries.length === 0) return 0
   let count = 0
   for (const entry of entries) {
     const created = await diaryDb.addDiaryEntry({
