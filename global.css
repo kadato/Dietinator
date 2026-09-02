@@ -60,7 +60,6 @@ textarea::placeholder {
  * map via var() so only one hex copy exists.
  */
 :root {
-  /* canonical app vars */
   --app-background: #f1f5f9;
   --app-surface: #ffffff;
   --app-surface-alt: #e2e8f0;
@@ -71,24 +70,23 @@ textarea::placeholder {
   --app-danger: #be123c;
   --app-warning: #96610a;
   --app-on-primary: #ffffff;
-  /* legacy aliases - keep for css that still references them, no hex duplication */
-  --bg: var(--app-background);
-  --bg-grid: rgba(15, 23, 42, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --meal-b: #075985;
   --meal-l: #804707;
   --meal-d: #96340a;
   --meal-s: #0b5f5a;
+  --bg-grid: rgba(15, 23, 42, 0.035);
   --paper-grid: rgba(15, 23, 42, 0.035);
-  --paper-grid-dark: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-alt: #e2e8f0;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+  --primary: #0b57d0;
+  --on-primary: #ffffff;
+  --border: #0f172a;
 }
+
 html.dark {
   --app-background: #1a1b26;
   --app-surface: #24283b;
@@ -100,28 +98,31 @@ html.dark {
   --app-danger: #ff7a8e;
   --app-warning: #e0af68;
   --app-on-primary: #1a1b26;
-  --bg: var(--app-background);
-  --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --meal-b: #8db8ff;
   --meal-l: #ffb020;
   --meal-d: #ff92a6;
   --meal-s: #2ec4b6;
+  --bg-grid: rgba(192, 202, 245, 0.035);
+  --paper-grid: rgba(192, 202, 245, 0.035);
+  --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #1a1b26;
+  --surface: #24283b;
+  --surface-alt: #292e42;
+  --ink: #c0caf5;
+  --ink-muted: #a9b1d6;
+  --primary: #7aa2f7;
+  --on-primary: #1a1b26;
+  --border: #6b739c;
 }
+
 html.theme-vscode-dark {
   --app-background: #1e1e1e;
   --app-surface: #252526;
   --app-surface-alt: #2d2d30;
   --app-primary: #007acc;
-  --app-border: #474747;
+  --app-border: #6e6e6e;
   --app-text: #cccccc;
-  --app-text-muted: #858585;
+  --app-text-muted: #949494;
   --app-danger: #f14c4c;
   --app-warning: #cca700;
   --app-on-primary: #ffffff;
@@ -129,188 +130,195 @@ html.theme-vscode-dark {
   --meal-l: #dcdcaa;
   --meal-d: #ce9178;
   --meal-s: #4ec9b0;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-alt: #2d2d30;
+  --ink: #cccccc;
+  --ink-muted: #949494;
+  --primary: #007acc;
+  --on-primary: #ffffff;
+  --border: #6e6e6e;
 }
+
 html.theme-vscode-light {
   --app-background: #ffffff;
   --app-surface: #f3f3f3;
   --app-surface-alt: #e8e8e8;
   --app-primary: #007acc;
-  --app-border: #e5e5e5;
+  --app-border: #8c8c8c;
   --app-text: #000000;
-  --app-text-muted: #6e6e6e;
+  --app-text-muted: #5a5a5a;
   --app-danger: #cd3131;
-  --app-warning: #bf8803;
+  --app-warning: #8f6a00;
   --app-on-primary: #ffffff;
   --meal-b: #001080;
   --meal-l: #795e26;
   --meal-d: #a31515;
   --meal-s: #267f99;
-  --bg: var(--app-background);
   --bg-grid: rgba(15, 23, 42, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(15, 23, 42, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #ffffff;
+  --surface: #f3f3f3;
+  --surface-alt: #e8e8e8;
+  --ink: #000000;
+  --ink-muted: #5a5a5a;
+  --primary: #007acc;
+  --on-primary: #ffffff;
+  --border: #8c8c8c;
 }
+
 html.theme-dracula {
   --app-background: #282a36;
   --app-surface: #44475a;
   --app-surface-alt: #343746;
   --app-primary: #bd93f9;
-  --app-border: #6272a4;
+  --app-border: #8d98c1;
   --app-text: #f8f8f2;
-  --app-text-muted: #6272a4;
-  --app-danger: #ff5555;
+  --app-text-muted: #aeb7d0;
+  --app-danger: #ff6b6b;
   --app-warning: #ffb86c;
   --app-on-primary: #282a36;
   --meal-b: #8be9fd;
   --meal-l: #ffb86c;
   --meal-d: #ff79c6;
   --meal-s: #50fa7b;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #282a36;
+  --surface: #44475a;
+  --surface-alt: #343746;
+  --ink: #f8f8f2;
+  --ink-muted: #aeb7d0;
+  --primary: #bd93f9;
+  --on-primary: #282a36;
+  --border: #8d98c1;
 }
+
 html.theme-monokai {
   --app-background: #272822;
   --app-surface: #3e3d32;
   --app-surface-alt: #49483e;
   --app-primary: #a6e22e;
-  --app-border: #75715e;
+  --app-border: #9a978a;
   --app-text: #f8f8f2;
-  --app-text-muted: #75715e;
-  --app-danger: #f92672;
+  --app-text-muted: #b8b6a8;
+  --app-danger: #ff4b8b;
   --app-warning: #fd971f;
   --app-on-primary: #272822;
   --meal-b: #66d9ef;
   --meal-l: #e6db74;
-  --meal-d: #f92672;
+  --meal-d: #ff4b8b;
   --meal-s: #a6e22e;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #272822;
+  --surface: #3e3d32;
+  --surface-alt: #49483e;
+  --ink: #f8f8f2;
+  --ink-muted: #b8b6a8;
+  --primary: #a6e22e;
+  --on-primary: #272822;
+  --border: #9a978a;
 }
+
 html.theme-nord {
   --app-background: #2e3440;
   --app-surface: #3b4252;
   --app-surface-alt: #434c5e;
   --app-primary: #88c0d0;
-  --app-border: #4c566a;
+  --app-border: #8a95ad;
   --app-text: #eceff4;
-  --app-text-muted: #4c566a;
-  --app-danger: #bf616a;
+  --app-text-muted: #b8bfd0;
+  --app-danger: #d68a90;
   --app-warning: #ebcb8b;
   --app-on-primary: #2e3440;
   --meal-b: #88c0d0;
   --meal-l: #ebcb8b;
-  --meal-d: #bf616a;
+  --meal-d: #d68a90;
   --meal-s: #a3be8c;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #2e3440;
+  --surface: #3b4252;
+  --surface-alt: #434c5e;
+  --ink: #eceff4;
+  --ink-muted: #b8bfd0;
+  --primary: #88c0d0;
+  --on-primary: #2e3440;
+  --border: #8a95ad;
 }
+
 html.theme-solarized-dark {
   --app-background: #002b36;
-  --app-surface: #073642;
-  --app-surface-alt: #586e75;
-  --app-primary: #268bd2;
-  --app-border: #586e75;
-  --app-text: #839496;
-  --app-text-muted: #586e75;
-  --app-danger: #dc322f;
+  --app-surface: #063242;
+  --app-surface-alt: #0a4e5e;
+  --app-primary: #2678ce;
+  --app-border: #6d8a93;
+  --app-text: #adb8b8;
+  --app-text-muted: #b0c4c4;
+  --app-danger: #e35d5b;
   --app-warning: #b58900;
-  --app-on-primary: #fdf6e3;
+  --app-on-primary: #ffffff;
   --meal-b: #268bd2;
   --meal-l: #b58900;
   --meal-d: #dc322f;
   --meal-s: #2aa198;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #002b36;
+  --surface: #063242;
+  --surface-alt: #0a4e5e;
+  --ink: #adb8b8;
+  --ink-muted: #b0c4c4;
+  --primary: #2678ce;
+  --on-primary: #ffffff;
+  --border: #6d8a93;
 }
+
 html.theme-solarized-light {
   --app-background: #fdf6e3;
   --app-surface: #eee8d5;
-  --app-surface-alt: #93a1a1;
-  --app-primary: #268bd2;
-  --app-border: #93a1a1;
-  --app-text: #657b83;
-  --app-text-muted: #93a1a1;
-  --app-danger: #dc322f;
-  --app-warning: #b58900;
-  --app-on-primary: #fdf6e3;
+  --app-surface-alt: #d6d0b8;
+  --app-primary: #1a6093;
+  --app-border: #768989;
+  --app-text: #3a4a4e;
+  --app-text-muted: #4c5c5d;
+  --app-danger: #a82a28;
+  --app-warning: #7a5f00;
+  --app-on-primary: #ffffff;
   --meal-b: #268bd2;
   --meal-l: #b58900;
   --meal-d: #dc322f;
   --meal-s: #2aa198;
-  --bg: var(--app-background);
   --bg-grid: rgba(15, 23, 42, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(15, 23, 42, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #fdf6e3;
+  --surface: #eee8d5;
+  --surface-alt: #d6d0b8;
+  --ink: #3a4a4e;
+  --ink-muted: #4c5c5d;
+  --primary: #1a6093;
+  --on-primary: #ffffff;
+  --border: #768989;
 }
+
 html.theme-one-dark-pro {
   --app-background: #282c34;
   --app-surface: #21252b;
   --app-surface-alt: #2c323c;
   --app-primary: #61afef;
-  --app-border: #3e4451;
+  --app-border: #6a758a;
   --app-text: #abb2bf;
-  --app-text-muted: #5c6370;
+  --app-text-muted: #9aa0b0;
   --app-danger: #e06c75;
   --app-warning: #e5c07b;
   --app-on-primary: #282c34;
@@ -318,53 +326,27 @@ html.theme-one-dark-pro {
   --meal-l: #e5c07b;
   --meal-d: #e06c75;
   --meal-s: #98c379;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #282c34;
+  --surface: #21252b;
+  --surface-alt: #2c323c;
+  --ink: #abb2bf;
+  --ink-muted: #9aa0b0;
+  --primary: #61afef;
+  --on-primary: #282c34;
+  --border: #6a758a;
 }
-html.theme-github-light {
-  --app-background: #ffffff;
-  --app-surface: #f6f8fa;
-  --app-surface-alt: #eaeef2;
-  --app-primary: #0969da;
-  --app-border: #d0d7de;
-  --app-text: #24292f;
-  --app-text-muted: #656d76;
-  --app-danger: #cf222e;
-  --app-warning: #9a6700;
-  --app-on-primary: #ffffff;
-  --meal-b: #0969da;
-  --meal-l: #9a6700;
-  --meal-d: #cf222e;
-  --meal-s: #1a7f37;
-  --bg: var(--app-background);
-  --bg-grid: rgba(15, 23, 42, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
-  --paper-grid: rgba(15, 23, 42, 0.035);
-  --scrim: rgba(26, 27, 38, 0.65);
-}
+
 html.theme-github-dark {
   --app-background: #0d1117;
   --app-surface: #161b22;
   --app-surface-alt: #21262d;
   --app-primary: #58a6ff;
-  --app-border: #30363d;
+  --app-border: #656d76;
   --app-text: #e6edf3;
-  --app-text-muted: #7d8590;
+  --app-text-muted: #9198a1;
   --app-danger: #f85149;
   --app-warning: #d29922;
   --app-on-primary: #0d1117;
@@ -372,26 +354,55 @@ html.theme-github-dark {
   --meal-l: #d29922;
   --meal-d: #f85149;
   --meal-s: #3fb950;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-alt: #21262d;
+  --ink: #e6edf3;
+  --ink-muted: #9198a1;
+  --primary: #58a6ff;
+  --on-primary: #0d1117;
+  --border: #656d76;
 }
+
+html.theme-github-light {
+  --app-background: #ffffff;
+  --app-surface: #f6f8fa;
+  --app-surface-alt: #eaeef2;
+  --app-primary: #0969da;
+  --app-border: #7a8591;
+  --app-text: #24292f;
+  --app-text-muted: #57606a;
+  --app-danger: #cf222e;
+  --app-warning: #9a6700;
+  --app-on-primary: #ffffff;
+  --meal-b: #0969da;
+  --meal-l: #9a6700;
+  --meal-d: #cf222e;
+  --meal-s: #1a7f37;
+  --bg-grid: rgba(15, 23, 42, 0.035);
+  --paper-grid: rgba(15, 23, 42, 0.035);
+  --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --surface-alt: #eaeef2;
+  --ink: #24292f;
+  --ink-muted: #57606a;
+  --primary: #0969da;
+  --on-primary: #ffffff;
+  --border: #7a8591;
+}
+
 html.theme-material-palenight {
   --app-background: #292d3e;
   --app-surface: #34324a;
   --app-surface-alt: #3a3e5c;
   --app-primary: #c792ea;
-  --app-border: #676e95;
+  --app-border: #7f85a6;
   --app-text: #a6accd;
-  --app-text-muted: #676e95;
+  --app-text-muted: #a8acc3;
   --app-danger: #ff5370;
   --app-warning: #ffcb6b;
   --app-on-primary: #292d3e;
@@ -399,26 +410,27 @@ html.theme-material-palenight {
   --meal-l: #ffcb6b;
   --meal-d: #f07178;
   --meal-s: #c3e88d;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #292d3e;
+  --surface: #34324a;
+  --surface-alt: #3a3e5c;
+  --ink: #a6accd;
+  --ink-muted: #a8acc3;
+  --primary: #c792ea;
+  --on-primary: #292d3e;
+  --border: #7f85a6;
 }
+
 html.theme-tokyo-night {
   --app-background: #1a1b26;
   --app-surface: #16161e;
   --app-surface-alt: #1e202e;
   --app-primary: #7aa2f7;
-  --app-border: #414868;
+  --app-border: #636a8c;
   --app-text: #c0caf5;
-  --app-text-muted: #565f89;
+  --app-text-muted: #828ab3;
   --app-danger: #f7768e;
   --app-warning: #e0af68;
   --app-on-primary: #1a1b26;
@@ -426,26 +438,27 @@ html.theme-tokyo-night {
   --meal-l: #e0af68;
   --meal-d: #f7768e;
   --meal-s: #9ece6a;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #1a1b26;
+  --surface: #16161e;
+  --surface-alt: #1e202e;
+  --ink: #c0caf5;
+  --ink-muted: #828ab3;
+  --primary: #7aa2f7;
+  --on-primary: #1a1b26;
+  --border: #636a8c;
 }
+
 html.theme-tokyo-night-storm {
   --app-background: #24283b;
   --app-surface: #1f2335;
   --app-surface-alt: #292e42;
   --app-primary: #7aa2f7;
-  --app-border: #414868;
+  --app-border: #6b7296;
   --app-text: #c0caf5;
-  --app-text-muted: #565f89;
+  --app-text-muted: #959cc0;
   --app-danger: #f7768e;
   --app-warning: #e0af68;
   --app-on-primary: #1a1b26;
@@ -453,26 +466,27 @@ html.theme-tokyo-night-storm {
   --meal-l: #e0af68;
   --meal-d: #f7768e;
   --meal-s: #9ece6a;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #24283b;
+  --surface: #1f2335;
+  --surface-alt: #292e42;
+  --ink: #c0caf5;
+  --ink-muted: #959cc0;
+  --primary: #7aa2f7;
+  --on-primary: #1a1b26;
+  --border: #6b7296;
 }
+
 html.theme-tokyo-night-moon {
   --app-background: #222436;
   --app-surface: #1e2030;
   --app-surface-alt: #2f334d;
   --app-primary: #82aaff;
-  --app-border: #444a73;
+  --app-border: #686ea0;
   --app-text: #c8d3f5;
-  --app-text-muted: #636da6;
+  --app-text-muted: #9aa0c8;
   --app-danger: #ff757f;
   --app-warning: #ffc777;
   --app-on-primary: #1e2030;
@@ -480,26 +494,27 @@ html.theme-tokyo-night-moon {
   --meal-l: #ffc777;
   --meal-d: #ff757f;
   --meal-s: #c3e88d;
-  --bg: var(--app-background);
   --bg-grid: rgba(192, 202, 245, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #222436;
+  --surface: #1e2030;
+  --surface-alt: #2f334d;
+  --ink: #c8d3f5;
+  --ink-muted: #9aa0c8;
+  --primary: #82aaff;
+  --on-primary: #1e2030;
+  --border: #686ea0;
 }
+
 html.theme-tokyo-night-light {
   --app-background: #d5d6db;
   --app-surface: #cbccd1;
   --app-surface-alt: #b4b5b9;
   --app-primary: #34548a;
-  --app-border: #9699a8;
+  --app-border: #6e7085;
   --app-text: #343b58;
-  --app-text-muted: #5a638c;
+  --app-text-muted: #3a3e54;
   --app-danger: #8c4351;
   --app-warning: #8f5e15;
   --app-on-primary: #d5d6db;
@@ -507,18 +522,19 @@ html.theme-tokyo-night-light {
   --meal-l: #8f5e15;
   --meal-d: #8c4351;
   --meal-s: #33635c;
-  --bg: var(--app-background);
   --bg-grid: rgba(15, 23, 42, 0.035);
-  --surface: var(--app-surface);
-  --surface-alt: var(--app-surface-alt);
-  --ink: var(--app-text);
-  --ink-muted: var(--app-text-muted);
-  --primary: var(--app-primary);
-  --on-primary: var(--app-on-primary);
-  --border: var(--app-border);
   --paper-grid: rgba(15, 23, 42, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
+  --bg: #d5d6db;
+  --surface: #cbccd1;
+  --surface-alt: #b4b5b9;
+  --ink: #343b58;
+  --ink-muted: #3a3e54;
+  --primary: #34548a;
+  --on-primary: #d5d6db;
+  --border: #6e7085;
 }
+
 /*
  * gluestack-ui Tokyo Night alignment - derived from theme surfaceAlt / border
  * Keep in sync with src/theme/tokens. For new themes, add a selector like
