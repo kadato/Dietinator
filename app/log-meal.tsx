@@ -27,7 +27,7 @@ import { getFoodIcon } from "@/utils/food-icon"
 import { getSuggestedFoods } from "@/services/yazio/foods"
 import { getFavoriteFoods, getRecentFoodUsages, updateFavoriteOrder } from "@/db/food-cache"
 import { deleteFoodEntry, getDiaryEntriesForDate, quickLogFood } from "@/services/diary"
-import { listMeals, logMealToDiary, mealTotals } from "@/services/meals"
+import { duplicateMeal, listMeals, logMealToDiary, mealTotals } from "@/services/meals"
 import type {
   DiaryEntry,
   FoodNutrients,
@@ -376,6 +376,19 @@ export default function LogMealScreen() {
     [date, loadLoggedEntries, loggingMealId, mealType, showError, showSuccess, showWarning],
   )
 
+  const handleDuplicateMeal = useCallback(
+    async (meal: Meal) => {
+      try {
+        const dup = await duplicateMeal(meal.id)
+        await loadMeals()
+        showSuccess(`Duplicated "${dup.name}".`, "Meal duplicated")
+      } catch (error) {
+        showError(error, "Could not duplicate meal.")
+      }
+    },
+    [loadMeals, showError, showSuccess],
+  )
+
   const handleReorderFavorites = useCallback(
     async (reordered: SearchFoodResult[]) => {
       const orderedIds = reordered.map((f) => f.product_id)
@@ -498,12 +511,13 @@ export default function LogMealScreen() {
               params: { mealId: item.id },
             })
           }
+          onDuplicate={() => handleDuplicateMeal(item)}
           logging={loggingMealId === item.id}
           accentColor={accent}
         />
       )
     },
-    [accent, handleLogMeal, loggingMealId, mealTotalsById, router],
+    [accent, handleDuplicateMeal, handleLogMeal, loggingMealId, mealTotalsById, router],
   )
 
   const emptyMessage = useMemo(() => {

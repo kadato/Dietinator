@@ -47,6 +47,35 @@ export function deleteMeal(id: string): Promise<void> {
   return mealDb.deleteMeal(id)
 }
 
+export async function duplicateMeal(id: string): Promise<Meal> {
+  const meal = await mealDb.getMealById(id)
+  if (!meal) throw new Error("Meal not found.")
+  const newId = generateId()
+  const now = new Date().toISOString()
+  const baseName = meal.name.replace(/ copy( \d+)?$/i, "").trim()
+  let newName = `${baseName} copy`
+  const existing = await mealDb.getMeals()
+  const names = new Set(existing.map((m) => m.name.toLowerCase()))
+  if (names.has(newName.toLowerCase())) {
+    let n = 2
+    while (names.has(`${baseName} copy ${n}`.toLowerCase())) n += 1
+    newName = `${baseName} copy ${n}`
+  }
+  await mealDb.saveMeal({
+    id: newId,
+    name: newName,
+    created_at: now,
+    updated_at: now,
+    items: meal.items,
+  })
+  for (const item of meal.items) {
+    foodCacheDb.saveFoodToCache(itemToFood(item), null, true).catch(() => undefined)
+  }
+  const saved = await mealDb.getMealById(newId)
+  if (!saved) throw new Error("Could not duplicate meal.")
+  return saved
+}
+
 /** Total nutrients for the meal as configured (amounts are already baked in). */
 export function mealTotals(meal: Pick<Meal, "items">): FoodNutrients {
   return sumNutrients(

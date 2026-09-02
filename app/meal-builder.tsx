@@ -16,7 +16,7 @@ import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useToast } from "@/context/ToastContext"
-import { deleteMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
+import { deleteMeal, duplicateMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
 import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
 import { mergeFoodResults } from "@/utils/food-search"
 import type { MealItem, SearchFoodResult } from "@/types"
@@ -182,6 +182,17 @@ export default function MealBuilderScreen() {
     })
   }
 
+  const handleDuplicate = async () => {
+    if (!mealId) return
+    try {
+      const dup = await duplicateMeal(mealId)
+      showSuccess(`Duplicated "${dup.name}".`, "Meal duplicated")
+      safeBack()
+    } catch (error) {
+      showError(error, "Could not duplicate meal.")
+    }
+  }
+
   if (loadingMeal) {
     return (
       <Box className="flex-1 items-center justify-center bg-background-0">
@@ -212,20 +223,36 @@ export default function MealBuilderScreen() {
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
           {isEditing ? (
-            <Pressable
-              onPress={handleDelete}
-              hitSlop={8}
-              className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
-              style={{
-                borderWidth: borders.width,
-                borderColor: colors.border,
-                borderRadius: radii.none,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Delete meal"
-            >
-              <Feather name="trash-2" size={18} color={colors.danger} />
-            </Pressable>
+            <Box className="flex-row items-center gap-2">
+              <Pressable
+                onPress={handleDuplicate}
+                hitSlop={8}
+                className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Duplicate meal"
+              >
+                <Feather name="copy" size={18} color={colors.text} />
+              </Pressable>
+              <Pressable
+                onPress={handleDelete}
+                hitSlop={8}
+                className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Delete meal"
+              >
+                <Feather name="trash-2" size={18} color={colors.danger} />
+              </Pressable>
+            </Box>
           ) : (
             <Box className="w-10" />
           )}

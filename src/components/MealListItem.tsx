@@ -14,6 +14,7 @@ type Props = {
   onPress: () => void
   onLog?: () => void
   onEdit?: () => void
+  onDuplicate?: () => void
   onDelete?: () => void
   logging?: boolean
   accentColor?: string
@@ -25,6 +26,7 @@ export const MealListItem = memo(function MealListItem({
   onPress,
   onLog,
   onEdit,
+  onDuplicate,
   onDelete,
   logging = false,
   accentColor,
@@ -112,6 +114,18 @@ export const MealListItem = memo(function MealListItem({
           accessibilityLabel={`Edit ${meal.name}`}
         >
           <Feather name="edit-2" size={16} color={colors.textMuted} />
+        </Pressable>
+      ) : null}
+
+      {onDuplicate ? (
+        <Pressable
+          onPress={onDuplicate}
+          hitSlop={8}
+          className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+          accessibilityRole="button"
+          accessibilityLabel={`Duplicate ${meal.name}`}
+        >
+          <Feather name="copy" size={16} color={colors.textMuted} />
         </Pressable>
       ) : null}
 
