@@ -7,7 +7,7 @@ import { Platform, Pressable, View } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useApp } from "@/context/AppContext"
-import { layout } from "@/theme"
+import { layout, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>["tabBar"]>>[0]
@@ -47,7 +47,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           width: layout.sideTabWidth,
           alignSelf: "flex-start",
           backgroundColor: colors.surface,
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
           paddingTop: insets.top > 0 ? 12 : 16,
           paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 16,
@@ -73,7 +73,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           style={{
             width: 44,
             height: 44,
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.primary,
             backgroundColor: colors.primary,
             alignItems: "center",
@@ -113,8 +113,15 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               target: route.key,
               canPreventDefault: true,
             })
-
-            if (!isFocused && !event.defaultPrevented) {
+            if (event.defaultPrevented) return
+            // Settings keeps its drilldown in the `section` query param. Tab screens stay
+            // mounted, so the param survives tab switches. Tapping the tab (whether it is
+            // already focused or not) should land on the hub, not the previous drilldown.
+            if (route.name === "settings") {
+              ;(navigation as any).navigate(route.name, { section: undefined })
+              return
+            }
+            if (!isFocused) {
               navigation.navigate(route.name, route.params)
             }
           }
@@ -147,8 +154,9 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   width: layout.sideTabItemWidth,
                   paddingVertical: 10,
                   paddingHorizontal: 6,
-                  borderRadius: 0,
-                  borderWidth: isFocused || hoveredRoute === route.key ? 1.5 : 1,
+                  borderRadius: radii.none,
+                  borderWidth:
+                    isFocused || hoveredRoute === route.key ? borders.width : borders.widthThin,
                   borderColor:
                     isFocused || hoveredRoute === route.key ? colors.primary : colors.border,
                   flexDirection: "column",
@@ -211,7 +219,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
       style={{
         flexDirection: "row",
         backgroundColor: colors.surface,
-        borderTopWidth: 1.5,
+        borderTopWidth: borders.width,
         borderTopColor: colors.border,
         minHeight: tabBarHeight + bottomInset,
         paddingBottom: bottomInset,
@@ -236,8 +244,12 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             target: route.key,
             canPreventDefault: true,
           })
-
-          if (!isFocused && !event.defaultPrevented) {
+          if (event.defaultPrevented) return
+          if (route.name === "settings") {
+            ;(navigation as any).navigate(route.name, { section: undefined })
+            return
+          }
+          if (!isFocused) {
             navigation.navigate(route.name, route.params)
           }
         }
@@ -280,7 +292,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   ? colors.surfaceAlt
                   : "transparent",
               borderWidth: 0,
-              borderRadius: 0,
+              borderRadius: radii.none,
             }}
           >
             <View
@@ -320,11 +332,11 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   position: "absolute",
                   bottom: tabBarHeight + 8,
                   backgroundColor: colors.surface,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   paddingHorizontal: 8,
                   paddingVertical: 4,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                 }}
                 pointerEvents="none"
               >
