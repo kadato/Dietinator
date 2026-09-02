@@ -53,7 +53,11 @@ if (Platform.OS === "web" && typeof window !== "undefined") {
       text.includes("props.pointerEvents is deprecated") ||
       text.includes("accessibilityRole") ||
       text.includes("is not a valid icon name") ||
-      text.includes("Reduced motion setting is enabled")
+      text.includes("Reduced motion setting is enabled") ||
+      text.includes("wasm streaming compile failed") ||
+      text.includes("falling back to ArrayBuffer") ||
+      text.includes("Incorrect response MIME type") ||
+      text.includes("application/wasm")
     )
   }
 

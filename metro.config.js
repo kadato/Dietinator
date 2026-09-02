@@ -127,9 +127,11 @@ config.server.enhanceMiddleware = (middleware) => {
                 ? "application/json"
                 : ext === ".ico"
                   ? "image/x-icon"
-                  : ext === ".js"
-                    ? "application/javascript"
-                    : "application/octet-stream"
+                  : ext === ".wasm"
+                    ? "application/wasm"
+                    : ext === ".js"
+                      ? "application/javascript"
+                      : "application/octet-stream"
           res.setHeader("Content-Type", mime)
           fs.createReadStream(filePath).pipe(res)
           return
