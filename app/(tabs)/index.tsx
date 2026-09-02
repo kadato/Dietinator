@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { Keyboard, Platform, Pressable, RefreshControl, ScrollView, View } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
@@ -68,8 +68,17 @@ export default function TodayScreen() {
   const [localWaterMl, setLocalWaterMl] = useState(0)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [isPending, startTransition] = useTransition()
   // Session cache for the streak computation, see load() below.
   const streakCacheRef = useRef<{ day: string; count: number } | null>(null)
+
+  // Wrap date navigation in a transition so chevron/arrow-key changes stay
+  // responsive while SQLite and network catch up in the background.
+  const setDateKeyTransition = useCallback((updater: string | ((prev: string) => string)) => {
+    startTransition(() => {
+      setDateKey(updater as never)
+    })
+  }, [])
 
   const totals = useMemo(() => sumNutrients(entries), [entries])
 
@@ -169,7 +178,9 @@ export default function TodayScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      load({ quiet: true })
+      startTransition(() => {
+        void load({ quiet: true })
+      })
     }, [load]),
   )
 
@@ -203,11 +214,11 @@ export default function TodayScreen() {
       }
       const target = event.target as HTMLElement | null
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
-      setDateKey((d) => shiftDateKey(d, event.key === "ArrowLeft" ? -1 : 1))
+      setDateKeyTransition((d) => shiftDateKey(d, event.key === "ArrowLeft" ? -1 : 1))
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [keyboardVisible, pickerOpen, logWeightOpen, logWaterOpen, logSlotOpen])
+  }, [keyboardVisible, pickerOpen, logWeightOpen, logWaterOpen, logSlotOpen, setDateKeyTransition])
 
   const openAdd = useCallback(
     (mealType: MealType) => {
@@ -405,7 +416,7 @@ export default function TodayScreen() {
       <View className={`flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
         <Box className={`min-w-0 flex-1 flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
           <Pressable
-            onPress={() => setDateKey((d) => shiftDateKey(d, -1))}
+            onPress={() => setDateKeyTransition((d) => shiftDateKey(d, -1))}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Previous day"
@@ -421,6 +432,7 @@ export default function TodayScreen() {
                   borderStyle: "solid",
                   borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  opacity: isPending ? 0.7 : 1,
                 }}
               >
                 <Feather name="chevron-left" size={compact ? 18 : 20} color={colors.text} />
@@ -471,7 +483,7 @@ export default function TodayScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => setDateKey((d) => shiftDateKey(d, 1))}
+            onPress={() => setDateKeyTransition((d) => shiftDateKey(d, 1))}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Next day"
@@ -487,6 +499,7 @@ export default function TodayScreen() {
                   borderStyle: "solid",
                   borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  opacity: isPending ? 0.7 : 1,
                 }}
               >
                 <Feather name="chevron-right" size={compact ? 18 : 20} color={colors.text} />
@@ -1083,7 +1096,7 @@ export default function TodayScreen() {
       <DatePickerModal
         visible={pickerOpen}
         dateKey={dateKey}
-        onSelect={(key) => setDateKey(key)}
+        onSelect={(key) => setDateKeyTransition(key)}
         onClose={() => setPickerOpen(false)}
       />
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { searchFoodsRemote } from "@/services/yazio/foods"
 import { searchLocalFoods } from "@/db/food-cache"
 import { mergeFoodResults } from "@/utils/food-search"
@@ -29,6 +29,7 @@ export function useFoodSearch<T = SearchFoodResult>(
   const onError = options?.onError
   const [foods, setFoods] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [nonce, setNonce] = useState(0)
   const requestRef = useRef(0)
 
@@ -77,12 +78,12 @@ export function useFoodSearch<T = SearchFoodResult>(
       try {
         const cached = await searchLocalFoods(trimmed)
         if (requestId !== requestRef.current || cancelled) return
-        setFoods(cached as T[])
+        startTransition(() => setFoods(cached as T[]))
         setLoading(false)
         try {
           const remote = await searchFoodsRemote(trimmed)
           if (requestId !== requestRef.current || cancelled) return
-          setFoods(mergeFoodResults(cached, remote) as T[])
+          startTransition(() => setFoods(mergeFoodResults(cached, remote) as T[]))
           setYazioAvailable(true)
         } catch {
           if (requestId === requestRef.current && !cancelled) {
@@ -101,5 +102,9 @@ export function useFoodSearch<T = SearchFoodResult>(
     }
   }, [debounced, enabled, emptyQuery, nonce, onError, setYazioAvailable])
 
-  return { foods: showResults ? foods : [], loading: showResults ? loading : false, refresh }
+  return {
+    foods: showResults ? foods : [],
+    loading: showResults ? loading || isPending : false,
+    refresh,
+  }
 }
