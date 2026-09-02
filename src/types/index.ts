@@ -70,8 +70,8 @@ export interface AppSettings {
   ai_system_prompt: string
   /** Last-applied agent change revision. MCP. Web snapshot bridge only. */
   agent_bridge_rev: number
-  /** Explicit app theme. Follow the system, or force light or dark. */
-  theme_preference: "system" | "light" | "dark"
+  /** Explicit app theme. System follows the OS, otherwise any preseeded theme (VSCode, Dietinator Light/Dark, etc.). */
+  theme_preference: string
   /** Daily hydration target in milliliters. 0 is unset and falls back to YAZIO. */
   water_goal_ml: number
   /** Body height in centimeters. 0 is unset, so no BMI shown. */

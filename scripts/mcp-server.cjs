@@ -935,7 +935,11 @@ const TOOLS = [
         target_weight_kg: { type: "number", description: "Target weight in kilograms." },
         water_goal_ml: { type: "number", description: "Daily water goal in milliliters." },
         food_database_country: { type: "string", description: "Country code for food searches." },
-        theme_preference: { type: "string", description: "'system', 'light', or 'dark'." },
+        theme_preference: {
+          type: "string",
+          description:
+            "'system' or any theme like 'dracula', 'nord', 'one-dark-pro', 'github-light', etc.",
+        },
         units: { type: "string", description: "'metric' or 'imperial'." },
       },
     },
@@ -950,11 +954,7 @@ const TOOLS = [
         payload.water_goal_ml = Number(args.water_goal_ml)
       if (typeof args.food_database_country === "string")
         payload.food_database_country = args.food_database_country.trim().toUpperCase()
-      if (
-        args.theme_preference === "system" ||
-        args.theme_preference === "light" ||
-        args.theme_preference === "dark"
-      )
+      if (typeof args.theme_preference === "string" && args.theme_preference.length > 0)
         payload.theme_preference = args.theme_preference
       if (args.units === "metric" || args.units === "imperial") payload.units = args.units
       if (Object.keys(payload).length === 0) {

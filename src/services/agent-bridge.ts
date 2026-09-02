@@ -427,11 +427,7 @@ async function applySetProfile(payload: Record<string, unknown>): Promise<void> 
   if (typeof payload.food_database_country === "string") {
     update.food_database_country = payload.food_database_country.trim().toUpperCase()
   }
-  if (
-    payload.theme_preference === "system" ||
-    payload.theme_preference === "light" ||
-    payload.theme_preference === "dark"
-  ) {
+  if (typeof payload.theme_preference === "string" && payload.theme_preference.length > 0) {
     update.theme_preference = payload.theme_preference
   }
   if (payload.units === "metric" || payload.units === "imperial") {

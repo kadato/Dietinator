@@ -46,7 +46,9 @@ import { FabCluster } from "@/components/FabCluster"
 import { SettingsSection } from "@/components/SettingsSection"
 import { NumberStepper } from "@/components/NumberStepper"
 import { FoodDatabaseCountryPicker } from "@/components/FoodDatabaseCountryPicker"
+import { ThemePicker } from "@/components/ThemePicker"
 import { SegmentedControl } from "@/components/SegmentedControl"
+import { getTheme } from "@/theme/themes"
 import { useLayout } from "@/hooks/useLayout"
 import {
   getFoodDatabaseCountryLabel,
@@ -57,7 +59,7 @@ import { confirmAction } from "@/utils/confirm"
 import { formatNumber } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { routeParam } from "@/utils/route"
-import { spacing, fonts } from "@/theme"
+import { spacing, fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -97,7 +99,7 @@ function SettingsRow({
   const iconBox = (
     <Box
       className="h-10 w-10 shrink-0 items-center justify-center rounded-none border bg-background-100"
-      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
     >
       <Feather name={icon} size={20} color={tint} />
     </Box>
@@ -193,9 +195,9 @@ function GoalInput({
           <View
             className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: `${tint}14`,
             }}
           >
@@ -290,8 +292,11 @@ const SETTINGS_SECTIONS = [
     id: "device",
     label: "Device and Preferences",
     icon: "sliders" as const,
-    getSubtitle: (s: AppSettings, country: string) =>
-      `Database: ${getFoodDatabaseCountryLabel(country)} · ${s.units === "imperial" ? "Imperial" : "Metric"} · Theme: ${s.theme_preference ?? "system"}`,
+    getSubtitle: (s: AppSettings, country: string) => {
+      const pref = s.theme_preference ?? "system"
+      const label = pref === "system" ? "System" : (getTheme(pref)?.label ?? pref)
+      return `Database: ${getFoodDatabaseCountryLabel(country)} · ${s.units === "imperial" ? "Imperial" : "Metric"} · Theme: ${label}`
+    },
   },
   {
     id: "data",
@@ -495,7 +500,11 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
           </View>
           <View
             className="h-4 flex-row overflow-hidden rounded-none border bg-background-100"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            style={{
+              borderWidth: borders.width,
+              borderColor: colors.border,
+              borderRadius: radii.none,
+            }}
           >
             {pPct > 0 ? (
               <View
@@ -593,9 +602,9 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
               size="md"
               className="rounded-none border bg-primary-500 active:bg-primary-600"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.primary,
-                borderRadius: 0,
+                borderRadius: radii.none,
               }}
               onPress={saveGoals}
               disabled={saving}
@@ -638,7 +647,11 @@ function SettingsField({
         {icon ? (
           <Box
             className="h-5 w-5 items-center justify-center rounded-none"
-            style={{ backgroundColor: `${tint}20`, borderWidth: 1, borderColor: tint }}
+            style={{
+              backgroundColor: `${tint}20`,
+              borderWidth: borders.widthThin,
+              borderColor: tint,
+            }}
           >
             <Feather name={icon} size={11} color={tint} />
           </Box>
@@ -815,10 +828,10 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
                 accessibilityState={{ selected }}
                 className="cursor-pointer flex-row items-center gap-1.5 rounded-none border px-3 py-2"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: selected ? tint : colors.border,
                   backgroundColor: selected ? `${tint}20` : colors.surface,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                 }}
               >
                 <Box
@@ -879,8 +892,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             style={{
               backgroundColor: colors.surfaceAlt,
               borderColor: colors.border,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
             }}
             accessibilityRole="button"
             accessibilityLabel={showApiKey ? "Hide key" : "Show key"}
@@ -923,8 +936,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             style={{
               backgroundColor: `${colors.breakfast}18`,
               borderColor: colors.breakfast,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
               opacity: fetchingModels ? 0.6 : 1,
             }}
             accessibilityRole="button"
@@ -962,10 +975,10 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
                   onPress={() => setAiModel(model)}
                   className="rounded-none border px-2.5 py-1.5"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: aiModel === model ? colors.primary : colors.border,
                     backgroundColor: aiModel === model ? `${colors.primary}20` : colors.surfaceAlt,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Select model ${model}`}
@@ -1008,8 +1021,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           style={{
             borderColor: colors.danger,
             backgroundColor: `${colors.danger}18`,
-            borderWidth: 1.5,
-            borderRadius: 0,
+            borderWidth: borders.width,
+            borderRadius: radii.none,
           }}
         >
           <Box className="flex-row items-center gap-2">
@@ -1035,8 +1048,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           style={{
             borderColor: testResult.ok ? colors.primary : colors.danger,
             backgroundColor: testResult.ok ? `${colors.primary}18` : `${colors.danger}18`,
-            borderWidth: 1.5,
-            borderRadius: 0,
+            borderWidth: borders.width,
+            borderRadius: radii.none,
           }}
         >
           <Box className="flex-row items-center gap-2">
@@ -1082,8 +1095,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           style={{
             backgroundColor: `${colors.primary}20`,
             borderColor: colors.primary,
-            borderWidth: 1.5,
-            borderRadius: 0,
+            borderWidth: borders.width,
+            borderRadius: radii.none,
             opacity: testingConnection ? 0.6 : 1,
           }}
           accessibilityRole="button"
@@ -1111,8 +1124,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             style={{
               backgroundColor: `${colors.lunch}18`,
               borderColor: colors.lunch,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
             }}
             accessibilityRole="button"
             accessibilityLabel="Open AI chat"
@@ -1151,8 +1164,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
             style={{
               backgroundColor: `${colors.danger}18`,
               borderColor: colors.danger,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
             }}
             accessibilityRole="button"
             accessibilityLabel="Clear chat history"
@@ -1176,7 +1189,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         <Button
           size="lg"
           className="mt-1 rounded-none border bg-primary-500 py-3.5 active:bg-primary-600"
-          style={{ borderWidth: 1.5, borderColor: colors.primary, borderRadius: 0 }}
+          style={{
+            borderWidth: borders.width,
+            borderColor: colors.primary,
+            borderRadius: radii.none,
+          }}
           onPress={saveAiSettings}
           disabled={aiSaving}
         >
@@ -1207,6 +1224,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
   const scrollRef = useRef<ScrollView>(null)
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
+  const [themePickerOpen, setThemePickerOpen] = useState(false)
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
   const [mcpExpanded, setMcpExpanded] = useState(false)
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null)
@@ -1223,6 +1241,11 @@ export default function SettingsScreen() {
     ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- deep link sync
       setActiveSection(sectionParam)
+    } else if (!sectionParam && activeSection !== null) {
+      // Tab press clears the query param so we must clear the local drilldown state
+      // too - otherwise the old section survives tab switches because the screen
+      // stays mounted. On wide the next effect will re-select the first tab.
+      setActiveSection(null)
     }
   }, [sectionParam, activeSection])
 
@@ -1420,7 +1443,7 @@ export default function SettingsScreen() {
                         accessibilityLabel={`Open ${section.label}`}
                         hitSlop={4}
                         style={{
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: isActive ? colors.primary : colors.border,
                           backgroundColor: isActive ? `${colors.primary}10` : colors.surface,
                           padding: 16,
@@ -1434,7 +1457,7 @@ export default function SettingsScreen() {
                         <Box
                           className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
                           style={{
-                            borderWidth: 1.5,
+                            borderWidth: borders.width,
                             borderColor: colors.border,
                             backgroundColor: isActive ? colors.primary : `${colors.primary}12`,
                           }}
@@ -1481,9 +1504,9 @@ export default function SettingsScreen() {
                   variant="elevated"
                   className="overflow-hidden rounded-none border p-0"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     boxShadow: "none",
                     elevation: 0,
                   }}
@@ -1503,7 +1526,11 @@ export default function SettingsScreen() {
                       >
                         <Box
                           className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"
-                          style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                          style={{
+                            borderWidth: borders.width,
+                            borderColor: colors.border,
+                            borderRadius: radii.none,
+                          }}
                         >
                           <Feather name={section.icon} size={22} color={colors.primary} />
                         </Box>
@@ -1544,7 +1571,7 @@ export default function SettingsScreen() {
                   hitSlop={8}
                   className="h-9 w-9 items-center justify-center rounded-none border"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
                     backgroundColor: colors.surface,
                   }}
@@ -1593,7 +1620,7 @@ export default function SettingsScreen() {
                         style={{
                           paddingHorizontal: 12,
                           paddingVertical: 8,
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: active ? colors.primary : colors.border,
                           backgroundColor: active ? colors.primary : colors.surface,
                           flexDirection: "row",
@@ -1672,31 +1699,58 @@ export default function SettingsScreen() {
                     <SettingsRow
                       icon="sun"
                       title="Theme"
-                      subtitle={
-                        settings.theme_preference === "light"
-                          ? "Always light"
-                          : settings.theme_preference === "dark"
-                            ? "Always dark"
-                            : "Follow your device setting"
-                      }
+                      subtitle={(() => {
+                        const pref = settings.theme_preference ?? "system"
+                        if (pref === "system") return "Follow your device setting"
+                        const def = getTheme(pref)
+                        return def ? `${def.label} · ${def.group}` : pref
+                      })()}
                       last
                       stackOnNarrow
                       right={
-                        <SegmentedControl
-                          value={settings.theme_preference ?? "system"}
-                          options={[
-                            { value: "system", label: "System" },
-                            { value: "light", label: "Light" },
-                            { value: "dark", label: "Dark" },
-                          ]}
-                          onChange={async (theme) => {
-                            try {
-                              await updateSettings({ theme_preference: theme })
-                            } catch (error) {
-                              showError(error, "Could not update theme.")
-                            }
+                        <Pressable
+                          onPress={() => setThemePickerOpen(true)}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                            borderWidth: borders.width,
+                            borderColor: colors.border,
+                            backgroundColor: colors.surfaceAlt,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: radii.none,
                           }}
-                        />
+                          accessibilityRole="button"
+                          accessibilityLabel="Choose theme"
+                        >
+                          <View
+                            style={{
+                              width: 14,
+                              height: 14,
+                              backgroundColor: colors.primary,
+                              borderWidth: borders.widthThin,
+                              borderColor: colors.border,
+                            }}
+                          />
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: "700",
+                              color: colors.text,
+                              fontFamily: fonts.mono,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.04,
+                            }}
+                          >
+                            {(() => {
+                              const pref = settings.theme_preference ?? "system"
+                              if (pref === "system") return "System"
+                              return getTheme(pref)?.label ?? pref
+                            })()}
+                          </Text>
+                          <Feather name="chevron-down" size={12} color={colors.textMuted} />
+                        </Pressable>
                       }
                     />
                   </SettingsSection>
@@ -1816,8 +1870,8 @@ export default function SettingsScreen() {
                       style={{
                         backgroundColor: `${colors.primary}18`,
                         borderColor: colors.primary,
-                        borderWidth: 1.5,
-                        borderRadius: 0,
+                        borderWidth: borders.width,
+                        borderRadius: radii.none,
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Sync pending entries now"
@@ -1864,8 +1918,8 @@ export default function SettingsScreen() {
                       style={{
                         backgroundColor: `${colors.lunch}18`,
                         borderColor: colors.lunch,
-                        borderWidth: 1.5,
-                        borderRadius: 0,
+                        borderWidth: borders.width,
+                        borderRadius: radii.none,
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Import today from YAZIO"
@@ -1990,7 +2044,7 @@ export default function SettingsScreen() {
                             style={{
                               backgroundColor: `${colors.primary}14`,
                               borderColor: colors.primary,
-                              borderWidth: 1.5,
+                              borderWidth: borders.width,
                             }}
                             accessibilityRole="button"
                             accessibilityLabel="Open AI chat"
@@ -2117,6 +2171,18 @@ export default function SettingsScreen() {
                 setProfileCountry(null)
               } catch (error) {
                 showError(error, "Could not save food database country.")
+              }
+            }}
+          />
+          <ThemePicker
+            visible={themePickerOpen}
+            selected={settings.theme_preference ?? "system"}
+            onClose={() => setThemePickerOpen(false)}
+            onSelect={async (value) => {
+              try {
+                await updateSettings({ theme_preference: value })
+              } catch (error) {
+                showError(error, "Could not update theme.")
               }
             }}
           />

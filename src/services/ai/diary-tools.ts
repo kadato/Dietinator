@@ -666,11 +666,7 @@ async function setProfileTool(args: Record<string, unknown>): Promise<unknown> {
   if (typeof args.food_database_country === "string") {
     update.food_database_country = args.food_database_country.trim().toUpperCase()
   }
-  if (
-    args.theme_preference === "system" ||
-    args.theme_preference === "light" ||
-    args.theme_preference === "dark"
-  ) {
+  if (typeof args.theme_preference === "string" && args.theme_preference.length > 0) {
     update.theme_preference = args.theme_preference
   }
   if (args.units === "metric" || args.units === "imperial") {
@@ -1157,7 +1153,9 @@ export function createDiaryTools(): AiToolDefinition[] {
           food_database_country: stringSchema(
             "Country code for food searches (for example'US', 'DE', 'GB').",
           ),
-          theme_preference: stringSchema("Theme: 'system', 'light', or 'dark'."),
+          theme_preference: stringSchema(
+            "Theme: 'system' or any preseeded theme like 'light', 'dark', 'dracula', 'nord', 'one-dark-pro', 'github-light', etc.",
+          ),
         },
       },
       destructive: true,
