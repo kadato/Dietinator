@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 
 export type DropdownOption<T extends string> = {
   value: T
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     paddingHorizontal: 10,
     paddingVertical: 5,
     boxShadow: "none",
@@ -165,8 +165,8 @@ const styles = StyleSheet.create({
   popover: {
     position: "absolute",
     minWidth: 140,
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     padding: 4,
     boxShadow: "none",
     elevation: 0,
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     borderColor: "transparent",
     gap: 8,
     boxShadow: "none",

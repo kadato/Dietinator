@@ -26,7 +26,7 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { useLayout } from "@/hooks/useLayout"
 import { PageContainer } from "@/components/PageContainer"
 import { withAlpha } from "@/utils/color"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -126,7 +126,7 @@ export default function LoginScreen() {
                 style={{
                   width: 96,
                   height: 96,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.primary,
                   backgroundColor: colors.primary,
                   alignItems: "center",
@@ -182,7 +182,7 @@ export default function LoginScreen() {
                       key={chip.k}
                       className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1.5"
                       style={{
-                        borderWidth: 1,
+                        borderWidth: borders.widthThin,
                         borderColor: colors.border,
                         backgroundColor: colors.surface,
                       }}
@@ -214,7 +214,7 @@ export default function LoginScreen() {
                   width: 80,
                   height: 80,
                   marginBottom: 20,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.primary,
                   backgroundColor: colors.primary,
                   alignItems: "center",
@@ -270,9 +270,9 @@ export default function LoginScreen() {
               variant="elevated"
               className="gap-4 p-5"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surface,
                 boxShadow: "none",
                 elevation: 0,
@@ -283,7 +283,11 @@ export default function LoginScreen() {
                 variant="outline"
                 isDisabled={loading}
                 className="rounded-none border"
-                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
               >
                 <InputField
                   placeholder="YAZIO email"
@@ -306,7 +310,11 @@ export default function LoginScreen() {
                 variant="outline"
                 isDisabled={loading}
                 className="rounded-none border"
-                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
               >
                 <InputField
                   ref={passwordRef as never}
@@ -334,7 +342,7 @@ export default function LoginScreen() {
                   className="mr-1.5 h-8 w-8 items-center justify-center rounded-none border"
                   style={[
                     {
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: passwordVisible ? colors.primary : colors.border,
                       backgroundColor: passwordVisible
                         ? withAlpha(colors.primary, 0.14)
@@ -374,9 +382,9 @@ export default function LoginScreen() {
                 isDisabled={loading || demoLoading}
                 className="mt-1 rounded-none border"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.primary,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.primary,
                 }}
               >
@@ -403,9 +411,9 @@ export default function LoginScreen() {
                 isDisabled={loading || demoLoading}
                 className="rounded-none border"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.surface,
                 }}
                 onPress={async () => {
@@ -442,9 +450,9 @@ export default function LoginScreen() {
               variant="elevated"
               className="mt-4 p-0"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surface,
                 boxShadow: "none",
                 elevation: 0,

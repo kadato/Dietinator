@@ -14,7 +14,7 @@ import { Fab } from "@/components/Fab"
 import { useTheme } from "@/hooks/useTheme"
 import { getErrorMessage } from "@/utils/error-message"
 import { mixColors } from "@/utils/color"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 
 export type ToastType = "success" | "error" | "info" | "warning"
 
@@ -393,8 +393,8 @@ const createToastStyles = (colors: ColorPalette) =>
     toast: {
       width: "100%",
       maxWidth: 420,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       overflow: "hidden",
       boxShadow: "none",
       elevation: 0,
@@ -409,8 +409,8 @@ const createToastStyles = (colors: ColorPalette) =>
     iconChip: {
       width: 34,
       height: 34,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,

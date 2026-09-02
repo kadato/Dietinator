@@ -9,7 +9,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { MacroPills } from "@/components/MacroPills"
 import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { FoodNutrients } from "@/types"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 type Props = {
@@ -344,8 +344,8 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
                   maxWidth: 580,
                   maxHeight: "88%",
                   height: "88%",
-                  borderRadius: 0,
-                  borderWidth: 1.5,
+                  borderRadius: radii.none,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   boxShadow: "none",
                   elevation: 0,
@@ -379,7 +379,7 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.surface,
       borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       borderBottomWidth: 0,
       height: "85%",
@@ -401,7 +401,7 @@ const createStyles = (colors: ColorPalette) =>
     dragHandle: {
       width: 34,
       height: 4,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.border,
     },
     header: {
@@ -439,8 +439,8 @@ const createStyles = (colors: ColorPalette) =>
     closeBtn: {
       width: 36,
       height: 36,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
@@ -460,9 +460,9 @@ const createStyles = (colors: ColorPalette) =>
     },
     energyCard: {
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
+      borderRadius: radii.none,
       padding: spacing.md,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       marginBottom: spacing.md,
       flexDirection: "row",
@@ -499,8 +499,8 @@ const createStyles = (colors: ColorPalette) =>
     macroPill: {
       paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
     },
@@ -526,10 +526,10 @@ const createStyles = (colors: ColorPalette) =>
     },
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 0,
+      borderRadius: radii.none,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.xs,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       marginBottom: spacing.md,
       boxShadow: "none",
@@ -592,18 +592,18 @@ const createStyles = (colors: ColorPalette) =>
     },
     barTrack: {
       height: 4,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
       marginTop: 6,
       overflow: "hidden",
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       boxShadow: "none",
       elevation: 0,
     },
     barFill: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     footnote: {
       fontSize: 11,

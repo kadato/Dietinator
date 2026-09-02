@@ -17,7 +17,7 @@ import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import type { MealType } from "@/types"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -44,9 +44,9 @@ function MacroInput({
     <Box
       className="flex-row items-center justify-between rounded-none border bg-background-50 px-3 py-2.5"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: colors.border,
-        borderRadius: 0,
+        borderRadius: radii.none,
         backgroundColor: colors.surface,
       }}
     >
@@ -56,8 +56,8 @@ function MacroInput({
           style={{
             backgroundColor: `${accent}18`,
             borderColor: colors.border,
-            borderWidth: 1.5,
-            borderRadius: 0,
+            borderWidth: borders.width,
+            borderRadius: radii.none,
           }}
         >
           <Feather name={icon} size={15} color={accent} />
@@ -153,9 +153,9 @@ export default function ManualEntryScreen() {
             className="h-10 w-10 items-center justify-center rounded-none border"
             style={{
               backgroundColor: `${colors.primary}18`,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
             }}
           >
             <Feather
@@ -195,7 +195,11 @@ export default function ManualEntryScreen() {
                 size="md"
                 variant="outline"
                 className="mb-3 rounded-none border bg-background-50"
-                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
               >
                 <InputField
                   value={name}

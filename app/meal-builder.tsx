@@ -31,7 +31,7 @@ import { NumberStepper } from "@/components/NumberStepper"
 
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -216,7 +216,11 @@ export default function MealBuilderScreen() {
               onPress={handleDelete}
               hitSlop={8}
               className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
-              style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+              style={{
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderRadius: radii.none,
+              }}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
             >
@@ -253,7 +257,11 @@ export default function MealBuilderScreen() {
             size="md"
             variant="outline"
             className="mb-4 rounded-none border bg-background-50"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            style={{
+              borderWidth: borders.width,
+              borderColor: colors.border,
+              borderRadius: radii.none,
+            }}
           >
             <InputField
               placeholder="Cornflakes with milk"
@@ -284,9 +292,9 @@ export default function MealBuilderScreen() {
                     key={item.product_id}
                     className="mb-2.5 flex-row items-center gap-2.5 border bg-background-50 px-3.5 py-3"
                     style={{
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                       backgroundColor: colors.surface,
                       boxShadow: "none",
                       elevation: 0,
@@ -340,9 +348,9 @@ export default function MealBuilderScreen() {
                       className="h-8 w-8 items-center justify-center rounded-none border"
                       style={{
                         backgroundColor: `${colors.danger}14`,
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: colors.border,
-                        borderRadius: 0,
+                        borderRadius: radii.none,
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={`Remove ${item.name}`}
@@ -384,7 +392,11 @@ export default function MealBuilderScreen() {
             size="md"
             variant="outline"
             className="mb-2 rounded-none border bg-background-50"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            style={{
+              borderWidth: borders.width,
+              borderColor: colors.border,
+              borderRadius: radii.none,
+            }}
           >
             <InputField
               placeholder="Search foods..."
@@ -444,7 +456,11 @@ export default function MealBuilderScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Delete meal"
-              style={{ borderWidth: 1.5, borderColor: "transparent", borderRadius: 0 }}
+              style={{
+                borderWidth: borders.width,
+                borderColor: "transparent",
+                borderRadius: radii.none,
+              }}
             >
               <Text
                 size="md"

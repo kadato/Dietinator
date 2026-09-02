@@ -12,7 +12,7 @@ import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -118,9 +118,9 @@ export default function CreateOptionsScreen() {
                   variant="outline"
                   className="flex-row items-center gap-4 p-4 active:opacity-80"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     backgroundColor: colors.surface,
                     boxShadow: "none",
                     elevation: 0,
@@ -130,9 +130,9 @@ export default function CreateOptionsScreen() {
                     className="h-12 w-12 items-center justify-center rounded-none border"
                     style={{
                       backgroundColor: withAlpha(tint, 0.13),
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                     }}
                   >
                     <Feather name={option.icon} size={22} color={tint} />

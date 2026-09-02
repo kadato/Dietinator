@@ -6,7 +6,10 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { computeMacroRatios, DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import { MacroPills } from "@/components/MacroPills"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
+import { cardStyle } from "@/theme/helpers"
+import { overlays } from "@/theme/tokens"
+import { withAlpha } from "@/utils/color"
 
 type Props = {
   nutrients: FoodNutrients
@@ -188,15 +191,10 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
-      borderRadius: 0,
+      ...cardStyle(colors),
       paddingHorizontal: spacing.md,
       paddingVertical: 12,
-      borderWidth: 1.5,
-      borderColor: colors.border,
       marginBottom: spacing.sm,
-      boxShadow: "none",
-      elevation: 0,
     },
     topRow: {
       flexDirection: "row",
@@ -241,18 +239,18 @@ const createStyles = (colors: ColorPalette) =>
       height: 8,
       flexDirection: "row",
       overflow: "hidden",
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
       marginBottom: 10,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       boxShadow: "none",
       elevation: 0,
     },
     barSegment: {
       height: "100%",
-      borderTopWidth: 1.5,
-      borderTopColor: "rgba(255,255,255,0.22)",
+      borderTopWidth: borders.width,
+      borderTopColor: overlays.highlight,
     },
     macroGrid: {
       flexDirection: "row",
@@ -272,7 +270,7 @@ const createStyles = (colors: ColorPalette) =>
     macroDot: {
       width: 6,
       height: 6,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.border,
     },
     macroLabel: {
@@ -299,7 +297,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     microSection: {
       marginTop: 8,
-      borderTopWidth: 1.5,
+      borderTopWidth: borders.width,
       borderTopColor: colors.border,
       paddingTop: 4,
     },
@@ -308,9 +306,9 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       paddingVertical: 6,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: "transparent",
-      borderRadius: 0,
+      borderRadius: radii.none,
       paddingHorizontal: 4,
     },
     expandTogglePressed: {
@@ -335,8 +333,8 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       paddingVertical: 5,
-      borderBottomWidth: 1,
-      borderBottomColor: `${colors.border}30`,
+      borderBottomWidth: borders.widthThin,
+      borderBottomColor: withAlpha(colors.border, 0.18),
     },
     microLabel: {
       fontSize: 12,

@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react"
+import { borders } from "@/theme"
 import { Feather } from "@expo/vector-icons"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
@@ -66,7 +67,7 @@ export function EmptyState({
       style={
         isWide
           ? {
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
               backgroundColor: colors.surface,
             }

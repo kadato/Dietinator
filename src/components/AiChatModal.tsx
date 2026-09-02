@@ -30,7 +30,7 @@ import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 
 function formatTime(iso: string): string {
@@ -68,9 +68,9 @@ function ToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_calls"] }) {
           key={`${call.id}-${index}`}
           className="flex-row items-center gap-1 rounded-none border bg-background-50 px-2 py-0.5"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: colors.surface,
             boxShadow: "none",
             elevation: 0,
@@ -148,9 +148,9 @@ function AiChatModalContent() {
               className="max-w-full rounded-none border px-3.5 py-2.5"
               style={{
                 backgroundColor: colors.primary,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.primary,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 boxShadow: "none",
                 elevation: 0,
               }}
@@ -197,9 +197,9 @@ function AiChatModalContent() {
             className="h-8 w-8 shrink-0 items-center justify-center rounded-none border"
             style={{
               backgroundColor: colors.surfaceAlt,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               boxShadow: "none",
               elevation: 0,
             }}
@@ -212,10 +212,10 @@ function AiChatModalContent() {
               maxWidth: compact ? "82%" : "78%",
               alignSelf: "flex-start",
               flexShrink: 1,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: item.is_error ? withAlpha(colors.danger, 0.35) : colors.border,
               backgroundColor: item.is_error ? withAlpha(colors.danger, 0.08) : colors.surface,
-              borderRadius: 0,
+              borderRadius: radii.none,
               boxShadow: "none",
               elevation: 0,
             }}
@@ -270,9 +270,9 @@ function AiChatModalContent() {
       <Box
         className="h-20 w-20 items-center justify-center rounded-none border bg-primary-500/10"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: `${colors.primary}10`,
           boxShadow: "none",
           elevation: 0,
@@ -281,9 +281,9 @@ function AiChatModalContent() {
         <Box
           className="h-14 w-14 items-center justify-center rounded-none border bg-primary-500/15"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: `${colors.primary}18`,
             boxShadow: "none",
             elevation: 0,
@@ -331,9 +331,9 @@ function AiChatModalContent() {
             accessibilityLabel={chip.label}
             className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surface,
             }}
           >
@@ -376,9 +376,9 @@ function AiChatModalContent() {
               accessibilityLabel={`Preset: ${preset.title}`}
               className="w-[calc(50%-4px)] max-w-[240px] rounded-none border bg-background-50 p-3 active:opacity-80"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surface,
                 boxShadow: "none",
                 elevation: 0,
@@ -388,9 +388,9 @@ function AiChatModalContent() {
                 <Box
                   className="h-8 w-8 items-center justify-center rounded-none border bg-primary-500/15"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     boxShadow: "none",
                     elevation: 0,
                   }}
@@ -428,10 +428,10 @@ function AiChatModalContent() {
     <Box
       className="mx-4 mt-3 flex-row items-center gap-3 rounded-none border px-3.5 py-3"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: withAlpha(colors.warning, 0.35),
         backgroundColor: withAlpha(colors.warning, 0.08),
-        borderRadius: 0,
+        borderRadius: radii.none,
         boxShadow: "none",
         elevation: 0,
       }}
@@ -463,9 +463,9 @@ function AiChatModalContent() {
         accessibilityLabel="Open AI settings"
         className="rounded-none border bg-warning-500 px-3 py-1.5 active:opacity-80"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.warning,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: colors.warning,
           boxShadow: "none",
           elevation: 0,
@@ -492,9 +492,9 @@ function AiChatModalContent() {
       <Box
         className="mx-4 mb-3 rounded-none border bg-background-50 p-4"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: colors.surface,
           boxShadow: "none",
           elevation: 0,
@@ -525,9 +525,9 @@ function AiChatModalContent() {
             accessibilityLabel="Approve assistant changes"
             className="flex-1 items-center rounded-none border bg-primary-500 py-2.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.primary,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.primary,
               boxShadow: "none",
               elevation: 0,
@@ -552,9 +552,9 @@ function AiChatModalContent() {
             accessibilityLabel="Decline assistant changes"
             className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surfaceAlt,
               boxShadow: "none",
               elevation: 0,
@@ -592,9 +592,9 @@ function AiChatModalContent() {
               className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
               style={{
                 backgroundColor: colors.primaryOverlay,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 boxShadow: "none",
                 elevation: 0,
               }}
@@ -640,9 +640,9 @@ function AiChatModalContent() {
               style={[
                 {
                   backgroundColor: colors.primaryOverlay,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   boxShadow: "none",
                   elevation: 0,
                 },
@@ -662,9 +662,9 @@ function AiChatModalContent() {
               style={[
                 {
                   backgroundColor: colors.primaryOverlay,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   boxShadow: "none",
                   elevation: 0,
                 },
@@ -713,7 +713,7 @@ function AiChatModalContent() {
             paddingBottom: safeBottom + 12,
             borderTopWidth: 1.5,
             borderTopColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
           }}
         >
           <Box className="flex-row items-end gap-2">
@@ -724,9 +724,9 @@ function AiChatModalContent() {
               accessibilityLabel="Close AI chat"
               className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-70"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surfaceAlt,
                 boxShadow: "none",
                 elevation: 0,
@@ -738,9 +738,9 @@ function AiChatModalContent() {
               className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
               style={{
                 minHeight: 44,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surfaceAlt,
                 boxShadow: "none",
                 elevation: 0,
@@ -771,9 +771,9 @@ function AiChatModalContent() {
                 accessibilityLabel="Stop generating"
                 className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.surfaceAlt,
                   boxShadow: "none",
                   elevation: 0,
@@ -793,9 +793,9 @@ function AiChatModalContent() {
                 style={[
                   {
                     backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: canSend ? colors.primary : colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     boxShadow: "none",
                     elevation: 0,
                   },
@@ -843,8 +843,8 @@ function AiChatModalContent() {
                   width: "100%",
                   maxWidth: 720,
                   height: "100%",
-                  borderRadius: 0,
-                  borderWidth: 1.5,
+                  borderRadius: radii.none,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   boxShadow: "none",
                   elevation: 0,
@@ -859,7 +859,12 @@ function AiChatModalContent() {
             accessibilityViewIsModal={true}
             style={[
               shell.sheet,
-              { backgroundColor: colors.surface, borderRadius: 0, boxShadow: "none", elevation: 0 },
+              {
+                backgroundColor: colors.surface,
+                borderRadius: radii.none,
+                boxShadow: "none",
+                elevation: 0,
+              },
             ]}
           >
             {chat}

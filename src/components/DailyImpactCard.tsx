@@ -6,7 +6,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { formatThousands } from "@/utils/format"
 import { DAILY_RECOMMENDED_INTAKE } from "@/utils/nutrients"
 import type { AppSettings, FoodNutrients } from "@/types"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 
 type Props = {
   currentDayNutrients: FoodNutrients
@@ -452,8 +452,8 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.md,
       marginBottom: spacing.sm,
@@ -471,8 +471,8 @@ const createStyles = (colors: ColorPalette) =>
     headerIconBox: {
       width: 22,
       height: 22,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: `${colors.primary}14`,
       alignItems: "center",
@@ -500,8 +500,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     calorieHero: {
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.sm,
       marginBottom: spacing.sm,
@@ -551,8 +551,8 @@ const createStyles = (colors: ColorPalette) =>
     calorieBadge: {
       paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
       flexShrink: 0,
@@ -570,8 +570,8 @@ const createStyles = (colors: ColorPalette) =>
     heroBarTrack: {
       height: 10,
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
@@ -581,7 +581,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     heroBarSegment: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
       borderTopWidth: 1.5,
       borderTopColor: "rgba(255,255,255,0.22)",
     },
@@ -590,7 +590,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     macroRow: {
       gap: 4,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     macroRowHeader: {
       flexDirection: "row",
@@ -607,14 +607,14 @@ const createStyles = (colors: ColorPalette) =>
     dot: {
       width: 6,
       height: 6,
-      borderRadius: 0,
-      borderWidth: 1,
+      borderRadius: radii.none,
+      borderWidth: borders.widthThin,
     },
     iconBox: {
       width: 20,
       height: 20,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       alignItems: "center",
       justifyContent: "center",
       boxShadow: "none",
@@ -665,8 +665,8 @@ const createStyles = (colors: ColorPalette) =>
     budgetBadge: {
       paddingHorizontal: 6,
       paddingVertical: 1.5,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
     },
@@ -681,8 +681,8 @@ const createStyles = (colors: ColorPalette) =>
     barTrack: {
       height: 9,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
@@ -691,7 +691,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     barSegment: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
       borderTopWidth: 1.5,
       borderTopColor: "rgba(255,255,255,0.22)",
     },
@@ -706,7 +706,7 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: spacing.xs,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     accordionPressed: {
       opacity: 0.7,
@@ -732,7 +732,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     microRow: {
       gap: 2,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     microHeader: {
       flexDirection: "row",
@@ -769,8 +769,8 @@ const createStyles = (colors: ColorPalette) =>
     microBarTrack: {
       height: 8,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       overflow: "hidden",
       flexDirection: "row",
@@ -780,7 +780,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     microBarSegment: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
       borderTopWidth: 1.5,
       borderTopColor: "rgba(255,255,255,0.22)",
     },

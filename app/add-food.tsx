@@ -47,7 +47,7 @@ import { useApp } from "@/context/AppContext"
 import { useLayout } from "@/hooks/useLayout"
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useToast } from "@/context/ToastContext"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 
 /**
@@ -455,7 +455,7 @@ export default function AddFoodScreen() {
                       borderWidth: isFavorite ? 1.5 : 0,
                       borderColor: colors.warning,
                       padding: 6,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                     }}
                   >
                     <MaterialCommunityIcons
@@ -677,9 +677,9 @@ const createStyles = (colors: ColorPalette) =>
     mealChip: {
       paddingHorizontal: spacing.md,
       paddingVertical: 7,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surface,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     mealChipSelected: {
@@ -701,8 +701,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     portionCard: {
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.md,
       gap: spacing.sm,
@@ -737,9 +737,9 @@ const createStyles = (colors: ColorPalette) =>
     chip: {
       paddingHorizontal: spacing.sm + 4,
       paddingVertical: 7,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     chipSelected: {
@@ -772,9 +772,9 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: 7,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     multiplierText: {

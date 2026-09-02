@@ -12,7 +12,7 @@ import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 import type { MealType } from "@/types"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { usePressedState } from "@/hooks/usePressedState"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -85,9 +85,9 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
           accessibilityViewIsModal={true}
           className="w-full max-w-[420px] self-center rounded-none bg-background-50 p-4"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: colors.surface,
           }}
         >
@@ -114,10 +114,10 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                 style={{
                   width: 40,
                   height: 40,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: prevPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -139,10 +139,10 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                   height: 40,
                   paddingHorizontal: 12,
                   gap: 6,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: calPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -176,10 +176,10 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                 style={{
                   width: 40,
                   height: 40,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: nextPress.pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -199,9 +199,9 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                   onPressOut={press.onPressOut}
                   className="flex-row items-center gap-3.5 rounded-none border px-3 py-3"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     backgroundColor: press.pressed ? colors.surfaceAlt : colors.surface,
                   }}
                   accessibilityRole="button"
@@ -212,8 +212,8 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                     style={{
                       backgroundColor: `${colors[slot]}22`,
                       borderColor: `${colors[slot]}55`,
-                      borderWidth: 1.5,
-                      borderRadius: 0,
+                      borderWidth: borders.width,
+                      borderRadius: radii.none,
                     }}
                   >
                     <MaterialCommunityIcons

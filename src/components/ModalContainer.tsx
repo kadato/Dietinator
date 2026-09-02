@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { borders } from "@/theme"
 import type { ReactNode } from "react"
 import { Platform, Pressable, StatusBar } from "react-native"
 import { Box } from "@ui/box"
@@ -118,7 +119,7 @@ export function ModalContainer({
         style={{
           maxWidth,
           backgroundColor: colors.surface,
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
           elevation: 0,
         }}

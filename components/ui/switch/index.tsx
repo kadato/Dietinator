@@ -3,6 +3,7 @@ import React from "react"
 import { Pressable, View } from "react-native"
 import { tva } from "@gluestack-ui/utils/nativewind-utils"
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
+import { borders, radii } from "@/theme"
 
 /**
  * Field-terminal toggle. The No Pill Rule bans the capsule switch, so this
@@ -73,8 +74,8 @@ function SquareSwitchImpl(
           height: TRACK_H,
           alignItems: "flex-start",
           justifyContent: "center",
-          borderWidth: 1.5,
-          borderRadius: 0,
+          borderWidth: borders.width,
+          borderRadius: radii.none,
           padding: 2,
         }}
         className={
@@ -85,7 +86,7 @@ function SquareSwitchImpl(
           style={{
             width: THUMB,
             height: THUMB - 1,
-            borderRadius: 0,
+            borderRadius: radii.none,
             transform: [{ translateX: value ? travel : 0 }],
           }}
           className={value ? "bg-typography-white" : "bg-outline-300"}

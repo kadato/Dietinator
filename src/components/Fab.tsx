@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { borders } from "@/theme"
 import { Pressable, StyleSheet } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useReduceMotion } from "@/hooks/useReduceMotion"
@@ -117,7 +118,7 @@ export function Fab({
         shape,
         {
           backgroundColor: bg,
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: tone === "surface" ? colors.border : bg,
         },
         pressed ? pressedStyle : styles.idle,

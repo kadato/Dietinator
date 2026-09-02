@@ -24,7 +24,7 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { getWeightEntryForDate, saveWeightEntry } from "@/db/weight"
 import { isImperial, parseWeightInput } from "@/utils/units"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -125,8 +125,8 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             width: "100%",
             maxWidth: 420,
             maxHeight: "75%",
-            borderRadius: 0,
-            borderWidth: 1.5,
+            borderRadius: radii.none,
+            borderWidth: borders.width,
             borderColor: colors.border,
             elevation: 0,
             flexShrink: 1,
@@ -137,9 +137,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: `${colors.primary}14`,
               elevation: 0,
             }}
@@ -213,9 +213,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             <Box
               className="mt-3 flex-row items-center justify-between rounded-none border bg-primary-500/10 px-4 py-3"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 elevation: 0,
               }}
             >
@@ -351,9 +351,9 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 0,
+      borderRadius: radii.none,
       padding: spacing.md,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       elevation: 0,
     },

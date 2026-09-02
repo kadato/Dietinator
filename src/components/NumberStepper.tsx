@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { usePressedState } from "@/hooks/usePressedState"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 
 type NumberStepperProps = {
   value: string
@@ -198,16 +198,16 @@ const createStyles = (colors: ColorPalette) =>
     btn: {
       width: 44,
       height: 44,
-      borderRadius: 0,
+      borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       boxShadow: "none",
       elevation: 0,
     },
-    btnSm: { width: 36, height: 36, borderRadius: 0 },
+    btnSm: { width: 36, height: 36, borderRadius: radii.none },
     btnDisabled: { opacity: 0.4 },
     btnPressed: { opacity: 0.7 },
     input: {
@@ -217,8 +217,8 @@ const createStyles = (colors: ColorPalette) =>
       minWidth: 0,
       height: 44,
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       paddingVertical: 0,
       paddingHorizontal: spacing.md,

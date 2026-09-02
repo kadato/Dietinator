@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react"
+import { radii } from "@/theme"
 import { Animated, Easing, Platform, StyleSheet, View } from "react-native"
 import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
@@ -95,11 +96,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   trackStatic: {
-    borderRadius: 0,
+    borderRadius: radii.none,
     backgroundColor: "transparent",
   },
   arc: {
-    borderRadius: 0,
+    borderRadius: radii.none,
     backgroundColor: "transparent",
   },
   loadingContainer: {

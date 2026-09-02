@@ -24,7 +24,7 @@ import { formatTimeHM } from "@/utils/format"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -62,7 +62,11 @@ function ToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_calls"] }) {
         <Box
           key={`${call.id}-${index}`}
           className="flex-row items-center gap-1 rounded-none border bg-background-50 px-2 py-0.5"
-          style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+          style={{
+            borderWidth: borders.width,
+            borderColor: colors.border,
+            borderRadius: radii.none,
+          }}
         >
           <Feather name="tool" size={11} color={colors.textMuted} />
           <Text
@@ -155,9 +159,9 @@ export default function AiScreen() {
               className="max-w-full rounded-none border px-3.5 py-2.5"
               style={{
                 backgroundColor: colors.primary,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.primary,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 boxShadow: "none",
                 elevation: 0,
               }}
@@ -195,9 +199,9 @@ export default function AiScreen() {
             style={{
               // Ink carries chrome. The violet accent is reserved for data.
               backgroundColor: colors.primary,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
             }}
           >
             <Feather name="cpu" size={14} color={colors.onPrimary} />
@@ -208,8 +212,8 @@ export default function AiScreen() {
               maxWidth: compact ? "82%" : "78%",
               alignSelf: "flex-start",
               flexShrink: 1,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
               boxShadow: "none",
               elevation: 0,
               ...(item.is_error
@@ -263,18 +267,18 @@ export default function AiScreen() {
       <Box
         className="h-20 w-20 items-center justify-center rounded-none border"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: withAlpha(colors.primary, 0.08),
         }}
       >
         <Box
           className="h-14 w-14 items-center justify-center rounded-none border"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: withAlpha(colors.primary, 0.12),
           }}
         >
@@ -314,9 +318,9 @@ export default function AiScreen() {
             accessibilityLabel={chip.label}
             className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surface,
             }}
           >
@@ -351,9 +355,9 @@ export default function AiScreen() {
               accessibilityLabel={`Preset: ${preset.title}`}
               className="w-[calc(50%-4px)] max-w-[240px] rounded-none border bg-background-50 p-3 active:opacity-80"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.surface,
                 boxShadow: "none",
                 elevation: 0,
@@ -363,9 +367,9 @@ export default function AiScreen() {
                 <Box
                   className="h-8 w-8 items-center justify-center rounded-none border"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     backgroundColor: withAlpha(colors.primary, 0.12),
                   }}
                 >
@@ -402,10 +406,10 @@ export default function AiScreen() {
     <Box
       className="mx-4 mt-3 flex-row items-center gap-3 rounded-none border px-3.5 py-3"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: withAlpha(colors.warning, 0.35),
         backgroundColor: withAlpha(colors.warning, 0.08),
-        borderRadius: 0,
+        borderRadius: radii.none,
       }}
     >
       <Feather name="key" size={18} color={colors.warning} />
@@ -434,9 +438,9 @@ export default function AiScreen() {
         accessibilityLabel="Open AI settings"
         className="rounded-none border bg-warning-500 px-3 py-1.5 active:opacity-80"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.warning,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: colors.warning,
         }}
       >
@@ -457,9 +461,9 @@ export default function AiScreen() {
       <Box
         className="mx-4 mb-3 rounded-none border bg-background-50 p-4"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: colors.surface,
         }}
       >
@@ -488,9 +492,9 @@ export default function AiScreen() {
             accessibilityLabel="Approve assistant changes"
             className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.primary,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.primary,
             }}
           >
@@ -509,9 +513,9 @@ export default function AiScreen() {
             accessibilityLabel="Decline assistant changes"
             className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surface,
             }}
           >
@@ -553,9 +557,9 @@ export default function AiScreen() {
                 className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
                 style={{
                   backgroundColor: colors.primaryOverlay,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                 }}
               >
                 <Feather name="cpu" size={20} color={colors.onPrimary} />
@@ -594,9 +598,9 @@ export default function AiScreen() {
                 style={[
                   {
                     backgroundColor: colors.primaryOverlay,
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                   },
                   ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
                 ]}
@@ -630,7 +634,7 @@ export default function AiScreen() {
               <Box
                 className="rounded-none border bg-background-50 p-4"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   backgroundColor: colors.surface,
                 }}
@@ -639,7 +643,7 @@ export default function AiScreen() {
                   <Box
                     className="h-9 w-9 items-center justify-center rounded-none border"
                     style={{
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
                       backgroundColor: withAlpha(colors.primary, 0.12),
                     }}
@@ -673,7 +677,7 @@ export default function AiScreen() {
                       accessibilityLabel={`Preset: ${preset.title}`}
                       className="rounded-none border bg-background-50 p-3 active:opacity-80"
                       style={{
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: colors.border,
                         backgroundColor: colors.surface,
                       }}
@@ -682,7 +686,7 @@ export default function AiScreen() {
                         <Box
                           className="h-7 w-7 items-center justify-center rounded-none border"
                           style={{
-                            borderWidth: 1,
+                            borderWidth: borders.widthThin,
                             borderColor: colors.border,
                             backgroundColor: withAlpha(colors.primary, 0.1),
                           }}
@@ -717,7 +721,7 @@ export default function AiScreen() {
               <Box
                 className="rounded-none border bg-background-50 p-3"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   backgroundColor: colors.surface,
                 }}
@@ -739,7 +743,7 @@ export default function AiScreen() {
                     <Box key={k} className="flex-row items-center justify-between">
                       <Box
                         className="rounded-none border bg-background-100 px-1.5 py-0.5"
-                        style={{ borderWidth: 1, borderColor: colors.border }}
+                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                       >
                         <Text
                           size="2xs"
@@ -768,7 +772,7 @@ export default function AiScreen() {
                 flex: 1,
                 minWidth: 0,
                 alignSelf: "stretch",
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
                 backgroundColor: colors.surface,
                 flexDirection: "column",
@@ -788,7 +792,7 @@ export default function AiScreen() {
                         <Box
                           className="h-16 w-16 items-center justify-center rounded-none border"
                           style={{
-                            borderWidth: 1.5,
+                            borderWidth: borders.width,
                             borderColor: colors.border,
                             backgroundColor: withAlpha(colors.primary, 0.08),
                           }}
@@ -840,9 +844,9 @@ export default function AiScreen() {
                       className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
                       style={{
                         minHeight: 44,
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: colors.border,
-                        borderRadius: 0,
+                        borderRadius: radii.none,
                         backgroundColor: colors.surface,
                         boxShadow: "none",
                         elevation: 0,
@@ -876,9 +880,9 @@ export default function AiScreen() {
                         accessibilityLabel="Stop generating"
                         className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
                         style={{
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: colors.border,
-                          borderRadius: 0,
+                          borderRadius: radii.none,
                           backgroundColor: colors.surface,
                           boxShadow: "none",
                           elevation: 0,
@@ -898,9 +902,9 @@ export default function AiScreen() {
                         style={[
                           {
                             backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                            borderWidth: 1.5,
+                            borderWidth: borders.width,
                             borderColor: canSend ? colors.primary : colors.border,
-                            borderRadius: 0,
+                            borderRadius: radii.none,
                             boxShadow: "none",
                             elevation: 0,
                           },
@@ -957,9 +961,9 @@ export default function AiScreen() {
                   className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
                   style={{
                     minHeight: 44,
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     backgroundColor: colors.surface,
                     boxShadow: "none",
                     elevation: 0,
@@ -991,9 +995,9 @@ export default function AiScreen() {
                     accessibilityLabel="Stop generating"
                     className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
                     style={{
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                       backgroundColor: colors.surface,
                     }}
                   >
@@ -1011,9 +1015,9 @@ export default function AiScreen() {
                     style={[
                       {
                         backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: canSend ? colors.primary : colors.border,
-                        borderRadius: 0,
+                        borderRadius: radii.none,
                         boxShadow: "none",
                         elevation: 0,
                       },

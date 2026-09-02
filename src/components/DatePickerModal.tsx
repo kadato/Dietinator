@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { parseDateKey, toDateKey } from "@/utils/date"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
@@ -147,7 +147,7 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
                   ? { backgroundColor: colors.primary, borderColor: colors.primary }
                   : isToday
                     ? {
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: colors.primary,
                         backgroundColor: "transparent",
                       }
@@ -218,8 +218,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     sheet: {
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.md,
       width: "100%",
@@ -231,15 +231,15 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       marginBottom: spacing.sm,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     navBtn: {
       width: 40,
       height: 40,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       elevation: 0,
@@ -282,8 +282,8 @@ const createStyles = (colors: ColorPalette) =>
       aspectRatio: 1.05,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: "transparent",
       elevation: 0,
     },
@@ -301,8 +301,8 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
       marginTop: spacing.sm,
       paddingVertical: 12,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.primary,
       backgroundColor: colors.primary,
       elevation: 0,

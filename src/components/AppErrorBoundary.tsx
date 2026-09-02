@@ -1,7 +1,7 @@
 import React from "react"
 import { Appearance, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
-import { darkColors, lightColors, spacing, fonts, type ColorPalette } from "@/theme"
+import { darkColors, lightColors, spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 
 type Props = {
   children: React.ReactNode
@@ -72,9 +72,9 @@ const createStyles = (colors: ColorPalette) =>
       height: 56,
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surface,
       boxShadow: "none",
       elevation: 0,
@@ -104,8 +104,8 @@ const createStyles = (colors: ColorPalette) =>
       alignSelf: "stretch",
       marginVertical: spacing.sm,
       padding: spacing.sm,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surface,
       boxShadow: "none",
@@ -122,8 +122,8 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.primary,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm + 2,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.primary,
       boxShadow: "none",
       elevation: 0,

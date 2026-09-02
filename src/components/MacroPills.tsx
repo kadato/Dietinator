@@ -219,14 +219,14 @@ const styles = StyleSheet.create({
   },
   cardItemNormal: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: borders.widthThin,
     paddingHorizontal: 7,
     paddingVertical: 8,
     minHeight: 56,
   },
   cardItemDominant: {
     flex: 1.45,
-    borderWidth: 1.5,
+    borderWidth: borders.width,
     paddingHorizontal: 9,
     paddingVertical: 12,
     minHeight: 74,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: radii.none,
-    borderWidth: 1,
+    borderWidth: borders.widthThin,
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "none",
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   cardIconBoxDominant: {
     width: 22,
     height: 22,
-    borderWidth: 1.5,
+    borderWidth: borders.width,
   },
   cardLabel: {
     fontSize: 11,

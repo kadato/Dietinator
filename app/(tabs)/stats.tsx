@@ -32,7 +32,7 @@ import { computeAdherence, computeLogStreak } from "@/utils/adherence"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { confirmAction } from "@/utils/confirm"
 import type { WeightEntry } from "@/types"
-import { spacing, fonts } from "@/theme"
+import { spacing, fonts, borders } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -353,7 +353,7 @@ export default function StatsScreen() {
                 <Box
                   key={s}
                   className="rounded-none border bg-background-50 px-1.5 py-0.5"
-                  style={{ borderWidth: 1, borderColor: colors.border }}
+                  style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                 >
                   <Text size="2xs" bold style={{ fontFamily: fonts.mono }}>
                     {s}
@@ -379,7 +379,7 @@ export default function StatsScreen() {
               <Box className="flex-row items-center gap-2.5">
                 <Box
                   className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                  style={{ borderWidth: 1.5, borderColor: colors.border }}
+                  style={{ borderWidth: borders.width, borderColor: colors.border }}
                 >
                   <Feather name="cloud-off" size={18} color={colors.danger} />
                 </Box>
@@ -419,7 +419,7 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center gap-2.5">
                   <Box
                     className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
@@ -436,7 +436,7 @@ export default function StatsScreen() {
                 <Box className="mt-3 flex-row gap-3">
                   <Box
                     className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Box className="flex-row items-center gap-1">
                       <Feather name="zap" size={14} color={colors.warning} />
@@ -450,7 +450,7 @@ export default function StatsScreen() {
                   </Box>
                   <Box
                     className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.loggedDays}
@@ -461,7 +461,7 @@ export default function StatsScreen() {
                   </Box>
                   <Box
                     className="flex-1 items-center rounded-none border bg-background-50 py-3"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Text size="lg" bold className="font-tabular text-typography-900">
                       {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "No data"}
@@ -478,7 +478,7 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center gap-2.5">
                   <Box
                     className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Feather name="activity" size={18} color={colors.primary} />
                   </Box>
@@ -554,7 +554,7 @@ export default function StatsScreen() {
                     </Box>
                     <View
                       className="h-2 overflow-hidden rounded-none border bg-background-100"
-                      style={{ borderWidth: 1, borderColor: colors.border }}
+                      style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                       accessibilityRole="progressbar"
                       accessibilityLabel="Goal progress"
                       accessibilityValue={{
@@ -595,7 +595,7 @@ export default function StatsScreen() {
                 {selectedWeight ? (
                   <Box
                     className="mt-3 flex-row flex-wrap items-center gap-2 rounded-none border bg-background-50 px-3 py-2.5"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Feather name="map-pin" size={15} color={colors.primary} />
                     <Box className="min-w-[120px] flex-1">
@@ -665,7 +665,7 @@ export default function StatsScreen() {
                   <Box className="flex-row items-center gap-2.5">
                     <Box
                       className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                      style={{ borderWidth: 1.5, borderColor: colors.border }}
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
                     >
                       <Feather name="zap" size={18} color={colors.primary} />
                     </Box>
@@ -721,7 +721,7 @@ export default function StatsScreen() {
                   <Box className="flex-row items-center gap-2.5">
                     <Box
                       className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                      style={{ borderWidth: 1.5, borderColor: colors.border }}
+                      style={{ borderWidth: borders.width, borderColor: colors.border }}
                     >
                       <Feather name="pie-chart" size={18} color={colors.primary} />
                     </Box>
@@ -799,7 +799,7 @@ export default function StatsScreen() {
                       <Box
                         className="flex-1 items-center rounded-none border p-2.5"
                         style={{
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: colors.border,
                           backgroundColor: `${colors.breakfast}15`,
                         }}
@@ -817,7 +817,7 @@ export default function StatsScreen() {
                       <Box
                         className="flex-1 items-center rounded-none border p-2.5"
                         style={{
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: colors.border,
                           backgroundColor: `${colors.lunch}15`,
                         }}
@@ -835,7 +835,7 @@ export default function StatsScreen() {
                       <Box
                         className="flex-1 items-center rounded-none border p-2.5"
                         style={{
-                          borderWidth: 1.5,
+                          borderWidth: borders.width,
                           borderColor: colors.border,
                           backgroundColor: `${colors.dinner}15`,
                         }}
@@ -860,7 +860,7 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center gap-2.5">
                   <Box
                     className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: 1.5, borderColor: colors.border }}
+                    style={{ borderWidth: borders.width, borderColor: colors.border }}
                   >
                     <Feather name="droplet" size={18} color={colors.primary} />
                   </Box>

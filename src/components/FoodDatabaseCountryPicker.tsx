@@ -17,7 +17,7 @@ import {
   normalizeFoodDatabaseCountry,
 } from "@/utils/food-database-country"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 
 type CountryOption = { code: string; label: string }
 
@@ -130,7 +130,7 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       marginBottom: spacing.sm,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     title: {
       fontSize: 16,
@@ -147,9 +147,9 @@ const createStyles = (colors: ColorPalette) =>
       height: 32,
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
       boxShadow: "none",
       elevation: 0,
@@ -169,8 +169,8 @@ const createStyles = (colors: ColorPalette) =>
     },
     search: {
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.sm,
       marginBottom: spacing.md,
@@ -187,8 +187,8 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       paddingVertical: spacing.md,
       paddingHorizontal: spacing.sm,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: "transparent",
       marginBottom: 2,
       boxShadow: "none",

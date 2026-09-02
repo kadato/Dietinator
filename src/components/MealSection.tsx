@@ -9,7 +9,7 @@ import { formatMacro } from "@/utils/format"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { useTheme } from "@/hooks/useTheme"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 
 type Props = {
   mealType: MealType
@@ -56,7 +56,7 @@ export const MealSection = memo(function MealSection({
   return (
     <Box
       className="meal-card mb-2.5 overflow-hidden rounded-none border bg-background-50 p-0"
-      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
     >
       <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />
       {/* Header: icon + title on one line, kcal + add on the right. */}
@@ -79,8 +79,8 @@ export const MealSection = memo(function MealSection({
             style={{
               backgroundColor: `${accent}14`,
               borderColor: colors.border,
-              borderWidth: 1.5,
-              borderRadius: 0,
+              borderWidth: borders.width,
+              borderRadius: radii.none,
             }}
           >
             <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />
@@ -142,9 +142,9 @@ export const MealSection = memo(function MealSection({
           <View
             className="w-full overflow-hidden rounded-none border bg-background-100"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               height: 6,
             }}
           >
@@ -169,10 +169,10 @@ export const MealSection = memo(function MealSection({
             <View
               className="rounded-none border px-2 py-0.5"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: overKcal ? colors.danger : accent,
                 backgroundColor: overKcal ? `${colors.danger}14` : `${accent}14`,
-                borderRadius: 0,
+                borderRadius: radii.none,
               }}
             >
               <Text

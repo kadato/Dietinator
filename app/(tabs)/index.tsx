@@ -37,7 +37,7 @@ import { formatThousands } from "@/utils/format"
 import { MEAL_TYPES } from "@/utils/meals"
 import { useLayout } from "@/hooks/useLayout"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing, layout, fonts } from "@/theme"
+import { spacing, layout, fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Card } from "@ui/card"
@@ -395,10 +395,10 @@ export default function TodayScreen() {
     <Box
       className="mb-3 border bg-background-50 px-3 py-3"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: colors.border,
         borderStyle: "solid",
-        borderRadius: 0,
+        borderRadius: radii.none,
         backgroundColor: colors.surface,
       }}
     >
@@ -416,10 +416,10 @@ export default function TodayScreen() {
                 style={{
                   width: compact ? 38 : 42,
                   height: compact ? 38 : 42,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -442,10 +442,10 @@ export default function TodayScreen() {
                   height: compact ? 38 : 42,
                   paddingHorizontal: compact ? 10 : 14,
                   gap: 6,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -482,10 +482,10 @@ export default function TodayScreen() {
                 style={{
                   width: compact ? 38 : 42,
                   height: compact ? 38 : 42,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -499,10 +499,10 @@ export default function TodayScreen() {
               className="flex-row items-center justify-center gap-1.5 px-2.5"
               style={{
                 height: compact ? 38 : 42,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.warning,
                 borderStyle: "solid",
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: `${colors.warning}18`,
               }}
               accessibilityRole="text"
@@ -539,10 +539,10 @@ export default function TodayScreen() {
                 style={{
                   width: compact ? 38 : 42,
                   height: compact ? 38 : 42,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
                 }}
               >
@@ -571,10 +571,10 @@ export default function TodayScreen() {
               height: 42,
               paddingHorizontal: 16,
               gap: 8,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
               borderStyle: "solid",
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
             }}
           >
@@ -597,7 +597,7 @@ export default function TodayScreen() {
     <Card
       variant="elevated"
       className="mb-3 overflow-hidden border p-0"
-      style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
     >
       <Box className="items-center pt-6">
         <CalorieRing
@@ -642,7 +642,7 @@ export default function TodayScreen() {
     <Box className={`mb-3 flex-row ${compact ? "gap-2" : "gap-2.5"}`}>
       <Box
         className={`min-w-0 flex-1 flex-row items-center rounded-none border bg-background-50 ${compact ? "p-2" : "p-2.5"}`}
-        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+        style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
       >
         <Pressable
           onPress={() => setLogWaterOpen(true)}
@@ -657,9 +657,9 @@ export default function TodayScreen() {
             style={{
               width: 44,
               height: 44,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: `${colors.primary}12`,
             }}
           >
@@ -685,9 +685,9 @@ export default function TodayScreen() {
           style={{
             minHeight: 44,
             height: 44,
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.primary,
-            borderRadius: 0,
+            borderRadius: radii.none,
           }}
           accessibilityRole="button"
           accessibilityLabel="Quick add 250ml water"
@@ -712,7 +712,7 @@ export default function TodayScreen() {
       <Pressable
         onPress={() => setLogWeightOpen(true)}
         className={`min-w-0 flex-1 cursor-pointer rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
-        style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+        style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
         accessibilityRole="button"
         accessibilityLabel={
           displayedWeight != null
@@ -726,9 +726,9 @@ export default function TodayScreen() {
             style={{
               width: 44,
               height: 44,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: `${colors.primary}12`,
             }}
           >
@@ -769,9 +769,9 @@ export default function TodayScreen() {
                       flex: 1,
                       height: h,
                       backgroundColor: isLast ? colors.primary : `${colors.primary}55`,
-                      borderWidth: 1,
+                      borderWidth: borders.widthThin,
                       borderColor: isLast ? colors.primary : `${colors.primary}40`,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                     }}
                   />
                 )
@@ -828,7 +828,11 @@ export default function TodayScreen() {
                 {isLarge ? (
                   <Box
                     className="hidden rounded-none border bg-background-50 p-3 lg:flex"
-                    style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                    style={{
+                      borderWidth: borders.width,
+                      borderColor: colors.border,
+                      borderRadius: radii.none,
+                    }}
                   >
                     <Text
                       size="2xs"
@@ -841,7 +845,7 @@ export default function TodayScreen() {
                     <Box className="mt-2.5 flex-row gap-2">
                       <Box
                         className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
-                        style={{ borderWidth: 1, borderColor: colors.border }}
+                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                       >
                         <Text
                           size="lg"
@@ -862,7 +866,7 @@ export default function TodayScreen() {
                       </Box>
                       <Box
                         className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
-                        style={{ borderWidth: 1, borderColor: colors.border }}
+                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                       >
                         <Text
                           size="lg"
@@ -899,10 +903,10 @@ export default function TodayScreen() {
                   <Box
                     className="mb-3 flex-row items-center gap-2 border px-4 py-3"
                     style={{
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.primary,
                       backgroundColor: `${colors.primary}10`,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                     }}
                     accessibilityRole="text"
                     accessibilityLabel="Your diary is empty. Tap Log food to start"
@@ -945,10 +949,10 @@ export default function TodayScreen() {
                 <Box
                   className="mb-3 flex-row items-center gap-2 border px-4 py-3"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.primary,
                     backgroundColor: `${colors.primary}10`,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                   }}
                   accessibilityRole="text"
                   accessibilityLabel="Your diary is empty. Tap Log food to start"
@@ -985,7 +989,7 @@ export default function TodayScreen() {
             position: "absolute",
             bottom: isLarge ? 96 : 88,
             right: 24,
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
             backgroundColor: colors.surface,
             paddingHorizontal: 12,
@@ -1030,7 +1034,7 @@ export default function TodayScreen() {
               width: "100%",
               maxWidth: 420,
               backgroundColor: colors.surface,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
               padding: 16,
               gap: 12,
@@ -1057,7 +1061,7 @@ export default function TodayScreen() {
                 <Box key={k} className="flex-row items-center justify-between gap-4">
                   <Box
                     className="rounded-none border bg-background-100 px-2 py-1"
-                    style={{ borderWidth: 1, borderColor: colors.border }}
+                    style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
                   >
                     <Text size="xs" bold style={{ fontFamily: fonts.mono }}>
                       {k}

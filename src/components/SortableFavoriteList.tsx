@@ -17,7 +17,7 @@ import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
 import { MacroPills } from "@/components/MacroPills"
-import { spacing, fonts } from "@/theme"
+import { spacing, fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -147,9 +147,9 @@ function SortableItem({
       <Box
         className="flex-row items-center bg-background-50 px-3 py-3"
         style={{
-          borderWidth: 1.5,
+          borderWidth: borders.width,
           borderColor: colors.border,
-          borderRadius: 0,
+          borderRadius: radii.none,
           backgroundColor: colors.surface,
           boxShadow: "none",
           elevation: 0,
@@ -174,9 +174,9 @@ function SortableItem({
           <Box
             className="mr-3 h-10 w-10 shrink-0 items-center justify-center bg-background-100"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surfaceAlt,
               boxShadow: "none",
               elevation: 0,
@@ -337,8 +337,8 @@ const styles = StyleSheet.create({
   moveBtn: {
     width: 32,
     height: 32,
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "none",

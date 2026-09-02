@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useNetwork } from "@/context/NetworkContext"
 import { useTheme } from "@/hooks/useTheme"
-import { fonts } from "@/theme"
+import { fonts, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -32,7 +32,7 @@ export function OfflineBanner({
         borderWidth: 0,
         borderBottomWidth: 1.5,
         borderColor: colors.border,
-        borderRadius: 0,
+        borderRadius: radii.none,
         boxShadow: "none",
         elevation: 0,
         // On headerless screens the banner is the topmost element, so it

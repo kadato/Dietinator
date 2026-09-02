@@ -1,4 +1,5 @@
 import { memo } from "react"
+import { borders } from "@/theme"
 import { ActivityIndicator, Pressable, View } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { FoodNutrients, Meal } from "@/types"
@@ -41,7 +42,7 @@ export const MealListItem = memo(function MealListItem({
     <Box
       className="mb-2.5 flex-row items-center gap-2 rounded-none bg-background-50 px-4 py-3.5"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: colors.border,
         borderLeftWidth: 3,
         borderLeftColor: accent,

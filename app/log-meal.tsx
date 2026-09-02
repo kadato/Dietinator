@@ -52,7 +52,7 @@ import { MealListItem } from "@/components/MealListItem"
 import { MacroPills } from "@/components/MacroPills"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useLayout } from "@/hooks/useLayout"
 
 type FoodCategory = "foods" | "meals"
@@ -1053,8 +1053,8 @@ const createStyles = (colors: ColorPalette) =>
     headerCloseBtn: {
       width: 32,
       height: 32,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surface,
       alignItems: "center",
@@ -1064,7 +1064,7 @@ const createStyles = (colors: ColorPalette) =>
     mealIconBox: {
       width: 28,
       height: 28,
-      borderRadius: 0,
+      borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1094,8 +1094,8 @@ const createStyles = (colors: ColorPalette) =>
     moreBtn: {
       width: 36,
       height: 36,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
@@ -1117,8 +1117,8 @@ const createStyles = (colors: ColorPalette) =>
       gap: 3,
       paddingVertical: 7,
       paddingHorizontal: 2,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
     },
     tabItemActive: {},
     tabItemInactive: {
@@ -1147,10 +1147,10 @@ const createStyles = (colors: ColorPalette) =>
       left: 6,
       width: 28,
       height: 28,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
+      borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
       zIndex: 1,
@@ -1158,8 +1158,8 @@ const createStyles = (colors: ColorPalette) =>
     searchInput: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       paddingVertical: spacing.sm,
       paddingLeft: 42,
       paddingRight: spacing.xl,
@@ -1178,7 +1178,7 @@ const createStyles = (colors: ColorPalette) =>
       height: 28,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     loader: { marginVertical: spacing.sm },
     loaderWrap: {
@@ -1200,7 +1200,7 @@ const createStyles = (colors: ColorPalette) =>
       marginHorizontal: spacing.md,
       marginBottom: spacing.md,
       paddingVertical: spacing.md,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.primary,
     },
     newMealText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
@@ -1208,15 +1208,15 @@ const createStyles = (colors: ColorPalette) =>
       marginHorizontal: spacing.md,
       marginBottom: spacing.sm,
       maxHeight: 260,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surface,
       overflow: "hidden",
     },
     loggedWrap: {
       padding: spacing.md,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surface,
       maxHeight: 260,
     },
@@ -1226,7 +1226,7 @@ const createStyles = (colors: ColorPalette) =>
     },
     loggedWrapCompact: {
       padding: spacing.sm,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surface,
     },
     loggedCollapsedBarCompact: {
@@ -1348,7 +1348,7 @@ const createStyles = (colors: ColorPalette) =>
     loggedIconWrap: {
       width: 40,
       height: 40,
-      borderRadius: 0,
+      borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1372,7 +1372,7 @@ const createStyles = (colors: ColorPalette) =>
     miniChip: {
       paddingHorizontal: 5,
       paddingVertical: 1,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     miniChipText: {
       fontSize: 11,
@@ -1386,8 +1386,8 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       gap: 6,
     },
@@ -1412,8 +1412,8 @@ const createStyles = (colors: ColorPalette) =>
     dayBudgetBadge: {
       paddingHorizontal: 8,
       paddingVertical: 2,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     dayBudgetBadgeText: {
@@ -1432,7 +1432,7 @@ const createStyles = (colors: ColorPalette) =>
     loggedIconBtn: {
       width: 32,
       height: 32,
-      borderRadius: 0,
+      borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -1467,9 +1467,9 @@ const createStyles = (colors: ColorPalette) =>
       gap: 4,
       paddingHorizontal: 10,
       paddingVertical: 5,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     reorderBtnText: {

@@ -9,6 +9,7 @@ import { formatNumber } from "@/utils/format"
 import { getFoodIcon } from "@/utils/food-icon"
 import { fonts, borders, radii, type ColorPalette } from "@/theme"
 import { chipTint } from "@/theme.helpers"
+import { withAlpha } from "@/utils/color"
 
 type Props = {
   entry: DiaryEntry
@@ -112,10 +113,10 @@ const createStyles = (colors: ColorPalette) =>
       gap: 10,
       paddingVertical: 8,
       paddingHorizontal: 6,
-      borderRadius: 0,
+      borderRadius: radii.none,
       borderWidth: 0,
-      borderBottomWidth: 1,
-      borderBottomColor: `${colors.border}14`,
+      borderBottomWidth: borders.widthThin,
+      borderBottomColor: withAlpha(colors.border, 0.08),
       boxShadow: "none",
       elevation: 0,
       overflow: "hidden",
@@ -126,10 +127,10 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 10,
-      borderRadius: 0,
+      borderRadius: radii.none,
       paddingVertical: 4,
       paddingHorizontal: 2,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: "transparent",
       boxShadow: "none",
       elevation: 0,
@@ -181,8 +182,8 @@ const createStyles = (colors: ColorPalette) =>
     miniChip: {
       paddingHorizontal: 3,
       paddingVertical: 1,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
     },
     miniChipText: {

@@ -14,7 +14,7 @@ import { getApkAsset } from "@/services/updates"
 import { Markdown } from "@/components/Markdown"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useTheme } from "@/hooks/useTheme"
-import { spacing, fonts } from "@/theme"
+import { spacing, fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Button, ButtonSpinner, ButtonText } from "@ui/button"
@@ -118,7 +118,7 @@ export function UpdateDialog({
               maxWidth: 560,
               maxHeight: dialogMaxHeight,
               backgroundColor: colors.surface,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
               overflow: "hidden",
               flexShrink: 1,
@@ -133,9 +133,9 @@ export function UpdateDialog({
               <Box
                 className="h-11 w-11 items-center justify-center bg-primary-500/15"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: `${colors.primary}14`,
                   boxShadow: "none",
                   elevation: 0,
@@ -175,9 +175,9 @@ export function UpdateDialog({
                 hitSlop={12}
                 className="p-1"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.surfaceAlt,
                   width: 36,
                   height: 36,
@@ -255,7 +255,11 @@ export function UpdateDialog({
                   className="min-w-0 flex-1"
                   onPress={onClose}
                   isDisabled={downloading}
-                  style={{ borderRadius: 0, borderWidth: 1.5, borderColor: colors.border }}
+                  style={{
+                    borderRadius: radii.none,
+                    borderWidth: borders.width,
+                    borderColor: colors.border,
+                  }}
                 >
                   <ButtonText
                     numberOfLines={1}
@@ -275,8 +279,8 @@ export function UpdateDialog({
                     onPress={onDownload}
                     isDisabled={downloading}
                     style={{
-                      borderRadius: 0,
-                      borderWidth: 1.5,
+                      borderRadius: radii.none,
+                      borderWidth: borders.width,
                       borderColor: colors.primary,
                       boxShadow: "none",
                       elevation: 0,

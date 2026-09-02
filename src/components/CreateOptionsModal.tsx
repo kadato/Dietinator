@@ -12,7 +12,7 @@ import type { ColorPalette } from "@/theme"
 import type { MealType } from "@/types"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 
 type CreateOption = {
   id: string
@@ -106,9 +106,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
           accessibilityViewIsModal={true}
           className="w-full max-w-[420px] self-center rounded-none border bg-background-50 p-5"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: colors.surface,
             boxShadow: "none",
             elevation: 0,
@@ -156,9 +156,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                   <Box
                     className="flex-row items-center gap-3.5 rounded-none border p-3.5"
                     style={{
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                       backgroundColor: colors.surface,
                       boxShadow: "none",
                       elevation: 0,
@@ -168,9 +168,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                       className="h-11 w-11 items-center justify-center rounded-none border"
                       style={{
                         backgroundColor: withAlpha(tint, 0.14),
-                        borderWidth: 1.5,
+                        borderWidth: borders.width,
                         borderColor: colors.border,
-                        borderRadius: 0,
+                        borderRadius: radii.none,
                         boxShadow: "none",
                         elevation: 0,
                       }}

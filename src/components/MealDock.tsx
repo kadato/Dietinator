@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useReduceMotion } from "@/hooks/useReduceMotion"
 import { useTheme } from "@/hooks/useTheme"
-import { layout } from "@/theme"
+import { layout, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
 
 type DockSlot = {
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
     flexBasis: "0%",
     minWidth: 0,
     minHeight: 56,
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     alignItems: "center",
     justifyContent: "center",
     gap: 3,

@@ -1,6 +1,6 @@
 import { Pressable, View } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
 
 type Option<T extends string> = { value: T; label: string }
@@ -25,9 +25,9 @@ export function SegmentedControl<T extends string>({
     <View
       className="flex-row gap-1 border bg-background-100 p-1"
       style={{
-        borderWidth: 1.5,
+        borderWidth: borders.width,
         borderColor: colors.border,
-        borderRadius: 0,
+        borderRadius: radii.none,
         backgroundColor: colors.surfaceAlt,
         boxShadow: "none",
         elevation: 0,
@@ -41,9 +41,9 @@ export function SegmentedControl<T extends string>({
             className="flex-1 items-center px-3 py-2"
             style={{
               backgroundColor: active ? accent : "transparent",
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: active ? accent : "transparent",
-              borderRadius: 0,
+              borderRadius: radii.none,
               // No opacity dimming on inactive segments: it dragged the
               // textMuted label under 4.5:1 on surfaceAlt. The accent fill
               // and border already mark the active segment.

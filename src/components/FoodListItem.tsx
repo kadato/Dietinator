@@ -8,7 +8,8 @@ import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
 import { MacroPills } from "@/components/MacroPills"
-import { fonts } from "@/theme"
+import { fonts, borders, radii } from "@/theme"
+import { chipTint, cardStyle } from "@/theme/helpers"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 
@@ -118,14 +119,9 @@ export const FoodListItem = memo(function FoodListItem({
     <Box
       className="mx-3 mb-2 flex-row items-center rounded-none bg-background-50 px-3 py-2.5"
       style={{
-        borderWidth: 1.5,
-        borderColor: colors.border,
+        ...cardStyle(colors),
         borderLeftWidth: 3,
         borderLeftColor: accent,
-        borderRadius: 0,
-        backgroundColor: colors.surface,
-        boxShadow: "none",
-        elevation: 0,
       }}
     >
       <Pressable
@@ -137,10 +133,10 @@ export const FoodListItem = memo(function FoodListItem({
         <Box
           className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-none bg-background-100"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: colors.border,
-            borderRadius: 0,
-            backgroundColor: `${accent}14`,
+            borderRadius: radii.none,
+            backgroundColor: chipTint(accent),
             boxShadow: "none",
             elevation: 0,
           }}
@@ -225,9 +221,9 @@ export const FoodListItem = memo(function FoodListItem({
             hitSlop={6}
             className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surfaceAlt,
               boxShadow: "none",
               elevation: 0,
@@ -248,9 +244,9 @@ export const FoodListItem = memo(function FoodListItem({
             hitSlop={6}
             className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: colors.surfaceAlt,
               boxShadow: "none",
               elevation: 0,
@@ -275,9 +271,9 @@ export const FoodListItem = memo(function FoodListItem({
             className="ml-2 flex-row items-center justify-center rounded-none px-2.5 py-1.5 active:opacity-85"
             style={{
               backgroundColor: accent,
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: accent,
-              borderRadius: 0,
+              borderRadius: radii.none,
               minHeight: 34,
               minWidth: 44,
               boxShadow: "none",
@@ -333,9 +329,9 @@ export const FoodListItem = memo(function FoodListItem({
             hitSlop={12}
             className="p-1 pl-2"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: "transparent",
-              borderRadius: 0,
+              borderRadius: radii.none,
               backgroundColor: "transparent",
               boxShadow: "none",
               elevation: 0,
@@ -357,9 +353,9 @@ export const FoodListItem = memo(function FoodListItem({
           hitSlop={12}
           className="p-1 pl-2"
           style={{
-            borderWidth: 1.5,
+            borderWidth: borders.width,
             borderColor: "transparent",
-            borderRadius: 0,
+            borderRadius: radii.none,
             backgroundColor: "transparent",
             boxShadow: "none",
             elevation: 0,

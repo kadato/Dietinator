@@ -31,7 +31,7 @@ import { useSafeBack } from "@/hooks/useSafeBack"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
@@ -53,9 +53,9 @@ const cameraStyles = StyleSheet.create({
   frame: {
     width: FRAME_SIZE,
     height: FRAME_SIZE,
-    borderRadius: 0,
+    borderRadius: radii.none,
     overflow: "hidden",
-    borderWidth: 1.5,
+    borderWidth: borders.width,
     borderColor: "rgba(255,255,255,0.9)",
   },
   corner: {
@@ -86,7 +86,7 @@ const cameraStyles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    borderRadius: 0,
+    borderRadius: radii.none,
     opacity: 0.8,
     pointerEvents: "none",
   },
@@ -96,8 +96,8 @@ const cameraStyles = StyleSheet.create({
     gap: 6,
     marginTop: 16,
     backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 0,
-    borderWidth: 1.5,
+    borderRadius: radii.none,
+    borderWidth: borders.width,
     borderColor: "rgba(255,255,255,0.25)",
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -348,9 +348,9 @@ export default function ScanScreen() {
               className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
               style={{
                 backgroundColor: `${colors.primary}1a`,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.border,
-                borderRadius: 0,
+                borderRadius: radii.none,
               }}
             >
               <MaterialCommunityIcons name="barcode-scan" size={36} color={colors.primary} />
@@ -365,7 +365,11 @@ export default function ScanScreen() {
                 size="lg"
                 variant="outline"
                 className="mb-4 rounded-none border bg-background-50"
-                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
               >
                 <InputField
                   placeholder="4000539012345"
@@ -393,7 +397,11 @@ export default function ScanScreen() {
                   variant="outline"
                   action="secondary"
                   className="mt-3 rounded-none border"
-                  style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                  style={{
+                    borderWidth: borders.width,
+                    borderColor: colors.border,
+                    borderRadius: radii.none,
+                  }}
                   onPress={confirmNotFound}
                 >
                   <ButtonText
@@ -460,7 +468,11 @@ export default function ScanScreen() {
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <Box
             className="h-20 w-20 items-center justify-center rounded-none border bg-background-50"
-            style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+            style={{
+              borderWidth: borders.width,
+              borderColor: colors.border,
+              borderRadius: radii.none,
+            }}
           >
             <Feather name="camera" size={32} color={colors.primary} />
           </Box>
@@ -475,9 +487,9 @@ export default function ScanScreen() {
                 onPress={() => Linking.openSettings()}
                 className="rounded-none border"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.primary,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.primary,
                 }}
               >
@@ -499,9 +511,9 @@ export default function ScanScreen() {
               onPress={requestPermission}
               className="rounded-none border"
               style={{
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.primary,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 backgroundColor: colors.primary,
               }}
             >
@@ -556,9 +568,9 @@ export default function ScanScreen() {
                 className="h-16 w-16 items-center justify-center rounded-none border"
                 style={{
                   backgroundColor: `${colors.warning}22`,
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                 }}
               >
                 <Feather name="alert-triangle" size={28} color={colors.warning} />
@@ -569,7 +581,11 @@ export default function ScanScreen() {
                 variant="outline"
                 action="secondary"
                 className="mt-4 rounded-none border"
-                style={{ borderWidth: 1.5, borderColor: colors.border, borderRadius: 0 }}
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.border,
+                  borderRadius: radii.none,
+                }}
                 onPress={confirmNotFound}
               >
                 <ButtonText
@@ -669,7 +685,7 @@ const createStyles = (colors: ColorPalette) =>
     linkBtn: {
       marginTop: spacing.md,
       padding: spacing.sm,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: "transparent",
     },
     linkBtnText: {
@@ -705,8 +721,8 @@ const createStyles = (colors: ColorPalette) =>
       alignSelf: "flex-start",
       paddingHorizontal: spacing.lg,
       paddingVertical: 10,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.primary,
       backgroundColor: colors.primary,
     },
@@ -726,11 +742,11 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      borderRadius: 0,
+      borderRadius: radii.none,
       paddingLeft: spacing.md,
       paddingRight: spacing.sm,
       paddingVertical: spacing.sm,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
     },
     headerTitleWrap: {
       flexDirection: "row",
@@ -748,8 +764,8 @@ const createStyles = (colors: ColorPalette) =>
     closeBtn: {
       width: 32,
       height: 32,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surfaceAlt,
       alignItems: "center",
@@ -793,8 +809,8 @@ const createStyles = (colors: ColorPalette) =>
     overlayCard: {
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       padding: spacing.lg,
       minWidth: 200,

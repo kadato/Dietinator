@@ -25,7 +25,7 @@ import { addWaterEntry, deleteWaterEntry, getWaterEntriesForDate } from "@/db/wa
 import type { WaterEntry } from "@/types"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { formatWaterAmount } from "@/utils/units"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -125,8 +125,8 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             width: "100%",
             maxWidth: 420,
             maxHeight: "75%",
-            borderRadius: 0,
-            borderWidth: 1.5,
+            borderRadius: radii.none,
+            borderWidth: borders.width,
             borderColor: colors.border,
             elevation: 0,
             flexShrink: 1,
@@ -138,9 +138,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               elevation: 0,
             }}
           >
@@ -184,9 +184,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           <Box
             className="my-3 items-center rounded-none border bg-primary-500/10 px-4 py-3"
             style={{
-              borderWidth: 1.5,
+              borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: 0,
+              borderRadius: radii.none,
               elevation: 0,
             }}
           >
@@ -235,9 +235,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 accessibilityLabel={`Add ${amount} ml of water`}
                 className="min-w-[76px] flex-1 items-center rounded-none border bg-primary-500 px-3 py-2.5 active:opacity-80"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.primary,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.primary,
                   elevation: 0,
                 }}
@@ -280,9 +280,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               className="h-10 items-center justify-center rounded-none border px-4"
               style={{
                 backgroundColor: colors.primary,
-                borderWidth: 1.5,
+                borderWidth: borders.width,
                 borderColor: colors.primary,
-                borderRadius: 0,
+                borderRadius: radii.none,
                 opacity: saving || !(Number(customMl) > 0) ? 0.5 : 1,
                 elevation: 0,
               }}
@@ -296,9 +296,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               <Box
                 className="h-10 w-10 items-center justify-center rounded-none border"
                 style={{
-                  borderWidth: 1.5,
+                  borderWidth: borders.width,
                   borderColor: colors.border,
-                  borderRadius: 0,
+                  borderRadius: radii.none,
                   backgroundColor: colors.surfaceAlt,
                   elevation: 0,
                 }}
@@ -326,9 +326,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   key={entry.id}
                   className="mb-1.5 flex-row items-center rounded-none border bg-background-50 px-3 py-2.5"
                   style={{
-                    borderWidth: 1.5,
+                    borderWidth: borders.width,
                     borderColor: colors.border,
-                    borderRadius: 0,
+                    borderRadius: radii.none,
                     backgroundColor: colors.surface,
                     elevation: 0,
                   }}
@@ -348,9 +348,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                     className="h-8 w-8 items-center justify-center rounded-none border"
                     style={{
                       backgroundColor: `${colors.danger}14`,
-                      borderWidth: 1.5,
+                      borderWidth: borders.width,
                       borderColor: colors.border,
-                      borderRadius: 0,
+                      borderRadius: radii.none,
                       elevation: 0,
                     }}
                     accessibilityRole="button"
@@ -448,9 +448,9 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderRadius: 0,
+      borderRadius: radii.none,
       padding: spacing.md,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       elevation: 0,
     },
@@ -462,14 +462,14 @@ const createStyles = (colors: ColorPalette) =>
       height: 6,
       width: "80%",
       backgroundColor: colors.surfaceAlt,
-      borderRadius: 0,
-      borderWidth: 1.5,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
       borderColor: colors.border,
       overflow: "hidden",
       elevation: 0,
     },
     progressFill: {
       height: "100%",
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
   })

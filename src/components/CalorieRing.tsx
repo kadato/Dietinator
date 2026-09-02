@@ -4,7 +4,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { formatThousands } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
-import { spacing, fonts, type ColorPalette } from "@/theme"
+import { spacing, fonts, type ColorPalette, radii } from "@/theme"
 
 type Props = {
   consumed: number
@@ -163,7 +163,7 @@ const createStyles = (colors: ColorPalette) =>
       padding: spacing.lg,
       paddingBottom: spacing.sm,
       alignItems: "center",
-      borderRadius: 0,
+      borderRadius: radii.none,
       borderWidth: 0,
       boxShadow: "none",
       elevation: 0,
@@ -184,7 +184,7 @@ const createStyles = (colors: ColorPalette) =>
       left: 0,
       right: 0,
       bottom: 0,
-      borderRadius: 0,
+      borderRadius: radii.none,
       boxShadow: "none",
       elevation: 0,
     },
@@ -223,7 +223,7 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
       gap: spacing.md,
       marginTop: spacing.md,
-      borderRadius: 0,
+      borderRadius: radii.none,
     },
     statPill: {
       flexDirection: "row",
@@ -257,7 +257,7 @@ const createStyles = (colors: ColorPalette) =>
     dot: {
       width: 4,
       height: 4,
-      borderRadius: 0,
+      borderRadius: radii.none,
       backgroundColor: colors.border,
       borderWidth: 0,
     },

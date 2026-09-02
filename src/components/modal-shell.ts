@@ -1,8 +1,9 @@
 import { Platform, StatusBar, StyleSheet } from "react-native"
 import type { ColorPalette } from "@/theme"
+import { borders, spacing, overlays } from "@/theme/tokens"
 
 /** Dim level every overlay dialog (water, weight, AI chat) uses. */
-export const MODAL_BACKDROP = "rgba(0, 0, 0, 0.45)"
+export const MODAL_BACKDROP = overlays.backdrop
 
 /**
  * Top safe-area value for full-bleed dialogs. The provider's insets can be 0
@@ -37,13 +38,13 @@ export function createModalShellStyles(colors: ColorPalette) {
       width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 16,
-      paddingHorizontal: 16,
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.lg,
       pointerEvents: "box-none",
     },
     dialogBox: {
       backgroundColor: colors.surface,
-      borderWidth: 1.5,
+      borderWidth: borders.width,
       borderColor: colors.border,
       overflow: "hidden",
     },
