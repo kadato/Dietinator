@@ -20,6 +20,7 @@ type Props = {
   onAdd: (mealType: MealType) => void
   onEdit: (entryId: string) => void
   onDelete: (id: string) => void
+  onUpdateAmount?: (id: string, amount: number) => Promise<void>
 }
 
 export const MealSection = memo(function MealSection({
@@ -30,6 +31,7 @@ export const MealSection = memo(function MealSection({
   onAdd,
   onEdit,
   onDelete,
+  onUpdateAmount,
 }: Props) {
   const { colors } = useTheme()
   // Collapsed by default on all devices so the diary is scannable.
@@ -269,6 +271,7 @@ export const MealSection = memo(function MealSection({
               accentColor={accent}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onUpdateAmount={onUpdateAmount}
             />
           ))}
         </Box>
