@@ -53,29 +53,32 @@ const MacroCompareRow = memo(function MacroCompareRow({
           <Text style={[styles.macroLabel, { color }]}>{label}</Text>
         </View>
 
-        <View style={styles.valueGroup}>
-          <Text style={styles.transitionText} numberOfLines={1}>
-            {Math.round(current)}g <Text style={styles.arrowText}>→</Text>{" "}
-            <Text style={styles.projectedText}>{Math.round(projected)}g</Text>{" "}
-            <Text style={[styles.addedText, { color }]}>[+{Math.round(added)}g]</Text>
-          </Text>
+        <Text style={styles.macroProjected} numberOfLines={1}>
+          {Math.round(projected)}g
+          {goal > 0 ? <Text style={styles.macroGoal}> of {Math.round(goal)}g</Text> : null}
+        </Text>
+      </View>
 
-          {goal > 0 ? (
-            <View
-              style={[
-                styles.budgetBadge,
-                {
-                  backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
-                  borderColor: over > 0 ? colors.danger : color,
-                },
-              ]}
-            >
-              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
-                {over > 0 ? `+${Math.round(over)} over` : `${Math.round(remaining)} left`}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+      <View style={styles.macroSubRow}>
+        <Text style={styles.macroSub} numberOfLines={1}>
+          Today {Math.round(current)} + this {Math.round(added)}
+        </Text>
+
+        {goal > 0 ? (
+          <View
+            style={[
+              styles.budgetBadge,
+              {
+                backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
+                borderColor: over > 0 ? colors.danger : color,
+              },
+            ]}
+          >
+            <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
+              {over > 0 ? `+${Math.round(over)} over` : `${Math.round(remaining)} left`}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {goal > 0 ? (
@@ -232,11 +235,18 @@ export const DailyImpactCard = memo(function DailyImpactCard({
       <View style={styles.calorieHero}>
         <View style={styles.calorieTopRow}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.heroLabel}>Daily Calories</Text>
-            <Text style={styles.heroTransition} numberOfLines={1} adjustsFontSizeToFit>
-              {formatThousands(currentKcal)} <Text style={styles.arrowText}>→</Text>{" "}
-              <Text style={styles.heroProjected}>{formatThousands(projectedKcal)}</Text>{" "}
-              <Text style={styles.heroAdded}>[+{formatThousands(addedKcal)} kcal]</Text>
+            <Text style={styles.heroLabel}>After logging</Text>
+            <Text
+              style={styles.heroBig}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {formatThousands(projectedKcal)} <Text style={styles.heroBigUnit}>kcal</Text>
+            </Text>
+            <Text style={styles.heroSub} numberOfLines={2}>
+              Today {formatThousands(currentKcal)} + this {formatThousands(addedKcal)}
+              {goalKcal > 0 ? ` · goal ${formatThousands(goalKcal)}` : ""}
             </Text>
           </View>
 
@@ -250,8 +260,8 @@ export const DailyImpactCard = memo(function DailyImpactCard({
                       ? colors.danger
                       : colors.primary
                     : overKcal
-                      ? `${colors.danger}14`
-                      : `${colors.primary}14`,
+                      ? `${colors.danger}20`
+                      : `${colors.primary}20`,
                   borderColor: overKcal ? colors.danger : colors.primary,
                 },
               ]}
@@ -269,8 +279,8 @@ export const DailyImpactCard = memo(function DailyImpactCard({
                 ]}
               >
                 {overKcal
-                  ? `+${formatThousands(overKcal)} kcal over`
-                  : `${formatThousands(remainingKcal ?? 0)} kcal left`}
+                  ? `+${formatThousands(overKcal)} over`
+                  : `${formatThousands(remainingKcal ?? 0)} left`}
               </Text>
             </View>
           ) : null}
@@ -454,7 +464,7 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.surface,
       borderRadius: radii.none,
       borderWidth: borders.width,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       padding: spacing.md,
       marginBottom: spacing.sm,
       boxShadow: "none",
@@ -499,11 +509,11 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     calorieHero: {
-      backgroundColor: colors.surfaceAlt,
+      backgroundColor: `${colors.primary}14`,
       borderRadius: radii.none,
       borderWidth: borders.width,
-      borderColor: colors.border,
-      padding: spacing.sm,
+      borderColor: colors.primary,
+      padding: spacing.md,
       marginBottom: spacing.sm,
       boxShadow: "none",
       elevation: 0,
@@ -520,48 +530,49 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.textMuted,
       fontWeight: "700",
       textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.6,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
-    heroTransition: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: colors.text,
-      fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
-      marginTop: 2,
-    },
-    heroProjected: {
-      fontSize: 15,
+    heroBig: {
+      fontSize: 28,
       fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      letterSpacing: 0.2,
+      marginTop: 2,
     },
-    heroAdded: {
-      fontSize: 11,
-      fontWeight: "700",
-      color: colors.primary,
+    heroBigUnit: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+    },
+    heroSub: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      marginTop: 2,
     },
     calorieBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 3,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
       borderRadius: radii.none,
       borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
       flexShrink: 0,
       alignSelf: "flex-start",
-      maxWidth: "42%",
+      maxWidth: "44%",
     },
     calorieBadgeText: {
-      fontSize: 11,
-      fontWeight: "700",
+      fontSize: 12,
+      fontWeight: "800",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
@@ -628,39 +639,41 @@ const createStyles = (colors: ColorPalette) =>
       textTransform: "uppercase",
       letterSpacing: 0.4,
     },
-    valueGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      flexShrink: 1,
-      flexWrap: "wrap",
-      justifyContent: "flex-end",
-      maxWidth: "58%",
-    },
-    transitionText: {
-      fontSize: 11,
-      fontWeight: "600",
+    macroProjected: {
+      fontSize: 14,
+      fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
+      flexShrink: 1,
+      textAlign: "right",
+    },
+    macroGoal: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+    },
+    macroSubRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.xs,
+    },
+    macroSub: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      flex: 1,
+      minWidth: 0,
     },
     arrowText: {
       color: colors.textMuted,
       fontSize: 11,
       fontFamily: fonts.mono,
-    },
-    projectedText: {
-      fontWeight: "700",
-      color: colors.text,
-      fontFamily: fonts.mono,
-    },
-    addedText: {
-      fontSize: 11,
-      fontWeight: "700",
-      fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
     },
     budgetBadge: {
       paddingHorizontal: 6,
