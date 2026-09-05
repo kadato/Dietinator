@@ -37,15 +37,12 @@ import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { NumberStepper } from "@/components/NumberStepper"
 import { PageContainer } from "@/components/PageContainer"
 import { ModalContainer } from "@/components/ModalContainer"
-import { Fab } from "@/components/Fab"
-import { FabCluster } from "@/components/FabCluster"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useApp } from "@/context/AppContext"
 import { useLayout } from "@/hooks/useLayout"
-import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useToast } from "@/context/ToastContext"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
@@ -137,7 +134,6 @@ export default function AddFoodScreen() {
   const { isWide } = useLayout()
   const { showError, showWarning } = useToast()
   const insets = useSafeAreaInsets()
-  const keyboardOpen = useKeyboardVisible()
   const params = useLocalSearchParams<{
     meal: string
     date: string
@@ -407,7 +403,6 @@ export default function AddFoodScreen() {
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`
 
   const TOP_OFFSET = 44
-  const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
   const safeTop = baseTop + TOP_OFFSET
 
@@ -420,10 +415,7 @@ export default function AddFoodScreen() {
       <ModalContainer maxWidth={560} topOffset={TOP_OFFSET}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: spacing.sm, paddingBottom: safeBottom + 96 },
-          ]}
+          contentContainerStyle={[styles.content, { paddingTop: spacing.sm }]}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -497,115 +489,128 @@ export default function AddFoodScreen() {
               </View>
             ) : null}
 
-            {/* Compact Portion and Serving Controls - above the fold for thumb reach */}
-            <View style={styles.portionCard}>
-              <View style={styles.portionHeaderRow}>
-                <Text style={styles.portionTitle}>Portion and Serving</Text>
-                <Text style={styles.unitBadge}>Base unit: {displayUnit(unit)}</Text>
-              </View>
-
-              {/* Serving Unit Chips */}
-              {servingOptions.length > 0 ? (
-                <View style={styles.servingBlock}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.servingRow}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {servingOptions.map((option) => {
-                      const key = `${option.serving}-${option.amount}`
-                      const selected = key === selectedServingKey
-                      return (
-                        <Pressable
-                          key={key}
-                          style={[styles.chip, selected && styles.chipSelected]}
-                          onPress={() => selectServing(option)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
-                          accessibilityState={{ selected }}
-                        >
-                          <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                            {formatServingOption(option, unit)}
-                          </Text>
-                        </Pressable>
-                      )
-                    })}
-                  </ScrollView>
-                </View>
-              ) : null}
-
-              {/* Amount Stepper Control */}
-              <View style={styles.stepperContainer}>
-                <NumberStepper
-                  value={amount}
-                  onChangeText={(text) => {
-                    amountTouched.current = true
-                    setAmount(text)
-                  }}
-                  onSubmit={() => void handleSave()}
-                  step={stepperStep}
-                  decimals={1}
-                  accessibilityLabel={`Amount in ${displayUnit(unit)}`}
-                />
-              </View>
-
-              {/* Quick Multiplier Chips */}
-              <View style={styles.multiplierRow}>
-                {[0.5, 1, 1.5, 2, 3].map((mult) => (
-                  <Pressable
-                    key={mult}
-                    onPress={() => {
-                      const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
-                      const val = Math.round(base * mult * 10) / 10
-                      amountTouched.current = true
-                      setAmount(String(val))
-                    }}
-                    style={styles.multiplierChip}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Scale to ${mult}x serving`}
-                  >
-                    <Text style={styles.multiplierText}>{mult}×</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
             {preview && (
               <View style={styles.nutritionSection}>
-                <NutritionFactsCard
-                  nutrients={preview}
-                  servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
-                  baseAmount={Number(amount) || 100}
-                  baseUnit={food.base_unit || "g"}
-                />
                 <DailyImpactCard
                   currentDayNutrients={currentDayNutrients}
                   itemNutrients={preview}
                   settings={settings}
                 />
+                <NutritionFactsCard
+                  nutrients={preview}
+                  servingLabel={formatNutrientsServingLabel(food, Number(amount) || 0)}
+                  baseAmount={Number(amount) || 100}
+                  baseUnit={food.base_unit || "g"}
+                  variant="compact"
+                />
               </View>
             )}
           </PageContainer>
         </ScrollView>
-      </ModalContainer>
 
-      {!keyboardOpen ? (
-        <FabCluster
-          bottomOffset={safeBottom + 20}
-          left={
-            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
-          }
-          right={
-            <Fab
-              icon="check"
-              onPress={handleSave}
+        {/* Bottom portion dock: exact amount, serving presets, save. Pinned
+            for thumb reach so the primary controls never scroll away. */}
+        <View style={styles.bottomDock}>
+          <View style={styles.portionCard}>
+            <View style={styles.portionHeaderRow}>
+              <Text style={styles.portionTitle}>Portion and Serving</Text>
+              <Text style={styles.unitBadge}>Base unit: {displayUnit(unit)}</Text>
+            </View>
+
+            {/* Serving Unit Chips */}
+            {servingOptions.length > 0 ? (
+              <View style={styles.servingBlock}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.servingRow}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {servingOptions.map((option) => {
+                    const key = `${option.serving}-${option.amount}`
+                    const selected = key === selectedServingKey
+                    return (
+                      <Pressable
+                        key={key}
+                        style={[styles.chip, selected && styles.chipSelected]}
+                        onPress={() => selectServing(option)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Serving: ${formatServingOption(option, unit)}`}
+                        accessibilityState={{ selected }}
+                      >
+                        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                          {formatServingOption(option, unit)}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            {/* Amount Stepper Control */}
+            <View style={styles.stepperContainer}>
+              <NumberStepper
+                value={amount}
+                onChangeText={(text) => {
+                  amountTouched.current = true
+                  setAmount(text)
+                }}
+                onSubmit={() => void handleSave()}
+                step={stepperStep}
+                decimals={1}
+                accessibilityLabel={`Amount in ${displayUnit(unit)}`}
+              />
+            </View>
+
+            {/* Quick Multiplier Chips */}
+            <View style={styles.multiplierRow}>
+              {[0.5, 1, 1.5, 2, 3].map((mult) => (
+                <Pressable
+                  key={mult}
+                  onPress={() => {
+                    const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
+                    const val = Math.round(base * mult * 10) / 10
+                    amountTouched.current = true
+                    setAmount(String(val))
+                  }}
+                  style={styles.multiplierChip}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Scale to ${mult}x serving`}
+                >
+                  <Text style={styles.multiplierText}>{mult}×</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.dockActionRow}>
+            <Pressable
+              onPress={safeBack}
+              hitSlop={8}
+              style={styles.dockBackBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Feather name="arrow-left" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => void handleSave()}
               disabled={saving}
+              hitSlop={8}
+              style={[styles.dockSaveBtn, saving && styles.dockSaveBtnDisabled]}
+              accessibilityRole="button"
               accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
-            />
-          }
-        />
-      ) : null}
+              accessibilityState={{ disabled: saving }}
+            >
+              <Feather name="check" size={20} color={colors.onPrimary} />
+              <Text style={styles.dockSaveText}>
+                {saving ? "Saving…" : isEditing ? "Update entry" : "Add to diary"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ModalContainer>
     </KeyboardAvoidingView>
   )
 }
@@ -699,6 +704,55 @@ const createStyles = (colors: ColorPalette) =>
     nutritionSection: {
       gap: spacing.xs,
     },
+    bottomDock: {
+      borderTopWidth: borders.width,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.sm,
+      gap: spacing.sm,
+    },
+    dockActionRow: {
+      flexDirection: "row",
+      alignItems: "stretch",
+      gap: spacing.sm,
+    },
+    dockBackBtn: {
+      width: 52,
+      minHeight: 52,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    dockSaveBtn: {
+      flex: 1,
+      minHeight: 52,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.primary,
+      backgroundColor: colors.primary,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    dockSaveBtnDisabled: {
+      opacity: 0.5,
+    },
+    dockSaveText: {
+      fontSize: 14,
+      fontWeight: "800",
+      color: colors.onPrimary,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
     portionCard: {
       backgroundColor: colors.surface,
       borderRadius: radii.none,
@@ -736,11 +790,14 @@ const createStyles = (colors: ColorPalette) =>
     },
     chip: {
       paddingHorizontal: spacing.sm + 4,
-      paddingVertical: 7,
+      paddingVertical: 10,
+      minHeight: 44,
       borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
       borderWidth: borders.width,
       borderColor: colors.border,
+      alignItems: "center",
+      justifyContent: "center",
     },
     chipSelected: {
       backgroundColor: colors.primary,
@@ -771,7 +828,8 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 7,
+      minHeight: 44,
+      paddingVertical: 10,
       borderRadius: radii.none,
       backgroundColor: colors.surfaceAlt,
       borderWidth: borders.width,
