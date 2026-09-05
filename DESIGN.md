@@ -25,17 +25,23 @@ text-on-background: "#0f172a"
 text-on-background-dark: "#c0caf5"
 border: "#0f172a"
 border-dark: "#6b739c"
-breakfast: "#075985"
+breakfast: "#0369a1"
 breakfast-dark: "#8db8ff"
-lunch: "#804707"
+lunch: "#92400e"
 lunch-dark: "#FFB020"
-dinner: "#96340a"
+dinner: "#be123c"
 dinner-dark: "#ff92a6"
-snack: "#0b5f5a"
+snack: "#0f766e"
 snack-dark: "#2EC4B6"
+water: "#0e7490"
+water-dark: "#38bdf8"
+weight: "#6d28d9"
+weight-dark: "#c4b5fd"
+success: "#15803d"
+success-dark: "#4ade80"
 danger: "#be123c"
 danger-dark: "#ff7a8e"
-warning: "#96610a"
+warning: "#92400e"
 warning-dark: "#e0af68"
 ink-grid: "rgba(15,23,42,0.035)"
 ink-grid-dark: "rgba(192,202,245,0.035)"
@@ -138,13 +144,13 @@ This replacement world keeps product truth, content, function, and constraints, 
 - Square strict. Every card, button, input, bar, and tab is `0` radius with a 1.5px ink rule. Tinted chips use 1px interior rules not glows.
 - Mono ledger. Departure Mono everywhere. Tabular-nums forced. Headings uppercase at 0.04 to 0.08 tracking.
 - Paper grid system. 24px graph on `#f1f5f9` light and 24px dotted void on `#1a1b26` dark at `0.035` alpha. No gradients, no blur.
-- Slate ledger. Light paper `#f1f5f9` with wells `#e2e8f0` ink `#0f172a` primary `#0b57d0`. Wong meals `075985 804707 96340a 2EC4B6` carry macros colorblind-safe at 4.5:1. Dark Tokyo Night `#1a1b26` stays.
+- Slate ledger. Light paper `#f1f5f9` with wells `#e2e8f0` ink `#0f172a` primary `#0b57d0`. Vivid meals `0369a1 92400e be123c 0f766e` plus water `0e7490` weight `6d28d9` success `15803d` carry macros colorblind-safe at 4.5:1. Dark Tokyo Night `#1a1b26` stays.
 - Thumb-first density. Tight 4 to 12 rhythm. Generous separation between groups. Bottom dock of 52 square keys for one-hand logging.
 - Flat authority. No shadows. Elevation is border weight and invert. Pressed is `scale 0.98` not lift.
 
 ## Colors
 
-Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic keeps danger and warning only.
+Vivid terminal: full palette. Neutrals carry the page, each meal and macro owns its card and bar, water and weight own hydration, streak amber owns consistency. Primary stays the action color.
 
 ### Primary
 
@@ -185,6 +191,8 @@ Restrained strategy. Neutrals carry the page, one ink carries chrome, semantic k
 **Pixel perfection.** For pixel-perfect results, set the font size to increments of 11px. Departure Mono is drawn on an 11px grid. Sizes that are multiples of 11 keep stems on device pixels and avoid half-pixel antialias smear. The scale below snaps every size to the grid: 11, 22, 33 and their halves at 11 and 22 steps. Body 14 is the compromise for readability, but tabular numerals and headings stay on the 11px grid wherever they carry measurement. On web the face is forced to `font-variant-numeric: tabular-nums` and `letter-spacing: 0` at the grid, with `text-rendering: optimizeLegibility` and no negative tracking.
 
 **Character. Terminal instrument, not decorative mono costume. Every numeral is tabular so columns hold when `1840` becomes `2012`. Headings are uppercase, tight, and crowded. Body is small and breathable at 14 and 1.5. The mono texture carries the ledger without needing color.**
+
+**Chat body exception.** Assistant messages render `Markdown` at `bodySize lg` (16 and 24) through the shared `src/components/ai-chat.tsx` bubbles. Thin pixel strokes read faint at 14, so chat is the one surface allowed bigger body copy. The tab and the modal share the bubbles and the composer from that module. A second copy is how the modal drifted gray, so new chat UI goes there.
 
 ### Hierarchy
 
@@ -285,6 +293,10 @@ Expanded rows for `DiaryEntryRow` with `38` icon `13` name `14` kcal `32` action
 ### Modal dismissal
 
 Every modal dismisses on backdrop tap and `Escape`. `ModalContainer` wide renders an absolute `Pressable` backdrop behind the centered dialog and calls `useSafeBack` via `useEscapeToClose`. `MealSlotModal` the `+` FAB sheet and `CreateOptionsModal` the three-dot sheet both use a dim `rgba(0,0,0,0.45)` `View` centered with an absolute backdrop `Pressable` and `useEscapeToClose`. The sheet `Cancel` is a boxed button `1.5px` `border` `surfaceAlt` `px-6 py-2.5` mono uppercase.
+
+### Modal header
+
+Every functional dialog takes `ModalHeader` (`src/components/ModalHeader.tsx`): a 5px accent bar on the top edge, then a tinted band with a solid accent icon well, an accent title, and a muted subtitle. Water uses water cyan, weight uses weight violet, create and pickers use primary or the target meal color. Text inside dialogs never uses gluestack gray scales. Titles are ink, secondary copy is `textMuted`, both set as explicit styles so contrast holds on native and web.
 
 ### Log meal FAB cluster
 
