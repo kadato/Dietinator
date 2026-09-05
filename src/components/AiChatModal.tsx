@@ -1,19 +1,17 @@
 import { useCallback, useMemo, useState } from "react"
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Markdown } from "@/components/Markdown"
+import { ChatMessage, ChatComposer } from "@/components/ai-chat"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { createModalShellStyles } from "@/components/modal-shell"
@@ -24,7 +22,6 @@ import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { usePressedState } from "@/hooks/usePressedState"
 import { withAlpha } from "@/utils/color"
-import { formatTimeHM } from "@/utils/format"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
 import type { AiChatMessage } from "@/types"
@@ -32,10 +29,6 @@ import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { fonts, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
-
-function formatTime(iso: string): string {
-  return formatTimeHM(iso)
-}
 
 function summaryOf(pending: PendingConfirmation[]): string {
   const parts = pending.map((item) => {
@@ -58,43 +51,6 @@ function summaryOf(pending: PendingConfirmation[]): string {
   return parts.join(", ")
 }
 
-function ToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_calls"] }) {
-  const { colors } = useTheme()
-  if (!toolCalls?.length) return null
-  return (
-    <Box className="mt-1.5 flex-row flex-wrap gap-1.5">
-      {toolCalls.map((call, index) => (
-        <Box
-          key={`${call.id}-${index}`}
-          className="flex-row items-center gap-1 rounded-none border bg-background-50 px-2 py-0.5"
-          style={{
-            borderWidth: borders.width,
-            borderColor: colors.border,
-            borderRadius: radii.none,
-            backgroundColor: colors.surface,
-            boxShadow: "none",
-            elevation: 0,
-          }}
-        >
-          <Feather name="tool" size={11} color={colors.textMuted} />
-          <Text
-            size="xs"
-            style={{
-              color: colors.textMuted,
-              fontFamily: fonts.mono,
-              fontVariant: ["tabular-nums"],
-              textTransform: "uppercase",
-              letterSpacing: 0.4,
-            }}
-          >
-            {call.name}
-          </Text>
-        </Box>
-      ))}
-    </Box>
-  )
-}
-
 export function AiChatModal() {
   const { open } = useAiChatModal()
   if (!open) return null
@@ -115,7 +71,6 @@ function AiChatModalContent() {
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
   const headerPress = usePressedState()
-  const sendPress = usePressedState()
   const compact = width < 360
 
   const configured = settings.ai_enabled === 1
@@ -139,136 +94,10 @@ function AiChatModalContent() {
     [busy, send],
   )
 
-  const renderMessage = useCallback(
-    ({ item }: { item: AiChatMessage }) => {
-      if (item.role === "user") {
-        return (
-          <Box className={`mb-3 w-full flex-row justify-end ${compact ? "pl-6" : "pl-12"}`}>
-            <Box
-              className="max-w-full rounded-none border px-3.5 py-2.5"
-              style={{
-                backgroundColor: colors.primary,
-                borderWidth: borders.width,
-                borderColor: colors.primary,
-                borderRadius: radii.none,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <Text
-                size="sm"
-                className="leading-5"
-                style={{
-                  color: colors.onPrimary,
-                  fontFamily: fonts.mono,
-                  letterSpacing: 0.2,
-                }}
-              >
-                {item.content}
-              </Text>
-              {item.created_at ? (
-                <Text
-                  size="xs"
-                  className="mt-1 text-right"
-                  style={{
-                    color: colors.onPrimaryMuted,
-                    fontFamily: fonts.mono,
-                    fontVariant: ["tabular-nums"],
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  {formatTime(item.created_at)}
-                </Text>
-              ) : null}
-            </Box>
-          </Box>
-        )
-      }
-
-      const hasToolCalls = (item.tool_calls?.length ?? 0) > 0
-      const thinking = item.content === "" && !item.is_error && !hasToolCalls
-      return (
-        <Box
-          className={`mb-3 w-full flex-row gap-2.5 ${compact ? "pr-6" : "pr-12"}`}
-          style={{ alignItems: "flex-start" }}
-        >
-          <Box
-            className="h-8 w-8 shrink-0 items-center justify-center rounded-none border"
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              boxShadow: "none",
-              elevation: 0,
-            }}
-          >
-            <Feather name="cpu" size={14} color={colors.primary} />
-          </Box>
-          <Box
-            className="rounded-none border px-3.5 py-2.5"
-            style={{
-              maxWidth: compact ? "82%" : "78%",
-              alignSelf: "flex-start",
-              flexShrink: 1,
-              borderWidth: borders.width,
-              borderColor: item.is_error ? withAlpha(colors.danger, 0.35) : colors.border,
-              backgroundColor: item.is_error ? withAlpha(colors.danger, 0.08) : colors.surface,
-              borderRadius: radii.none,
-              boxShadow: "none",
-              elevation: 0,
-            }}
-          >
-            {thinking ? (
-              <Box className="flex-row items-center gap-2 py-0.5">
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text
-                  size="sm"
-                  className="text-typography-500"
-                  style={{
-                    fontFamily: fonts.mono,
-                    fontVariant: ["tabular-nums"],
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
-                  }}
-                >
-                  Thinking…
-                </Text>
-              </Box>
-            ) : (
-              <>
-                <Markdown
-                  source={item.content || (item.is_error ? "The assistant ran into an error." : "")}
-                />
-                <ToolChips toolCalls={item.tool_calls} />
-                {item.created_at ? (
-                  <Text
-                    size="xs"
-                    className="mt-1.5 text-typography-400"
-                    style={{
-                      fontFamily: fonts.mono,
-                      fontVariant: ["tabular-nums"],
-                      textTransform: "uppercase",
-                      letterSpacing: 0.4,
-                    }}
-                  >
-                    {formatTime(item.created_at)}
-                  </Text>
-                ) : null}
-              </>
-            )}
-          </Box>
-        </Box>
-      )
-    },
-    [colors, compact],
-  )
-
   const emptyState = (
     <Box className="items-center px-5 pb-24 pt-8">
       <Box
-        className="h-20 w-20 items-center justify-center rounded-none border bg-primary-500/10"
+        className="h-20 w-20 items-center justify-center rounded-none border"
         style={{
           borderWidth: borders.width,
           borderColor: colors.border,
@@ -279,7 +108,7 @@ function AiChatModalContent() {
         }}
       >
         <Box
-          className="h-14 w-14 items-center justify-center rounded-none border bg-primary-500/15"
+          className="h-14 w-14 items-center justify-center rounded-none border"
           style={{
             borderWidth: borders.width,
             borderColor: colors.border,
@@ -289,21 +118,27 @@ function AiChatModalContent() {
             elevation: 0,
           }}
         >
-          <Feather name="cpu" size={28} color={colors.primary} />
+          <Feather name="cpu" size={28} color={colors.weight ?? colors.primary} />
         </Box>
       </Box>
       <Text
         size="xl"
         bold
-        className="mt-4 text-center text-typography-900"
-        style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+        className="mt-4 text-center"
+        style={{
+          color: colors.text,
+          fontFamily: fonts.mono,
+          textTransform: "uppercase",
+          letterSpacing: 0.4,
+        }}
       >
         How can I help you eat well?
       </Text>
       <Text
         size="sm"
-        className="mt-2 text-center leading-5 text-typography-500"
+        className="mt-2 text-center leading-5"
         style={{
+          color: colors.textMuted,
           maxWidth: 380,
           fontFamily: fonts.mono,
           fontVariant: ["tabular-nums"],
@@ -329,7 +164,7 @@ function AiChatModalContent() {
             }}
             accessibilityRole="button"
             accessibilityLabel={chip.label}
-            className="flex-row items-center gap-1.5 rounded-none border bg-background-50 px-3 py-1.5 active:opacity-80"
+            className="flex-row items-center gap-1.5 rounded-none border px-3 py-1.5 active:opacity-80"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,
@@ -337,12 +172,13 @@ function AiChatModalContent() {
               backgroundColor: colors.surface,
             }}
           >
-            <Feather name={chip.icon} size={12} color={colors.primary} />
+            <Feather name={chip.icon} size={12} color={colors.weight ?? colors.primary} />
             <Text
               size="xs"
               bold
-              className="text-typography-700"
+              className=""
               style={{
+                color: colors.text,
                 fontFamily: fonts.mono,
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
@@ -358,8 +194,9 @@ function AiChatModalContent() {
         <Text
           size="xs"
           bold
-          className="mb-2.5 text-center text-typography-400"
+          className="mb-2.5 text-center"
           style={{
+            color: colors.textMuted,
             fontFamily: fonts.mono,
             textTransform: "uppercase",
             letterSpacing: 0.4,
@@ -374,7 +211,7 @@ function AiChatModalContent() {
               onPress={() => runPreset(preset)}
               accessibilityRole="button"
               accessibilityLabel={`Preset: ${preset.title}`}
-              className="w-[calc(50%-4px)] max-w-[240px] rounded-none border bg-background-50 p-3 active:opacity-80"
+              className="w-[calc(50%-4px)] max-w-[240px] rounded-none border p-3 active:opacity-80"
               style={{
                 borderWidth: borders.width,
                 borderColor: colors.border,
@@ -386,7 +223,7 @@ function AiChatModalContent() {
             >
               <Box className="flex-row items-center gap-2">
                 <Box
-                  className="h-8 w-8 items-center justify-center rounded-none border bg-primary-500/15"
+                  className="h-8 w-8 items-center justify-center rounded-none border"
                   style={{
                     borderWidth: borders.width,
                     borderColor: colors.border,
@@ -398,22 +235,27 @@ function AiChatModalContent() {
                   <Feather
                     name={preset.icon as keyof typeof Feather.glyphMap}
                     size={16}
-                    color={colors.primary}
+                    color={colors.weight ?? colors.primary}
                   />
                 </Box>
                 <Text
                   size="sm"
                   bold
-                  className="flex-1 text-typography-900"
-                  style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+                  className="flex-1"
+                  style={{
+                    color: colors.text,
+                    fontFamily: fonts.mono,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
                 >
                   {preset.title}
                 </Text>
               </Box>
               <Text
                 size="xs"
-                className="mt-1.5 leading-4 text-typography-500"
-                style={{ fontFamily: fonts.mono, letterSpacing: 0.2 }}
+                className="mt-1.5 leading-4"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.2 }}
               >
                 {preset.subtitle}
               </Text>
@@ -441,15 +283,20 @@ function AiChatModalContent() {
         <Text
           size="sm"
           bold
-          className="text-typography-900"
-          style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+          className=""
+          style={{
+            color: colors.text,
+            fontFamily: fonts.mono,
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+          }}
         >
           AI Assistant needs setup
         </Text>
         <Text
           size="xs"
-          className="mt-0.5 leading-4 text-typography-500"
-          style={{ fontFamily: fonts.mono, letterSpacing: 0.2 }}
+          className="mt-0.5 leading-4"
+          style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.2 }}
         >
           Enable it and add an API key in Settings.
         </Text>
@@ -461,7 +308,7 @@ function AiChatModalContent() {
         }}
         accessibilityRole="button"
         accessibilityLabel="Open AI settings"
-        className="rounded-none border bg-warning-500 px-3 py-1.5 active:opacity-80"
+        className="rounded-none border px-3 py-1.5 active:opacity-80"
         style={{
           borderWidth: borders.width,
           borderColor: colors.warning,
@@ -490,7 +337,7 @@ function AiChatModalContent() {
   const confirmationCard =
     pending.length > 0 ? (
       <Box
-        className="mx-4 mb-3 rounded-none border bg-background-50 p-4"
+        className="mx-4 mb-3 rounded-none border p-4"
         style={{
           borderWidth: borders.width,
           borderColor: colors.border,
@@ -505,16 +352,21 @@ function AiChatModalContent() {
           <Text
             size="sm"
             bold
-            className="flex-1 text-typography-900"
-            style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+            className="flex-1"
+            style={{
+              color: colors.text,
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+            }}
           >
             Approve changes?
           </Text>
         </Box>
         <Text
           size="sm"
-          className="mt-2 leading-5 text-typography-500"
-          style={{ fontFamily: fonts.mono, letterSpacing: 0.2 }}
+          className="mt-2 leading-5"
+          style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.2 }}
         >
           {summaryOf(pending)}
         </Text>
@@ -523,7 +375,7 @@ function AiChatModalContent() {
             onPress={() => void confirm(true)}
             accessibilityRole="button"
             accessibilityLabel="Approve assistant changes"
-            className="flex-1 items-center rounded-none border bg-primary-500 py-2.5 active:opacity-80"
+            className="flex-1 items-center rounded-none border py-2.5 active:opacity-80"
             style={{
               borderWidth: borders.width,
               borderColor: colors.primary,
@@ -563,8 +415,13 @@ function AiChatModalContent() {
             <Text
               size="sm"
               bold
-              className="text-typography-700"
-              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+              className=""
+              style={{
+                color: colors.text,
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
             >
               Decline
             </Text>
@@ -579,7 +436,7 @@ function AiChatModalContent() {
     <Box className="flex-1">
       <Box
         style={{
-          backgroundColor: colors.primary,
+          backgroundColor: colors.weight ?? colors.primary,
           paddingTop: safeTop + 12,
           paddingLeft: insets.left + 16,
           paddingRight: insets.right + 16,
@@ -591,7 +448,7 @@ function AiChatModalContent() {
             <Box
               className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
               style={{
-                backgroundColor: colors.primaryOverlay,
+                backgroundColor: withAlpha("#ffffff", 0.18),
                 borderWidth: borders.width,
                 borderColor: colors.border,
                 borderRadius: radii.none,
@@ -639,7 +496,7 @@ function AiChatModalContent() {
               className="ml-1 h-9 w-9 items-center justify-center rounded-none border"
               style={[
                 {
-                  backgroundColor: colors.primaryOverlay,
+                  backgroundColor: withAlpha("#ffffff", 0.18),
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,
@@ -661,7 +518,7 @@ function AiChatModalContent() {
               className="h-9 w-9 items-center justify-center rounded-none border"
               style={[
                 {
-                  backgroundColor: colors.primaryOverlay,
+                  backgroundColor: withAlpha("#ffffff", 0.18),
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,
@@ -696,7 +553,9 @@ function AiChatModalContent() {
         ) : (
           <FlatList
             data={reversedMessages}
-            renderItem={renderMessage}
+            renderItem={({ item }: { item: AiChatMessage }) => (
+              <ChatMessage item={item} compact={compact} />
+            )}
             keyExtractor={(item) => String(item.id ?? item.created_at)}
             inverted
             contentContainerClassName="px-4 pb-20 pt-3"
@@ -707,110 +566,16 @@ function AiChatModalContent() {
 
         {confirmationCard}
 
-        <Box
-          className="border-t bg-background-0 px-3 pt-2"
-          style={{
-            paddingBottom: safeBottom + 12,
-            borderTopWidth: 1.5,
-            borderTopColor: colors.border,
-            borderRadius: radii.none,
-          }}
-        >
-          <Box className="flex-row items-end gap-2">
-            <Pressable
-              onPress={closeAiChat}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Close AI chat"
-              className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-70"
-              style={{
-                borderWidth: borders.width,
-                borderColor: colors.border,
-                borderRadius: radii.none,
-                backgroundColor: colors.surfaceAlt,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <Feather name="chevron-down" size={18} color={colors.text} />
-            </Pressable>
-            <Box
-              className="min-w-0 flex-1 justify-center rounded-none border bg-background-100 px-4"
-              style={{
-                minHeight: 44,
-                borderWidth: borders.width,
-                borderColor: colors.border,
-                borderRadius: radii.none,
-                backgroundColor: colors.surfaceAlt,
-                boxShadow: "none",
-                elevation: 0,
-              }}
-            >
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                placeholder={
-                  configured ? "Ask about your diet…" : "Enable the assistant in Settings first"
-                }
-                placeholderTextColor={colors.textMuted}
-                editable={configured}
-                multiline={Platform.OS !== "web"}
-                style={[styles.input, { color: colors.text, fontFamily: fonts.mono }]}
-                selectionColor={colors.primary}
-                accessibilityLabel="Message the AI assistant"
-                returnKeyType="send"
-                enterKeyHint="send"
-                blurOnSubmit={false}
-                onSubmitEditing={canSend ? submit : undefined}
-              />
-            </Box>
-            {busy ? (
-              <Pressable
-                onPress={stop}
-                accessibilityRole="button"
-                accessibilityLabel="Stop generating"
-                className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-background-100 active:opacity-80"
-                style={{
-                  borderWidth: borders.width,
-                  borderColor: colors.border,
-                  borderRadius: radii.none,
-                  backgroundColor: colors.surfaceAlt,
-                  boxShadow: "none",
-                  elevation: 0,
-                }}
-              >
-                <Feather name="square" size={16} color={colors.danger} />
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={submit}
-                disabled={!canSend}
-                onPressIn={sendPress.onPressIn}
-                onPressOut={sendPress.onPressOut}
-                accessibilityRole="button"
-                accessibilityLabel="Send message"
-                className="h-11 w-11 shrink-0 items-center justify-center rounded-none border"
-                style={[
-                  {
-                    backgroundColor: canSend ? colors.primary : colors.surfaceAlt,
-                    borderWidth: borders.width,
-                    borderColor: canSend ? colors.primary : colors.border,
-                    borderRadius: radii.none,
-                    boxShadow: "none",
-                    elevation: 0,
-                  },
-                  ...(sendPress.pressed && canSend ? [{ opacity: 0.85 }] : []),
-                ]}
-              >
-                <Feather
-                  name="arrow-up"
-                  size={18}
-                  color={canSend ? colors.onPrimary : colors.textMuted}
-                />
-              </Pressable>
-            )}
-          </Box>
-        </Box>
+        <ChatComposer
+          draft={draft}
+          setDraft={setDraft}
+          canSend={canSend}
+          busy={busy}
+          configured={configured}
+          onSubmit={submit}
+          onStop={stop}
+          bottomPad={safeBottom}
+        />
       </KeyboardAvoidingView>
     </Box>
   )
@@ -881,17 +646,3 @@ function AiChatModalContent() {
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  input: {
-    fontSize: 14,
-    lineHeight: 20,
-    maxHeight: 110,
-    paddingTop: Platform.select({ ios: 10, android: 8, default: 11 }),
-    paddingBottom: Platform.select({ ios: 10, android: 8, default: 11 }),
-    paddingHorizontal: 0,
-    fontFamily: fonts.mono,
-    includeFontPadding: false,
-    textAlignVertical: "center",
-  },
-})

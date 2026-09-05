@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { Linking, Pressable } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
-import { fonts } from "@/theme"
+import { fonts, borders } from "@/theme"
 import type { ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -198,13 +198,13 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
         switch (token.type) {
           case "bold":
             return (
-              <Text key={index} bold>
+              <Text key={index} bold style={{ color: colors.text }}>
                 {token.text}
               </Text>
             )
           case "italic":
             return (
-              <Text key={index} style={{ fontStyle: "italic" }}>
+              <Text key={index} style={{ fontStyle: "italic", color: colors.text }}>
                 {token.text}
               </Text>
             )
@@ -245,19 +245,34 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
               </Pressable>
             )
           default:
-            return <Text key={index}>{token.text}</Text>
+            return (
+              <Text key={index} style={{ color: colors.text }}>
+                {token.text}
+              </Text>
+            )
         }
       })}
     </>
   )
 }
 
-function BlockContent({ block, colors }: { block: Block; colors: ColorPalette }) {
+function BlockContent({
+  block,
+  colors,
+  bodySize,
+}: {
+  block: Block
+  colors: ColorPalette
+  bodySize: "sm" | "lg"
+}) {
+  // Chat surfaces pass lg so thin mono strokes read as body copy, not fine print.
+  const bodyFontSize = bodySize === "lg" ? 16 : 14
+  const bodyLineHeight = bodySize === "lg" ? 24 : 20
   switch (block.type) {
     case "heading": {
       const size = block.level === 1 ? "xl" : block.level === 2 ? "lg" : "md"
       return (
-        <Text size={size} bold className="mt-1 text-typography-900">
+        <Text size={size} bold className="mt-1" style={{ color: colors.text }}>
           <InlineText tokens={parseInline(block.text)} colors={colors} />
         </Text>
       )
@@ -267,11 +282,19 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
         <Box className="gap-1">
           {block.items.map((item, index) => (
             <Box key={index} className="flex-row gap-2">
-              <Text size="sm" className="w-4 text-right text-typography-500">
+              <Text size="sm" className="w-4 text-right" style={{ color: colors.textMuted }}>
                 {block.ordered ? `${index + 1}.` : "-"}
               </Text>
               <Box className="flex-1">
-                <Text size="sm" className="leading-[20px] text-typography-900">
+                <Text
+                  className="font-mono"
+                  style={{
+                    color: colors.text,
+                    fontFamily: fonts.mono,
+                    fontSize: bodyFontSize,
+                    lineHeight: bodyLineHeight,
+                  }}
+                >
                   <InlineText tokens={parseInline(item)} colors={colors} />
                 </Text>
               </Box>
@@ -282,8 +305,13 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
     case "code":
       return (
         <Box
-          className="rounded-lg border border-outline-100 bg-background-100 px-3 py-2"
-          style={{ flexShrink: 1 }}
+          className="rounded-lg border px-3 py-2"
+          style={{
+            flexShrink: 1,
+            borderWidth: borders.widthThin,
+            borderColor: colors.border,
+            backgroundColor: colors.surfaceAlt,
+          }}
         >
           <Text
             style={{
@@ -304,27 +332,53 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
     case "quote":
       return (
         <Box className="border-l-2 pl-3" style={{ borderLeftColor: colors.border }}>
-          <Text size="sm" className="leading-[20px] text-typography-500">
+          <Text
+            className="font-mono"
+            style={{
+              color: colors.textMuted,
+              fontFamily: fonts.mono,
+              fontSize: bodyFontSize,
+              lineHeight: bodyLineHeight,
+            }}
+          >
             <InlineText tokens={parseInline(block.text)} colors={colors} />
           </Text>
         </Box>
       )
     case "hr":
-      return <Box className="border-t border-outline-200" />
+      return <Box className="border-t" style={{ borderTopColor: colors.border }} />
     case "table":
       return (
-        <Box className="overflow-hidden rounded-lg border border-outline-200">
-          <Box className="flex-row bg-background-100">
+        <Box
+          className="overflow-hidden rounded-lg border"
+          style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+        >
+          <Box className="flex-row" style={{ backgroundColor: colors.surfaceAlt }}>
             {block.header.map((cell, index) => (
-              <Text key={index} size="xs" bold className="flex-1 px-2 py-1.5 text-typography-900">
+              <Text
+                key={index}
+                size="xs"
+                bold
+                className="flex-1 px-2 py-1.5"
+                style={{ color: colors.text }}
+              >
                 {cell}
               </Text>
             ))}
           </Box>
           {block.rows.map((row, rowIndex) => (
-            <Box key={rowIndex} className="flex-row border-t border-outline-100">
+            <Box
+              key={rowIndex}
+              className="flex-row border-t"
+              style={{ borderTopColor: colors.border, borderTopWidth: borders.widthThin }}
+            >
               {row.map((cell, cellIndex) => (
-                <Text key={cellIndex} size="xs" className="flex-1 px-2 py-1.5 text-typography-600">
+                <Text
+                  key={cellIndex}
+                  size="xs"
+                  className="flex-1 px-2 py-1.5"
+                  style={{ color: colors.text }}
+                >
                   {cell}
                 </Text>
               ))}
@@ -334,20 +388,28 @@ function BlockContent({ block, colors }: { block: Block; colors: ColorPalette })
       )
     default:
       return (
-        <Text size="sm" className="leading-[20px] text-typography-900">
+        <Text
+          className="font-mono"
+          style={{
+            color: colors.text,
+            fontFamily: fonts.mono,
+            fontSize: bodyFontSize,
+            lineHeight: bodyLineHeight,
+          }}
+        >
           <InlineText tokens={parseInline(block.text)} colors={colors} />
         </Text>
       )
   }
 }
 
-export function Markdown({ source }: { source: string }) {
+export function Markdown({ source, bodySize = "sm" }: { source: string; bodySize?: "sm" | "lg" }) {
   const { colors } = useTheme()
   const blocks = useMemo(() => parseBlocks(source), [source])
   return (
     <Box className="gap-2">
       {blocks.map((block, index) => (
-        <BlockContent key={index} block={block} colors={colors} />
+        <BlockContent key={index} block={block} colors={colors} bodySize={bodySize} />
       ))}
     </Box>
   )
