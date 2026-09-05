@@ -147,8 +147,9 @@ export function UpdateDialog({
                 <Text
                   size="xl"
                   bold
-                  className="text-typography-900"
+                  className=""
                   style={{
+                    color: colors.text,
                     fontFamily: fonts.mono,
                     textTransform: "uppercase",
                     letterSpacing: 0.4,
@@ -158,8 +159,9 @@ export function UpdateDialog({
                 </Text>
                 <Text
                   size="xs"
-                  className="mt-0.5 text-typography-500"
+                  className="mt-0.5"
                   style={{
+                    color: colors.textMuted,
                     fontFamily: fonts.mono,
                     fontVariant: ["tabular-nums"],
                     textTransform: "uppercase",
@@ -200,8 +202,8 @@ export function UpdateDialog({
             >
               <Text
                 size="sm"
-                className="mb-3 leading-[20px] text-typography-500"
-                style={{ fontFamily: fonts.mono, letterSpacing: 0.2 }}
+                className="mb-3 leading-[20px]"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.2 }}
               >
                 A new version of Dietinator is ready. Your diary, meals and settings stay on this
                 device. Updating never touches your data.
@@ -212,8 +214,9 @@ export function UpdateDialog({
                   <Text
                     size="xs"
                     bold
-                    className="mb-2 uppercase tracking-wide text-typography-500"
+                    className="mb-2 uppercase tracking-wide"
                     style={{
+                      color: colors.textMuted,
                       fontFamily: fonts.mono,
                       textTransform: "uppercase",
                       letterSpacing: 0.6,
@@ -224,7 +227,11 @@ export function UpdateDialog({
                   <Markdown source={release.notes} />
                 </>
               ) : (
-                <Text size="sm" className="text-typography-500" style={{ fontFamily: fonts.mono }}>
+                <Text
+                  size="sm"
+                  className=""
+                  style={{ color: colors.textMuted, fontFamily: fonts.mono }}
+                >
                   No release notes published for this version.
                 </Text>
               )}
@@ -232,8 +239,8 @@ export function UpdateDialog({
               {!apk ? (
                 <Text
                   size="sm"
-                  className="mt-3 text-typography-500"
-                  style={{ fontFamily: fonts.mono }}
+                  className="mt-3"
+                  style={{ color: colors.textMuted, fontFamily: fonts.mono }}
                 >
                   This release has no Android APK attached yet.
                 </Text>
@@ -319,11 +326,12 @@ export function UpdateDialog({
                 <Text
                   size="xs"
                   bold
-                  className={`${downloading ? "opacity-40" : ""} text-typography-400`}
+                  className={`${downloading ? "opacity-40" : ""}`}
                   style={{
                     fontFamily: fonts.mono,
                     textTransform: "uppercase",
                     letterSpacing: 0.4,
+                    color: colors.textMuted,
                   }}
                 >
                   Don&apos;t ask again

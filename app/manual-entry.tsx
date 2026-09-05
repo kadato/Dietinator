@@ -42,7 +42,7 @@ function MacroInput({
   const { colors } = useTheme()
   return (
     <Box
-      className="flex-row items-center justify-between rounded-none border bg-background-50 px-3 py-2.5"
+      className="flex-row items-center justify-between rounded-none border px-3 py-2.5"
       style={{
         borderWidth: borders.width,
         borderColor: colors.border,
@@ -65,8 +65,14 @@ function MacroInput({
         <Text
           size="xs"
           bold
-          className="text-typography-900"
-          style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+          className=""
+          style={{
+            backgroundColor: colors.surface,
+            color: colors.text,
+            fontFamily: fonts.mono,
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+          }}
         >
           {label}
         </Text>
@@ -147,7 +153,7 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
-      <ModalContainer maxWidth={520} outerClassName="bg-background-50" topOffset={TOP_OFFSET}>
+      <ModalContainer maxWidth={520} outerClassName="" topOffset={TOP_OFFSET}>
         <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border"
@@ -168,15 +174,15 @@ export default function ManualEntryScreen() {
             <Text
               size="xl"
               bold
-              className="uppercase tracking-widest text-typography-900"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+              className="uppercase tracking-widest"
+              style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
             >
               {isQuickAdd ? "Quick Add" : "New Food"}
             </Text>
             <Text
               size="xs"
-              className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              className="mt-0.5 font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
               {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
             </Text>
@@ -194,8 +200,9 @@ export default function ManualEntryScreen() {
               <Input
                 size="md"
                 variant="outline"
-                className="mb-3 rounded-none border bg-background-50"
+                className="mb-3 rounded-none border"
                 style={{
+                  backgroundColor: colors.surface,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,

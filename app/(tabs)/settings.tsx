@@ -98,19 +98,24 @@ function SettingsRow({
 
   const iconBox = (
     <Box
-      className="h-10 w-10 shrink-0 items-center justify-center rounded-none border bg-background-100"
-      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
+      className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
+      style={{
+        backgroundColor: colors.surfaceAlt,
+        borderWidth: borders.width,
+        borderColor: colors.border,
+        borderRadius: radii.none,
+      }}
     >
       <Feather name={icon} size={20} color={tint} />
     </Box>
   )
   const titleBox = (
     <Box className="min-w-0 flex-1">
-      <Text size="sm" className="text-typography-900">
+      <Text size="sm" className="" style={{ color: colors.text }}>
         {title}
       </Text>
       {subtitle ? (
-        <Text size="xs" className="mt-0.5 leading-4 text-typography-500">
+        <Text size="xs" className="mt-0.5 leading-4" style={{ color: colors.textMuted }}>
           {subtitle}
         </Text>
       ) : null}
@@ -208,11 +213,11 @@ function GoalInput({
             )}
           </View>
           <View className="min-w-0 flex-1">
-            <Text size="sm" bold className="text-typography-900">
+            <Text size="sm" bold className="" style={{ color: colors.text }}>
               {label}
             </Text>
             {unit ? (
-              <Text size="xs" className="text-typography-500">
+              <Text size="xs" className="" style={{ color: colors.textMuted }}>
                 {unit}
               </Text>
             ) : null}
@@ -271,7 +276,7 @@ function MacroGoalSubtitle({
       {items.map((item) => (
         <View key={item.icon} className="flex-row items-center gap-1">
           <Feather name={item.icon} size={11} color={item.color} />
-          <Text size="xs" className="font-tabular text-typography-500">
+          <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
             {item.value}
           </Text>
         </View>
@@ -494,13 +499,14 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
 
         <View className="border-t border-outline-100 p-4">
           <View className="mb-2 flex-row items-center justify-between">
-            <Text size="xs" className="text-typography-500">
+            <Text size="xs" className="" style={{ color: colors.textMuted }}>
               Macro ratio
             </Text>
           </View>
           <View
-            className="h-4 flex-row overflow-hidden rounded-none border bg-background-100"
+            className="h-4 flex-row overflow-hidden rounded-none border"
             style={{
+              backgroundColor: colors.surfaceAlt,
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
@@ -659,8 +665,8 @@ function SettingsField({
         <Text
           size="xs"
           bold
-          className="uppercase tracking-widest text-typography-500"
-          style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+          className="uppercase tracking-widest"
+          style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.08 }}
         >
           {label}
         </Text>
@@ -857,7 +863,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
       </SettingsField>
 
       <SettingsField label="Base Endpoint URL" icon="globe" accent={colors.lunch}>
-        <Input size="md" className="rounded-none border bg-background-50">
+        <Input
+          size="md"
+          className="rounded-none border"
+          style={{ backgroundColor: colors.surface }}
+        >
           <InputField
             value={aiBaseUrl}
             onChangeText={setAiBaseUrl}
@@ -873,7 +883,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
       <SettingsField label="API Secret Key" icon="key" accent={colors.warning}>
         <View className="flex-row items-center gap-2">
-          <Input size="md" className="flex-1 rounded-none border bg-background-50">
+          <Input
+            size="md"
+            className="flex-1 rounded-none border"
+            style={{ backgroundColor: colors.surface }}
+          >
             <InputField
               value={aiApiKey}
               onChangeText={setAiApiKey}
@@ -916,7 +930,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
 
       <SettingsField label="Target Model" icon="cpu" accent={colors.breakfast}>
         <View className="flex-row items-center gap-2">
-          <Input size="md" className="flex-1 rounded-none border bg-background-50">
+          <Input
+            size="md"
+            className="flex-1 rounded-none border"
+            style={{ backgroundColor: colors.surface }}
+          >
             <InputField
               value={aiModel}
               onChangeText={setAiModel}
@@ -963,8 +981,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
           <Box className="mt-2.5 gap-2">
             <Text
               size="xs"
-              className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              className="font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
               {fetchedModels.length} models available — tap to select
             </Text>
@@ -1001,7 +1019,11 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
       </SettingsField>
 
       <SettingsField label="System Prompt (Optional)" icon="terminal" accent={colors.dinner}>
-        <Input size="md" className="h-24 rounded-none border bg-background-50 p-2">
+        <Input
+          size="md"
+          className="h-24 rounded-none border p-2"
+          style={{ backgroundColor: colors.surface }}
+        >
           <InputField
             value={aiSystemPrompt}
             onChangeText={setAiSystemPrompt}
@@ -1403,7 +1425,7 @@ export default function SettingsScreen() {
                 <Text
                   size="2xl"
                   bold
-                  className="uppercase tracking-widest text-typography-900"
+                  className="uppercase tracking-widest"
                   style={{
                     color: colors.textOnBackground,
                     fontFamily: fonts.mono,
@@ -1414,8 +1436,8 @@ export default function SettingsScreen() {
                 </Text>
                 <Text
                   size="xs"
-                  className="mt-1 font-mono uppercase tracking-widest text-typography-500"
-                  style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                  className="mt-1 font-mono uppercase tracking-widest"
+                  style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
                 >
                   Goals, preferences, data and account
                 </Text>
@@ -1469,13 +1491,18 @@ export default function SettingsScreen() {
                           />
                         </Box>
                         <Box className="w-full min-w-0">
-                          <Text size="md" bold className="text-typography-900">
+                          <Text size="md" bold className="" style={{ color: colors.text }}>
                             {section.label}
                           </Text>
                           {section.id === "goals" ? (
                             <MacroGoalSubtitle settings={settings} colors={colors} />
                           ) : (
-                            <Text size="xs" numberOfLines={2} className="mt-1 text-typography-500">
+                            <Text
+                              size="xs"
+                              numberOfLines={2}
+                              className="mt-1"
+                              style={{ color: colors.textMuted }}
+                            >
                               {section.getSubtitle(settings, effectiveCountry)}
                             </Text>
                           )}
@@ -1535,7 +1562,7 @@ export default function SettingsScreen() {
                           <Feather name={section.icon} size={22} color={colors.primary} />
                         </Box>
                         <Box className="min-w-0 flex-1">
-                          <Text size="md" bold className="text-typography-900">
+                          <Text size="md" bold className="" style={{ color: colors.text }}>
                             {section.label}
                           </Text>
                           {section.id === "goals" ? (
@@ -1544,7 +1571,8 @@ export default function SettingsScreen() {
                             <Text
                               size="xs"
                               numberOfLines={1}
-                              className="mt-0.5 text-typography-500"
+                              className="mt-0.5"
+                              style={{ color: colors.textMuted }}
                             >
                               {section.getSubtitle(settings, effectiveCountry)}
                             </Text>
@@ -1815,7 +1843,7 @@ export default function SettingsScreen() {
                     <Text
                       size="xs"
                       bold
-                      className="flex-1 uppercase tracking-widest text-typography-900"
+                      className="flex-1 uppercase tracking-widest"
                       style={{
                         fontFamily: fonts.mono,
                         letterSpacing: 0.08,
@@ -2035,7 +2063,7 @@ export default function SettingsScreen() {
                       <>
                         <AiSettingsForm settings={settings} />
                         <View className="border-t border-outline-100 p-4">
-                          <Text size="xs" className="text-typography-500">
+                          <Text size="xs" className="" style={{ color: colors.textMuted }}>
                             AI provider config below. Also open chat in the AI tab.
                           </Text>
                           <Pressable
@@ -2089,14 +2117,18 @@ export default function SettingsScreen() {
                       />
                       {mcpExpanded ? (
                         <View className="gap-1 border-t border-outline-100 p-4">
-                          <Text size="sm" className="leading-5 text-typography-500">
+                          <Text size="sm" className="leading-5" style={{ color: colors.textMuted }}>
                             Point Claude Desktop, Cursor or any MCP client at{" "}
-                            <Text size="sm" className="text-typography-900">
+                            <Text size="sm" className="" style={{ color: colors.text }}>
                               {getMcpOrigin()}/mcp
                             </Text>{" "}
                             to work with your diary.
                           </Text>
-                          <Text size="xs" className="mt-2 leading-4 text-typography-500">
+                          <Text
+                            size="xs"
+                            className="mt-2 leading-4"
+                            style={{ color: colors.textMuted }}
+                          >
                             Set MCP_API_KEY on the server to protect the endpoint (required in
                             production). The snapshot bridge is same-origin only and never stores
                             data on disk.
@@ -2129,9 +2161,14 @@ export default function SettingsScreen() {
                             ].map((tool) => (
                               <Box
                                 key={tool}
-                                className="rounded-none border border-outline-100 bg-background-50 px-2 py-0.5"
+                                className="rounded-none border border-outline-100 px-2 py-0.5"
+                                style={{ backgroundColor: colors.surface }}
                               >
-                                <Text size="xs" className="font-mono text-typography-600">
+                                <Text
+                                  size="xs"
+                                  className="font-mono"
+                                  style={{ color: colors.text }}
+                                >
                                   {tool}
                                 </Text>
                               </Box>

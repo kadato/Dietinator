@@ -152,16 +152,16 @@ export default function LoginScreen() {
                   size="4xl"
                   bold
                   accessibilityRole="header"
-                  className="uppercase tracking-widest text-typography-900"
-                  style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                  className="uppercase tracking-widest"
+                  style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.06 }}
                 >
                   Dietinator
                 </Text>
                 <Text
                   size="xs"
                   bold
-                  className="font-mono uppercase tracking-widest text-typography-500"
-                  style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.textMuted, letterSpacing: 0.08, fontFamily: fonts.mono }}
                 >
                   Track calories. No ads. Offline first.
                 </Text>
@@ -240,16 +240,16 @@ export default function LoginScreen() {
               size={isWide ? "xl" : "3xl"}
               bold
               accessibilityRole="header"
-              className={`${isWide ? "hidden" : ""} text-center uppercase tracking-widest text-typography-900`}
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              className={`${isWide ? "hidden" : ""} text-center uppercase tracking-widest`}
+              style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.text }}
             >
               {isWide ? "Sign in" : "Dietinator"}
             </Text>
             <Text
               size="xs"
               bold
-              className={`${isWide ? "hidden" : ""} mt-2 max-w-[340px] text-center font-mono uppercase tracking-widest text-typography-500`}
-              style={{ letterSpacing: 0.08 }}
+              className={`${isWide ? "hidden" : ""} mt-2 max-w-[340px] text-center font-mono uppercase tracking-widest`}
+              style={{ letterSpacing: 0.08, color: colors.textMuted }}
             >
               Track calories. No ads.
             </Text>
@@ -257,8 +257,8 @@ export default function LoginScreen() {
               <Text
                 size="xs"
                 bold
-                className="mt-2 text-center font-mono uppercase tracking-widest text-typography-500"
-                style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+                className="mt-2 text-center font-mono uppercase tracking-widest"
+                style={{ color: colors.textMuted, letterSpacing: 0.08, fontFamily: fonts.mono }}
               >
                 Sign in with YAZIO or try the demo
               </Text>
@@ -363,8 +363,8 @@ export default function LoginScreen() {
                 <Text
                   size="sm"
                   bold
-                  className="font-mono uppercase tracking-widest text-typography-900"
-                  style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
                 >
                   Remember me
                 </Text>
@@ -470,8 +470,8 @@ export default function LoginScreen() {
                   <Text
                     size="sm"
                     bold
-                    className="flex-1 font-mono uppercase tracking-widest text-typography-900"
-                    style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                    className="flex-1 font-mono uppercase tracking-widest"
+                    style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
                   >
                     Registered with Google?
                   </Text>
@@ -485,8 +485,8 @@ export default function LoginScreen() {
               {googleHelpExpanded ? (
                 <Text
                   size="sm"
-                  className="mt-1 px-4 pb-4 leading-5 text-typography-500"
-                  style={{ fontFamily: fonts.mono }}
+                  className="mt-1 px-4 pb-4 leading-5"
+                  style={{ color: colors.textMuted, fontFamily: fonts.mono }}
                 >
                   In the YAZIO app: sign out, select email login, tap &apos;Forgot password&apos;,
                   and set a password. Sign in here with it.
@@ -496,8 +496,8 @@ export default function LoginScreen() {
 
             <Text
               size="xs"
-              className="mt-8 px-2 text-center font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              className="mt-8 px-2 text-center font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
               Unofficial YAZIO API. For personal use only. Credentials are stored securely on this
               device.

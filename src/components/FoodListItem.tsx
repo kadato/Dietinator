@@ -117,7 +117,7 @@ export const FoodListItem = memo(function FoodListItem({
 
   return (
     <Box
-      className="mx-3 mb-2 flex-row items-center rounded-none bg-background-50 px-3 py-2.5"
+      className="mx-3 mb-2 flex-row items-center rounded-none px-3 py-2.5"
       style={{
         ...cardStyle(colors),
         borderLeftWidth: 3,
@@ -131,7 +131,7 @@ export const FoodListItem = memo(function FoodListItem({
         accessibilityLabel={showKcal ? `${rowText} ${kcalText}` : `${rowText}, ${kcalText}`}
       >
         <Box
-          className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-none bg-background-100"
+          className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-none"
           style={{
             borderWidth: borders.width,
             borderColor: colors.border,
@@ -151,8 +151,9 @@ export const FoodListItem = memo(function FoodListItem({
           <Text
             size="md"
             bold
-            className="text-[15.5px] leading-5 text-typography-900"
+            className="text-[15.5px] leading-5"
             style={{
+              color: colors.text,
               fontFamily: fonts.mono,
               fontWeight: "600",
               letterSpacing: 0,
@@ -164,8 +165,9 @@ export const FoodListItem = memo(function FoodListItem({
           {subtitle ? (
             <Text
               size="xs"
-              className="text-[12.5px] leading-4 text-typography-500"
+              className="text-[12.5px] leading-4"
               style={{
+                color: colors.textMuted,
                 fontFamily: fonts.mono,
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
@@ -178,8 +180,9 @@ export const FoodListItem = memo(function FoodListItem({
             <View className="flex-row flex-wrap items-center gap-1">
               <Text
                 size="xs"
-                className="text-[12.5px] leading-4 text-typography-500"
+                className="text-[12.5px] leading-4"
                 style={{
+                  color: colors.textMuted,
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],
                   textTransform: "uppercase",
@@ -201,8 +204,9 @@ export const FoodListItem = memo(function FoodListItem({
         {showKcal ? (
           <Text
             size="sm"
-            className="ml-2 shrink-0 text-sm font-semibold text-typography-500"
+            className="ml-2 shrink-0 text-sm font-semibold"
             style={{
+              color: colors.textMuted,
               fontFamily: fonts.mono,
               fontVariant: ["tabular-nums"],
               textTransform: "uppercase",
@@ -219,7 +223,7 @@ export const FoodListItem = memo(function FoodListItem({
             onPress={onMoveUp}
             disabled={!canMoveUp}
             hitSlop={6}
-            className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+            className="h-9 w-9 items-center justify-center rounded-none active:bg-background-200"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,
@@ -242,7 +246,7 @@ export const FoodListItem = memo(function FoodListItem({
             onPress={onMoveDown}
             disabled={!canMoveDown}
             hitSlop={6}
-            className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+            className="h-9 w-9 items-center justify-center rounded-none active:bg-background-200"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,

@@ -145,7 +145,7 @@ function SortableItem({
   return (
     <Animated.View style={[styles.itemContainer, animatedStyle]}>
       <Box
-        className="flex-row items-center bg-background-50 px-3 py-3"
+        className="flex-row items-center px-3 py-3"
         style={{
           borderWidth: borders.width,
           borderColor: colors.border,
@@ -172,7 +172,7 @@ function SortableItem({
           accessibilityRole="button"
         >
           <Box
-            className="mr-3 h-10 w-10 shrink-0 items-center justify-center bg-background-100"
+            className="mr-3 h-10 w-10 shrink-0 items-center justify-center"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,
@@ -192,9 +192,10 @@ function SortableItem({
             <Text
               size="md"
               bold
-              className="text-[15px] leading-5 text-typography-900"
+              className="text-[15px] leading-5"
               numberOfLines={1}
               style={{
+                color: colors.text,
                 fontFamily: fonts.mono,
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
@@ -205,8 +206,9 @@ function SortableItem({
             <View className="mt-0.5 flex-row flex-wrap items-center gap-1.5">
               <Text
                 size="xs"
-                className="text-[12px] text-typography-500"
+                className="text-[12px]"
                 style={{
+                  color: colors.textMuted,
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],
                   textTransform: "uppercase",

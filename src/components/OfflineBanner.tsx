@@ -45,8 +45,9 @@ export function OfflineBanner({
       <Feather name="wifi-off" size={16} color={colors.warning} />
       <Text
         size="sm"
-        className="flex-shrink text-typography-800"
+        className="flex-shrink"
         style={{
+          color: colors.text,
           fontFamily: fonts.mono,
           fontVariant: ["tabular-nums"],
           textTransform: "uppercase",

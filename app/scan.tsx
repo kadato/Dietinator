@@ -364,8 +364,9 @@ export default function ScanScreen() {
               <Input
                 size="lg"
                 variant="outline"
-                className="mb-4 rounded-none border bg-background-50"
+                className="mb-4 rounded-none border"
                 style={{
+                  backgroundColor: colors.surface,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,
@@ -467,8 +468,9 @@ export default function ScanScreen() {
       <View style={styles.center}>
         <PageContainer variant="narrow" contentStyle={styles.centerContent}>
           <Box
-            className="h-20 w-20 items-center justify-center rounded-none border bg-background-50"
+            className="h-20 w-20 items-center justify-center rounded-none border"
             style={{
+              backgroundColor: colors.surface,
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,

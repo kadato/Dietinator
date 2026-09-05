@@ -45,14 +45,25 @@ export function EmptyState({
   if (variant === "compact") {
     return (
       <Box className={`items-center px-6 py-8 ${className}`}>
-        <Box className="h-11 w-11 items-center justify-center rounded-none border bg-background-100">
+        <Box
+          className="h-11 w-11 items-center justify-center rounded-none border"
+          style={{ backgroundColor: colors.surfaceAlt }}
+        >
           <Feather name={icon} size={20} color={tint} />
         </Box>
-        <Text size="sm" className="mt-3 max-w-[420px] text-center leading-5 text-typography-500">
+        <Text
+          size="sm"
+          className="mt-3 max-w-[420px] text-center leading-5"
+          style={{ color: colors.textMuted }}
+        >
           {title}
         </Text>
         {message ? (
-          <Text size="sm" className="mt-1 max-w-[420px] text-center leading-5 text-typography-500">
+          <Text
+            size="sm"
+            className="mt-1 max-w-[420px] text-center leading-5"
+            style={{ color: colors.textMuted }}
+          >
             {message}
           </Text>
         ) : null}
@@ -63,7 +74,7 @@ export function EmptyState({
 
   return (
     <Box
-      className={`items-center px-6 pb-10 ${className} ${isWide ? "mx-auto w-full max-w-[720px] border bg-background-50 p-8" : ""}`}
+      className={`items-center px-6 pb-10 ${className} ${isWide ? "mx-auto w-full max-w-[720px] border p-8" : ""}`}
       style={
         isWide
           ? {
@@ -74,14 +85,21 @@ export function EmptyState({
           : undefined
       }
     >
-      <Box className="h-16 w-16 items-center justify-center rounded-none border bg-background-100">
+      <Box
+        className="h-16 w-16 items-center justify-center rounded-none border"
+        style={{ backgroundColor: colors.surfaceAlt }}
+      >
         <Feather name={icon} size={28} color={tint} />
       </Box>
-      <Text size="lg" bold className="mt-4 text-center text-typography-900">
+      <Text size="lg" bold className="mt-4 text-center" style={{ color: colors.text }}>
         {title}
       </Text>
       {message ? (
-        <Text size="sm" className="mt-1.5 max-w-[420px] text-center leading-5 text-typography-500">
+        <Text
+          size="sm"
+          className="mt-1.5 max-w-[420px] text-center leading-5"
+          style={{ color: colors.textMuted }}
+        >
           {message}
         </Text>
       ) : null}

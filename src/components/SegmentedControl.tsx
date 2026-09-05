@@ -23,7 +23,7 @@ export function SegmentedControl<T extends string>({
 
   return (
     <View
-      className="flex-row gap-1 border bg-background-100 p-1"
+      className="flex-row gap-1 border p-1"
       style={{
         borderWidth: borders.width,
         borderColor: colors.border,

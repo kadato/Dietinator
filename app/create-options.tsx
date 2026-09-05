@@ -85,20 +85,20 @@ export default function CreateOptionsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ModalContainer maxWidth={560} outerClassName="bg-background-50">
+      <ModalContainer maxWidth={560} outerClassName="">
         <Box className="px-6 pb-2 pt-4">
           <Text
             size="2xl"
             bold
-            className="uppercase tracking-widest text-typography-900"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+            className="uppercase tracking-widest"
+            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
           >
             Create
           </Text>
           <Text
             size="xs"
-            className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            className="mt-0.5 font-mono uppercase tracking-widest"
+            style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
           >
             What would you like to log or create?
           </Text>
@@ -141,15 +141,19 @@ export default function CreateOptionsScreen() {
                     <Text
                       size="md"
                       bold
-                      className="font-mono uppercase tracking-widest text-typography-900"
-                      style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                      className="font-mono uppercase tracking-widest"
+                      style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
                     >
                       {option.title}
                     </Text>
                     <Text
                       size="xs"
-                      className="mt-0.5 font-mono uppercase tracking-widest text-typography-500"
-                      style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                      className="mt-0.5 font-mono uppercase tracking-widest"
+                      style={{
+                        color: colors.textMuted,
+                        fontFamily: fonts.mono,
+                        letterSpacing: 0.06,
+                      }}
                     >
                       {option.description}
                     </Text>

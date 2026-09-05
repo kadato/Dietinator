@@ -195,7 +195,10 @@ export default function MealBuilderScreen() {
 
   if (loadingMeal) {
     return (
-      <Box className="flex-1 items-center justify-center bg-background-0">
+      <Box
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: colors.surfaceAlt }}
+      >
         <ActivityIndicator color={colors.primary} />
       </Box>
     )
@@ -207,7 +210,7 @@ export default function MealBuilderScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background-0"
+      className="flex-1"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
@@ -217,8 +220,8 @@ export default function MealBuilderScreen() {
           <Text
             size="xl"
             bold
-            className="flex-1 text-center font-mono uppercase tracking-widest text-typography-900"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+            className="flex-1 text-center font-mono uppercase tracking-widest"
+            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
           >
             {isEditing ? "Edit meal" : "New meal"}
           </Text>
@@ -227,8 +230,9 @@ export default function MealBuilderScreen() {
               <Pressable
                 onPress={handleDuplicate}
                 hitSlop={8}
-                className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+                className="h-10 w-10 items-center justify-center rounded-none border active:bg-background-200"
                 style={{
+                  backgroundColor: colors.surfaceAlt,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,
@@ -241,8 +245,9 @@ export default function MealBuilderScreen() {
               <Pressable
                 onPress={handleDelete}
                 hitSlop={8}
-                className="h-10 w-10 items-center justify-center rounded-none border bg-background-100 active:bg-background-200"
+                className="h-10 w-10 items-center justify-center rounded-none border active:bg-background-200"
                 style={{
+                  backgroundColor: colors.surfaceAlt,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderRadius: radii.none,
@@ -266,8 +271,8 @@ export default function MealBuilderScreen() {
         >
           <Text
             size="xs"
-            className="mb-4 font-mono uppercase tracking-widest text-typography-500"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+            className="mb-4 font-mono uppercase tracking-widest"
+            style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
           >
             Ready to log into any meal slot.
           </Text>
@@ -275,16 +280,17 @@ export default function MealBuilderScreen() {
           <Text
             size="xs"
             bold
-            className="mb-1.5 font-mono uppercase tracking-widest text-typography-600"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+            className="mb-1.5 font-mono uppercase tracking-widest"
+            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
           >
             Meal name
           </Text>
           <Input
             size="md"
             variant="outline"
-            className="mb-4 rounded-none border bg-background-50"
+            className="mb-4 rounded-none border"
             style={{
+              backgroundColor: colors.surface,
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
@@ -307,8 +313,8 @@ export default function MealBuilderScreen() {
               <Text
                 size="xs"
                 bold
-                className="mb-1.5 font-mono uppercase tracking-widest text-typography-600"
-                style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                className="mb-1.5 font-mono uppercase tracking-widest"
+                style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
               >
                 In your meal · {Math.round(totals.kcal)} kcal
               </Text>
@@ -317,7 +323,7 @@ export default function MealBuilderScreen() {
                 return (
                   <Box
                     key={item.product_id}
-                    className="mb-2.5 flex-row items-center gap-2.5 border bg-background-50 px-3.5 py-3"
+                    className="mb-2.5 flex-row items-center gap-2.5 border px-3.5 py-3"
                     style={{
                       borderWidth: borders.width,
                       borderColor: colors.border,
@@ -331,8 +337,8 @@ export default function MealBuilderScreen() {
                       <Text
                         size="md"
                         bold
-                        className="font-mono uppercase tracking-widest text-typography-900"
-                        style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                        className="font-mono uppercase tracking-widest"
+                        style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
                         numberOfLines={1}
                       >
                         {item.name}
@@ -340,8 +346,12 @@ export default function MealBuilderScreen() {
                       <Box className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
                         <Text
                           size="xs"
-                          className="font-mono uppercase tabular-nums tracking-widest text-typography-500"
-                          style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                          className="font-mono uppercase tabular-nums tracking-widest"
+                          style={{
+                            color: colors.textMuted,
+                            fontFamily: fonts.mono,
+                            letterSpacing: 0.04,
+                          }}
                         >
                           {Math.round(itemN.kcal)} kcal
                         </Text>
@@ -364,8 +374,8 @@ export default function MealBuilderScreen() {
                     />
                     <Text
                       size="xs"
-                      className="w-6 font-mono uppercase text-typography-500"
-                      style={{ fontFamily: fonts.mono }}
+                      className="w-6 font-mono uppercase"
+                      style={{ color: colors.textMuted, fontFamily: fonts.mono }}
                     >
                       {item.base_unit}
                     </Text>
@@ -400,8 +410,8 @@ export default function MealBuilderScreen() {
           ) : (
             <Text
               size="sm"
-              className="mb-5 mt-2 px-6 text-center font-mono leading-5 text-typography-500"
-              style={{ fontFamily: fonts.mono }}
+              className="mb-5 mt-2 px-6 text-center font-mono leading-5"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
             >
               No foods in this meal yet. Use the search below to add them.
             </Text>
@@ -410,16 +420,17 @@ export default function MealBuilderScreen() {
           <Text
             size="xs"
             bold
-            className="mb-1.5 mt-4 font-mono uppercase tracking-widest text-typography-600"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+            className="mb-1.5 mt-4 font-mono uppercase tracking-widest"
+            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
           >
             Add foods
           </Text>
           <Input
             size="md"
             variant="outline"
-            className="mb-2 rounded-none border bg-background-50"
+            className="mb-2 rounded-none border"
             style={{
+              backgroundColor: colors.surface,
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
@@ -440,8 +451,8 @@ export default function MealBuilderScreen() {
             <Text
               size="xs"
               bold
-              className="mb-2 mt-1 font-mono uppercase tracking-widest text-typography-600"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+              className="mb-2 mt-1 font-mono uppercase tracking-widest"
+              style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
             >
               Favorite and recent picks
             </Text>
@@ -460,8 +471,8 @@ export default function MealBuilderScreen() {
           {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
             <Text
               size="xs"
-              className="py-2 text-center font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontFamily: fonts.mono }}
+              className="py-2 text-center font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
             >
               Showing the first 30 results. Refine your search for more.
             </Text>
@@ -469,8 +480,8 @@ export default function MealBuilderScreen() {
           {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (
             <Text
               size="sm"
-              className="py-3 text-center font-mono text-typography-500"
-              style={{ fontFamily: fonts.mono }}
+              className="py-3 text-center font-mono"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
             >
               No foods found. Try a different search.
             </Text>

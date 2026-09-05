@@ -42,7 +42,7 @@ export const MealListItem = memo(function MealListItem({
 
   return (
     <Box
-      className="mb-2.5 flex-row items-center gap-2 rounded-none bg-background-50 px-4 py-3.5"
+      className="mb-2.5 flex-row items-center gap-2 rounded-none px-4 py-3.5"
       style={{
         borderWidth: borders.width,
         borderColor: colors.border,
@@ -73,13 +73,17 @@ export const MealListItem = memo(function MealListItem({
           <Text
             size="md"
             bold
-            className="text-[15.5px] leading-5 text-typography-900"
-            style={{ flexWrap: "wrap" }}
+            className="text-[15.5px] leading-5"
+            style={{ color: colors.text, flexWrap: "wrap" }}
           >
             {meal.name}{" "}
           </Text>
           <View className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
-            <Text size="xs" className="font-tabular text-[12.5px] text-typography-500">
+            <Text
+              size="xs"
+              className="font-tabular text-[12.5px]"
+              style={{ color: colors.textMuted }}
+            >
               {foodCount}, {kcal} kcal
             </Text>
             {totals ? <MacroPills protein={protein} carbs={carbs} fat={fat} size="xs" /> : null}
@@ -109,9 +113,10 @@ export const MealListItem = memo(function MealListItem({
         <Pressable
           onPress={onEdit}
           hitSlop={8}
-          className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+          className="h-9 w-9 items-center justify-center rounded-none active:bg-background-200"
           accessibilityRole="button"
           accessibilityLabel={`Edit ${meal.name}`}
+          style={{ backgroundColor: colors.surfaceAlt }}
         >
           <Feather name="edit-2" size={16} color={colors.textMuted} />
         </Pressable>
@@ -121,9 +126,10 @@ export const MealListItem = memo(function MealListItem({
         <Pressable
           onPress={onDuplicate}
           hitSlop={8}
-          className="h-9 w-9 items-center justify-center rounded-none bg-background-100 active:bg-background-200"
+          className="h-9 w-9 items-center justify-center rounded-none active:bg-background-200"
           accessibilityRole="button"
           accessibilityLabel={`Duplicate ${meal.name}`}
+          style={{ backgroundColor: colors.surfaceAlt }}
         >
           <Feather name="copy" size={16} color={colors.textMuted} />
         </Pressable>
