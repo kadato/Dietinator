@@ -4,6 +4,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { formatThousands } from "@/utils/format"
 import { computeMacroRatios } from "@/utils/nutrients"
+import { chipTint } from "@/theme.helpers"
 import { spacing, fonts, type ColorPalette, radii } from "@/theme"
 
 type Props = {
@@ -83,7 +84,7 @@ export function CalorieRing({
             width={rectW}
             height={rectH}
             fill="none"
-            stroke={colors.surfaceAlt}
+            stroke={chipTint(colors.primary, 0.18)}
             strokeWidth={T}
           />
           {svgSegments.map((seg, index) => (
@@ -143,14 +144,46 @@ export function CalorieRing({
       </View>
 
       <View style={styles.statsRow}>
-        <View style={styles.statPill}>
+        <View
+          style={[
+            styles.statPill,
+            { backgroundColor: chipTint(colors.primary, 0.14), borderColor: colors.primary },
+          ]}
+        >
           <Text style={styles.statValue}>{formatThousands(Math.round(consumed))}</Text>
           <Text style={styles.statLabel}>EATEN</Text>
         </View>
         <Text style={styles.separator}>·</Text>
-        <View style={styles.statPill}>
+        <View
+          style={[
+            styles.statPill,
+            {
+              backgroundColor: chipTint(colors.success ?? colors.primary, 0.14),
+              borderColor: colors.success ?? colors.primary,
+            },
+          ]}
+        >
           <Text style={styles.statValue}>{formatThousands(Math.round(goal))}</Text>
           <Text style={styles.statLabel}>GOAL</Text>
+        </View>
+      </View>
+
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.breakfast }]} />
+          <Text style={styles.legendLabel}>PROT</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.lunch }]} />
+          <Text style={styles.legendLabel}>CARB</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.dinner }]} />
+          <Text style={styles.legendLabel}>FAT</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.snack }]} />
+          <Text style={styles.legendLabel}>SNCK</Text>
         </View>
       </View>
     </View>
@@ -229,6 +262,36 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "baseline",
       gap: 6,
+      borderWidth: 1,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    legendRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginTop: 10,
+      flexWrap: "wrap",
+      paddingHorizontal: 8,
+    },
+    legendItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    legendDot: {
+      width: 10,
+      height: 10,
+      borderWidth: 1,
+      borderColor: "rgba(0,0,0,0.25)",
+    },
+    legendLabel: {
+      fontSize: 10,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      color: colors.textMuted,
+      letterSpacing: 0.6,
     },
     statValue: {
       fontSize: 16,

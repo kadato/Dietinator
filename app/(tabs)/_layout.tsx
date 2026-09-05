@@ -134,6 +134,18 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           }
 
           const inactiveColor = colors.textMuted
+          // Vivid terminal: each destination owns its active hue so the rail
+          // reads as a legend. Today is primary blue, AI is violet, Stats is
+          // green, Settings is amber. All clear contrast with white or ink.
+          const activeBg =
+            route.name === "ai"
+              ? (colors.weight ?? colors.primary)
+              : route.name === "stats"
+                ? (colors.success ?? colors.primary)
+                : route.name === "settings"
+                  ? colors.warning
+                  : colors.primary
+          const activeFg = route.name === "settings" ? colors.onWarning : colors.onPrimary
 
           return (
             <Pressable
@@ -157,14 +169,13 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                   borderRadius: radii.none,
                   borderWidth:
                     isFocused || hoveredRoute === route.key ? borders.width : borders.widthThin,
-                  borderColor:
-                    isFocused || hoveredRoute === route.key ? colors.primary : colors.border,
+                  borderColor: isFocused || hoveredRoute === route.key ? activeBg : colors.border,
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 3,
                   backgroundColor: isFocused
-                    ? colors.primary
+                    ? activeBg
                     : pressedRoute === route.key
                       ? colors.surfaceAlt
                       : colors.surface,
@@ -174,14 +185,14 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             >
               {options.tabBarIcon?.({
                 focused: isFocused,
-                color: isFocused ? colors.onPrimary : inactiveColor,
+                color: isFocused ? activeFg : inactiveColor,
                 size: 20,
               })}
               <Text
                 size="xs"
                 bold={isFocused}
                 style={{
-                  color: isFocused ? colors.onPrimary : inactiveColor,
+                  color: isFocused ? activeFg : inactiveColor,
                   marginTop: 1,
                   fontSize: 10,
                   letterSpacing: 0.06,
@@ -262,6 +273,15 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
         }
 
         const inactiveColor = colors.textMuted
+        const activeBg =
+          route.name === "ai"
+            ? (colors.weight ?? colors.primary)
+            : route.name === "stats"
+              ? (colors.success ?? colors.primary)
+              : route.name === "settings"
+                ? colors.warning
+                : colors.primary
+        const activeFg = route.name === "settings" ? colors.onWarning : colors.onPrimary
 
         return (
           <Pressable
@@ -287,7 +307,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               gap: 2,
               paddingVertical: 3,
               backgroundColor: isFocused
-                ? colors.primary
+                ? activeBg
                 : pressedRoute === route.key
                   ? colors.surfaceAlt
                   : "transparent",
@@ -305,7 +325,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             >
               {options.tabBarIcon?.({
                 focused: isFocused,
-                color: isFocused ? colors.onPrimary : inactiveColor,
+                color: isFocused ? activeFg : inactiveColor,
                 size: 18,
               })}
             </View>
@@ -314,7 +334,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                 size="2xs"
                 bold={isFocused}
                 style={{
-                  color: isFocused ? colors.onPrimary : inactiveColor,
+                  color: isFocused ? activeFg : inactiveColor,
                   fontSize: 11,
                   lineHeight: 12,
                   letterSpacing: 0.08,

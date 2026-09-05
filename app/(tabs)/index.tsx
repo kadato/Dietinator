@@ -440,7 +440,7 @@ export default function TodayScreen() {
 
   const dateChrome = (
     <Box
-      className="mb-3 border bg-background-50 px-3 py-3"
+      className="mb-3 border px-3 py-3"
       style={{
         borderWidth: borders.width,
         borderColor: colors.border,
@@ -502,8 +502,9 @@ export default function TodayScreen() {
                   size={compact ? "xs" : "sm"}
                   bold
                   numberOfLines={1}
-                  className="text-center text-typography-900"
+                  className="text-center"
                   style={{
+                    color: colors.text,
                     fontSize: compact ? 13 : 15,
                     flexShrink: 1,
                     textAlign: "center",
@@ -549,21 +550,25 @@ export default function TodayScreen() {
               style={{
                 height: compact ? 38 : 42,
                 borderWidth: borders.width,
-                borderColor: colors.warning,
+                borderColor: colors.border,
                 borderStyle: "solid",
                 borderRadius: radii.none,
-                backgroundColor: `${colors.warning}18`,
+                backgroundColor: colors.warning,
               }}
               accessibilityRole="text"
               accessibilityLabel={`${streak} day logging streak`}
             >
-              <MaterialCommunityIcons name="fire" size={compact ? 16 : 18} color={colors.warning} />
+              <MaterialCommunityIcons
+                name="fire"
+                size={compact ? 16 : 18}
+                color={colors.onWarning}
+              />
               <Text
                 size={compact ? "xs" : "sm"}
                 bold
                 className="font-tabular leading-none"
                 style={{
-                  color: colors.warning,
+                  color: "#ffffff",
                   fontFamily: fonts.mono,
                   fontWeight: "700",
                 }}
@@ -631,8 +636,8 @@ export default function TodayScreen() {
             <Text
               size="xs"
               bold
-              className="font-mono uppercase tracking-widest text-typography-900"
-              style={{ letterSpacing: 0.08, fontFamily: fonts.mono }}
+              className="font-mono uppercase tracking-widest"
+              style={{ color: colors.text, letterSpacing: 0.08, fontFamily: fonts.mono }}
             >
               Copy from date
             </Text>
@@ -646,9 +651,39 @@ export default function TodayScreen() {
     <Card
       variant="elevated"
       className="mb-3 overflow-hidden border p-0"
-      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
+      style={{
+        borderWidth: borders.width,
+        borderColor: colors.border,
+        borderRadius: radii.none,
+        borderTopWidth: 5,
+        borderTopColor: colors.primary,
+      }}
     >
-      <Box className="items-center pt-6">
+      <Box
+        className="flex-row items-center justify-between px-4 py-2"
+        style={{
+          backgroundColor: `${colors.primary}14`,
+          borderBottomWidth: borders.width,
+          borderBottomColor: colors.border,
+        }}
+      >
+        <Text
+          size="2xs"
+          bold
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.08, color: colors.primary }}
+        >
+          TODAY FUEL
+        </Text>
+        <Text
+          size="2xs"
+          bold
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.textMuted }}
+        >
+          {formatThousands(Math.round(totals.kcal))} /{" "}
+          {formatThousands(Math.round(settings.calorie_goal))} KCAL
+        </Text>
+      </Box>
+      <Box className="items-center pt-4">
         <CalorieRing
           consumed={totals.kcal}
           goal={settings.calorie_goal}
@@ -669,17 +704,24 @@ export default function TodayScreen() {
       />
 
       {summary && summary.steps > 0 ? (
-        <Box className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5">
-          <Feather name="activity" size={12} color={colors.textMuted} />
+        <Box
+          className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5"
+          style={{ backgroundColor: `${colors.snack}12` }}
+        >
+          <Feather name="activity" size={12} color={colors.snack} />
           <Text
             size="2xs"
             bold
-            className="font-mono uppercase tracking-widest text-typography-600"
-            style={{ letterSpacing: 0.06 }}
+            className="font-mono uppercase tracking-widest"
+            style={{ letterSpacing: 0.06, color: colors.snack }}
           >
             {formatThousands(summary.steps)} steps
           </Text>
-          <Text size="2xs" className="font-mono uppercase tracking-widest text-typography-400">
+          <Text
+            size="2xs"
+            className="font-mono uppercase tracking-widest"
+            style={{ color: colors.textMuted }}
+          >
             · today
           </Text>
         </Box>
@@ -687,11 +729,21 @@ export default function TodayScreen() {
     </Card>
   )
 
+  const waterAccent = colors.water ?? colors.primary
+  const weightAccent = colors.weight ?? colors.primary
+
   const hydrationRow = (
     <Box className={`mb-3 flex-row ${compact ? "gap-2" : "gap-2.5"}`}>
       <Box
-        className={`min-w-0 flex-1 flex-row items-center rounded-none border bg-background-50 ${compact ? "p-2" : "p-2.5"}`}
-        style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
+        className={`min-w-0 flex-1 flex-row items-center rounded-none border ${compact ? "p-2" : "p-2.5"}`}
+        style={{
+          borderWidth: borders.width,
+          borderColor: colors.border,
+          borderRadius: radii.none,
+          borderTopWidth: 4,
+          borderTopColor: waterAccent,
+          backgroundColor: `${waterAccent}14`,
+        }}
       >
         <Pressable
           onPress={() => setLogWaterOpen(true)}
@@ -709,19 +761,26 @@ export default function TodayScreen() {
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
-              backgroundColor: `${colors.primary}12`,
+              backgroundColor: waterAccent,
             }}
           >
-            <Feather name="droplet" size={compact ? 16 : 18} color={colors.primary} />
+            <Feather name="droplet" size={compact ? 16 : 18} color={colors.onPrimary} />
           </Box>
           <Box className="min-w-0 flex-1">
-            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+            <Text
+              size="sm"
+              bold
+              numberOfLines={1}
+              className="font-tabular"
+              style={{ color: waterAccent }}
+            >
               {formatWaterAmount(waterIntake, settings.units)}{" "}
             </Text>
             <Text
               size="2xs"
               numberOfLines={1}
-              className="font-mono uppercase tracking-widest text-typography-500"
+              className="font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted }}
             >
               {waterGoal > 0 ? `/ ${formatWaterAmount(waterGoal, settings.units)}` : "Water"}
             </Text>
@@ -730,12 +789,13 @@ export default function TodayScreen() {
         <Pressable
           onPress={() => void handleQuickWater(250)}
           hitSlop={8}
-          className={`cursor-pointer items-center justify-center rounded-none border bg-primary-500 hover:bg-primary-600 active:bg-primary-600 ${compact ? "min-w-[52px] px-2" : "min-w-[56px] px-3"}`}
+          className={`cursor-pointer items-center justify-center rounded-none border hover:opacity-90 active:opacity-80 ${compact ? "min-w-[52px] px-2" : "min-w-[56px] px-3"}`}
           style={{
             minHeight: 44,
             height: 44,
             borderWidth: borders.width,
-            borderColor: colors.primary,
+            borderColor: colors.border,
+            backgroundColor: waterAccent,
             borderRadius: radii.none,
           }}
           accessibilityRole="button"
@@ -745,14 +805,14 @@ export default function TodayScreen() {
             size="2xs"
             bold
             className="font-mono uppercase leading-none tracking-widest"
-            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
+            style={{ color: "#ffffff", letterSpacing: 0.06 }}
           >
             +{settings.units === "imperial" ? formatNumber(250 * 0.033814) : "250"}
           </Text>
           <Text
             size="2xs"
             className="font-mono uppercase leading-none tracking-widest"
-            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
+            style={{ color: "#ffffff", letterSpacing: 0.06 }}
           >
             {settings.units === "imperial" ? "oz" : "ml"}
           </Text>
@@ -760,8 +820,15 @@ export default function TodayScreen() {
       </Box>
       <Pressable
         onPress={() => setLogWeightOpen(true)}
-        className={`min-w-0 flex-1 cursor-pointer rounded-none border bg-background-50 hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
-        style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
+        className={`min-w-0 flex-1 cursor-pointer rounded-none border hover:bg-background-100 active:bg-background-100 ${compact ? "gap-2 p-2" : "gap-2.5 p-2.5"}`}
+        style={{
+          borderWidth: borders.width,
+          borderColor: colors.border,
+          borderRadius: radii.none,
+          borderTopWidth: 4,
+          borderTopColor: weightAccent,
+          backgroundColor: `${weightAccent}14`,
+        }}
         accessibilityRole="button"
         accessibilityLabel={
           displayedWeight != null
@@ -778,20 +845,26 @@ export default function TodayScreen() {
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
-              backgroundColor: `${colors.primary}12`,
+              backgroundColor: weightAccent,
             }}
           >
-            <Feather name="activity" size={compact ? 16 : 18} color={colors.primary} />
+            <Feather name="activity" size={compact ? 16 : 18} color={colors.onPrimary} />
           </Box>
           <Box className="min-w-0 flex-1">
-            <Text size="sm" bold numberOfLines={1} className="font-tabular text-typography-900">
+            <Text
+              size="sm"
+              bold
+              numberOfLines={1}
+              className="font-tabular"
+              style={{ color: weightAccent }}
+            >
               {displayedWeight != null ? formatWeight(displayedWeight, settings.units) : "-"}
             </Text>
             <Text
               size="2xs"
               numberOfLines={1}
-              className="font-mono uppercase tracking-widest text-typography-500"
-              style={{ fontSize: 11, letterSpacing: 0.06 }}
+              className="font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontSize: 11, letterSpacing: 0.06 }}
             >
               {weightHistory.length > 1
                 ? `${weightHistory.length} weigh-ins`
@@ -817,9 +890,9 @@ export default function TodayScreen() {
                     style={{
                       flex: 1,
                       height: h,
-                      backgroundColor: isLast ? colors.primary : `${colors.primary}55`,
+                      backgroundColor: isLast ? weightAccent : `${weightAccent}55`,
                       borderWidth: borders.widthThin,
-                      borderColor: isLast ? colors.primary : `${colors.primary}40`,
+                      borderColor: isLast ? weightAccent : `${weightAccent}40`,
                       borderRadius: radii.none,
                     }}
                   />
@@ -834,9 +907,47 @@ export default function TodayScreen() {
 
   const nutritionHeader = (
     <Box className="mb-3 flex-row items-center justify-between px-1">
-      <Text size="xl" bold style={{ color: colors.textOnBackground }}>
-        MEALS
-      </Text>
+      <Box className="flex-row items-center gap-2">
+        <Box
+          style={{
+            width: 12,
+            height: 12,
+            backgroundColor: colors.breakfast,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        />
+        <Box
+          style={{
+            width: 12,
+            height: 12,
+            backgroundColor: colors.lunch,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        />
+        <Box
+          style={{
+            width: 12,
+            height: 12,
+            backgroundColor: colors.dinner,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        />
+        <Box
+          style={{
+            width: 12,
+            height: 12,
+            backgroundColor: colors.snack,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        />
+        <Text size="xl" bold style={{ color: colors.textOnBackground }}>
+          MEALS
+        </Text>
+      </Box>
       {/* No header-level log button here. Every meal card carries its own
           square add key and the FAB is the single primary path, so a third
           "+" with the same glyph only invited mis-taps. */}
@@ -876,8 +987,9 @@ export default function TodayScreen() {
                 {hydrationRow}
                 {isLarge ? (
                   <Box
-                    className="hidden rounded-none border bg-background-50 p-3 lg:flex"
+                    className="hidden rounded-none border p-3 lg:flex"
                     style={{
+                      backgroundColor: colors.surface,
                       borderWidth: borders.width,
                       borderColor: colors.border,
                       borderRadius: radii.none,
@@ -886,36 +998,50 @@ export default function TodayScreen() {
                     <Text
                       size="2xs"
                       bold
-                      className="font-mono uppercase tracking-widest text-typography-500"
-                      style={{ fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                      className="font-mono uppercase tracking-widest"
+                      style={{
+                        color: colors.textMuted,
+                        fontFamily: fonts.mono,
+                        letterSpacing: 0.08,
+                      }}
                     >
                       Daily rhythm
                     </Text>
                     <Box className="mt-2.5 flex-row gap-2">
                       <Box
-                        className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
-                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                        className="flex-1 items-center rounded-none border px-1 py-2.5"
+                        style={{
+                          backgroundColor: colors.surfaceAlt,
+                          borderWidth: borders.widthThin,
+                          borderColor: colors.border,
+                        }}
                       >
                         <Text
                           size="lg"
                           bold
                           numberOfLines={1}
                           adjustsFontSizeToFit
-                          className="font-tabular text-typography-900"
+                          className="font-tabular"
+                          style={{ color: colors.text }}
                         >
                           {formatThousands(Math.round(totals.kcal))}
                         </Text>
                         <Text
                           size="2xs"
                           numberOfLines={1}
-                          className="font-mono uppercase tracking-widest text-typography-500"
+                          className="font-mono uppercase tracking-widest"
+                          style={{ color: colors.textMuted }}
                         >
                           kcal logged
                         </Text>
                       </Box>
                       <Box
-                        className="flex-1 items-center rounded-none border bg-background-0 px-1 py-2.5"
-                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                        className="flex-1 items-center rounded-none border px-1 py-2.5"
+                        style={{
+                          backgroundColor: colors.surfaceAlt,
+                          borderWidth: borders.widthThin,
+                          borderColor: colors.border,
+                        }}
                       >
                         <Text
                           size="lg"
@@ -937,7 +1063,8 @@ export default function TodayScreen() {
                         <Text
                           size="2xs"
                           numberOfLines={1}
-                          className="font-mono uppercase tracking-widest text-typography-500"
+                          className="font-mono uppercase tracking-widest"
+                          style={{ color: colors.textMuted }}
                         >
                           kcal left
                         </Text>
@@ -1171,8 +1298,12 @@ export default function TodayScreen() {
                 ].map(([k, v]) => (
                   <Box key={k} className="flex-row items-center justify-between gap-4">
                     <Box
-                      className="rounded-none border bg-background-100 px-2 py-1"
-                      style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                      className="rounded-none border px-2 py-1"
+                      style={{
+                        backgroundColor: colors.surfaceAlt,
+                        borderWidth: borders.widthThin,
+                        borderColor: colors.border,
+                      }}
                     >
                       <Text size="xs" bold style={{ fontFamily: fonts.mono }}>
                         {k}

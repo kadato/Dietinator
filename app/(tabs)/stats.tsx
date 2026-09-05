@@ -327,7 +327,7 @@ export default function StatsScreen() {
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats
           </Text>
-          <Text size="xs" className="mt-1 text-typography-500">
+          <Text size="xs" className="mt-1" style={{ color: colors.textMuted }}>
             Weight, calories and macro trends
           </Text>
         </Box>
@@ -344,16 +344,20 @@ export default function StatsScreen() {
             <Box className="mt-2 flex-row flex-wrap gap-2">
               <Text
                 size="2xs"
-                className="font-mono uppercase tracking-widest text-typography-400"
-                style={{ fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                className="font-mono uppercase tracking-widest"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
               >
                 Shortcuts:
               </Text>
               {["1·1W", "2·1M", "3·3M", "4·6M", "5·1Y", "W·Weight", "R·Refresh"].map((s) => (
                 <Box
                   key={s}
-                  className="rounded-none border bg-background-50 px-1.5 py-0.5"
-                  style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                  className="rounded-none border px-1.5 py-0.5"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: borders.widthThin,
+                    borderColor: colors.border,
+                  }}
                 >
                   <Text size="2xs" bold style={{ fontFamily: fonts.mono }}>
                     {s}
@@ -384,10 +388,10 @@ export default function StatsScreen() {
                   <Feather name="cloud-off" size={18} color={colors.danger} />
                 </Box>
                 <Box className="min-w-0 flex-1">
-                  <Text size="md" bold className="text-typography-900">
+                  <Text size="md" bold className="" style={{ color: colors.text }}>
                     Could not load stats
                   </Text>
-                  <Text size="xs" className="text-typography-500">
+                  <Text size="xs" className="" style={{ color: colors.textMuted }}>
                     Try switching ranges or pull to refresh.
                   </Text>
                 </Box>
@@ -419,16 +423,20 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center justify-between gap-2.5">
                   <Box className="flex-row items-center gap-2.5">
                     <Box
-                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="h-9 w-9 items-center justify-center rounded-none border"
+                      style={{
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                        backgroundColor: colors.warning,
+                      }}
                     >
-                      <Feather name="activity" size={18} color={colors.primary} />
+                      <Feather name="activity" size={18} color={colors.onWarning} />
                     </Box>
                     <Box>
-                      <Text size="md" bold className="text-typography-900">
+                      <Text size="md" bold className="" style={{ color: colors.text }}>
                         Consistency
                       </Text>
-                      <Text size="xs" className="text-typography-500">
+                      <Text size="xs" className="" style={{ color: colors.textMuted }}>
                         {RANGES.find((r) => r.id === range)?.days} days · {adherence.loggedDays}{" "}
                         logged
                       </Text>
@@ -458,28 +466,36 @@ export default function StatsScreen() {
                 <Box className="mt-3 gap-3">
                   <Box className="flex-row gap-3">
                     <Box
-                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="flex-1 gap-1 rounded-none border p-3"
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                      }}
                     >
                       <Box className="flex-row items-center justify-between">
                         <Text
                           size="2xs"
                           bold
-                          className="font-mono uppercase tracking-widest text-typography-500"
-                          style={{ letterSpacing: 0.06 }}
+                          className="font-mono uppercase tracking-widest"
+                          style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
                           Streak
                         </Text>
                         <Feather name="zap" size={12} color={colors.warning} />
                       </Box>
-                      <Text size="xl" bold className="font-tabular text-typography-900">
+                      <Text size="xl" bold className="font-tabular" style={{ color: colors.text }}>
                         {logStreak}
-                        <Text size="xs" className="font-mono font-normal text-typography-500">
+                        <Text
+                          size="xs"
+                          className="font-mono font-normal"
+                          style={{ color: colors.textMuted }}
+                        >
                           {" "}
                           days
                         </Text>
                       </Text>
-                      <Text size="2xs" className="font-mono text-typography-500">
+                      <Text size="2xs" className="font-mono" style={{ color: colors.textMuted }}>
                         {logStreak === 0
                           ? "Log today to start"
                           : logStreak === 1
@@ -488,30 +504,42 @@ export default function StatsScreen() {
                       </Text>
                     </Box>
                     <Box
-                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="flex-1 gap-1 rounded-none border p-3"
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                      }}
                     >
                       <Box className="flex-row items-center justify-between">
                         <Text
                           size="2xs"
                           bold
-                          className="font-mono uppercase tracking-widest text-typography-500"
-                          style={{ letterSpacing: 0.06 }}
+                          className="font-mono uppercase tracking-widest"
+                          style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
                           Logged
                         </Text>
                         <Feather name="check" size={12} color={colors.primary} />
                       </Box>
-                      <Text size="xl" bold className="font-tabular text-typography-900">
+                      <Text size="xl" bold className="font-tabular" style={{ color: colors.text }}>
                         {adherence.loggedDays}
-                        <Text size="xs" className="font-mono font-normal text-typography-500">
+                        <Text
+                          size="xs"
+                          className="font-mono font-normal"
+                          style={{ color: colors.textMuted }}
+                        >
                           {" "}
                           / {RANGES.find((r) => r.id === range)?.days}
                         </Text>
                       </Text>
                       <View
-                        className="mt-1 h-1.5 overflow-hidden rounded-none border bg-background-100"
-                        style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                        className="mt-1 h-1.5 overflow-hidden rounded-none border"
+                        style={{
+                          backgroundColor: colors.surfaceAlt,
+                          borderWidth: borders.widthThin,
+                          borderColor: colors.border,
+                        }}
                       >
                         <View
                           style={{
@@ -523,27 +551,35 @@ export default function StatsScreen() {
                       </View>
                     </Box>
                     <Box
-                      className="flex-1 gap-1 rounded-none border bg-background-50 p-3"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="flex-1 gap-1 rounded-none border p-3"
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                      }}
                     >
                       <Box className="flex-row items-center justify-between">
                         <Text
                           size="2xs"
                           bold
-                          className="font-mono uppercase tracking-widest text-typography-500"
-                          style={{ letterSpacing: 0.06 }}
+                          className="font-mono uppercase tracking-widest"
+                          style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
                           On target
                         </Text>
                         <Feather name="target" size={12} color={colors.primary} />
                       </Box>
-                      <Text size="xl" bold className="font-tabular text-typography-900">
+                      <Text size="xl" bold className="font-tabular" style={{ color: colors.text }}>
                         {adherence.onTargetPct !== null ? `${adherence.onTargetPct}%` : "—"}
                       </Text>
                       {adherence.onTargetPct !== null ? (
                         <View
-                          className="mt-1 h-1.5 overflow-hidden rounded-none border bg-background-100"
-                          style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                          className="mt-1 h-1.5 overflow-hidden rounded-none border"
+                          style={{
+                            backgroundColor: colors.surfaceAlt,
+                            borderWidth: borders.widthThin,
+                            borderColor: colors.border,
+                          }}
                         >
                           <View
                             style={{
@@ -555,7 +591,7 @@ export default function StatsScreen() {
                           />
                         </View>
                       ) : (
-                        <Text size="2xs" className="font-mono text-typography-500">
+                        <Text size="2xs" className="font-mono" style={{ color: colors.textMuted }}>
                           No data in range
                         </Text>
                       )}
@@ -576,7 +612,8 @@ export default function StatsScreen() {
                     />
                     <Text
                       size="2xs"
-                      className="font-mono uppercase tracking-widest text-typography-400"
+                      className="font-mono uppercase tracking-widest"
+                      style={{ color: colors.textMuted }}
                     >
                       {adherence.onTargetPct !== null
                         ? adherence.onTargetPct >= 80
@@ -594,18 +631,22 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
                   <Box
-                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    className="h-9 w-9 items-center justify-center rounded-none border"
+                    style={{
+                      borderWidth: borders.width,
+                      borderColor: colors.border,
+                      backgroundColor: colors.weight ?? colors.primary,
+                    }}
                   >
-                    <Feather name="activity" size={18} color={colors.primary} />
+                    <Feather name="activity" size={18} color={colors.onPrimary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900">
+                    <Text size="md" bold className="" style={{ color: colors.text }}>
                       Body weight
                     </Text>
                     {latest ? (
                       <Box className="flex-row items-center gap-1.5">
-                        <Text size="xs" className="text-typography-500">
+                        <Text size="xs" className="" style={{ color: colors.textMuted }}>
                           {formatDisplayDate(latest.date)}
                         </Text>
                         {weightDelta !== null && weightDelta !== 0 ? (
@@ -627,12 +668,12 @@ export default function StatsScreen() {
                         ) : null}
                       </Box>
                     ) : (
-                      <Text size="xs" className="text-typography-500">
+                      <Text size="xs" className="" style={{ color: colors.textMuted }}>
                         Not logged yet
                       </Text>
                     )}
                   </Box>
-                  <Text size="lg" bold className="font-tabular text-typography-900">
+                  <Text size="lg" bold className="font-tabular" style={{ color: colors.text }}>
                     {latest ? formatWeight(latest.weight_kg, settings.units) : "Not set"}
                   </Text>
                 </Box>
@@ -642,13 +683,18 @@ export default function StatsScreen() {
                     {bmi !== null ? (
                       <Box className="flex-row items-center gap-1">
                         <Feather name="user" size={13} color={colors.textMuted} />
-                        <Text size="xs" bold className="font-tabular text-typography-600">
+                        <Text
+                          size="xs"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
+                        >
                           BMI {bmi}
                         </Text>
                       </Box>
                     ) : null}
                     {goalDelta !== null ? (
-                      <Text size="xs" bold className="font-tabular text-typography-600">
+                      <Text size="xs" bold className="font-tabular" style={{ color: colors.text }}>
                         {goalDelta <= 0.05
                           ? "At goal weight"
                           : `${formatWeight(Math.abs(goalDelta), settings.units)} to goal`}
@@ -660,18 +706,27 @@ export default function StatsScreen() {
                 {goalProgress !== null ? (
                   <Box className="mt-3">
                     <Box className="mb-1 flex-row items-center justify-between">
-                      <Text size="xs" bold className="text-typography-600">
+                      <Text size="xs" bold className="" style={{ color: colors.text }}>
                         {goalProgress >= 1 ? "Goal reached" : "Goal progress"}
                       </Text>
                       {goalProgress < 1 ? (
-                        <Text size="xs" bold className="font-tabular text-typography-600">
+                        <Text
+                          size="xs"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
+                        >
                           {Math.round(goalProgress * 100)}%
                         </Text>
                       ) : null}
                     </Box>
                     <View
-                      className="h-2 overflow-hidden rounded-none border bg-background-100"
-                      style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
+                      className="h-2 overflow-hidden rounded-none border"
+                      style={{
+                        backgroundColor: colors.surfaceAlt,
+                        borderWidth: borders.widthThin,
+                        borderColor: colors.border,
+                      }}
                       accessibilityRole="progressbar"
                       accessibilityLabel="Goal progress"
                       accessibilityValue={{
@@ -695,7 +750,7 @@ export default function StatsScreen() {
                   {weightChartData.length > 0 ? (
                     <TrendChart
                       data={weightChartData}
-                      color={colors.primary}
+                      color={colors.weight ?? colors.primary}
                       rangeStart={fromKey}
                       rangeEnd={toDateKey()}
                       formatValue={(value) => formatWeight(value, settings.units)}
@@ -711,15 +766,19 @@ export default function StatsScreen() {
 
                 {selectedWeight ? (
                   <Box
-                    className="mt-3 flex-row flex-wrap items-center gap-2 rounded-none border bg-background-50 px-3 py-2.5"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    className="mt-3 flex-row flex-wrap items-center gap-2 rounded-none border px-3 py-2.5"
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderWidth: borders.width,
+                      borderColor: colors.border,
+                    }}
                   >
                     <Feather name="map-pin" size={15} color={colors.primary} />
                     <Box className="min-w-[120px] flex-1">
-                      <Text size="xs" bold className="text-typography-900">
+                      <Text size="xs" bold className="" style={{ color: colors.text }}>
                         {formatDisplayDate(selectedWeight.date)}
                       </Text>
-                      <Text size="xs" className="font-tabular text-typography-500">
+                      <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
                         {formatWeight(selectedWeight.weight_kg, settings.units)}
                         {selectedWeight.note ? ` · ${selectedWeight.note}` : ""}
                       </Text>
@@ -781,16 +840,20 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
                     <Box
-                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="h-9 w-9 items-center justify-center rounded-none border"
+                      style={{
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                        backgroundColor: colors.primary,
+                      }}
                     >
-                      <Feather name="zap" size={18} color={colors.primary} />
+                      <Feather name="zap" size={18} color={colors.onPrimary} />
                     </Box>
                     <Box>
-                      <Text size="md" bold className="text-typography-900">
+                      <Text size="md" bold className="" style={{ color: colors.text }}>
                         Calories
                       </Text>
-                      <Text size="xs" className="font-tabular text-typography-500">
+                      <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
                         Daily average {avgKcal !== null ? `${avgKcal} kcal` : "No data"}
                         {settings.calorie_goal > 0
                           ? ` · goal ${Math.round(settings.calorie_goal)}`
@@ -821,7 +884,12 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedKcal ? (
-                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
+                  <Text
+                    size="xs"
+                    bold
+                    className="font-tabular mt-2 px-1"
+                    style={{ color: colors.text }}
+                  >
                     {formatDisplayDate(selectedKcal.date)}, {Math.round(selectedKcal.value)} kcal
                     {settings.calorie_goal > 0
                       ? selectedKcal.value > settings.calorie_goal
@@ -837,16 +905,20 @@ export default function StatsScreen() {
                 <Box className="flex-row items-center justify-between gap-3">
                   <Box className="flex-row items-center gap-2.5">
                     <Box
-                      className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                      style={{ borderWidth: borders.width, borderColor: colors.border }}
+                      className="h-9 w-9 items-center justify-center rounded-none border"
+                      style={{
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                        backgroundColor: colors.breakfast,
+                      }}
                     >
-                      <Feather name="pie-chart" size={18} color={colors.primary} />
+                      <Feather name="pie-chart" size={18} color={colors.onPrimary} />
                     </Box>
                     <Box>
-                      <Text size="md" bold className="text-typography-900">
+                      <Text size="md" bold className="" style={{ color: colors.text }}>
                         Macronutrients
                       </Text>
-                      <Text size="xs" className="text-typography-500">
+                      <Text size="xs" className="" style={{ color: colors.textMuted }}>
                         Daily average breakdown
                       </Text>
                     </Box>
@@ -901,7 +973,12 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedMacro ? (
-                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
+                  <Text
+                    size="xs"
+                    bold
+                    className="font-tabular mt-2 px-1"
+                    style={{ color: colors.text }}
+                  >
                     {formatDisplayDate(selectedMacro.date)}, {Math.round(selectedMacro.value)}g{" "}
                     {macroMetric}
                   </Text>
@@ -909,7 +986,7 @@ export default function StatsScreen() {
 
                 {avgMacros ? (
                   <Box className="mt-3 border-t border-outline-100 pt-3">
-                    <Text size="2xs" bold className="mb-2 text-typography-500">
+                    <Text size="2xs" bold className="mb-2" style={{ color: colors.textMuted }}>
                       AVERAGE MACRO SPLIT
                     </Text>
                     <Box className="flex-row gap-2">
@@ -924,10 +1001,19 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.breakfast }}>
                           Protein
                         </Text>
-                        <Text size="sm" bold className="font-tabular text-typography-900">
+                        <Text
+                          size="sm"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
+                        >
                           {avgMacros.protein}g
                         </Text>
-                        <Text size="2xs" className="font-tabular text-typography-500">
+                        <Text
+                          size="2xs"
+                          className="font-tabular"
+                          style={{ color: colors.textMuted }}
+                        >
                           {avgMacros.proteinPct}%
                         </Text>
                       </Box>
@@ -942,10 +1028,19 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.lunch }}>
                           Carbs
                         </Text>
-                        <Text size="sm" bold className="font-tabular text-typography-900">
+                        <Text
+                          size="sm"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
+                        >
                           {avgMacros.carbs}g
                         </Text>
-                        <Text size="2xs" className="font-tabular text-typography-500">
+                        <Text
+                          size="2xs"
+                          className="font-tabular"
+                          style={{ color: colors.textMuted }}
+                        >
                           {avgMacros.carbsPct}%
                         </Text>
                       </Box>
@@ -960,10 +1055,19 @@ export default function StatsScreen() {
                         <Text size="xs" bold style={{ color: colors.dinner }}>
                           Fat
                         </Text>
-                        <Text size="sm" bold className="font-tabular text-typography-900">
+                        <Text
+                          size="sm"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
+                        >
                           {avgMacros.fat}g
                         </Text>
-                        <Text size="2xs" className="font-tabular text-typography-500">
+                        <Text
+                          size="2xs"
+                          className="font-tabular"
+                          style={{ color: colors.textMuted }}
+                        >
                           {avgMacros.fatPct}%
                         </Text>
                       </Box>
@@ -976,16 +1080,20 @@ export default function StatsScreen() {
               <Card variant="elevated" className="p-4">
                 <Box className="flex-row items-center gap-2.5">
                   <Box
-                    className="h-9 w-9 items-center justify-center rounded-none border bg-primary-500/10"
-                    style={{ borderWidth: borders.width, borderColor: colors.border }}
+                    className="h-9 w-9 items-center justify-center rounded-none border"
+                    style={{
+                      borderWidth: borders.width,
+                      borderColor: colors.border,
+                      backgroundColor: colors.water ?? colors.primary,
+                    }}
                   >
-                    <Feather name="droplet" size={18} color={colors.primary} />
+                    <Feather name="droplet" size={18} color={colors.onPrimary} />
                   </Box>
                   <Box className="min-w-0 flex-1">
-                    <Text size="md" bold className="text-typography-900">
+                    <Text size="md" bold className="" style={{ color: colors.text }}>
                       Water
                     </Text>
-                    <Text size="xs" className="font-tabular text-typography-500">
+                    <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
                       Daily intake
                       {settings.water_goal_ml > 0
                         ? ` · goal ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
@@ -998,7 +1106,7 @@ export default function StatsScreen() {
                   {waterChartData.length > 0 ? (
                     <TrendChart
                       data={waterChartData}
-                      color={colors.primary}
+                      color={colors.water ?? colors.primary}
                       goalValue={settings.water_goal_ml > 0 ? settings.water_goal_ml : undefined}
                       variant="bars"
                       rangeStart={fromKey}
@@ -1012,7 +1120,7 @@ export default function StatsScreen() {
                   ) : (
                     <EmptyState
                       icon="droplet"
-                      iconColor={colors.primary}
+                      iconColor={colors.water ?? colors.primary}
                       title={`No water logged ${range === "1w" ? "this week" : "in this range"} yet.`}
                       variant="compact"
                     />
@@ -1020,7 +1128,12 @@ export default function StatsScreen() {
                 </View>
 
                 {selectedWater ? (
-                  <Text size="xs" bold className="font-tabular mt-2 px-1 text-typography-600">
+                  <Text
+                    size="xs"
+                    bold
+                    className="font-tabular mt-2 px-1"
+                    style={{ color: colors.text }}
+                  >
                     {formatDisplayDate(selectedWater.date)},{" "}
                     {formatWaterAmount(selectedWater.value, settings.units)}
                     {settings.water_goal_ml > 0

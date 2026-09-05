@@ -57,12 +57,20 @@ export const MealSection = memo(function MealSection({
 
   return (
     <Box
-      className="meal-card mb-2.5 overflow-hidden rounded-none border bg-background-50 p-0"
-      style={{ borderWidth: borders.width, borderColor: colors.border, borderRadius: radii.none }}
+      className="meal-card mb-2.5 overflow-hidden rounded-none border p-0"
+      style={{
+        backgroundColor: colors.surface,
+        borderWidth: borders.width,
+        borderColor: colors.border,
+        borderRadius: 0,
+      }}
     >
-      <View style={{ height: 3, backgroundColor: accent, width: "100%" }} />
+      <View style={{ height: 5, backgroundColor: accent, width: "100%" }} />
       {/* Header: icon + title on one line, kcal + add on the right. */}
-      <Box className="flex-row items-center justify-between gap-2.5 px-3 py-2.5">
+      <Box
+        className="flex-row items-center justify-between gap-2.5 px-3 py-2.5"
+        style={{ backgroundColor: `${accent}1A` }}
+      >
         <Pressable
           onPress={() => {
             if (entries.length === 0) onAdd(mealType)
@@ -79,13 +87,13 @@ export const MealSection = memo(function MealSection({
           <Box
             className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
             style={{
-              backgroundColor: `${accent}14`,
+              backgroundColor: accent,
               borderColor: colors.border,
               borderWidth: borders.width,
-              borderRadius: radii.none,
+              borderRadius: 0,
             }}
           >
-            <Feather name={MEAL_ICONS[mealType]} size={18} color={accent} />
+            <Feather name={MEAL_ICONS[mealType]} size={18} color={colors.onPrimary} />
           </Box>
 
           <Box className="min-w-0 flex-1 gap-1">
@@ -94,8 +102,8 @@ export const MealSection = memo(function MealSection({
                 <Text
                   size="sm"
                   bold
-                  className="text-[13px] uppercase tracking-wider text-typography-900"
-                  style={{ letterSpacing: 0.06, fontFamily: fonts.mono }}
+                  className="text-[13px] uppercase tracking-wider"
+                  style={{ letterSpacing: 0.06, fontFamily: fonts.mono, color: accent }}
                 >
                   {MEAL_LABELS[mealType]}
                 </Text>
@@ -107,9 +115,18 @@ export const MealSection = memo(function MealSection({
                   />
                 ) : null}
               </Box>
-              <Text size="sm" bold className="font-tabular text-[15px] text-typography-900">
+              <Text
+                size="sm"
+                bold
+                className="font-tabular text-[15px]"
+                style={{ color: colors.text }}
+              >
                 {Math.round(totalKcal)}{" "}
-                <Text size="2xs" className="font-normal tracking-wider text-typography-500">
+                <Text
+                  size="2xs"
+                  className="font-normal tracking-wider"
+                  style={{ color: colors.textMuted }}
+                >
                   kcal
                 </Text>
               </Text>
@@ -128,7 +145,12 @@ export const MealSection = memo(function MealSection({
         />
 
         <Pressable
-          className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none bg-primary-500 hover:bg-primary-600 active:opacity-80"
+          className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none hover:opacity-90 active:opacity-80"
+          style={{
+            backgroundColor: accent,
+            borderWidth: borders.width,
+            borderColor: colors.border,
+          }}
           onPress={() => onAdd(mealType)}
           hitSlop={8}
           accessibilityRole="button"
@@ -142,12 +164,13 @@ export const MealSection = memo(function MealSection({
       {goal ? (
         <Box className="mt-0.5 gap-1.5 px-3 pb-2.5">
           <View
-            className="w-full overflow-hidden rounded-none border bg-background-100"
+            className="w-full overflow-hidden rounded-none border"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,
-              borderRadius: radii.none,
-              height: 6,
+              borderRadius: 0,
+              height: 8,
+              backgroundColor: `${accent}26`,
             }}
           >
             <View
@@ -163,8 +186,13 @@ export const MealSection = memo(function MealSection({
           <Box className="flex-row items-center justify-between">
             <Text
               size="2xs"
-              className="font-mono uppercase tracking-wider text-typography-500"
-              style={{ fontSize: 11, letterSpacing: 0.04, fontFamily: fonts.mono }}
+              className="font-mono uppercase tracking-wider"
+              style={{
+                color: colors.textMuted,
+                fontSize: 11,
+                letterSpacing: 0.04,
+                fontFamily: fonts.mono,
+              }}
             >
               Goal {Math.round(goal)} kcal
             </Text>
@@ -197,8 +225,13 @@ export const MealSection = memo(function MealSection({
           {overKcal ? (
             <Text
               size="2xs"
-              className="font-mono tracking-wider text-typography-500"
-              style={{ fontSize: 10, letterSpacing: 0.02, fontFamily: fonts.mono }}
+              className="font-mono tracking-wider"
+              style={{
+                color: colors.textMuted,
+                fontSize: 10,
+                letterSpacing: 0.02,
+                fontFamily: fonts.mono,
+              }}
             >
               Adjust tomorrow
             </Text>
@@ -211,8 +244,13 @@ export const MealSection = memo(function MealSection({
           <Feather name="plus" size={11} color={colors.textMuted} />
           <Text
             size="2xs"
-            className="font-mono uppercase tracking-wider text-typography-400"
-            style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.04 }}
+            className="font-mono uppercase tracking-wider"
+            style={{
+              color: colors.textMuted,
+              fontFamily: fonts.mono,
+              fontSize: 11,
+              letterSpacing: 0.04,
+            }}
           >
             Tap + to log
           </Text>
@@ -224,15 +262,16 @@ export const MealSection = memo(function MealSection({
               <Text
                 size="xs"
                 numberOfLines={1}
-                className="flex-1 font-mono text-typography-700"
-                style={{ fontFamily: fonts.mono, fontSize: 12 }}
+                className="flex-1 font-mono"
+                style={{ color: colors.text, fontFamily: fonts.mono, fontSize: 12 }}
               >
                 {entry.food_name}
               </Text>
               <Text
                 size="xs"
-                className="ml-2 shrink-0 font-mono tabular-nums text-typography-500"
+                className="ml-2 shrink-0 font-mono tabular-nums"
                 style={{
+                  color: colors.textMuted,
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"] as never,
                   fontSize: 12,
@@ -245,16 +284,26 @@ export const MealSection = memo(function MealSection({
           {entries.length > 2 ? (
             <Text
               size="2xs"
-              className="font-mono uppercase tracking-wider text-typography-400"
-              style={{ fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.04 }}
+              className="font-mono uppercase tracking-wider"
+              style={{
+                color: colors.textMuted,
+                fontFamily: fonts.mono,
+                fontSize: 10,
+                letterSpacing: 0.04,
+              }}
             >
               +{entries.length - 2} more · tap to expand
             </Text>
           ) : (
             <Text
               size="2xs"
-              className="font-mono uppercase tracking-wider text-typography-400"
-              style={{ fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.04 }}
+              className="font-mono uppercase tracking-wider"
+              style={{
+                color: colors.textMuted,
+                fontFamily: fonts.mono,
+                fontSize: 10,
+                letterSpacing: 0.04,
+              }}
             >
               Tap to expand
             </Text>

@@ -148,15 +148,12 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
         accessibilityHint={canInline ? "Tap to edit amount inline" : "Tap to edit"}
       >
         <View
-          style={[
-            styles.iconWrap,
-            { backgroundColor: chipTint(accentColor), borderColor: colors.border },
-          ]}
+          style={[styles.iconWrap, { backgroundColor: accentColor, borderColor: colors.border }]}
         >
           <MaterialCommunityIcons
             name={getFoodIcon(entry.food_name, entry)}
             size={22}
-            color={accentColor}
+            color={colors.onPrimary}
           />
         </View>
         <View style={styles.info}>
@@ -164,7 +161,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           <Text style={styles.amountLabel}>{amountLabel.trim()}</Text>
         </View>
         <View style={styles.kcalBlock}>
-          <Text style={styles.kcalValue}>{Math.round(entry.kcal)}</Text>
+          <Text style={[styles.kcalValue, { color: accentColor }]}>{Math.round(entry.kcal)}</Text>
           <Text style={styles.kcalUnit}> kcal</Text>
         </View>
       </Pressable>

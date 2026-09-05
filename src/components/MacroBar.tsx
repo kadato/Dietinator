@@ -24,19 +24,14 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
     <View style={styles.row}>
       <View style={styles.rowHeader}>
         <View style={styles.labelGroup}>
-          <View
-            style={[
-              styles.iconBox,
-              { borderColor: chipTint(color, 0.35), backgroundColor: chipTint(color) },
-            ]}
-          >
-            <Feather name={icon} size={12} color={color} />
+          <View style={[styles.iconBox, { borderColor: colors.border, backgroundColor: color }]}>
+            <Feather name={icon} size={12} color={colors.onPrimary} />
           </View>
-          <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+          <Text style={[styles.label, { color }]}>{label}</Text>
         </View>
 
         <View style={styles.valueGroup}>
-          <Text style={styles.trackedText}>
+          <Text style={[styles.trackedText, { color }]}>
             {Math.round(value)}
             {goal > 0 ? (
               <Text style={styles.goalText}> / {Math.round(goal)}g</Text>
@@ -50,14 +45,12 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
               style={[
                 styles.budgetBadge,
                 {
-                  backgroundColor: over > 0 ? chipTint(colors.danger) : chipTint(color),
+                  backgroundColor: over > 0 ? chipTint(colors.danger) : chipTint(color, 0.22),
                   borderColor: over > 0 ? colors.danger : color,
                 },
               ]}
             >
-              <Text
-                style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : colors.text }]}
-              >
+              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
                 {over > 0 ? `+${Math.round(over)}g over` : `${Math.round(remaining)}g left`}
               </Text>
             </View>
@@ -78,7 +71,7 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
         </Text>
       ) : null}
 
-      <View style={styles.barBg}>
+      <View style={[styles.barBg, { backgroundColor: chipTint(color, 0.18) }]}>
         <View
           style={[
             styles.barFill,
