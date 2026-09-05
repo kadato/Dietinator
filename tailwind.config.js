@@ -201,6 +201,9 @@ module.exports = {
           lunch: "var(--meal-l)",
           dinner: "var(--meal-d)",
           snack: "var(--meal-s)",
+          water: "var(--app-water)",
+          weight: "var(--app-weight)",
+          success: "var(--app-success)",
         },
         app: {
           chrome: "#ffedd5",

@@ -28,6 +28,9 @@ export const darkColors: ColorPalette = {
   lunch: "#FFB020",
   dinner: "#ff92a6",
   snack: "#2EC4B6",
+  water: "#38bdf8",
+  weight: "#c4b5fd",
+  success: "#4ade80",
 }
 
 export const lightColors: ColorPalette = {
@@ -44,19 +47,20 @@ export const lightColors: ColorPalette = {
   textMuted: "#475569",
   textOnBackground: "#0f172a",
   danger: "#be123c",
-  warning: "#96610a",
+  warning: "#92400e",
   onWarning: "#ffffff",
   border: "#0f172a",
-  // Vibrant, colorblind-safe macro and meal palette, Wong and Okabe-Ito
-  // darkened until every value clears 4.5 to 1 as text on white, the page
-  // background, and its own tinted chip well. Blue for protein and breakfast,
-  // amber for carbs and lunch, vermillion for fat and dinner remain distinct
-  // under deuteranopia, protanopia, or tritanopia. Snack keeps a teal that is
-  // luminance-separated from the three.
-  breakfast: "#075985",
-  lunch: "#804707",
-  dinner: "#96340a",
-  snack: "#0b5f5a",
+  // Vivid terminal: saturated but still 4.5 to 1 as text on white and on
+  // their own tinted wells. Sky for breakfast and protein, amber-brown for
+  // lunch and carbs, rose for dinner and fat, teal for snack. Water is cyan
+  // distinct from breakfast blue, weight is violet, success is green.
+  breakfast: "#0369a1",
+  lunch: "#92400e",
+  dinner: "#be123c",
+  snack: "#0f766e",
+  water: "#0e7490",
+  weight: "#6d28d9",
+  success: "#15803d",
 }
 
 export type BuiltinThemeName = "light" | "dark"

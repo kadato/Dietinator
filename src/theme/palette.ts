@@ -23,6 +23,9 @@ export type ColorPalette = {
   lunch: string
   dinner: string
   snack: string
+  water?: string
+  weight?: string
+  success?: string
 }
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack"

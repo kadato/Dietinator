@@ -68,12 +68,15 @@ textarea::placeholder {
   --app-text: #0f172a;
   --app-text-muted: #475569;
   --app-danger: #be123c;
-  --app-warning: #96610a;
+  --app-warning: #92400e;
   --app-on-primary: #ffffff;
-  --meal-b: #075985;
-  --meal-l: #804707;
-  --meal-d: #96340a;
-  --meal-s: #0b5f5a;
+  --meal-b: #0369a1;
+  --meal-l: #92400e;
+  --meal-d: #be123c;
+  --meal-s: #0f766e;
+  --app-water: #0e7490;
+  --app-weight: #6d28d9;
+  --app-success: #15803d;
   --bg-grid: rgba(15, 23, 42, 0.035);
   --paper-grid: rgba(15, 23, 42, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
@@ -102,6 +105,9 @@ html.dark {
   --meal-l: #ffb020;
   --meal-d: #ff92a6;
   --meal-s: #2ec4b6;
+  --app-water: #38bdf8;
+  --app-weight: #c4b5fd;
+  --app-success: #4ade80;
   --bg-grid: rgba(192, 202, 245, 0.035);
   --paper-grid: rgba(192, 202, 245, 0.035);
   --scrim: rgba(26, 27, 38, 0.65);
@@ -654,6 +660,12 @@ html.dark input {
 }
 html.dark :focus-visible {
   outline-color: var(--app-primary);
+}
+
+/* Borderless inputs nested in their own bordered container (log-meal
+ * expanding search) draw focus on the container, not as an inner box. */
+.logmeal-search-input:focus-visible {
+  outline: none;
 }
 
 /* Terminal world - square, sharp, no soft shadows */
