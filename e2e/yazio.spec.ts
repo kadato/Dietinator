@@ -41,6 +41,7 @@ test.describe("YAZIO (real account)", () => {
 
   async function logFoodViaSearch(page: Page, meal: string, query: string, foodName: string) {
     await page.getByRole("button", { name: `Add food to ${meal}` }).click()
+    await page.getByRole("button", { name: "Search foods" }).click()
     const searchBox = page.getByPlaceholder("Search foods…")
     await expect(searchBox).toBeVisible()
     await searchBox.fill(query)
@@ -78,6 +79,7 @@ test.describe("YAZIO (real account)", () => {
     await login(page)
 
     await page.getByRole("button", { name: "Add food to Lunch" }).click()
+    await page.getByRole("button", { name: "Search foods" }).click()
     await page.getByPlaceholder("Search foods…").fill("banane")
 
     // Remote results arrive with real product rows (aria-label ends with the

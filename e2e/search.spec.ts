@@ -5,6 +5,7 @@ test.describe("food search (offline)", () => {
     await bootAuthenticated(page)
 
     await page.getByRole("button", { name: "Add food to Breakfast" }).click()
+    await page.getByRole("button", { name: "Search foods" }).click()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
     // The unified log-meal screen switches lists via quick tabs, not buttons.
     await expect(page.getByRole("tab", { name: "Favorites" })).toBeVisible()
@@ -25,6 +26,7 @@ test.describe("food search (offline)", () => {
     await page.getByRole("button", { name: "Add food to Breakfast" }).click()
     // The modal title (the dashboard card behind it also says "Breakfast", so scope to the modal).
     await expect(page.getByRole("button", { name: "More" })).toBeVisible()
+    await page.getByRole("button", { name: "Search foods" }).click()
     await expect(page.getByPlaceholder("Search foods…")).toBeVisible()
 
     // The log-meal modal closes via its bottom-left back FAB.

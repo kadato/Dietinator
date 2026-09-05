@@ -22,6 +22,7 @@ async function openFoodPreview(
 } | null> {
   await page.getByRole("button", { name: "Add food to Lunch" }).click()
   const searchBox = page.getByPlaceholder("Search foods…")
+  await page.getByRole("button", { name: "Search foods" }).click()
   await expect(searchBox).toBeVisible()
   const firstRow = page.getByRole("button", { name: namePattern ?? /, \d+ kcal / }).first()
   const suggestionLabel = namePattern ? null : await firstRow.getAttribute("aria-label")
