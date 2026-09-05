@@ -16,13 +16,23 @@ type Props = {
   servingLabel: string
   baseAmount?: number
   baseUnit?: string
+  /** Compact renders one slim row for the add-food screen, where the
+      Daily Budget Impact card carries the decision. Full keeps the
+      large macro cards. */
+  variant?: "full" | "compact"
 }
 
 function formatMacro(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
-export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUnit = "g" }: Props) {
+export function NutritionFactsCard({
+  nutrients,
+  servingLabel,
+  baseAmount,
+  baseUnit = "g",
+  variant = "full",
+}: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const [expanded, setExpanded] = useState(false)
@@ -106,6 +116,74 @@ export function NutritionFactsCard({ nutrients, servingLabel, baseAmount, baseUn
       rdi: DAILY_RECOMMENDED_INTAKE.vitamin_b12.value,
     },
   ].filter((item) => item.value !== undefined && item.value > 0)
+
+  if (variant === "compact") {
+    return (
+      <View style={styles.compactCard}>
+        <View style={styles.compactTopRow}>
+          <Text style={styles.compactKcal}>
+            <Text testID="preview-kcal" maxFontSizeMultiplier={2}>
+              {nutrients.kcal}
+            </Text>{" "}
+            <Text style={styles.compactKcalUnit}>kcal</Text>
+          </Text>
+          <Text style={styles.servingNote} numberOfLines={1}>
+            {servingLabel}
+          </Text>
+        </View>
+        <MacroPills
+          protein={nutrients.protein}
+          carbs={nutrients.carbs}
+          fat={nutrients.fat}
+          size="xs"
+        />
+        {micros.length > 0 ? (
+          <View style={styles.compactMicroSection}>
+            <Pressable
+              style={[styles.expandToggle]}
+              onPress={() => setExpanded(!expanded)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                expanded ? "Hide micronutrients" : `Show micronutrients per ${unitLabel}`
+              }
+            >
+              <Text style={styles.expandToggleText}>
+                {expanded
+                  ? "Hide Micronutrients"
+                  : `Micronutrients per ${unitLabel} (${micros.length})`}
+              </Text>
+              <Feather
+                name={expanded ? "chevron-up" : "chevron-down"}
+                size={14}
+                color={colors.primary}
+              />
+            </Pressable>
+
+            {expanded ? (
+              <View style={styles.microGrid}>
+                {micros.map((item) => {
+                  const valPer100 = (item.value ?? 0) * per100Scale
+                  const rdiPct = Math.round((valPer100 / item.rdi) * 100)
+                  return (
+                    <View key={item.label} style={styles.microRow}>
+                      <Text style={styles.microLabel}>{item.label}</Text>
+                      <View style={styles.microValWrap}>
+                        <Text style={styles.microVal}>
+                          {formatMacro(valPer100)} {item.unit}
+                          <Text style={styles.microBasis}> / {unitLabel}</Text>
+                        </Text>
+                        <Text style={styles.microRdi}>{rdiPct}% RDI</Text>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
+    )
+  }
 
   return (
     <View style={styles.card}>
@@ -195,6 +273,43 @@ const createStyles = (colors: ColorPalette) =>
       paddingHorizontal: spacing.md,
       paddingVertical: 12,
       marginBottom: spacing.sm,
+    },
+    compactCard: {
+      ...cardStyle(colors),
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+      marginBottom: spacing.sm,
+      gap: spacing.xs,
+    },
+    compactTopRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.sm,
+    },
+    compactKcal: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: colors.primary,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      flexShrink: 0,
+    },
+    compactKcalUnit: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    compactMicroSection: {
+      borderTopWidth: borders.width,
+      borderTopColor: colors.border,
+      paddingTop: 2,
     },
     topRow: {
       flexDirection: "row",
