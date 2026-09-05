@@ -83,7 +83,7 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
         />
         <Box
           accessibilityViewIsModal={true}
-          className="w-full max-w-[420px] self-center rounded-none bg-background-50 p-4"
+          className="w-full max-w-[420px] self-center rounded-none p-4"
           style={{
             borderWidth: borders.width,
             borderColor: colors.border,
@@ -91,11 +91,20 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
             backgroundColor: colors.surface,
           }}
         >
+          <View
+            style={{
+              height: 5,
+              backgroundColor: colors.primary,
+              marginTop: -16,
+              marginHorizontal: -16,
+              marginBottom: 12,
+            }}
+          />
           <Text
             size="lg"
             bold
-            className="mb-3 px-1 uppercase tracking-widest text-typography-900"
-            style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+            className="mb-3 px-1 uppercase tracking-widest"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.04, color: colors.text }}
           >
             {title}
           </Text>
@@ -151,11 +160,11 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                   size="sm"
                   bold
                   numberOfLines={1}
-                  className="text-typography-900"
                   style={{
                     fontFamily: fonts.mono,
                     textTransform: "uppercase",
                     letterSpacing: 0.04,
+                    color: colors.text,
                   }}
                 >
                   {formatDisplayDate(dateKey)}
@@ -210,8 +219,8 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                   <Box
                     className="h-10 w-10 items-center justify-center rounded-none border"
                     style={{
-                      backgroundColor: `${colors[slot]}22`,
-                      borderColor: `${colors[slot]}55`,
+                      backgroundColor: colors[slot],
+                      borderColor: colors.border,
                       borderWidth: borders.width,
                       borderRadius: radii.none,
                     }}
@@ -227,14 +236,14 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
                               : "cookie"
                       }
                       size={20}
-                      color={colors[slot]}
+                      color={colors.onPrimary}
                     />
                   </Box>
                   <Text
                     size="md"
                     bold
-                    className="flex-1 uppercase tracking-widest text-typography-900"
-                    style={{ fontFamily: fonts.mono, letterSpacing: 0.04 }}
+                    className="flex-1 uppercase tracking-widest"
+                    style={{ fontFamily: fonts.mono, letterSpacing: 0.04, color: colors.text }}
                   >
                     {MEAL_LABELS[slot]}
                   </Text>

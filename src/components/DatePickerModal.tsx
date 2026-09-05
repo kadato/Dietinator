@@ -103,6 +103,15 @@ export function DatePickerModal({ visible, dateKey, onSelect, onClose }: Props) 
           ]}
         >
           <View style={styles.sheet}>
+            <View
+              style={{
+                height: 5,
+                backgroundColor: colors.primary,
+                marginTop: -12,
+                marginHorizontal: -12,
+                marginBottom: 12,
+              }}
+            />
             <View style={styles.monthRow}>
               <Pressable
                 onPress={() => shiftMonth(-1)}

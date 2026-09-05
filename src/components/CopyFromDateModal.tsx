@@ -221,6 +221,15 @@ export function CopyFromDateModal({
           ]}
         >
           <View style={styles.sheet}>
+            <View
+              style={{
+                height: 5,
+                backgroundColor: colors.primary,
+                marginTop: -12,
+                marginHorizontal: -12,
+                marginBottom: 12,
+              }}
+            />
             <View style={styles.headerRow}>
               <Feather name="copy" size={16} color={colors.primary} />
               <Text style={styles.headerTitle}>Copy from date</Text>

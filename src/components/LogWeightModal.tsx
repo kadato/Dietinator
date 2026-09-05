@@ -11,6 +11,7 @@ import {
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { ModalHeader } from "@/components/ModalHeader"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
@@ -108,6 +109,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
   }
 
   const currentWeightKg = parseWeightInput(weightText, settings.units)
+  const accent = colors.weight ?? colors.primary
   const bmi =
     currentWeightKg && settings.height_cm > 0
       ? Math.round(
@@ -133,28 +135,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           },
         ]}
       >
-        <Box className="flex-row items-center gap-3 px-5 pb-2 pt-4">
-          <Box
-            className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
-            style={{
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              backgroundColor: `${colors.primary}14`,
-              elevation: 0,
-            }}
-          >
-            <Feather name="activity" size={18} color={colors.primary} />
-          </Box>
-          <Text
-            size="xl"
-            bold
-            className="text-typography-900"
-            style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
-          >
-            Log weight
-          </Text>
-        </Box>
+        <ModalHeader
+          icon="activity"
+          accent={accent}
+          title="Log weight"
+          subtitle={isImperial(settings.units) ? "Pounds · BMI on save" : "Kilograms · BMI on save"}
+        />
         <ScrollView
           style={{ flexGrow: 0 }}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
@@ -170,12 +156,17 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             accessibilityRole="button"
             accessibilityLabel="Choose date"
           >
-            <Feather name="calendar" size={16} color={colors.primary} />
+            <Feather name="calendar" size={16} color={accent} />
             <Text
               size="md"
               bold
-              className="ml-2 flex-1 text-typography-900"
-              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+              className="ml-2 flex-1"
+              style={{
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                color: colors.text,
+              }}
             >
               {formatDisplayDate(dateKey)}
             </Text>
@@ -197,12 +188,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             <Text
               size="sm"
               bold
-              className="text-typography-500"
               style={{
                 fontFamily: fonts.mono,
                 fontVariant: ["tabular-nums"],
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
+                color: colors.textMuted,
               }}
             >
               {isImperial(settings.units) ? "lb" : "kg"}
@@ -211,11 +202,12 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
 
           {bmi !== null ? (
             <Box
-              className="mt-3 flex-row items-center justify-between rounded-none border bg-primary-500/10 px-4 py-3"
+              className="mt-3 flex-row items-center justify-between rounded-none border px-4 py-3"
               style={{
                 borderWidth: borders.width,
                 borderColor: colors.border,
                 borderRadius: radii.none,
+                backgroundColor: `${accent}1A`,
                 elevation: 0,
               }}
             >
@@ -223,19 +215,24 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
                 <Text
                   size="xs"
                   bold
-                  className="font-tabular text-typography-900"
-                  style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+                  className="font-tabular"
+                  style={{
+                    fontFamily: fonts.mono,
+                    fontVariant: ["tabular-nums"],
+                    color: colors.text,
+                  }}
                 >
                   BMI {bmi}
                 </Text>
                 <Text
                   size="2xs"
-                  className="font-tabular text-typography-500"
+                  className="font-tabular"
                   style={{
                     fontFamily: fonts.mono,
                     fontVariant: ["tabular-nums"],
                     textTransform: "uppercase",
                     letterSpacing: 0.4,
+                    color: colors.textMuted,
                   }}
                 >
                   Height: {settings.height_cm} cm
@@ -245,7 +242,7 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
                 size="xs"
                 bold
                 style={{
-                  color: colors.primary,
+                  color: accent,
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],
                   textTransform: "uppercase",

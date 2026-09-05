@@ -104,7 +104,7 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
         />
         <Box
           accessibilityViewIsModal={true}
-          className="w-full max-w-[420px] self-center rounded-none border bg-background-50 p-5"
+          className="w-full max-w-[420px] self-center rounded-none border p-5"
           style={{
             borderWidth: borders.width,
             borderColor: colors.border,
@@ -114,12 +114,22 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
             elevation: 0,
           }}
         >
+          <View
+            style={{
+              height: 5,
+              backgroundColor: colors[mealType],
+              marginTop: -20,
+              marginHorizontal: -20,
+              marginBottom: 16,
+            }}
+          />
           <Box className="pb-3">
             <Text
               size="xl"
               bold
-              className="text-typography-900"
+              className=""
               style={{
+                color: colors.text,
                 fontFamily: fonts.mono,
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
@@ -129,8 +139,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
             </Text>
             <Text
               size="xs"
-              className="mt-0.5 text-typography-500"
+              className="mt-0.5"
               style={{
+                color: colors.textMuted,
                 fontFamily: fonts.mono,
                 fontVariant: ["tabular-nums"],
                 textTransform: "uppercase",
@@ -181,8 +192,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                       <Text
                         size="md"
                         bold
-                        className="text-typography-900"
+                        className=""
                         style={{
+                          color: colors.text,
                           fontFamily: fonts.mono,
                           textTransform: "uppercase",
                           letterSpacing: 0.4,
@@ -192,8 +204,9 @@ export function CreateOptionsModal({ visible, mealType, date, onClose }: Props) 
                       </Text>
                       <Text
                         size="xs"
-                        className="mt-0.5 leading-4 text-typography-500"
+                        className="mt-0.5 leading-4"
                         style={{
+                          color: colors.textMuted,
                           fontFamily: fonts.mono,
                           fontVariant: ["tabular-nums"],
                           textTransform: "uppercase",

@@ -94,6 +94,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
 
   const modalBody = (
     <View style={styles.modalBody}>
+      <View style={{ height: 5, backgroundColor: colors.primary }} />
       {!isMedium && (
         <View style={styles.handleContainer}>
           <View style={styles.dragHandle} />

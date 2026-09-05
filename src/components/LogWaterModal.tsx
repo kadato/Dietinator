@@ -11,6 +11,7 @@ import {
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { DatePickerModal } from "@/components/DatePickerModal"
+import { ModalHeader } from "@/components/ModalHeader"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
@@ -61,6 +62,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
   const totalMl = entries.reduce((sum, entry) => sum + entry.amount_ml, 0)
   const goalMl = settings.water_goal_ml > 0 ? settings.water_goal_ml : 0
   const progress = goalMl > 0 ? Math.min(totalMl / goalMl, 1) : 0
+  const accent = colors.water ?? colors.primary
 
   const [openSync, setOpenSync] = useState({ visible: false, key: initialDateKey ?? toDateKey() })
   if (visible !== openSync.visible) {
@@ -134,27 +136,16 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           isMedium ? styles.dialogBodyWide : undefined,
         ]}
       >
-        <Box className="flex-row items-center gap-3 px-5 pb-2 pt-4">
-          <Box
-            className="h-10 w-10 items-center justify-center rounded-none border bg-primary-500/15"
-            style={{
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              elevation: 0,
-            }}
-          >
-            <Feather name="droplet" size={18} color={colors.primary} />
-          </Box>
-          <Text
-            size="xl"
-            bold
-            className="text-typography-900"
-            style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
-          >
-            Water
-          </Text>
-        </Box>
+        <ModalHeader
+          icon="droplet"
+          accent={accent}
+          title="Water"
+          subtitle={
+            goalMl > 0
+              ? `${formatWaterAmount(totalMl, settings.units)} of ${formatWaterAmount(goalMl, settings.units)}`
+              : formatDisplayDate(dateKey)
+          }
+        />
         <ScrollView
           style={{ flexGrow: 0 }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, paddingTop: 8 }}
@@ -169,12 +160,17 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             accessibilityRole="button"
             accessibilityLabel="Choose water date"
           >
-            <Feather name="calendar" size={16} color={colors.primary} />
+            <Feather name="calendar" size={16} color={accent} />
             <Text
               size="md"
               bold
-              className="ml-2 flex-1 text-typography-900"
-              style={{ fontFamily: fonts.mono, textTransform: "uppercase", letterSpacing: 0.4 }}
+              className="ml-2 flex-1"
+              style={{
+                fontFamily: fonts.mono,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                color: colors.text,
+              }}
             >
               {formatDisplayDate(dateKey)}
             </Text>
@@ -182,30 +178,36 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           </Pressable>
 
           <Box
-            className="my-3 items-center rounded-none border bg-primary-500/10 px-4 py-3"
+            className="my-3 items-center rounded-none border px-4 py-3"
             style={{
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: radii.none,
+              backgroundColor: `${accent}1A`,
               elevation: 0,
             }}
           >
             <Text
               size="2xl"
               bold
-              className="font-tabular text-typography-900"
-              style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+              className="font-tabular"
+              style={{
+                fontFamily: fonts.mono,
+                fontVariant: ["tabular-nums"],
+                color: accent,
+              }}
             >
               {formatWaterAmount(totalMl, settings.units)}
             </Text>
             <Text
               size="xs"
-              className="font-tabular mt-0.5 text-typography-500"
+              className="font-tabular mt-0.5"
               style={{
                 fontFamily: fonts.mono,
                 fontVariant: ["tabular-nums"],
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
+                color: colors.textMuted,
               }}
             >
               {goalMl > 0
@@ -217,7 +219,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${progress * 100}%`, backgroundColor: colors.primary },
+                    { width: `${progress * 100}%`, backgroundColor: accent },
                   ]}
                 />
               </View>
@@ -241,12 +243,12 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   disabled={saving}
                   accessibilityRole="button"
                   accessibilityLabel={`Add ${a11y} of water`}
-                  className="min-w-[76px] flex-1 items-center rounded-none border bg-primary-500 px-3 py-2.5 active:opacity-80"
+                  className="min-w-[76px] flex-1 items-center rounded-none border px-3 py-2.5 active:opacity-80"
                   style={{
                     borderWidth: borders.width,
-                    borderColor: colors.primary,
+                    borderColor: accent,
                     borderRadius: radii.none,
-                    backgroundColor: colors.primary,
+                    backgroundColor: accent,
                     elevation: 0,
                   }}
                 >
@@ -288,9 +290,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               accessibilityLabel="Log custom water amount"
               className="h-10 items-center justify-center rounded-none border px-4"
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: accent,
                 borderWidth: borders.width,
-                borderColor: colors.primary,
+                borderColor: accent,
                 borderRadius: radii.none,
                 opacity: saving || !(Number(customMl) > 0) ? 0.5 : 1,
                 elevation: 0,
@@ -316,12 +318,13 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               </Box>
               <Text
                 size="xs"
-                className="text-center text-typography-500"
+                className="text-center"
                 style={{
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],
                   textTransform: "uppercase",
                   letterSpacing: 0.4,
+                  color: colors.textMuted,
                 }}
               >
                 Nothing logged for this day yet.
@@ -333,7 +336,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               {entries.map((entry) => (
                 <Box
                   key={entry.id}
-                  className="mb-1.5 flex-row items-center rounded-none border bg-background-50 px-3 py-2.5"
+                  className="mb-1.5 flex-row items-center rounded-none border px-3 py-2.5"
                   style={{
                     borderWidth: borders.width,
                     borderColor: colors.border,
@@ -342,12 +345,16 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                     elevation: 0,
                   }}
                 >
-                  <Feather name="droplet" size={14} color={colors.primary} />
+                  <Feather name="droplet" size={14} color={accent} />
                   <Text
                     size="sm"
                     bold
-                    className="font-tabular ml-2 flex-1 text-typography-900"
-                    style={{ fontFamily: fonts.mono, fontVariant: ["tabular-nums"] }}
+                    className="font-tabular ml-2 flex-1"
+                    style={{
+                      fontFamily: fonts.mono,
+                      fontVariant: ["tabular-nums"],
+                      color: colors.text,
+                    }}
                   >
                     {formatWaterAmount(entry.amount_ml, settings.units)}
                   </Text>
