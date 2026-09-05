@@ -5,18 +5,18 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/kadato/Dietinator/ci.yml?label=CI&logo=github)](https://github.com/kadato/Dietinator/actions)
 [![Android APK](https://img.shields.io/badge/Android-latest%20APK-3ddc84?logo=android&logoColor=white)](https://github.com/kadato/Dietinator/releases/latest/download/Dietinator-Android.apk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Expo SDK 56](https://img.shields.io/badge/Expo-SDK%2056-000020?logo=expo&logoColor=white)](https://expo.dev)
+[![Expo SDK 57](https://img.shields.io/badge/Expo-SDK%2057-000020?logo=expo&logoColor=white)](https://expo.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Dietinator is a local-first calorie tracker. Diary entries live in SQLite on your device. Food search and optional sync use the YAZIO database. No account needed. Works offline.
+Dietinator is a local-first calorie tracker. Diary entries live in SQLite on your device. Food search and optional sync use the unofficial YAZIO API. You need no account. The diary works offline.
 
 </div>
 
 <div align="center">
 
-[![Live Demo — Try in browser](https://img.shields.io/badge/Live%20Demo-Try%20in%20browser-2dd4bf?style=for-the-badge)](https://dietinator.pages.dev/?demo=1)
+[![Live Demo - Try in browser](https://img.shields.io/badge/Live%20Demo-Try%20in%20browser-2dd4bf?style=for-the-badge)](https://dietinator.pages.dev/?demo=1)
 
-No install, no account. Or tap **Explore the demo** on the login screen.
+No install, no account. Tap **Explore the demo** on the login screen.
 
 </div>
 
@@ -58,7 +58,7 @@ Every `v*` tag builds a signed APK via `.github/workflows/release.yml`. On first
 <strong>Food search and favorites</strong>, <strong>Food and portion details</strong>, <strong>Meal builder</strong><br><br>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/search-dark.png">
-  <img alt="Food search with dynamic icons, recents, and one-tap favorites" src="./docs/screenshots/search-light.png" width="190">
+  <img alt="Food search with category icons, recents, and one-tap favorites" src="./docs/screenshots/search-light.png" width="190">
 </picture>
 &nbsp;&nbsp;
 <picture>
@@ -89,23 +89,23 @@ Every `v*` tag builds a signed APK via `.github/workflows/release.yml`. On first
 
 ## Features
 
-- **Local-first diary.** Writes to `diary_entries` in `expo-sqlite` with WAL. Works fully offline. Food cache keeps past searches.
-- **Dashboard.** Calorie ring, macro bars, meal sections, water and weight quick-add, copy previous day, pull to refresh from YAZIO when online.
-- **Food search.** Debounced YAZIO lookup, category icons, favorites and recents, serving sizes with remembered amounts, amount steppers with hold repeat, live budget impact before you save.
-- **Meals.** Builder for reusable combos with auto nutrition math, plus Quick Add for direct kcal and macros. Per-meal budgets and inline entry edit.
-- **Barcode.** Camera scan for EAN and UPC on device with cache lookup. Limited on web.
-- **Weight and water.** Log water with presets, track weight with BMI and trend charts.
-- **Micronutrients.** Fiber, sugar, saturated fat, sodium, potassium, calcium, iron on the dashboard and food detail.
-- **AI assistant.** Optional, in Settings. Supports OpenAI, OpenRouter, Ollama and any OpenAI-compatible endpoint. Streams answers, runs tools against your local SQLite, asks before destructive writes, keeps history in SQLite. See [ARCHITECTURE.md](ARCHITECTURE.md) for the MCP endpoint at `/mcp`.
-- **Backup and export.** JSON or CSV export, full SQLite backup and restore. All user initiated.
-- **Demo mode.** `/?demo=1` loads sample data, no account. Light and dark themes, system or manual.
+- **Local-first diary.** The app writes to `diary_entries` in `expo-sqlite` with WAL. The diary works fully offline. The food cache keeps past searches.
+- **Dashboard.** The dashboard shows a calorie ring, macro bars, and meal sections. It supports water and weight quick-add, copy of the previous day, and pull to refresh from YAZIO when you are online.
+- **Food search.** The search debounces YAZIO lookups. It shows category icons, favorites, and recents. It remembers serving sizes and amounts. Steppers support hold repeat. You see live budget impact before you save.
+- **Meals.** The builder stores reusable combos with auto nutrition math. Quick Add stores direct kcal and macros. Each meal has a budget and inline entry edit.
+- **Barcode.** The camera scans EAN and UPC on device with cache lookup. The scan is limited on web.
+- **Weight and water.** You log water with presets. You track weight with BMI and trend charts.
+- **Micronutrients.** The dashboard and food detail show fiber, sugar, saturated fat, sodium, potassium, calcium, and iron.
+- **AI assistant.** Turn it on in Settings. It supports OpenAI, OpenRouter, Ollama, and any OpenAI-compatible endpoint. It streams answers. It runs tools against your local SQLite. It asks before destructive writes. It keeps history in SQLite. Read [Dietinator architecture](ARCHITECTURE.md) for the MCP endpoint at `/mcp`.
+- **Backup and export.** Export JSON or CSV. Back up and restore the full SQLite file. You start every export and restore.
+- **Demo mode.** `/?demo=1` loads sample data. You need no account. Themes follow the system, or you pick light or dark manually.
 
 ## Tech stack
 
 | Area      | Choice                                                              |
 | --------- | ------------------------------------------------------------------- |
 | Runtime   | Node 22, see `.nvmrc`, `packageManager` is `pnpm@11.22.0`           |
-| Framework | Expo SDK 56, React 19.2, React Native 0.85, `expo-router` in `app/` |
+| Framework | Expo SDK 57, React 19.2, React Native 0.86, `expo-router` in `app/` |
 | DB        | `expo-sqlite` WAL, migrations in `src/db/database.ts`               |
 | UI        | `gluestack-ui` v3 and `NativeWind` v4, `global.css`                 |
 | Sync      | `yazio` npm client, `withRetry` on 5xx and 429, offline-first       |
@@ -120,7 +120,7 @@ pnpm start         # Metro on port 9082, scan QR with Expo Go
 pnpm run web       # or run in the browser
 ```
 
-Port `9082` avoids Windows Hyper-V collisions on `8081`. To use another port, run `pnpm start -- --port 9090`.
+The start script uses port `9082`. Port `9082` avoids Windows Hyper-V collisions on `8081`. To use another port, run `pnpm start -- --port 9090`.
 
 Other commands:
 
@@ -135,8 +135,8 @@ pnpm run build:web # writes dist/
 
 ## More
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - data model, local-first flow, release pipeline and the MCP bridge
-- [CHANGELOG.md](CHANGELOG.md) - version history. `pnpm run release` tags `vX.Y.Z`
-- [CONTRIBUTING.md](CONTRIBUTING.md) - ground rules and quality gates
+- [Dietinator architecture](ARCHITECTURE.md). Data model, local-first flow, release pipeline and the MCP bridge.
+- [Changelog](CHANGELOG.md). Version history. `pnpm run release` tags `vX.Y.Z`.
+- [Contributing](CONTRIBUTING.md). Ground rules and quality gates.
 
-> **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. Use it for yourself only. The API can change without notice. The local-first design keeps the diary and cache working when it does.
+> **Note.** Dietinator uses an unofficial, reverse-engineered YAZIO API. Use Dietinator for yourself only. The API can change without notice. The local-first design keeps the diary and cache working when the API changes.
