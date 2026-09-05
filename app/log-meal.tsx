@@ -40,7 +40,7 @@ import { mergeFoodResults } from "@/utils/food-search"
 import { normalizedSearchAmount, sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { displayUnit } from "@/utils/food-display"
-import { formatNumber } from "@/utils/format"
+import { formatNumber, formatThousands } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
@@ -50,10 +50,7 @@ import { useSafeBack } from "@/hooks/useSafeBack"
 import { ModalContainer } from "@/components/ModalContainer"
 import { MealListItem } from "@/components/MealListItem"
 import { MacroPills } from "@/components/MacroPills"
-import { Fab } from "@/components/Fab"
-import { FabCluster } from "@/components/FabCluster"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
-import { useLayout } from "@/hooks/useLayout"
 
 type FoodCategory = "foods" | "meals"
 type ListMode = "frequent" | "recent" | "favorites"
@@ -104,14 +101,13 @@ export default function LogMealScreen() {
   const { showError, showWarning, showSuccess, showUndoFab } = useToast()
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
-  const { width } = useLayout()
-  const compact = width < 380
   const insets = useSafeAreaInsets()
 
   const accent = colors[mealType]
 
   const [category, setCategory] = useState<FoodCategory>("foods")
   const [query, setQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
   const debounced = useDebounce(query, 200)
   const [listMode, setListMode] = useState<ListMode>("frequent")
@@ -121,6 +117,16 @@ export default function LogMealScreen() {
   const [reorderFavorites, setReorderFavorites] = useState(false)
 
   const activeTab: ActiveTab = category === "meals" ? "meals" : listMode
+
+  const openSearch = useCallback(() => {
+    setSearchOpen(true)
+  }, [])
+
+  const closeSearch = useCallback(() => {
+    setQuery("")
+    setSearchOpen(false)
+    searchInputRef.current?.blur()
+  }, [])
 
   const handleTabPress = useCallback(
     (tabId: ActiveTab) => {
@@ -189,6 +195,9 @@ export default function LogMealScreen() {
   const dayProteinRemaining = Math.max((settings.protein_goal || 0) - dayTotals.protein, 0)
   const dayCarbsRemaining = Math.max((settings.carbs_goal || 0) - dayTotals.carbs, 0)
   const dayFatRemaining = Math.max((settings.fat_goal || 0) - dayTotals.fat, 0)
+  const dayGoalKcal = Math.round(settings.calorie_goal)
+  const dayConsumedKcal = Math.round(dayTotals.kcal)
+  const dayProgressPct = dayGoalKcal > 0 ? Math.min((dayTotals.kcal / dayGoalKcal) * 100, 100) : 0
 
   useEffect(() => {
     if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
@@ -682,9 +691,9 @@ export default function LogMealScreen() {
       </View>
     ) : null
 
-  const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
   const safeTop = baseTop + 12
+  const safeBottom = insets.bottom
 
   return (
     <KeyboardAvoidingView
@@ -716,68 +725,85 @@ export default function LogMealScreen() {
           </Pressable>
         </View>
 
-        {/* Macros Left to Fill and Day Budget Bar */}
+        {/* Daily budget hero: big consumed-vs-goal number, progress, macros left */}
         <View style={styles.budgetBar}>
           <View style={styles.budgetTopRow}>
-            <Text style={styles.budgetSectionLabel}>Left to fill today</Text>
+            <View style={styles.budgetNumbers}>
+              <Text style={styles.budgetEyebrow}>Daily budget</Text>
+              <Text
+                style={styles.budgetKcal}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                {formatThousands(dayConsumedKcal)}
+                <Text style={styles.budgetKcalGoal}>
+                  {dayGoalKcal > 0 ? ` / ${formatThousands(dayGoalKcal)} kcal` : " kcal"}
+                </Text>
+              </Text>
+            </View>
 
-            {settings.calorie_goal > 0 ? (
-              <View style={styles.dayBudgetBadgeWrap}>
-                <View
+            {dayGoalKcal > 0 ? (
+              <View
+                style={[
+                  styles.dayBudgetBadge,
+                  {
+                    backgroundColor: budgetBadgeFlash
+                      ? dayOverKcal > 0
+                        ? colors.danger
+                        : colors.primary
+                      : dayOverKcal > 0
+                        ? `${colors.danger}20`
+                        : `${colors.primary}20`,
+                    borderColor: dayOverKcal > 0 ? colors.danger : colors.primary,
+                  },
+                ]}
+              >
+                <Text
                   style={[
-                    styles.dayBudgetBadge,
+                    styles.dayBudgetBadgeText,
                     {
-                      backgroundColor: budgetBadgeFlash
-                        ? dayOverKcal > 0
-                          ? colors.danger
-                          : colors.primary
+                      color: budgetBadgeFlash
+                        ? colors.onPrimary
                         : dayOverKcal > 0
-                          ? `${colors.danger}18`
-                          : `${colors.primary}18`,
+                          ? colors.danger
+                          : colors.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.dayBudgetBadgeText,
-                      {
-                        color: budgetBadgeFlash
-                          ? colors.onPrimary
-                          : dayOverKcal > 0
-                            ? colors.danger
-                            : colors.primary,
-                      },
-                    ]}
-                  >
-                    {dayOverKcal > 0
-                      ? `+${Math.round(dayOverKcal)} kcal over`
-                      : `${Math.round(dayRemainingKcal)} kcal left`}
-                  </Text>
-                </View>
+                  {dayOverKcal > 0
+                    ? `+${formatThousands(Math.round(dayOverKcal))} over`
+                    : `${formatThousands(Math.round(dayRemainingKcal))} left`}
+                </Text>
               </View>
             ) : null}
           </View>
 
+          {dayGoalKcal > 0 ? (
+            <View style={styles.budgetBarTrack}>
+              <View
+                style={[
+                  styles.budgetBarFill,
+                  {
+                    width: `${dayProgressPct}%`,
+                    backgroundColor: dayOverKcal > 0 ? colors.danger : colors.primary,
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
+
           <View style={styles.budgetPillsRow}>
+            <Text style={styles.budgetMacrosLabel}>Macros left</Text>
             <MacroPills
               protein={dayProteinRemaining}
               carbs={dayCarbsRemaining}
               fat={dayFatRemaining}
-              size="xs"
+              size="sm"
             />
           </View>
           {dayOverKcal > 0 ? (
-            <Text
-              style={{
-                fontSize: 11,
-                fontFamily: fonts.mono,
-                color: colors.textMuted,
-                letterSpacing: 0.3,
-                marginTop: 4,
-              }}
-            >
-              Adjust tomorrow
-            </Text>
+            <Text style={styles.budgetHint}>Over budget · adjust tomorrow</Text>
           ) : null}
         </View>
 
@@ -826,38 +852,6 @@ export default function LogMealScreen() {
           })}
         </View>
 
-        {/* Search Bar: always visible and pinned at a fixed position so
-            adding food does NOT jump or shift the input field. */}
-        <View style={styles.searchWrap}>
-          <View style={styles.searchIconBox}>
-            <Feather name="search" size={14} color={colors.text} />
-          </View>
-          <TextInput
-            ref={searchInputRef}
-            style={[styles.searchInput, { borderColor: accent }]}
-            placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
-            placeholderTextColor={colors.textMuted}
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-            returnKeyType="search"
-            enterKeyHint="search"
-            onSubmitEditing={() => searchInputRef.current?.blur()}
-            accessibilityLabel="Search foods"
-          />
-          {query.length > 0 ? (
-            <Pressable
-              style={styles.searchClear}
-              onPress={() => setQuery("")}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-            >
-              <Feather name="x-circle" size={20} color={colors.textMuted} />
-            </Pressable>
-          ) : null}
-        </View>
-
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
 
         {loading && foods.length === 0 ? (
@@ -902,7 +896,7 @@ export default function LogMealScreen() {
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               contentContainerClassName={
-                foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-36"
+                foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-28"
               }
               ListHeaderComponent={
                 <>
@@ -970,7 +964,7 @@ export default function LogMealScreen() {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-36"
+              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-28"
             }
             ListHeaderComponent={
               <>
@@ -1001,41 +995,85 @@ export default function LogMealScreen() {
             }
           />
         )}
-      </ModalContainer>
 
-      <FabCluster
-        bottomOffset={safeBottom + (compact ? 12 : 16)}
-        insetX={compact ? 12 : 20}
-        left={
-          <Fab
-            size={compact ? "sm" : "md"}
-            icon="arrow-left"
-            tone="surface"
+        {/* Bottom floating keys: transparent cluster, no dock bar. Search is
+            a FAB that expands into a floating field in the same row as scan,
+            so the two never overlap. */}
+        <View style={[styles.bottomCluster, { bottom: safeBottom + 12 }]} pointerEvents="box-none">
+          <Pressable
             onPress={safeBack}
+            hitSlop={8}
+            style={styles.dockIconBtn}
+            accessibilityRole="button"
             accessibilityLabel="Go back"
-          />
-        }
-        right={
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <Fab
-              size={compact ? "sm" : "md"}
-              icon="search"
-              tone="surface"
-              onPress={() => searchInputRef.current?.focus()}
+          >
+            <Feather name="arrow-left" size={22} color={colors.text} />
+          </Pressable>
+          {searchOpen ? (
+            <View style={[styles.searchExpanded, { borderColor: accent }]}>
+              <Pressable
+                onPress={closeSearch}
+                hitSlop={8}
+                style={styles.searchCollapse}
+                accessibilityRole="button"
+                accessibilityLabel="Close search"
+              >
+                <Feather name="chevron-down" size={22} color={colors.textMuted} />
+              </Pressable>
+              <TextInput
+                ref={searchInputRef}
+                style={styles.searchInput}
+                // Borderless field inside the bordered container: focus draws
+                // on the container via .logmeal-search-input in global.css.
+                className="logmeal-search-input"
+                placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
+                placeholderTextColor={colors.textMuted}
+                value={query}
+                onChangeText={setQuery}
+                autoCorrect={false}
+                autoFocus
+                returnKeyType="search"
+                enterKeyHint="search"
+                onSubmitEditing={() => searchInputRef.current?.blur()}
+                accessibilityLabel="Search foods"
+              />
+              {query.length > 0 ? (
+                <Pressable
+                  style={styles.searchClear}
+                  onPress={() => setQuery("")}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                >
+                  <Feather name="x-circle" size={20} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
+            </View>
+          ) : (
+            <Pressable
+              onPress={openSearch}
+              hitSlop={8}
+              style={styles.searchFab}
+              accessibilityRole="button"
               accessibilityLabel="Search foods"
-            />
-            <Fab
-              size={compact ? "sm" : "md"}
-              // MaterialCommunityIcons "barcode-scan": the only glyph that
-              // reads as scanning at a glance.
-              icon="barcode-scan"
-              IconComponent={MaterialCommunityIcons}
-              onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
-              accessibilityLabel="Scan barcode"
-            />
-          </View>
-        }
-      />
+            >
+              <Feather name="search" size={20} color={colors.textMuted} />
+              <Text style={styles.searchFabText}>
+                {category === "meals" ? "Search meals…" : "Search foods…"}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
+            hitSlop={8}
+            style={[styles.dockIconBtn, styles.dockScanBtn]}
+            accessibilityRole="button"
+            accessibilityLabel="Scan barcode"
+          >
+            <MaterialCommunityIcons name="barcode-scan" size={24} color={colors.onPrimary} />
+          </Pressable>
+        </View>
+      </ModalContainer>
 
       <CreateOptionsModal
         visible={optionsOpen}
@@ -1149,50 +1187,89 @@ const createStyles = (colors: ColorPalette) =>
     tabLabelActive: {
       fontWeight: "800",
     },
-    searchWrap: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginHorizontal: spacing.md,
-      marginBottom: spacing.xs,
-      gap: 6,
-    },
-    searchIconBox: {
-      position: "absolute",
-      left: 6,
-      width: 28,
-      height: 28,
-      borderWidth: borders.width,
-      borderColor: colors.border,
-      backgroundColor: colors.surfaceAlt,
-      borderRadius: radii.none,
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 1,
-    },
     searchInput: {
       flex: 1,
-      backgroundColor: colors.surface,
-      borderRadius: radii.none,
-      borderWidth: borders.width,
-      paddingVertical: spacing.sm,
-      paddingLeft: 42,
-      paddingRight: spacing.xl,
-      fontSize: 14,
+      minWidth: 0,
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      paddingVertical: 12,
+      fontSize: 15,
       fontWeight: "700",
       fontFamily: fonts.mono,
       letterSpacing: 0.4,
       color: colors.text,
     },
-    // 28x28 visual, hitSlop 10 brings the effective target to 48px.
     searchClear: {
-      position: "absolute",
-      right: spacing.md - 4,
-      zIndex: 1,
-      width: 28,
-      height: 28,
+      width: 44,
+      height: 48,
       alignItems: "center",
       justifyContent: "center",
+      flexShrink: 0,
+    },
+    bottomCluster: {
+      position: "absolute",
+      left: spacing.md,
+      right: spacing.md,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    searchFab: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 56,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
       borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+    },
+    searchFabText: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 14,
+      fontWeight: "600",
+      fontFamily: fonts.mono,
+      letterSpacing: 0.4,
+      color: colors.textMuted,
+    },
+    searchExpanded: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: 56,
+      backgroundColor: colors.surface,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      paddingLeft: 2,
+      paddingRight: 2,
+      gap: 2,
+    },
+    searchCollapse: {
+      width: 44,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    dockIconBtn: {
+      width: 56,
+      height: 56,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    dockScanBtn: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
     },
     loader: { marginVertical: spacing.sm },
     loaderWrap: {
@@ -1396,14 +1473,14 @@ const createStyles = (colors: ColorPalette) =>
     },
     budgetBar: {
       marginHorizontal: spacing.md,
-      marginBottom: spacing.xs,
+      marginBottom: spacing.sm,
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      backgroundColor: colors.surfaceAlt,
+      paddingVertical: spacing.md,
+      backgroundColor: `${colors.primary}0f`,
       borderRadius: radii.none,
       borderWidth: borders.width,
-      borderColor: colors.border,
-      gap: 6,
+      borderColor: colors.primary,
+      gap: spacing.sm,
     },
     budgetTopRow: {
       flexDirection: "row",
@@ -1411,7 +1488,72 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "space-between",
       gap: spacing.sm,
     },
-    budgetSectionLabel: {
+    budgetNumbers: {
+      flex: 1,
+      minWidth: 0,
+    },
+    budgetEyebrow: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+    },
+    budgetKcal: {
+      fontSize: 24,
+      fontWeight: "800",
+      color: colors.text,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      letterSpacing: 0.2,
+      marginTop: 2,
+    },
+    budgetKcalGoal: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+    },
+    dayBudgetBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      flexShrink: 0,
+      maxWidth: "44%",
+    },
+    dayBudgetBadgeText: {
+      fontSize: 12,
+      fontWeight: "800",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    budgetBarTrack: {
+      height: 10,
+      backgroundColor: colors.surface,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      overflow: "hidden",
+      flexDirection: "row",
+    },
+    budgetBarFill: {
+      height: "100%",
+      borderRadius: radii.none,
+      borderTopWidth: 1.5,
+      borderTopColor: "rgba(255,255,255,0.22)",
+    },
+    budgetPillsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: spacing.sm,
+    },
+    budgetMacrosLabel: {
       fontSize: 11,
       fontWeight: "700",
       color: colors.textMuted,
@@ -1419,29 +1561,13 @@ const createStyles = (colors: ColorPalette) =>
       textTransform: "uppercase",
       letterSpacing: 0.6,
     },
-    dayBudgetBadgeWrap: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    dayBudgetBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: radii.none,
-      borderWidth: borders.width,
-      borderColor: colors.border,
-    },
-    dayBudgetBadgeText: {
+    budgetHint: {
       fontSize: 11,
-      fontWeight: "800",
+      fontWeight: "600",
       fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
+      color: colors.danger,
+      letterSpacing: 0.3,
       textTransform: "uppercase",
-      letterSpacing: 0.4,
-    },
-    budgetPillsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
     },
     loggedIconBtn: {
       width: 32,
