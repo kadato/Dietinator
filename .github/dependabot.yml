@@ -1,6 +1,6 @@
 # Dependabot configuration for Dietinator
 # Reference: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-# Strategy: one grouped PR per ecosystem for version updates (plus one for security).
+# Strategy: grouped PRs by ecosystem and dependency type matching conventional commit pattern.
 
 version: 2
 
@@ -16,8 +16,8 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: "auto"
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
+      prefix: "build"
+      prefix-development: "build"
       include: "scope"
     labels:
       - "dependencies"
@@ -28,12 +28,20 @@ updates:
       security-patches:
         applies-to: security-updates
         patterns: ["*"]
-      all-dependencies:
-        patterns: ["*"]
+      deps:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      deps-dev:
+        dependency-type: "development"
         update-types: ["minor", "patch"]
     ignore:
       - dependency-name: "yazio"
-      - update-types: ["version-update:semver-major"]
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@react-native/jest-preset"
+        update-types: ["version-update:semver-minor"]
 
   # GitHub Actions: CI/CD workflows and automation
   - package-ecosystem: "github-actions"
@@ -53,7 +61,7 @@ updates:
       - "github-actions"
       - "ci"
     groups:
-      all-actions:
+      actions:
         patterns: ["*"]
 
   # Dev Containers: VS Code / GitHub Codespaces environment
@@ -66,8 +74,11 @@ updates:
       timezone: "Etc/UTC"
     open-pull-requests-limit: 2
     commit-message:
-      prefix: "deps"
+      prefix: "build"
       include: "scope"
     labels:
       - "dependencies"
       - "devcontainer"
+    groups:
+      devcontainer:
+        patterns: ["*"]
