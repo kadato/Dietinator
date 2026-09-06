@@ -1263,6 +1263,7 @@ export default function SettingsScreen() {
     ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- deep link sync
       setActiveSection(sectionParam)
+      scrollRef.current?.scrollTo({ y: 0, animated: false })
     } else if (!sectionParam && activeSection !== null) {
       // Tab press clears the query param so we must clear the local drilldown state
       // too - otherwise the old section survives tab switches because the screen

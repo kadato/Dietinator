@@ -1,8 +1,10 @@
 import { useState } from "react"
 import type { RefObject } from "react"
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput } from "react-native"
+import { useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { Markdown } from "@/components/Markdown"
+import { useOptionalAiChatModal } from "@/context/AiChatContext"
 import { useTheme } from "@/hooks/useTheme"
 import { withAlpha } from "@/utils/color"
 import { formatTimeHM } from "@/utils/format"
@@ -48,8 +50,29 @@ export function ChatToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_ca
 }
 
 export function ChatMessage({ item, compact }: { item: AiChatMessage; compact: boolean }) {
+  const router = useRouter()
+  const modal = useOptionalAiChatModal()
   const { colors } = useTheme()
   const accent = colors.weight ?? colors.primary
+
+  const handleLinkPress = (url: string) => {
+    if (url.startsWith("/")) {
+      if (modal?.open) {
+        modal.closeAiChat()
+      }
+      router.push(url as never)
+      return true
+    }
+    return false
+  }
+
+  const isSettingsError =
+    Boolean(item.is_error) &&
+    Boolean(
+      item.content?.includes("Settings") ||
+      item.content?.includes("API key") ||
+      item.content?.includes("section=account"),
+    )
 
   if (item.role === "user") {
     return (
@@ -142,7 +165,36 @@ export function ChatMessage({ item, compact }: { item: AiChatMessage; compact: b
             <Markdown
               source={item.content || (item.is_error ? "The assistant ran into an error." : "")}
               bodySize="lg"
+              onLinkPress={handleLinkPress}
             />
+            {isSettingsError ? (
+              <Pressable
+                onPress={() => {
+                  if (modal?.open) {
+                    modal.closeAiChat()
+                  }
+                  router.push({ pathname: "/(tabs)/settings", params: { section: "account" } })
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Open AI and Account settings"
+                className="mt-2.5 cursor-pointer flex-row items-center gap-1.5 self-start rounded-none border px-2.5 py-1.5 active:opacity-80"
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: colors.primary,
+                  backgroundColor: withAlpha(colors.primary, 0.1),
+                }}
+              >
+                <Feather name="settings" size={12} color={colors.primary} />
+                <Text
+                  size="xs"
+                  bold
+                  className="font-mono uppercase tracking-widest"
+                  style={{ fontFamily: fonts.mono, letterSpacing: 0.04, color: colors.primary }}
+                >
+                  Open AI Settings
+                </Text>
+              </Pressable>
+            ) : null}
             <ChatToolChips toolCalls={item.tool_calls} />
             {item.created_at ? (
               <Text

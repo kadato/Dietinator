@@ -187,6 +187,30 @@ describe("streamChatCompletion", () => {
     expect(chunks[0]?.error).toContain("API key")
   })
 
+  it("yields a missing API key error without fetching when API key is empty for cloud providers", async () => {
+    const chunks = []
+    for await (const chunk of streamChatCompletion({ ...settings, api_key: "" }, [], [])) {
+      chunks.push(chunk)
+    }
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(chunks[0]?.error).toContain("No API key configured for OpenAI (Official)")
+    expect(chunks[0]?.error).toContain("[Settings > AI and Account](/settings?section=account)")
+  })
+
+  it("allows empty API key for ollama or local custom provider", async () => {
+    mockFetch.mockResolvedValue(sseResponse(['{"choices":[{"delta":{"content":"ok"}}]}', "[DONE]"]))
+    const chunks = []
+    for await (const chunk of streamChatCompletion(
+      { ...settings, provider: "ollama", base_url: "http://localhost:11434/v1", api_key: "" },
+      [],
+      [],
+    )) {
+      chunks.push(chunk)
+    }
+    expect(mockFetch).toHaveBeenCalled()
+    expect(chunks).toEqual([{ delta: "ok" }])
+  })
+
   it("handles non-streaming JSON responses (fallback)", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
@@ -341,6 +365,11 @@ describe("provider extras", () => {
       ok: true,
       message: "Connection works.",
     })
+
+    const noKeyResult = await testProviderConnection({ ...settings, api_key: "" })
+    expect(noKeyResult.ok).toBe(false)
+    expect(noKeyResult.message).toContain("No API key configured for OpenAI (Official)")
+    expect(noKeyResult.message).toContain("Please enter an API key first.")
 
     mockFetch.mockResolvedValue({
       ok: false,

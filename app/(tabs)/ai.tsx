@@ -276,7 +276,7 @@ export default function AiScreen() {
       </Box>
       <Pressable
         onPress={() => {
-          router.push("/(tabs)/settings")
+          router.push({ pathname: "/(tabs)/settings", params: { section: "account" } })
         }}
         accessibilityRole="button"
         accessibilityLabel="Open AI settings"

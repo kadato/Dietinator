@@ -256,7 +256,7 @@ describe("AiAssistant", () => {
 
     expect(mockUpdateMessage).toHaveBeenCalledWith(
       expect.any(Number),
-      expect.objectContaining({ is_error: 1 }),
+      expect.objectContaining({ is_error: 1, content: "Provider exploded" }),
     )
   })
 

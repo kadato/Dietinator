@@ -304,7 +304,7 @@ function AiChatModalContent() {
       <Pressable
         onPress={() => {
           closeAiChat()
-          router.push("/(tabs)/settings")
+          router.push({ pathname: "/(tabs)/settings", params: { section: "account" } })
         }}
         accessibilityRole="button"
         accessibilityLabel="Open AI settings"

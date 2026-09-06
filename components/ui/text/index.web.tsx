@@ -1,5 +1,7 @@
 import React from "react"
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils"
+import { StyleSheet, type StyleProp, type TextStyle } from "react-native"
+import { fonts } from "@/theme"
 import { textStyle } from "./styles"
 
 const lineClampByCount: Record<number, string> = {
@@ -16,9 +18,10 @@ function lineClampClass(numberOfLines?: number): string | undefined {
   return lineClampByCount[numberOfLines] ?? lineClampByCount[6]
 }
 
-type ITextProps = React.ComponentProps<"span"> &
+type ITextProps = Omit<React.ComponentProps<"span">, "style"> &
   VariantProps<typeof textStyle> & {
     numberOfLines?: number
+    style?: StyleProp<TextStyle> | React.CSSProperties
   }
 
 const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function Text(
@@ -41,6 +44,11 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
     selectable: _selectable,
     suppressHighlighting: _suppressHighlighting,
     ellipsizeMode: _ellipsizeMode,
+    onPress,
+    onClick,
+    accessibilityRole,
+    role,
+    style,
     ...props
   }: { className?: string } & ITextProps & {
       adjustsFontSizeToFit?: boolean
@@ -49,10 +57,39 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
       selectable?: boolean
       suppressHighlighting?: boolean
       ellipsizeMode?: string
+      onPress?: (event: unknown) => void
+      accessibilityRole?: string
     },
   ref,
 ) {
   const clampClass = lineClampClass(numberOfLines)
+
+  const flatStyle = StyleSheet.flatten([{ fontFamily: fonts.mono }, style as object]) as
+    Record<string, unknown> | undefined
+
+  const normalizedStyle = flatStyle ? ({ ...flatStyle } as Record<string, unknown>) : {}
+  if (normalizedStyle) {
+    if (
+      normalizedStyle.fontWeight &&
+      normalizedStyle.fontWeight !== "400" &&
+      normalizedStyle.fontWeight !== "normal"
+    ) {
+      normalizedStyle.fontWeight = "400"
+    }
+    if (typeof normalizedStyle.lineHeight === "number") {
+      normalizedStyle.lineHeight = `${normalizedStyle.lineHeight}px`
+    }
+  }
+
+  const effectiveOnClick =
+    onClick ?? (onPress as unknown as React.MouseEventHandler<HTMLSpanElement> | undefined)
+  const effectiveRole =
+    role ??
+    (accessibilityRole === "link" ? "link" : accessibilityRole === "button" ? "button" : undefined)
+
+  if (effectiveOnClick && !normalizedStyle.cursor) {
+    normalizedStyle.cursor = "pointer"
+  }
 
   return (
     <span
@@ -67,6 +104,9 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
         highlight: highlight as boolean,
         class: [className, clampClass].filter(Boolean).join(" "),
       })}
+      style={normalizedStyle as React.CSSProperties}
+      onClick={effectiveOnClick}
+      role={effectiveRole}
       {...props}
       ref={ref}
     />

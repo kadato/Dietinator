@@ -1,5 +1,6 @@
 import { fetch as expoFetch } from "expo/fetch"
 import { Platform } from "react-native"
+import { AI_PROVIDER_PRESETS } from "@/db/ai-settings"
 import type { AiChatMessage, AiProviderSettings, AiToolCallInfo, StreamingChunk } from "@/types"
 import type { AiToolDefinition } from "./tools"
 
@@ -23,6 +24,24 @@ export type ChatTool = {
 }
 
 export const AI_PROXY_PREFIX = "/api/ai/proxy"
+
+export function isLocalUrl(url: string): boolean {
+  return /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01]))/i.test(
+    url,
+  )
+}
+
+export function isApiKeyMissing(settings: AiProviderSettings): boolean {
+  if (settings.api_key.trim()) return false
+  if (settings.provider === "ollama") return false
+  if (settings.provider === "custom" && isLocalUrl(settings.base_url)) return false
+  return true
+}
+
+export function missingApiKeyErrorMessage(provider: AiProviderSettings["provider"]): string {
+  const label = AI_PROVIDER_PRESETS[provider]?.label ?? "the selected provider"
+  return `No API key configured for ${label}. Please add your API key in [Settings > AI and Account](/settings?section=account) to start chatting.`
+}
 
 /** Providers whose gateways want the app identity headers (like OpenRouter). */
 function needsAppHeaders(provider: AiProviderSettings["provider"]): boolean {
@@ -165,6 +184,12 @@ export async function testProviderConnection(
   settings: AiProviderSettings,
   signal?: AbortSignal,
 ): Promise<{ ok: boolean; message: string }> {
+  if (isApiKeyMissing(settings)) {
+    return {
+      ok: false,
+      message: `No API key configured for ${AI_PROVIDER_PRESETS[settings.provider]?.label ?? "this provider"}. Please enter an API key first.`,
+    }
+  }
   try {
     const response = await aiFetch(chatCompletionsUrl(settings.base_url), {
       method: "POST",
@@ -179,7 +204,14 @@ export async function testProviderConnection(
     })
     if (response.ok) return { ok: true, message: "Connection works." }
     const body = await response.text().catch(() => "")
-    return { ok: false, message: friendlyHttpError(response.status, parseErrorBody(body)) }
+    return {
+      ok: false,
+      message: friendlyHttpError(
+        response.status,
+        parseErrorBody(body),
+        Boolean(settings.api_key.trim()),
+      ),
+    }
   } catch {
     return {
       ok: false,
@@ -188,15 +220,18 @@ export async function testProviderConnection(
   }
 }
 
-function friendlyHttpError(status: number, body: string): string {
+function friendlyHttpError(status: number, body: string, hasKey = true): string {
   if (status === 401 || status === 403) {
-    return "The provider rejected the API key (401/403). Check it in Settings."
+    if (!hasKey) {
+      return "No API key configured. Please add your API key in [Settings > AI and Account](/settings?section=account)."
+    }
+    return "The provider rejected the API key (HTTP 401/403). Please verify your API key in [Settings > AI and Account](/settings?section=account)."
   }
   if (status === 404) {
-    return "Endpoint or model not found (404). Check the base URL and model name."
+    return "Endpoint or model not found (HTTP 404). Check the base URL and model name."
   }
   if (status === 429) {
-    return "Rate limited by the provider (429). Try again in a moment."
+    return "Rate limited by the provider (HTTP 429). Try again in a moment."
   }
   if (status >= 500) {
     return `The provider failed (HTTP ${status}). Try again in a moment.`
@@ -320,6 +355,11 @@ export async function* streamChatCompletion(
   tools: AiToolDefinition[],
   signal?: AbortSignal,
 ): AsyncGenerator<StreamingChunk> {
+  if (isApiKeyMissing(settings)) {
+    yield { error: missingApiKeyErrorMessage(settings.provider) }
+    return
+  }
+
   const url = chatCompletionsUrl(settings.base_url)
 
   let response: Response
@@ -339,7 +379,13 @@ export async function* streamChatCompletion(
 
   if (!response.ok) {
     const body = await response.text().catch(() => "")
-    yield { error: friendlyHttpError(response.status, parseErrorBody(body)) }
+    yield {
+      error: friendlyHttpError(
+        response.status,
+        parseErrorBody(body),
+        Boolean(settings.api_key.trim()),
+      ),
+    }
     return
   }
 

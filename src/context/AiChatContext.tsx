@@ -29,3 +29,7 @@ export function useAiChatModal() {
   if (!ctx) throw new Error("useAiChatModal must be used within AiChatModalProvider")
   return ctx
 }
+
+export function useOptionalAiChatModal() {
+  return useContext(AiChatModalContext)
+}

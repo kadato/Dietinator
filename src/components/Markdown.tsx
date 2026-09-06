@@ -1,5 +1,6 @@
-import { useMemo } from "react"
-import { Linking, Pressable } from "react-native"
+import { useCallback, useMemo } from "react"
+import { Linking } from "react-native"
+import { useRouter } from "expo-router"
 import { useTheme } from "@/hooks/useTheme"
 import { fonts, borders } from "@/theme"
 import type { ColorPalette } from "@/theme"
@@ -29,8 +30,9 @@ type Block =
   | { type: "table"; header: string[]; rows: string[][] }
   | { type: "paragraph"; text: string }
 
-const INLINE_PATTERN = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
-const LINK_PATTERN = /^\[([^\]]+)\]\(([^)]+)\)$/
+const INLINE_PATTERN =
+  /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|\[[^\]]+\]\((?:[^()\s]+|\([^()\s]*\))+\))/g
+const LINK_PATTERN = /^\[([^\]]+)\]\(((?:[^()\s]+|\([^()\s]*\))+)\)$/
 
 function parseInline(source: string): InlineToken[] {
   const tokens: InlineToken[] = []
@@ -191,7 +193,15 @@ function parseBlocks(source: string): Block[] {
   return blocks
 }
 
-function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPalette }) {
+function InlineText({
+  tokens,
+  colors,
+  onLinkPress,
+}: {
+  tokens: InlineToken[]
+  colors: ColorPalette
+  onLinkPress?: (url: string) => void
+}) {
   return (
     <>
       {tokens.map((token, index) => {
@@ -226,30 +236,23 @@ function InlineText({ tokens, colors }: { tokens: InlineToken[]; colors: ColorPa
             )
           case "link":
             return (
-              <Pressable
+              <Text
                 key={index}
                 onPress={() => {
-                  if (token.url) Linking.openURL(token.url).catch(() => undefined)
+                  if (token.url) onLinkPress?.(token.url)
                 }}
                 accessibilityRole="link"
                 accessibilityLabel={token.text}
+                style={{
+                  color: colors.primary,
+                  textDecorationLine: "underline",
+                }}
               >
-                <Text
-                  style={{
-                    color: colors.primary,
-                    textDecorationLine: "underline",
-                  }}
-                >
-                  {token.text}
-                </Text>
-              </Pressable>
-            )
-          default:
-            return (
-              <Text key={index} style={{ color: colors.text }}>
                 {token.text}
               </Text>
             )
+          default:
+            return token.text
         }
       })}
     </>
@@ -260,10 +263,12 @@ function BlockContent({
   block,
   colors,
   bodySize,
+  onLinkPress,
 }: {
   block: Block
   colors: ColorPalette
   bodySize: "sm" | "lg"
+  onLinkPress?: (url: string) => void
 }) {
   // Chat surfaces pass lg so thin mono strokes read as body copy, not fine print.
   const bodyFontSize = bodySize === "lg" ? 16 : 14
@@ -273,7 +278,7 @@ function BlockContent({
       const size = block.level === 1 ? "xl" : block.level === 2 ? "lg" : "md"
       return (
         <Text size={size} bold className="mt-1" style={{ color: colors.text }}>
-          <InlineText tokens={parseInline(block.text)} colors={colors} />
+          <InlineText tokens={parseInline(block.text)} colors={colors} onLinkPress={onLinkPress} />
         </Text>
       )
     }
@@ -282,7 +287,16 @@ function BlockContent({
         <Box className="gap-1">
           {block.items.map((item, index) => (
             <Box key={index} className="flex-row gap-2">
-              <Text size="sm" className="w-4 text-right" style={{ color: colors.textMuted }}>
+              <Text
+                size="sm"
+                className="w-4 text-right"
+                style={{
+                  color: colors.textMuted,
+                  fontFamily: fonts.mono,
+                  fontSize: bodyFontSize,
+                  lineHeight: bodyLineHeight,
+                }}
+              >
                 {block.ordered ? `${index + 1}.` : "-"}
               </Text>
               <Box className="flex-1">
@@ -295,7 +309,11 @@ function BlockContent({
                     lineHeight: bodyLineHeight,
                   }}
                 >
-                  <InlineText tokens={parseInline(item)} colors={colors} />
+                  <InlineText
+                    tokens={parseInline(item)}
+                    colors={colors}
+                    onLinkPress={onLinkPress}
+                  />
                 </Text>
               </Box>
             </Box>
@@ -341,7 +359,11 @@ function BlockContent({
               lineHeight: bodyLineHeight,
             }}
           >
-            <InlineText tokens={parseInline(block.text)} colors={colors} />
+            <InlineText
+              tokens={parseInline(block.text)}
+              colors={colors}
+              onLinkPress={onLinkPress}
+            />
           </Text>
         </Box>
       )
@@ -397,19 +419,47 @@ function BlockContent({
             lineHeight: bodyLineHeight,
           }}
         >
-          <InlineText tokens={parseInline(block.text)} colors={colors} />
+          <InlineText tokens={parseInline(block.text)} colors={colors} onLinkPress={onLinkPress} />
         </Text>
       )
   }
 }
 
-export function Markdown({ source, bodySize = "sm" }: { source: string; bodySize?: "sm" | "lg" }) {
+export function Markdown({
+  source,
+  bodySize = "sm",
+  onLinkPress,
+}: {
+  source: string
+  bodySize?: "sm" | "lg"
+  onLinkPress?: (url: string) => boolean | void
+}) {
   const { colors } = useTheme()
+  const router = useRouter()
   const blocks = useMemo(() => parseBlocks(source), [source])
+
+  const handleLinkPress = useCallback(
+    (url: string) => {
+      if (onLinkPress && onLinkPress(url)) return
+      if (url.startsWith("/")) {
+        router.push(url as never)
+        return
+      }
+      Linking.openURL(url).catch(() => undefined)
+    },
+    [onLinkPress, router],
+  )
+
   return (
     <Box className="gap-2">
       {blocks.map((block, index) => (
-        <BlockContent key={index} block={block} colors={colors} bodySize={bodySize} />
+        <BlockContent
+          key={index}
+          block={block}
+          colors={colors}
+          bodySize={bodySize}
+          onLinkPress={handleLinkPress}
+        />
       ))}
     </Box>
   )

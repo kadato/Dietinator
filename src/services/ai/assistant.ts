@@ -216,7 +216,13 @@ export class AiAssistant {
 
       const { toolCalls, error } = await this.streamResponse(assistantId, callbacks)
       if (error) {
-        await aiChatDb.updateChatMessage(assistantId, { is_error: 1 })
+        const message = this.messages.find((m) => m.id === assistantId)
+        const finalContent = message?.content ? `${message.content}\n\n${error}` : error
+        if (message) {
+          message.content = finalContent
+          message.is_error = 1
+        }
+        await aiChatDb.updateChatMessage(assistantId, { is_error: 1, content: finalContent })
         callbacks.onMessages()
         return
       }
@@ -280,7 +286,17 @@ export class AiAssistant {
         error: "Reached the maximum number of tool steps.",
       }),
     )
-    await this.streamResponse(finalId, callbacks)
+    const { error: finalError } = await this.streamResponse(finalId, callbacks)
+    if (finalError) {
+      const message = this.messages.find((m) => m.id === finalId)
+      const finalContent = message?.content ? `${message.content}\n\n${finalError}` : finalError
+      if (message) {
+        message.content = finalContent
+        message.is_error = 1
+      }
+      await aiChatDb.updateChatMessage(finalId, { is_error: 1, content: finalContent })
+      callbacks.onMessages()
+    }
   }
 
   private async streamResponse(
