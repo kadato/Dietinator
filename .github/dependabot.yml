@@ -38,10 +38,18 @@ updates:
       - dependency-name: "yazio"
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "@types/react"
       - dependency-name: "react-native"
-        update-types: ["version-update:semver-minor"]
-      - dependency-name: "@react-native/jest-preset"
-        update-types: ["version-update:semver-minor"]
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native/*"
+      - dependency-name: "jest-expo"
+      - dependency-name: "babel-preset-expo"
+      - dependency-name: "eslint-config-expo"
 
   # GitHub Actions: CI/CD workflows and automation
   - package-ecosystem: "github-actions"
