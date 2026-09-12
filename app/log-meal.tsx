@@ -8,7 +8,8 @@ import {
   FlatList,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Keyboard,
+  LayoutAnimation,
   Platform,
 } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
@@ -152,6 +153,48 @@ export default function LogMealScreen() {
   const [loggedOpenQuery, setLoggedOpenQuery] = useState<string | null>(null)
   // Quick-add in-flight row key, product id or product id plus amount.
   const [addingKey, setAddingKey] = useState<string | null>(null)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
+
+    const onShow = (e: { endCoordinates?: { height?: number } }) => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(e.endCoordinates?.height ?? 0)
+    }
+    const onHide = () => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(0)
+    }
+
+    const showSub = Keyboard.addListener(showEvent, onShow)
+    const hideSub = Keyboard.addListener(hideEvent, onHide)
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => {
+      const offset = Math.max(0, Math.round(window.innerHeight - vv.height))
+      setKeyboardHeight(offset > 50 ? offset : 0)
+    }
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
 
   const loadLoggedEntries = useCallback(async () => {
     try {
@@ -691,16 +734,11 @@ export default function LogMealScreen() {
       </View>
     ) : null
 
-  const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 12
   const safeBottom = insets.bottom
+  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 8 : safeBottom + 12
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={safeTop}
-    >
+    <View style={styles.container}>
       <ModalContainer surface>
         {/* Compact Merged Header: Meal Icon + Title + Kcal + 3-Dot More Menu */}
         <View style={styles.header}>
@@ -726,86 +764,88 @@ export default function LogMealScreen() {
         </View>
 
         {/* Daily budget hero: big consumed-vs-goal number, progress, macros left */}
-        <View style={styles.budgetBar}>
-          <View style={styles.budgetTopRow}>
-            <View style={styles.budgetNumbers}>
-              <Text style={styles.budgetEyebrow}>Daily budget</Text>
-              <Text
-                style={styles.budgetKcal}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-              >
-                {formatThousands(dayConsumedKcal)}
-                <Text style={styles.budgetKcalGoal}>
-                  {dayGoalKcal > 0 ? ` / ${formatThousands(dayGoalKcal)} kcal` : " kcal"}
-                </Text>
-              </Text>
-            </View>
-
-            {dayGoalKcal > 0 ? (
-              <View
-                style={[
-                  styles.dayBudgetBadge,
-                  {
-                    backgroundColor: budgetBadgeFlash
-                      ? dayOverKcal > 0
-                        ? colors.danger
-                        : colors.primary
-                      : dayOverKcal > 0
-                        ? `${colors.danger}20`
-                        : `${colors.primary}20`,
-                    borderColor: dayOverKcal > 0 ? colors.danger : colors.primary,
-                  },
-                ]}
-              >
+        {!searchOpen ? (
+          <View style={styles.budgetBar}>
+            <View style={styles.budgetTopRow}>
+              <View style={styles.budgetNumbers}>
+                <Text style={styles.budgetEyebrow}>Daily budget</Text>
                 <Text
+                  style={styles.budgetKcal}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  {formatThousands(dayConsumedKcal)}
+                  <Text style={styles.budgetKcalGoal}>
+                    {dayGoalKcal > 0 ? ` / ${formatThousands(dayGoalKcal)} kcal` : " kcal"}
+                  </Text>
+                </Text>
+              </View>
+
+              {dayGoalKcal > 0 ? (
+                <View
                   style={[
-                    styles.dayBudgetBadgeText,
+                    styles.dayBudgetBadge,
                     {
-                      color: budgetBadgeFlash
-                        ? colors.onPrimary
-                        : dayOverKcal > 0
+                      backgroundColor: budgetBadgeFlash
+                        ? dayOverKcal > 0
                           ? colors.danger
-                          : colors.primary,
+                          : colors.primary
+                        : dayOverKcal > 0
+                          ? `${colors.danger}20`
+                          : `${colors.primary}20`,
+                      borderColor: dayOverKcal > 0 ? colors.danger : colors.primary,
                     },
                   ]}
                 >
-                  {dayOverKcal > 0
-                    ? `+${formatThousands(Math.round(dayOverKcal))} over`
-                    : `${formatThousands(Math.round(dayRemainingKcal))} left`}
-                </Text>
+                  <Text
+                    style={[
+                      styles.dayBudgetBadgeText,
+                      {
+                        color: budgetBadgeFlash
+                          ? colors.onPrimary
+                          : dayOverKcal > 0
+                            ? colors.danger
+                            : colors.primary,
+                      },
+                    ]}
+                  >
+                    {dayOverKcal > 0
+                      ? `+${formatThousands(Math.round(dayOverKcal))} over`
+                      : `${formatThousands(Math.round(dayRemainingKcal))} left`}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {dayGoalKcal > 0 ? (
+              <View style={styles.budgetBarTrack}>
+                <View
+                  style={[
+                    styles.budgetBarFill,
+                    {
+                      width: `${dayProgressPct}%`,
+                      backgroundColor: dayOverKcal > 0 ? colors.danger : colors.primary,
+                    },
+                  ]}
+                />
               </View>
             ) : null}
-          </View>
 
-          {dayGoalKcal > 0 ? (
-            <View style={styles.budgetBarTrack}>
-              <View
-                style={[
-                  styles.budgetBarFill,
-                  {
-                    width: `${dayProgressPct}%`,
-                    backgroundColor: dayOverKcal > 0 ? colors.danger : colors.primary,
-                  },
-                ]}
+            <View style={styles.budgetPillsRow}>
+              <Text style={styles.budgetMacrosLabel}>Macros left</Text>
+              <MacroPills
+                protein={dayProteinRemaining}
+                carbs={dayCarbsRemaining}
+                fat={dayFatRemaining}
+                size="sm"
               />
             </View>
-          ) : null}
-
-          <View style={styles.budgetPillsRow}>
-            <Text style={styles.budgetMacrosLabel}>Macros left</Text>
-            <MacroPills
-              protein={dayProteinRemaining}
-              carbs={dayCarbsRemaining}
-              fat={dayFatRemaining}
-              size="sm"
-            />
+            {dayOverKcal > 0 ? (
+              <Text style={styles.budgetHint}>Over budget · adjust tomorrow</Text>
+            ) : null}
           </View>
-          {dayOverKcal > 0 ? (
-            <Text style={styles.budgetHint}>Over budget · adjust tomorrow</Text>
-          ) : null}
-        </View>
+        ) : null}
 
         {/* Always visible quick-switch tabs: Frequent, Recent, Favorites, Meals */}
         <View style={styles.tabBar} accessibilityRole="tablist">
@@ -896,8 +936,11 @@ export default function LogMealScreen() {
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               contentContainerClassName={
-                foods.length === 0 && !loading ? "grow justify-center" : "pt-1 pb-28"
+                foods.length === 0 && !loading ? "grow justify-center" : "pt-1"
               }
+              contentContainerStyle={{
+                paddingBottom: keyboardHeight > 0 ? keyboardHeight + 76 : 112,
+              }}
               ListHeaderComponent={
                 <>
                   {loggedSection ? (
@@ -964,8 +1007,11 @@ export default function LogMealScreen() {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerClassName={
-              filteredMeals.length === 0 && !loading ? "grow justify-center" : "pb-28"
+              filteredMeals.length === 0 && !loading ? "grow justify-center" : ""
             }
+            contentContainerStyle={{
+              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 76 : 112,
+            }}
             ListHeaderComponent={
               <>
                 {loggedSection ? (
@@ -999,7 +1045,7 @@ export default function LogMealScreen() {
         {/* Bottom floating keys: transparent cluster, no dock bar. Search is
             a FAB that expands into a floating field in the same row as scan,
             so the two never overlap. */}
-        <View style={[styles.bottomCluster, { bottom: safeBottom + 12 }]} pointerEvents="box-none">
+        <View style={[styles.bottomCluster, { bottom: bottomOffset }]} pointerEvents="box-none">
           <Pressable
             onPress={safeBack}
             hitSlop={8}
@@ -1081,7 +1127,7 @@ export default function LogMealScreen() {
         date={date}
         onClose={() => setOptionsOpen(false)}
       />
-    </KeyboardAvoidingView>
+    </View>
   )
 }
 
@@ -1213,6 +1259,8 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
+      zIndex: 10,
+      elevation: 5,
     },
     searchFab: {
       flex: 1,
