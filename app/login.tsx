@@ -157,27 +157,15 @@ export default function LoginScreen() {
                 >
                   Dietinator
                 </Text>
-                <Text
-                  size="xs"
-                  bold
-                  className="font-mono uppercase tracking-widest"
-                  style={{ color: colors.textMuted, letterSpacing: 0.08, fontFamily: fonts.mono }}
-                >
-                  Track calories. No ads. Offline first.
-                </Text>
                 <View
                   style={{
                     flexDirection: "row",
                     gap: 8,
                     flexWrap: "wrap",
-                    marginTop: 8,
+                    marginTop: 4,
                   }}
                 >
-                  {[
-                    { k: "OFFLINE", v: "SQLite first" },
-                    { k: "GRID", v: "24px ruled" },
-                    { k: "MONO", v: "Departure 11px" },
-                  ].map((chip) => (
+                  {[{ k: "OFFLINE", v: "SQLite first" }].map((chip) => (
                     <Box
                       key={chip.k}
                       className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1.5"
