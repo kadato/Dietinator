@@ -59,10 +59,10 @@ export default function TodayScreen() {
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isLarge, width } = useLayout()
-  // Phone metrics below the medium breakpoint. The date chrome, quick-adds
-  // and dock are thumb-first. At 390, standard phone, the non-compact header
-  // overflows and clips the streak badge against the viewport edge.
-  const compact = width < layout.breakpointMedium
+  // Phone metrics below the medium breakpoint, and sidebar metrics on wide
+  // displays. On wide screens, the date chrome and hydration row sit inside
+  // a ~380px sidebar, so they require compact sizing to avoid overflowing.
+  const compact = width < layout.breakpointMedium || isWide
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -488,13 +488,14 @@ export default function TodayScreen() {
                 className="w-full flex-row items-center justify-center"
                 style={{
                   height: compact ? 38 : 42,
-                  paddingHorizontal: compact ? 10 : 14,
-                  gap: 6,
+                  paddingHorizontal: compact ? 8 : 14,
+                  gap: 5,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
                   borderRadius: radii.none,
                   backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+                  overflow: "hidden",
                 }}
               >
                 <Feather name="calendar" size={compact ? 14 : 17} color={colors.primary} />
@@ -502,15 +503,23 @@ export default function TodayScreen() {
                   size={compact ? "xs" : "sm"}
                   bold
                   numberOfLines={1}
-                  className="text-center"
+                  isTruncated={true}
+                  className="truncate text-center"
                   style={{
                     color: colors.text,
-                    fontSize: compact ? 13 : 15,
+                    fontSize: compact ? 12 : 15,
                     flexShrink: 1,
                     textAlign: "center",
                     fontFamily: fonts.mono,
                     textTransform: "uppercase",
                     letterSpacing: 0.04,
+                    ...(Platform.OS === "web"
+                      ? ({
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        } as never)
+                      : {}),
                   }}
                 >
                   {compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
