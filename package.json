@@ -45,7 +45,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.29.7",
     "@playwright/mcp": "^0.0.80",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@react-native/jest-preset": "0.86.3",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^29.5.14",
@@ -61,7 +61,7 @@
     "jest": "^29.7.0",
     "jest-expo": "~57.0.5",
     "lighthouse": "^13.4.1",
-    "lint-staged": "^17.5.0",
+    "lint-staged": "^17.5.1",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "puppeteer-core": "^25.10.0",
