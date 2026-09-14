@@ -84,8 +84,8 @@ importers:
         specifier: 19.2.3
         version: 19.2.3
       react-aria:
-        specifier: 3.52.0
-        version: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 3.52.1
+        version: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -5137,8 +5137,8 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
 
-  react-aria@3.52.0:
-    resolution: {integrity: sha512-eGU8GOqT6Stn4Se/X3esz0Wum6TqSwQJBbK3jSLJIbFAS7XkvpICCVwmqZQG1/siXuCgB9DBRq9CttI+K9HPTA==}
+  react-aria@3.52.1:
+    resolution: {integrity: sha512-fdZZruC9/x/joCg0mhKGs5aHpwrXLCSZ4GOJmhhYyiE0ffyEsk9MLFt9LCOCF9tn8ErTD+UDQP4oDUSlZkmpCg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
@@ -5996,6 +5996,11 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  use-sync-external-store@1.7.0:
+    resolution: {integrity: sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
@@ -6250,7 +6255,7 @@ snapshots:
       react-dom: 19.2.3(react@19.2.3)
       react-stately: 3.49.0(react@19.2.3)
       react-transition-group: 4.4.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      use-sync-external-store: 1.6.0(react@19.2.3)
+      use-sync-external-store: 1.7.0(react@19.2.3)
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -7445,7 +7450,7 @@ snapshots:
       '@react-types/shared': 3.36.1(react@19.2.3)
       dom-helpers: 6.0.1
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-native: 0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       react-native-web: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-stately: 3.50.0(react@19.2.3)
@@ -7967,28 +7972,28 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/checkbox@3.17.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/dialog@3.6.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/focus@3.22.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/interactions@3.28.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
@@ -7996,28 +8001,28 @@ snapshots:
       '@react-types/shared': 3.36.1(react@19.2.3)
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/label@3.8.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/menu@3.22.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/overlays@3.32.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/radio@3.13.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
@@ -8025,14 +8030,14 @@ snapshots:
       '@react-types/shared': 3.36.1(react@19.2.3)
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/selection@3.28.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/slider@3.9.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
@@ -8040,35 +8045,35 @@ snapshots:
       '@react-types/shared': 3.36.1(react@19.2.3)
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/ssr@3.10.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/switch@3.8.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/toggle@3.13.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-aria/utils@3.34.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
       react-stately: 3.50.0(react@19.2.3)
 
@@ -8076,7 +8081,7 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      react-aria: 3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-aria: 3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom: 19.2.3(react@19.2.3)
 
   '@react-native-community/netinfo@12.0.1(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)':
@@ -12211,9 +12216,9 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-stately: 3.49.0(react@19.2.3)
-      use-sync-external-store: 1.6.0(react@19.2.3)
+      use-sync-external-store: 1.7.0(react@19.2.3)
 
-  react-aria@3.52.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  react-aria@3.52.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       '@internationalized/date': 3.12.4
       '@internationalized/number': 3.6.8
@@ -12225,7 +12230,7 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-stately: 3.50.0(react@19.2.3)
-      use-sync-external-store: 1.6.0(react@19.2.3)
+      use-sync-external-store: 1.7.0(react@19.2.3)
 
   react-devtools-core@6.1.5:
     dependencies:
@@ -12437,7 +12442,7 @@ snapshots:
       '@react-types/shared': 3.36.1(react@19.2.3)
       '@swc/helpers': 0.5.23
       react: 19.2.3
-      use-sync-external-store: 1.6.0(react@19.2.3)
+      use-sync-external-store: 1.7.0(react@19.2.3)
 
   react-stately@3.50.0(react@19.2.3):
     dependencies:
@@ -13223,6 +13228,10 @@ snapshots:
       '@types/react': 19.2.18
 
   use-sync-external-store@1.6.0(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+
+  use-sync-external-store@1.7.0(react@19.2.3):
     dependencies:
       react: 19.2.3
 
