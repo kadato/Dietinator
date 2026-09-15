@@ -13,6 +13,7 @@ import {
   Platform,
 } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
+import { Swipeable } from "react-native-gesture-handler"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { FoodListItem } from "@/components/FoodListItem"
@@ -44,6 +45,7 @@ import { displayUnit } from "@/utils/food-display"
 import { formatNumber, formatThousands } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
+import { hapticLight, hapticSuccess } from "@/utils/haptics"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -153,6 +155,8 @@ export default function LogMealScreen() {
   const [loggedOpenQuery, setLoggedOpenQuery] = useState<string | null>(null)
   // Quick-add in-flight row key, product id or product id plus amount.
   const [addingKey, setAddingKey] = useState<string | null>(null)
+  // Open swipeable logged rows, so a cancelled swipe-delete can snap back.
+  const swipeableRefs = useRef(new Map<string, Swipeable | null>())
   const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   useEffect(() => {
@@ -344,6 +348,7 @@ export default function LogMealScreen() {
           amount: targetAmount,
         })
         await loadLoggedEntries()
+        hapticLight()
         // Show only the small Undo FAB, no huge toast banner that covers the dock.
         showUndoFab(`${food.name} added`, () => {
           deleteFoodEntry(entry.id)
@@ -385,6 +390,7 @@ export default function LogMealScreen() {
             showError(error, "Could not delete entry.")
           }
         },
+        onCancel: () => swipeableRefs.current.get(entry.id)?.close(),
       })
     },
     [date, loadLoggedEntries, showError],
@@ -399,6 +405,7 @@ export default function LogMealScreen() {
         if (logged === 0) {
           showWarning("No items in this meal could be logged.", "Nothing logged")
         } else {
+          hapticSuccess()
           showSuccess(
             logged === 1
               ? `Logged 1 item from "${meal.name}".`
@@ -648,57 +655,77 @@ export default function LogMealScreen() {
               showsVerticalScrollIndicator={false}
             >
               {loggedEntries.map((entry) => (
-                <View key={entry.id} style={styles.loggedRow}>
-                  <Pressable
-                    style={styles.loggedMain}
-                    onPress={() => openEdit(entry)}
-                    accessibilityRole="button"
-                    // Mirrors the visible name + portion + kcal + macro pills (2.5.3).
-                    accessibilityLabel={`Edit ${entry.food_name}, ${formatNumber(entry.amount)} ${displayUnit(entry.unit)}, ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
-                  >
-                    <View style={[styles.loggedIconWrap, { backgroundColor: `${accent}18` }]}>
-                      <MaterialCommunityIcons
-                        name={getFoodIcon(entry.food_name, entry)}
-                        size={20}
-                        color={accent}
-                      />
-                    </View>
-                    <View style={styles.loggedInfo}>
-                      <Text style={styles.loggedName}>{entry.food_name}</Text>
-                      <View style={styles.loggedSubRow}>
-                        <Text style={styles.loggedSub}>
-                          {formatNumber(entry.amount)} {displayUnit(entry.unit)} ·{" "}
-                          {Math.round(entry.kcal)} kcal
-                        </Text>
-                        <MacroPills
-                          protein={entry.protein}
-                          carbs={entry.carbs}
-                          fat={entry.fat}
-                          size="xs"
+                <Swipeable
+                  key={entry.id}
+                  ref={(ref) => {
+                    if (ref) swipeableRefs.current.set(entry.id, ref)
+                    else swipeableRefs.current.delete(entry.id)
+                  }}
+                  overshootRight={false}
+                  renderRightActions={() => (
+                    <Pressable
+                      style={styles.swipeDelete}
+                      onPress={() => onDeleteEntry(entry)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${entry.food_name}`}
+                    >
+                      <Feather name="trash-2" size={18} color={colors.onPrimary} />
+                    </Pressable>
+                  )}
+                  onSwipeableOpen={() => onDeleteEntry(entry)}
+                >
+                  <View style={styles.loggedRow}>
+                    <Pressable
+                      style={styles.loggedMain}
+                      onPress={() => openEdit(entry)}
+                      accessibilityRole="button"
+                      // Mirrors the visible name + portion + kcal + macro pills (2.5.3).
+                      accessibilityLabel={`Edit ${entry.food_name}, ${formatNumber(entry.amount)} ${displayUnit(entry.unit)}, ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
+                    >
+                      <View style={[styles.loggedIconWrap, { backgroundColor: `${accent}18` }]}>
+                        <MaterialCommunityIcons
+                          name={getFoodIcon(entry.food_name, entry)}
+                          size={20}
+                          color={accent}
                         />
                       </View>
-                    </View>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.loggedIconBtn, { backgroundColor: `${accent}1a` }]}
-                    onPress={() => openEdit(entry)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    // "details" disambiguates from the row's own edit action.
-                    accessibilityLabel={`Edit ${entry.food_name} details`}
-                  >
-                    <Feather name="edit-2" size={16} color={accent} />
-                  </Pressable>
-                  <Pressable
-                    style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
-                    onPress={() => onDeleteEntry(entry)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Delete ${entry.food_name}`}
-                  >
-                    <Feather name="trash-2" size={16} color={colors.danger} />
-                  </Pressable>
-                </View>
+                      <View style={styles.loggedInfo}>
+                        <Text style={styles.loggedName}>{entry.food_name}</Text>
+                        <View style={styles.loggedSubRow}>
+                          <Text style={styles.loggedSub}>
+                            {formatNumber(entry.amount)} {displayUnit(entry.unit)} ·{" "}
+                            {Math.round(entry.kcal)} kcal
+                          </Text>
+                          <MacroPills
+                            protein={entry.protein}
+                            carbs={entry.carbs}
+                            fat={entry.fat}
+                            size="xs"
+                          />
+                        </View>
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.loggedIconBtn, { backgroundColor: `${accent}1a` }]}
+                      onPress={() => openEdit(entry)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      // "details" disambiguates from the row's own edit action.
+                      accessibilityLabel={`Edit ${entry.food_name} details`}
+                    >
+                      <Feather name="edit-2" size={16} color={accent} />
+                    </Pressable>
+                    <Pressable
+                      style={[styles.loggedIconBtn, { backgroundColor: `${colors.danger}1a` }]}
+                      onPress={() => onDeleteEntry(entry)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${entry.food_name}`}
+                    >
+                      <Feather name="trash-2" size={16} color={colors.danger} />
+                    </Pressable>
+                  </View>
+                </Swipeable>
               ))}
             </ScrollView>
           </View>
@@ -1315,6 +1342,12 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
       flexShrink: 0,
     },
+    swipeDelete: {
+      width: 72,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.danger,
+    },
     dockScanBtn: {
       backgroundColor: colors.primary,
       borderColor: colors.primary,
@@ -1471,6 +1504,8 @@ const createStyles = (colors: ColorPalette) =>
     loggedRow: {
       flexDirection: "row",
       alignItems: "center",
+      // Opaque so the row covers the swipe-to-delete action when closed.
+      backgroundColor: colors.surface,
       // 12 between the icon keys so their 6px hit slops never overlap.
       gap: 12,
       paddingVertical: spacing.sm + 2,
