@@ -2,16 +2,46 @@
   "name": "Dietinator",
   "short_name": "Dietinator",
   "description": "Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database.",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f1f5f9",
   "theme_color": "#0b57d0",
   "icons": [
     {
-      "src": "/assets/icon.png",
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log food",
+      "url": "/log-meal",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "New meal",
+      "url": "/meal-builder",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Scan barcode",
+      "url": "/scan",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
