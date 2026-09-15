@@ -32,6 +32,7 @@ import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { confirmAction } from "@/utils/confirm"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
+import { setPendingMealFood } from "@/services/meal-scan-pending"
 import { Box } from "@ui/box"
 import { Input, InputField } from "@ui/input"
 import { Button, ButtonText } from "@ui/button"
@@ -239,9 +240,10 @@ function BarcodeMatchesList({
 
 export default function ScanScreen() {
   const router = useRouter()
-  const routeParams = useLocalSearchParams<{ meal?: string; date?: string }>()
+  const routeParams = useLocalSearchParams<{ meal?: string; date?: string; from?: string }>()
   const mealType = (routeParam(routeParams.meal) ?? "lunch") as MealType
   const dateKey = routeParam(routeParams.date) ?? toDateKey()
+  const fromMealBuilder = routeParam(routeParams.from) === "meal-builder"
   const { setYazioAvailable } = useApp()
   const { showError } = useToast()
   const { colors } = useTheme()
@@ -255,6 +257,25 @@ export default function ScanScreen() {
   const [manualBarcode, setManualBarcode] = useState("")
   const [notFound, setNotFound] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
+  // Mobile-web virtual keyboard covers the fixed lookup keys. Track it like
+  // the food search does so the barcode field and lookup stay visible.
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  useEffect(() => {
+    if (!MANUAL_SCAN_ON_WEB) return
+    if (Platform.OS !== "web" || typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => {
+      const offset = Math.max(0, Math.round(window.innerHeight - vv.height))
+      setKeyboardHeight(offset > 50 ? offset : 0)
+    }
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
 
   useEffect(() => {
     if (!MANUAL_SCAN_ON_WEB && !permission?.granted && permission?.canAskAgain !== false) {
@@ -312,6 +333,11 @@ export default function ScanScreen() {
   }
 
   const confirmNotFound = () => {
+    if (fromMealBuilder) {
+      resetForNextScan()
+      router.back()
+      return
+    }
     confirmAction({
       title: "Not found",
       message: "No match for this barcode. Search manually?",
@@ -326,6 +352,11 @@ export default function ScanScreen() {
   }
 
   const openFood = (food: SearchFoodResult) => {
+    if (fromMealBuilder) {
+      setPendingMealFood(food)
+      router.back()
+      return
+    }
     router.replace({
       pathname: "/add-food",
       params: {
@@ -343,7 +374,19 @@ export default function ScanScreen() {
     return (
       <View style={styles.container}>
         <ModalContainer maxWidth={640}>
-          <Box className="flex-1 items-center justify-center px-6" style={styles.webScanContent}>
+          <Box
+            className="flex-1 items-center justify-center px-6"
+            style={[
+              styles.webScanContent,
+              keyboardHeight > 0
+                ? {
+                    justifyContent: "flex-start",
+                    paddingTop: spacing.lg,
+                    paddingBottom: keyboardHeight + 16,
+                  }
+                : undefined,
+            ]}
+          >
             <Box
               className="mb-5 h-20 w-20 items-center justify-center rounded-none border"
               style={{
@@ -437,7 +480,7 @@ export default function ScanScreen() {
         </ModalContainer>
 
         <FabCluster
-          bottomOffset={insets.bottom + 20}
+          bottomOffset={keyboardHeight > 0 ? keyboardHeight + 8 : insets.bottom + 20}
           left={
             <Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />
           }
