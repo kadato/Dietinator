@@ -59,6 +59,9 @@ jobs:
         uses: android-actions/setup-android@v4
         with:
           accept-android-sdk-licenses: true
+          # The action defaults to "tools platform-tools", but Google removed
+          # the obsolete `tools` package, so sdkmanager exits 1 on it.
+          packages: platform-tools
       - name: Resolve version
         id: version
         shell: bash
