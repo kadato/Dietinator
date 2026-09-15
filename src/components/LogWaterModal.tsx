@@ -25,6 +25,7 @@ import { usePressedState } from "@/hooks/usePressedState"
 import { addWaterEntry, deleteWaterEntry, getWaterEntriesForDate } from "@/db/water"
 import type { WaterEntry } from "@/types"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
+import { hapticLight, hapticWarning } from "@/utils/haptics"
 import { formatWaterAmount } from "@/utils/units"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
@@ -93,6 +94,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
       const items = await getWaterEntriesForDate(dateKey)
       setEntries(items)
       setCustomMl("")
+      hapticLight()
       onSaved?.()
     } catch (error) {
       showError(error, "Could not log water.")
@@ -105,6 +107,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
     try {
       await deleteWaterEntry(entry.id)
       setEntries((prev) => prev.filter((item) => item.id !== entry.id))
+      hapticWarning()
       onSaved?.()
       showUndo("Pour removed.", () => {
         addWaterEntry({ date: entry.date, amountMl: entry.amount_ml })

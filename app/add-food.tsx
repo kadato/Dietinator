@@ -31,6 +31,7 @@ import {
 } from "@/utils/nutrients"
 import { formatNutrientsServingLabel, formatServingOption, displayUnit } from "@/utils/food-display"
 import { routeParam } from "@/utils/route"
+import { hapticSuccess } from "@/utils/haptics"
 import { toDateKey } from "@/utils/date"
 import { DailyImpactCard } from "@/components/DailyImpactCard"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
@@ -360,6 +361,7 @@ export default function AddFoodScreen() {
         }
         await logFood({ date, mealType: selectedMeal, food: resolved, amount: amt })
       }
+      hapticSuccess()
       safeBack()
     } catch (error) {
       showError(error, "Could not save entry.")
