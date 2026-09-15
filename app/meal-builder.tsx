@@ -1,26 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Keyboard,
-  KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native"
-import { useLocalSearchParams } from "expo-router"
-import { Feather } from "@expo/vector-icons"
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
-import { useKeyboardVisible } from "@/hooks/useKeyboardVisible"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useToast } from "@/context/ToastContext"
 import { deleteMeal, duplicateMeal, getMealById, mealTotals, saveMeal } from "@/services/meals"
+import { consumePendingMealFood } from "@/services/meal-scan-pending"
 import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
 import { mergeFoodResults } from "@/utils/food-search"
 import type { MealItem, SearchFoodResult } from "@/types"
 import { nutrientsForAmount } from "@/utils/nutrients"
+import { hapticLight, hapticSuccess } from "@/utils/haptics"
 import { routeParam } from "@/utils/route"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
@@ -29,9 +33,7 @@ import { MacroPills } from "@/components/MacroPills"
 import { NutritionFactsCard } from "@/components/NutritionFactsCard"
 import { NumberStepper } from "@/components/NumberStepper"
 
-import { Fab } from "@/components/Fab"
-import { FabCluster } from "@/components/FabCluster"
-import { fonts, borders, radii } from "@/theme"
+import { fonts, spacing, borders, radii, type ColorPalette } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
@@ -42,21 +44,76 @@ function servingAmountFor(food: SearchFoodResult): number {
 
 export default function MealBuilderScreen() {
   const safeBack = useSafeBack()
+  const router = useRouter()
   const params = useLocalSearchParams<{ mealId?: string }>()
   const mealId = routeParam(params.mealId)
   const isEditing = Boolean(mealId)
 
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
+  const bottomStyles = useMemo(() => createBottomStyles(colors), [colors])
   const { showError, showSuccess, showWarning } = useToast()
-  const keyboardOpen = useKeyboardVisible()
 
   const [name, setName] = useState("")
   const [items, setItems] = useState<MealItem[]>([])
   const [query, setQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchInputRef = useRef<TextInput>(null)
   const debounced = useDebounce(query, 200)
   const [loadingMeal, setLoadingMeal] = useState(isEditing)
   const [saving, setSaving] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  const openSearch = useCallback(() => {
+    setSearchOpen(true)
+  }, [])
+
+  const closeSearch = useCallback(() => {
+    setQuery("")
+    setSearchOpen(false)
+    searchInputRef.current?.blur()
+  }, [])
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
+
+    const onShow = (e: { endCoordinates?: { height?: number } }) => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(e.endCoordinates?.height ?? 0)
+    }
+    const onHide = () => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(0)
+    }
+
+    const showSub = Keyboard.addListener(showEvent, onShow)
+    const hideSub = Keyboard.addListener(hideEvent, onHide)
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => {
+      const offset = Math.max(0, Math.round(window.innerHeight - vv.height))
+      setKeyboardHeight(offset > 50 ? offset : 0)
+    }
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
 
   const emptyQuery = useCallback(async () => {
     const [favorites, recent] = await Promise.all([getFavoriteFoods(), getRecentFoods(20)])
@@ -95,6 +152,7 @@ export default function MealBuilderScreen() {
 
   const addFood = useCallback((food: SearchFoodResult) => {
     const addAmount = servingAmountFor(food)
+    hapticLight()
     setItems((prev) => {
       const existing = prev.find((item) => item.product_id === food.product_id)
       if (existing) {
@@ -118,6 +176,19 @@ export default function MealBuilderScreen() {
       ]
     })
   }, [])
+
+  // A barcode scanned from this screen lands here on return. The builder stays
+  // mounted under the scan modal, so the pending food is picked up on focus
+  // without losing the typed name or the items already added.
+  useFocusEffect(
+    useCallback(() => {
+      const pending = consumePendingMealFood()
+      if (pending) {
+        addFood(pending)
+        showSuccess(`${pending.name} added.`, "Scanned")
+      }
+    }, [addFood, showSuccess]),
+  )
 
   const setItemAmount = useCallback((productId: string, value: string) => {
     const parsed = Number(value)
@@ -155,6 +226,7 @@ export default function MealBuilderScreen() {
     setSaving(true)
     try {
       await saveMeal({ id: mealId ?? undefined, name: name.trim(), items })
+      hapticSuccess()
       showSuccess(isEditing ? "Meal updated." : "Meal saved.", isEditing ? "Updated" : "Saved")
       safeBack()
     } catch (error) {
@@ -204,16 +276,11 @@ export default function MealBuilderScreen() {
     )
   }
 
-  const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + 12
   const safeBottom = insets.bottom
+  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 8 : safeBottom + 20
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={safeTop}
-    >
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <ModalContainer maxWidth={640}>
         <Box className="flex-row items-center justify-between px-3 pb-2 pt-3">
           <Box className="w-10" />
@@ -265,7 +332,10 @@ export default function MealBuilderScreen() {
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-3 pb-32"
+          contentContainerClassName="px-3"
+          contentContainerStyle={{
+            paddingBottom: keyboardHeight > 0 ? keyboardHeight + 96 : 132,
+          }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -425,28 +495,6 @@ export default function MealBuilderScreen() {
           >
             Add foods
           </Text>
-          <Input
-            size="md"
-            variant="outline"
-            className="mb-2 rounded-none border"
-            style={{
-              backgroundColor: colors.surface,
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-            }}
-          >
-            <InputField
-              placeholder="Search foods..."
-              value={query}
-              onChangeText={setQuery}
-              autoCorrect={false}
-              returnKeyType="search"
-              onSubmitEditing={() => Keyboard.dismiss()}
-              accessibilityLabel="Search foods to add"
-              style={{ fontFamily: fonts.mono }}
-            />
-          </Input>
           {isBlank && results.length > 0 ? (
             <Text
               size="xs"
@@ -513,22 +561,191 @@ export default function MealBuilderScreen() {
         </ScrollView>
       </ModalContainer>
 
-      {!keyboardOpen ? (
-        <FabCluster
-          bottomOffset={safeBottom + 20}
-          left={
-            <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
-          }
-          right={
-            <Fab
-              icon="check"
-              onPress={() => void handleSave()}
-              disabled={saving}
-              accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+      {/* Bottom floating keys, same as food search: back, expanding search,
+          scan, save. The cluster lifts above the keyboard so the focused
+          search field never slides behind it on mobile. */}
+      <View style={[bottomStyles.bottomCluster, { bottom: bottomOffset }]} pointerEvents="box-none">
+        <Pressable
+          onPress={safeBack}
+          hitSlop={8}
+          style={bottomStyles.dockIconBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Feather name="arrow-left" size={22} color={colors.text} />
+        </Pressable>
+        {searchOpen ? (
+          <View style={[bottomStyles.searchExpanded, { borderColor: colors.primary }]}>
+            <Pressable
+              onPress={closeSearch}
+              hitSlop={8}
+              style={bottomStyles.searchCollapse}
+              accessibilityRole="button"
+              accessibilityLabel="Close search"
+            >
+              <Feather name="chevron-down" size={22} color={colors.textMuted} />
+            </Pressable>
+            <TextInput
+              ref={searchInputRef}
+              style={bottomStyles.searchInput}
+              className="logmeal-search-input"
+              placeholder="Search foods…"
+              placeholderTextColor={colors.textMuted}
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              autoFocus
+              returnKeyType="search"
+              enterKeyHint="search"
+              onSubmitEditing={() => searchInputRef.current?.blur()}
+              accessibilityLabel="Search foods"
             />
-          }
-        />
-      ) : null}
-    </KeyboardAvoidingView>
+            {query.length > 0 ? (
+              <Pressable
+                style={bottomStyles.searchClear}
+                onPress={() => setQuery("")}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Feather name="x-circle" size={20} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : (
+          <Pressable
+            onPress={openSearch}
+            hitSlop={8}
+            style={bottomStyles.searchFab}
+            accessibilityRole="button"
+            accessibilityLabel="Search foods"
+          >
+            <Feather name="search" size={20} color={colors.textMuted} />
+            <Text style={bottomStyles.searchFabText}>Search foods…</Text>
+          </Pressable>
+        )}
+        <Pressable
+          onPress={() => router.push({ pathname: "/scan", params: { from: "meal-builder" } })}
+          hitSlop={8}
+          style={[bottomStyles.dockIconBtn, bottomStyles.dockScanBtn]}
+          accessibilityRole="button"
+          accessibilityLabel="Scan barcode"
+        >
+          <MaterialCommunityIcons name="barcode-scan" size={24} color={colors.onPrimary} />
+        </Pressable>
+        <Pressable
+          onPress={() => void handleSave()}
+          disabled={saving}
+          hitSlop={8}
+          style={[
+            bottomStyles.dockIconBtn,
+            bottomStyles.dockSaveBtn,
+            saving && bottomStyles.dockSaveBtnDisabled,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+          accessibilityState={{ disabled: saving }}
+        >
+          <Feather name="check" size={22} color={colors.onPrimary} />
+        </Pressable>
+      </View>
+    </View>
   )
 }
+
+const createBottomStyles = (colors: ColorPalette) =>
+  StyleSheet.create({
+    bottomCluster: {
+      position: "absolute",
+      left: spacing.md,
+      right: spacing.md,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      zIndex: 10,
+      elevation: 5,
+    },
+    searchFab: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 56,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+    },
+    searchFabText: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 14,
+      fontWeight: "600",
+      fontFamily: fonts.mono,
+      letterSpacing: 0.4,
+      color: colors.textMuted,
+    },
+    searchExpanded: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: 56,
+      backgroundColor: colors.surface,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      paddingLeft: 2,
+      paddingRight: 2,
+      gap: 2,
+    },
+    searchCollapse: {
+      width: 44,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    searchInput: {
+      flex: 1,
+      minWidth: 0,
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      paddingVertical: 12,
+      fontSize: 15,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      letterSpacing: 0.4,
+      color: colors.text,
+    },
+    searchClear: {
+      width: 44,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    dockIconBtn: {
+      width: 56,
+      height: 56,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    dockScanBtn: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    dockSaveBtn: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    dockSaveBtnDisabled: {
+      opacity: 0.5,
+    },
+  })
