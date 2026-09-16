@@ -10,7 +10,6 @@ import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { routeParam } from "@/utils/route"
-import { hapticSuccess } from "@/utils/haptics"
 import { toDateKey, formatDisplayDate } from "@/utils/date"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
@@ -135,7 +134,6 @@ export default function ManualEntryScreen() {
         carbs: Math.round(Number(carbs) || 0),
         fat: Math.round(Number(fat) || 0),
       })
-      hapticSuccess()
       router.dismissAll()
     } catch (error) {
       showError(error, "Could not save entry.")

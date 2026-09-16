@@ -24,7 +24,6 @@ import { getFavoriteFoods, getRecentFoods } from "@/db/food-cache"
 import { mergeFoodResults } from "@/utils/food-search"
 import type { MealItem, SearchFoodResult } from "@/types"
 import { nutrientsForAmount } from "@/utils/nutrients"
-import { hapticLight, hapticSuccess } from "@/utils/haptics"
 import { routeParam } from "@/utils/route"
 import { confirmAction } from "@/utils/confirm"
 import { ModalContainer } from "@/components/ModalContainer"
@@ -152,7 +151,6 @@ export default function MealBuilderScreen() {
 
   const addFood = useCallback((food: SearchFoodResult) => {
     const addAmount = servingAmountFor(food)
-    hapticLight()
     setItems((prev) => {
       const existing = prev.find((item) => item.product_id === food.product_id)
       if (existing) {
@@ -226,7 +224,6 @@ export default function MealBuilderScreen() {
     setSaving(true)
     try {
       await saveMeal({ id: mealId ?? undefined, name: name.trim(), items })
-      hapticSuccess()
       showSuccess(isEditing ? "Meal updated." : "Meal saved.", isEditing ? "Updated" : "Saved")
       safeBack()
     } catch (error) {

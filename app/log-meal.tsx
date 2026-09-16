@@ -45,7 +45,6 @@ import { displayUnit } from "@/utils/food-display"
 import { formatNumber, formatThousands } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
-import { hapticLight, hapticSuccess } from "@/utils/haptics"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -348,7 +347,6 @@ export default function LogMealScreen() {
           amount: targetAmount,
         })
         await loadLoggedEntries()
-        hapticLight()
         // Show only the small Undo FAB, no huge toast banner that covers the dock.
         showUndoFab(`${food.name} added`, () => {
           deleteFoodEntry(entry.id)
@@ -405,7 +403,6 @@ export default function LogMealScreen() {
         if (logged === 0) {
           showWarning("No items in this meal could be logged.", "Nothing logged")
         } else {
-          hapticSuccess()
           showSuccess(
             logged === 1
               ? `Logged 1 item from "${meal.name}".`
