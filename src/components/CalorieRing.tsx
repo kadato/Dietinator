@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet } from "react-native"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import { runOnJS } from "react-native-reanimated"
 import Svg, { Rect } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { formatThousands } from "@/utils/format"
+import { getSwipeDirection } from "@/utils/swipe"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { chipTint } from "@/theme.helpers"
 import { spacing, fonts, type ColorPalette, radii } from "@/theme"
@@ -14,6 +17,8 @@ type Props = {
   carbs?: number
   fat?: number
   size?: number
+  onSwipeLeft?: () => void
+  onSwipeRight?: () => void
 }
 
 export function CalorieRing({
@@ -23,9 +28,20 @@ export function CalorieRing({
   carbs = 0,
   fat = 0,
   size = 132,
+  onSwipeLeft,
+  onSwipeRight,
 }: Props) {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
+
+  const swipePan = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-12, 12])
+    .onEnd((event) => {
+      const direction = getSwipeDirection(event.translationX, event.translationY)
+      if (direction === "left" && onSwipeLeft) runOnJS(onSwipeLeft)()
+      else if (direction === "right" && onSwipeRight) runOnJS(onSwipeRight)()
+    })
 
   const remaining = Math.max(goal - consumed, 0)
   const over = goal > 0 && consumed > goal ? consumed - goal : 0
@@ -76,72 +92,80 @@ export function CalorieRing({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.ringWrap, { width: size, height: size }]}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.gaugeSvg}>
-          <Rect
-            x={inset}
-            y={inset}
-            width={rectW}
-            height={rectH}
-            fill="none"
-            stroke={chipTint(colors.primary, 0.18)}
-            strokeWidth={T}
-          />
-          {svgSegments.map((seg, index) => (
+      <GestureDetector gesture={swipePan}>
+        <View
+          style={[styles.ringWrap, { width: size, height: size }]}
+          accessibilityLabel="Daily calories. Swipe left for next day, right for previous day."
+          accessibilityHint="Swipes left or right to change the selected day"
+        >
+          <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.gaugeSvg}>
             <Rect
-              key={index}
               x={inset}
               y={inset}
               width={rectW}
               height={rectH}
               fill="none"
-              stroke={seg.color}
+              stroke={chipTint(colors.primary, 0.18)}
               strokeWidth={T}
-              strokeDasharray={`${seg.len} ${perimeter - seg.len}`}
-              strokeDashoffset={-seg.offset}
-              strokeLinecap="square"
-              strokeLinejoin="miter"
-              strokeMiterlimit={4}
             />
-          ))}
-        </Svg>
+            {svgSegments.map((seg, index) => (
+              <Rect
+                key={index}
+                x={inset}
+                y={inset}
+                width={rectW}
+                height={rectH}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={T}
+                strokeDasharray={`${seg.len} ${perimeter - seg.len}`}
+                strokeDashoffset={-seg.offset}
+                strokeLinecap="square"
+                strokeLinejoin="miter"
+                strokeMiterlimit={4}
+              />
+            ))}
+          </Svg>
 
-        <View style={[styles.ringCenter, { width: innerSize, height: innerSize }]}>
-          <Text
-            maxFontSizeMultiplier={1.15}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.65}
-            style={[
-              styles.remainingValue,
-              over > 0 && { color: colors.danger },
-              { fontSize: Math.min(26 * scale, 30) },
-            ]}
-          >
-            {over > 0 ? formatThousands(Math.round(over)) : formatThousands(Math.round(remaining))}
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={[styles.remainingLabel, { fontSize: Math.max(Math.round(11 * scale), 10) }]}
-          >
-            {over > 0 ? "kcal over" : "kcal left"}
-          </Text>
-          {over > 0 ? (
+          <View style={[styles.ringCenter, { width: innerSize, height: innerSize }]}>
+            <Text
+              maxFontSizeMultiplier={1.15}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.65}
+              style={[
+                styles.remainingValue,
+                over > 0 && { color: colors.danger },
+                { fontSize: Math.min(26 * scale, 30) },
+              ]}
+            >
+              {over > 0
+                ? formatThousands(Math.round(over))
+                : formatThousands(Math.round(remaining))}
+            </Text>
             <Text
               numberOfLines={1}
-              style={{
-                fontSize: 10 * scale,
-                fontFamily: fonts.mono,
-                color: colors.textMuted,
-                letterSpacing: 0.3,
-                marginTop: 2,
-              }}
+              style={[styles.remainingLabel, { fontSize: Math.max(Math.round(11 * scale), 10) }]}
             >
-              Adjust tomorrow
+              {over > 0 ? "kcal over" : "kcal left"}
             </Text>
-          ) : null}
+            {over > 0 ? (
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: 10 * scale,
+                  fontFamily: fonts.mono,
+                  color: colors.textMuted,
+                  letterSpacing: 0.3,
+                  marginTop: 2,
+                }}
+              >
+                Adjust tomorrow
+              </Text>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </GestureDetector>
 
       <View style={styles.statsRow}>
         <View

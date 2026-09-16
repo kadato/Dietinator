@@ -700,6 +700,8 @@ export default function TodayScreen() {
           carbs={totals.carbs}
           fat={totals.fat}
           size={isLarge ? 192 : isWide ? 168 : width < 380 ? 140 : 152}
+          onSwipeLeft={() => setDateKeyTransition((d) => shiftDateKey(d, 1))}
+          onSwipeRight={() => setDateKeyTransition((d) => shiftDateKey(d, -1))}
         />
       </Box>
 
