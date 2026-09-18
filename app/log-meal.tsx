@@ -1163,6 +1163,7 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
       paddingBottom: spacing.xs,
     },
     headerLeft: {
