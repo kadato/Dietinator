@@ -274,11 +274,11 @@ export default function MealBuilderScreen() {
   }
 
   const safeBottom = insets.bottom
-  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 8 : safeBottom + 20
+  const bottomOffset = keyboardHeight > 0 ? keyboardHeight + 8 : safeBottom + 12
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <ModalContainer maxWidth={640}>
+      <ModalContainer surface maxWidth={640}>
         <Box className="flex-row items-center justify-between px-3 pb-2 pt-3">
           <Box className="w-10" />
           <Text
@@ -329,180 +329,186 @@ export default function MealBuilderScreen() {
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-3"
           contentContainerStyle={{
             paddingBottom: keyboardHeight > 0 ? keyboardHeight + 96 : 132,
           }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <Text
-            size="xs"
-            className="mb-4 font-mono uppercase tracking-widest"
-            style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
-          >
-            Ready to log into any meal slot.
-          </Text>
-
-          <Text
-            size="xs"
-            bold
-            className="mb-1.5 font-mono uppercase tracking-widest"
-            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
-          >
-            Meal name
-          </Text>
-          <Input
-            size="md"
-            variant="outline"
-            className="mb-4 rounded-none border"
-            style={{
-              backgroundColor: colors.surface,
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-            }}
-          >
-            <InputField
-              placeholder="Cornflakes with milk"
-              value={name}
-              onChangeText={setName}
-              autoCorrect={false}
-              accessibilityLabel="Meal name"
-              returnKeyType="done"
-              onSubmitEditing={() => void handleSave()}
-              style={{ fontFamily: fonts.mono }}
-            />
-          </Input>
-
-          {items.length > 0 ? (
-            <>
-              <Text
-                size="xs"
-                bold
-                className="mb-1.5 font-mono uppercase tracking-widest"
-                style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
-              >
-                In your meal · {Math.round(totals.kcal)} kcal
-              </Text>
-              {items.map((item) => {
-                const itemN = itemNutrients(item)
-                return (
-                  <Box
-                    key={item.product_id}
-                    className="mb-2.5 flex-row items-center gap-2.5 border px-3.5 py-3"
-                    style={{
-                      borderWidth: borders.width,
-                      borderColor: colors.border,
-                      borderRadius: radii.none,
-                      backgroundColor: colors.surface,
-                      boxShadow: "none",
-                      elevation: 0,
-                    }}
-                  >
-                    <Box className="min-w-0 flex-1">
-                      <Text
-                        size="md"
-                        bold
-                        className="font-mono uppercase tracking-widest"
-                        style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.04 }}
-                        numberOfLines={1}
-                      >
-                        {item.name}
-                      </Text>
-                      <Box className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
-                        <Text
-                          size="xs"
-                          className="font-mono uppercase tabular-nums tracking-widest"
-                          style={{
-                            color: colors.textMuted,
-                            fontFamily: fonts.mono,
-                            letterSpacing: 0.04,
-                          }}
-                        >
-                          {Math.round(itemN.kcal)} kcal
-                        </Text>
-                        <MacroPills
-                          protein={itemN.protein}
-                          carbs={itemN.carbs}
-                          fat={itemN.fat}
-                          size="xs"
-                        />
-                      </Box>
-                    </Box>
-                    <NumberStepper
-                      value={item.amount === 0 ? "" : String(item.amount)}
-                      onChangeText={(value) => setItemAmount(item.product_id, value)}
-                      onSubmit={() => void handleSave()}
-                      step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
-                      decimals={1}
-                      size="sm"
-                      accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
-                    />
-                    <Text
-                      size="xs"
-                      className="w-6 font-mono uppercase"
-                      style={{ color: colors.textMuted, fontFamily: fonts.mono }}
-                    >
-                      {item.base_unit}
-                    </Text>
-                    <Pressable
-                      onPress={() => removeItem(item.product_id)}
-                      hitSlop={6}
-                      className="h-8 w-8 items-center justify-center rounded-none border"
-                      style={{
-                        backgroundColor: `${colors.danger}14`,
-                        borderWidth: borders.width,
-                        borderColor: colors.border,
-                        borderRadius: radii.none,
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remove ${item.name}`}
-                    >
-                      <Feather name="trash-2" size={15} color={colors.danger} />
-                    </Pressable>
-                  </Box>
-                )
-              })}
-              <Box className="mb-4 mt-2">
-                <NutritionFactsCard
-                  nutrients={totals}
-                  servingLabel={
-                    items.length === 1 ? "1 food in meal" : `${items.length} foods in meal total`
-                  }
-                  baseAmount={items.reduce((s, i) => s + (i.amount || 0), 0) || 100}
-                />
-              </Box>
-            </>
-          ) : (
+          <Box className="px-3">
             <Text
-              size="sm"
-              className="mb-5 mt-2 px-6 text-center font-mono leading-5"
-              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
+              size="xs"
+              className="mb-4 font-mono uppercase tracking-widest"
+              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
-              No foods in this meal yet. Use the search below to add them.
+              Ready to log into any meal slot.
             </Text>
-          )}
 
-          <Text
-            size="xs"
-            bold
-            className="mb-1.5 mt-4 font-mono uppercase tracking-widest"
-            style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
-          >
-            Add foods
-          </Text>
-          {isBlank && results.length > 0 ? (
             <Text
               size="xs"
               bold
-              className="mb-2 mt-1 font-mono uppercase tracking-widest"
+              className="mb-1.5 font-mono uppercase tracking-widest"
               style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
             >
-              Favorite and recent picks
+              Meal name
             </Text>
-          ) : null}
-          {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
+            <Input
+              size="md"
+              variant="outline"
+              className="mb-4 rounded-none border"
+              style={{
+                backgroundColor: colors.surface,
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderRadius: radii.none,
+              }}
+            >
+              <InputField
+                placeholder="Cornflakes with milk"
+                value={name}
+                onChangeText={setName}
+                autoCorrect={false}
+                accessibilityLabel="Meal name"
+                returnKeyType="done"
+                onSubmitEditing={() => void handleSave()}
+                style={{ fontFamily: fonts.mono }}
+              />
+            </Input>
+
+            {items.length > 0 ? (
+              <>
+                <Text
+                  size="xs"
+                  bold
+                  className="mb-1.5 font-mono uppercase tracking-widest"
+                  style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
+                >
+                  In your meal · {Math.round(totals.kcal)} kcal
+                </Text>
+                {items.map((item) => {
+                  const itemN = itemNutrients(item)
+                  return (
+                    <Box
+                      key={item.product_id}
+                      className="mb-2.5 flex-row items-center gap-2.5 border px-3.5 py-3"
+                      style={{
+                        borderWidth: borders.width,
+                        borderColor: colors.border,
+                        borderRadius: radii.none,
+                        backgroundColor: colors.surface,
+                        boxShadow: "none",
+                        elevation: 0,
+                      }}
+                    >
+                      <Box className="min-w-0 flex-1">
+                        <Text
+                          size="md"
+                          bold
+                          className="font-mono uppercase tracking-widest"
+                          style={{
+                            color: colors.text,
+                            fontFamily: fonts.mono,
+                            letterSpacing: 0.04,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </Text>
+                        <Box className="mt-1 min-w-0 flex-row flex-wrap items-center gap-1.5">
+                          <Text
+                            size="xs"
+                            className="font-mono uppercase tabular-nums tracking-widest"
+                            style={{
+                              color: colors.textMuted,
+                              fontFamily: fonts.mono,
+                              letterSpacing: 0.04,
+                            }}
+                          >
+                            {Math.round(itemN.kcal)} kcal
+                          </Text>
+                          <MacroPills
+                            protein={itemN.protein}
+                            carbs={itemN.carbs}
+                            fat={itemN.fat}
+                            size="xs"
+                          />
+                        </Box>
+                      </Box>
+                      <NumberStepper
+                        value={item.amount === 0 ? "" : String(item.amount)}
+                        onChangeText={(value) => setItemAmount(item.product_id, value)}
+                        onSubmit={() => void handleSave()}
+                        step={item.base_unit === "g" || item.base_unit === "ml" ? 10 : 1}
+                        decimals={1}
+                        size="sm"
+                        accessibilityLabel={`Amount for ${item.name} in ${item.base_unit}`}
+                      />
+                      <Text
+                        size="xs"
+                        className="w-6 font-mono uppercase"
+                        style={{ color: colors.textMuted, fontFamily: fonts.mono }}
+                      >
+                        {item.base_unit}
+                      </Text>
+                      <Pressable
+                        onPress={() => removeItem(item.product_id)}
+                        hitSlop={6}
+                        className="h-8 w-8 items-center justify-center rounded-none border"
+                        style={{
+                          backgroundColor: `${colors.danger}14`,
+                          borderWidth: borders.width,
+                          borderColor: colors.border,
+                          borderRadius: radii.none,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${item.name}`}
+                      >
+                        <Feather name="trash-2" size={15} color={colors.danger} />
+                      </Pressable>
+                    </Box>
+                  )
+                })}
+                <Box className="mb-4 mt-2">
+                  <NutritionFactsCard
+                    nutrients={totals}
+                    servingLabel={
+                      items.length === 1 ? "1 food in meal" : `${items.length} foods in meal total`
+                    }
+                    baseAmount={items.reduce((s, i) => s + (i.amount || 0), 0) || 100}
+                  />
+                </Box>
+              </>
+            ) : (
+              <Text
+                size="sm"
+                className="mb-5 mt-2 px-6 text-center font-mono leading-5"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono }}
+              >
+                No foods in this meal yet. Use the search below to add them.
+              </Text>
+            )}
+
+            <Text
+              size="xs"
+              bold
+              className="mb-1.5 mt-4 font-mono uppercase tracking-widest"
+              style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
+            >
+              Add foods
+            </Text>
+            {isBlank && results.length > 0 ? (
+              <Text
+                size="xs"
+                bold
+                className="mb-2 mt-1 font-mono uppercase tracking-widest"
+                style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
+              >
+                Favorite and recent picks
+              </Text>
+            ) : null}
+            {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
+          </Box>
+
           {cappedResults.map((food) => (
             <FoodListItem
               key={food.product_id}
@@ -513,139 +519,145 @@ export default function MealBuilderScreen() {
               quickAddVariant="pill"
             />
           ))}
-          {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
-            <Text
-              size="xs"
-              className="py-2 text-center font-mono uppercase tracking-widest"
-              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
-            >
-              Showing the first 30 results. Refine your search for more.
-            </Text>
-          ) : null}
-          {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (
-            <Text
-              size="sm"
-              className="py-3 text-center font-mono"
-              style={{ color: colors.textMuted, fontFamily: fonts.mono }}
-            >
-              No foods found. Try a different search.
-            </Text>
-          ) : null}
 
-          {isEditing ? (
-            <Pressable
-              className="mt-8 items-center rounded-none active:opacity-80"
-              onPress={handleDelete}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Delete meal"
-              style={{
-                borderWidth: borders.width,
-                borderColor: "transparent",
-                borderRadius: radii.none,
-              }}
-            >
+          <Box className="px-3">
+            {!searching && !isBlank && query.trim().length > 0 && results.length > 30 ? (
               <Text
-                size="md"
-                bold
-                className="font-mono uppercase tracking-widest"
-                style={{ color: colors.danger, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                size="xs"
+                className="py-2 text-center font-mono uppercase tracking-widest"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono }}
               >
-                Delete meal
+                Showing the first 30 results. Refine your search for more.
               </Text>
-            </Pressable>
-          ) : null}
-        </ScrollView>
-      </ModalContainer>
-
-      {/* Bottom floating keys, same as food search: back, expanding search,
-          scan, save. The cluster lifts above the keyboard so the focused
-          search field never slides behind it on mobile. */}
-      <View style={[bottomStyles.bottomCluster, { bottom: bottomOffset }]} pointerEvents="box-none">
-        <Pressable
-          onPress={safeBack}
-          hitSlop={8}
-          style={bottomStyles.dockIconBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Feather name="arrow-left" size={22} color={colors.text} />
-        </Pressable>
-        {searchOpen ? (
-          <View style={[bottomStyles.searchExpanded, { borderColor: colors.primary }]}>
-            <Pressable
-              onPress={closeSearch}
-              hitSlop={8}
-              style={bottomStyles.searchCollapse}
-              accessibilityRole="button"
-              accessibilityLabel="Close search"
-            >
-              <Feather name="chevron-down" size={22} color={colors.textMuted} />
-            </Pressable>
-            <TextInput
-              ref={searchInputRef}
-              style={bottomStyles.searchInput}
-              className="logmeal-search-input"
-              placeholder="Search foods…"
-              placeholderTextColor={colors.textMuted}
-              value={query}
-              onChangeText={setQuery}
-              autoCorrect={false}
-              autoFocus
-              returnKeyType="search"
-              enterKeyHint="search"
-              onSubmitEditing={() => searchInputRef.current?.blur()}
-              accessibilityLabel="Search foods"
-            />
-            {query.length > 0 ? (
-              <Pressable
-                style={bottomStyles.searchClear}
-                onPress={() => setQuery("")}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search"
+            ) : null}
+            {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (
+              <Text
+                size="sm"
+                className="py-3 text-center font-mono"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono }}
               >
-                <Feather name="x-circle" size={20} color={colors.textMuted} />
+                No foods found. Try a different search.
+              </Text>
+            ) : null}
+
+            {isEditing ? (
+              <Pressable
+                className="mt-8 items-center rounded-none active:opacity-80"
+                onPress={handleDelete}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Delete meal"
+                style={{
+                  borderWidth: borders.width,
+                  borderColor: "transparent",
+                  borderRadius: radii.none,
+                }}
+              >
+                <Text
+                  size="md"
+                  bold
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.danger, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                >
+                  Delete meal
+                </Text>
               </Pressable>
             ) : null}
-          </View>
-        ) : (
+          </Box>
+        </ScrollView>
+
+        {/* Bottom floating keys, same as food search: back, expanding search,
+            scan, save. Enclosed in ModalContainer so on big screens it is
+            anchored inside the modal column, identical to the meal search page. */}
+        <View
+          style={[bottomStyles.bottomCluster, { bottom: bottomOffset }]}
+          pointerEvents="box-none"
+        >
           <Pressable
-            onPress={openSearch}
+            onPress={safeBack}
             hitSlop={8}
-            style={bottomStyles.searchFab}
+            style={bottomStyles.dockIconBtn}
             accessibilityRole="button"
-            accessibilityLabel="Search foods"
+            accessibilityLabel="Go back"
           >
-            <Feather name="search" size={20} color={colors.textMuted} />
-            <Text style={bottomStyles.searchFabText}>Search foods…</Text>
+            <Feather name="arrow-left" size={22} color={colors.text} />
           </Pressable>
-        )}
-        <Pressable
-          onPress={() => router.push({ pathname: "/scan", params: { from: "meal-builder" } })}
-          hitSlop={8}
-          style={[bottomStyles.dockIconBtn, bottomStyles.dockScanBtn]}
-          accessibilityRole="button"
-          accessibilityLabel="Scan barcode"
-        >
-          <MaterialCommunityIcons name="barcode-scan" size={24} color={colors.onPrimary} />
-        </Pressable>
-        <Pressable
-          onPress={() => void handleSave()}
-          disabled={saving}
-          hitSlop={8}
-          style={[
-            bottomStyles.dockIconBtn,
-            bottomStyles.dockSaveBtn,
-            saving && bottomStyles.dockSaveBtnDisabled,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
-          accessibilityState={{ disabled: saving }}
-        >
-          <Feather name="check" size={22} color={colors.onPrimary} />
-        </Pressable>
-      </View>
+          {searchOpen ? (
+            <View style={[bottomStyles.searchExpanded, { borderColor: colors.primary }]}>
+              <Pressable
+                onPress={closeSearch}
+                hitSlop={8}
+                style={bottomStyles.searchCollapse}
+                accessibilityRole="button"
+                accessibilityLabel="Close search"
+              >
+                <Feather name="chevron-down" size={22} color={colors.textMuted} />
+              </Pressable>
+              <TextInput
+                ref={searchInputRef}
+                style={bottomStyles.searchInput}
+                className="logmeal-search-input"
+                placeholder="Search foods…"
+                placeholderTextColor={colors.textMuted}
+                value={query}
+                onChangeText={setQuery}
+                autoCorrect={false}
+                autoFocus
+                returnKeyType="search"
+                enterKeyHint="search"
+                onSubmitEditing={() => searchInputRef.current?.blur()}
+                accessibilityLabel="Search foods"
+              />
+              {query.length > 0 ? (
+                <Pressable
+                  style={bottomStyles.searchClear}
+                  onPress={() => setQuery("")}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                >
+                  <Feather name="x-circle" size={20} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
+            </View>
+          ) : (
+            <Pressable
+              onPress={openSearch}
+              hitSlop={8}
+              style={bottomStyles.searchFab}
+              accessibilityRole="button"
+              accessibilityLabel="Search foods"
+            >
+              <Feather name="search" size={20} color={colors.textMuted} />
+              <Text style={bottomStyles.searchFabText}>Search foods…</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => router.push({ pathname: "/scan", params: { from: "meal-builder" } })}
+            hitSlop={8}
+            style={[bottomStyles.dockIconBtn, bottomStyles.dockScanBtn]}
+            accessibilityRole="button"
+            accessibilityLabel="Scan barcode"
+          >
+            <MaterialCommunityIcons name="barcode-scan" size={24} color={colors.onPrimary} />
+          </Pressable>
+          <Pressable
+            onPress={() => void handleSave()}
+            disabled={saving}
+            hitSlop={8}
+            style={[
+              bottomStyles.dockIconBtn,
+              bottomStyles.dockSaveBtn,
+              saving && bottomStyles.dockSaveBtnDisabled,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={isEditing ? "Save meal changes" : "Create meal"}
+            accessibilityState={{ disabled: saving }}
+          >
+            <Feather name="check" size={22} color={colors.onPrimary} />
+          </Pressable>
+        </View>
+      </ModalContainer>
     </View>
   )
 }
