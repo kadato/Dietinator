@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import { runOnJS } from "react-native-reanimated"
 import Svg, { Rect } from "react-native-svg"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
@@ -35,12 +34,13 @@ export function CalorieRing({
   const styles = useThemedStyles(createStyles)
 
   const swipePan = Gesture.Pan()
+    .runOnJS(true)
     .activeOffsetX([-15, 15])
     .failOffsetY([-12, 12])
     .onEnd((event) => {
       const direction = getSwipeDirection(event.translationX, event.translationY)
-      if (direction === "left" && onSwipeLeft) runOnJS(onSwipeLeft)()
-      else if (direction === "right" && onSwipeRight) runOnJS(onSwipeRight)()
+      if (direction === "left") onSwipeLeft?.()
+      else if (direction === "right") onSwipeRight?.()
     })
 
   const remaining = Math.max(goal - consumed, 0)
