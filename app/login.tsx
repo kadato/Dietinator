@@ -453,8 +453,13 @@ export default function LoginScreen() {
                 accessibilityState={{ expanded: googleHelpExpanded }}
                 accessibilityLabel="Registered with Google? Show instructions"
               >
-                <Box className="flex-1 flex-row items-center gap-2">
-                  <Feather name="help-circle" size={18} color={colors.textMuted} />
+                <Box className="flex-1 flex-row items-start gap-2">
+                  <Feather
+                    name="help-circle"
+                    size={18}
+                    color={colors.textMuted}
+                    style={{ flexShrink: 0, marginTop: 1 }}
+                  />
                   <Text
                     size="sm"
                     bold
@@ -468,6 +473,7 @@ export default function LoginScreen() {
                   name={googleHelpExpanded ? "chevron-up" : "chevron-down"}
                   size={18}
                   color={colors.textMuted}
+                  style={{ flexShrink: 0 }}
                 />
               </Pressable>
               {googleHelpExpanded ? (

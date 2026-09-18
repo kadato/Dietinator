@@ -286,7 +286,7 @@ function BlockContent({
       return (
         <Box className="gap-1">
           {block.items.map((item, index) => (
-            <Box key={index} className="flex-row gap-2">
+            <Box key={index} className="flex-row items-start gap-2">
               <Text
                 size="sm"
                 className="w-4 text-right"
@@ -295,6 +295,7 @@ function BlockContent({
                   fontFamily: fonts.mono,
                   fontSize: bodyFontSize,
                   lineHeight: bodyLineHeight,
+                  flexShrink: 0,
                 }}
               >
                 {block.ordered ? `${index + 1}.` : "-"}

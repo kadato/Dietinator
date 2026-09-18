@@ -402,7 +402,7 @@ const createToastStyles = (colors: ColorPalette) =>
     },
     row: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       padding: spacing.md,
       paddingRight: spacing.md + spacing.xs,
       gap: spacing.sm + 2,
@@ -418,7 +418,7 @@ const createToastStyles = (colors: ColorPalette) =>
       boxShadow: "none",
       elevation: 0,
     },
-    closeIcon: { flexShrink: 0 } as TextStyle,
+    closeIcon: { flexShrink: 0, marginTop: 2 } as TextStyle,
     textWrap: { flex: 1, gap: 2 },
     title: {
       color: colors.text,

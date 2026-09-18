@@ -846,3 +846,16 @@ html.dark .ledger-skeleton {
     background-image: none;
   }
 }
+
+/*
+ * Aligning list icons with the first line of text across wrapped lines.
+ * Formula: --offset: calc((1lh - var(--size)) / 2); transform: translateY(var(--offset));
+ */
+.list-item-icon {
+  flex-shrink: 0;
+  --size: 1.25rem;
+  width: var(--size);
+  height: var(--size);
+  --offset: calc((1lh - var(--size)) / 2);
+  transform: translateY(var(--offset));
+}

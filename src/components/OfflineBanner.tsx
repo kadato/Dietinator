@@ -25,7 +25,7 @@ export function OfflineBanner({
 
   return (
     <Box
-      className="flex-row items-center justify-center gap-2 border-b bg-background-warning px-4 py-2.5"
+      className="flex-row items-start justify-center gap-2 border-b bg-background-warning px-4 py-2.5"
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       style={{
@@ -42,7 +42,12 @@ export function OfflineBanner({
         paddingRight: insets.right + 16,
       }}
     >
-      <Feather name="wifi-off" size={16} color={colors.warning} />
+      <Feather
+        name="wifi-off"
+        size={16}
+        color={colors.warning}
+        style={{ flexShrink: 0, marginTop: 1 }}
+      />
       <Text
         size="sm"
         className="flex-shrink"
@@ -53,6 +58,7 @@ export function OfflineBanner({
           textTransform: "uppercase",
           letterSpacing: 0.4,
           fontSize: 12,
+          lineHeight: 18,
           fontWeight: "700",
         }}
       >
