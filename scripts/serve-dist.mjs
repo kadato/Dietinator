@@ -95,6 +95,7 @@ async function proxyYazioRequest(req, res) {
 }
 
 function serveStatic(req, res, urlPath) {
+  setSecurityHeaders(res)
   let filePath = normalize(join(ROOT, urlPath))
   if (!filePath.startsWith(ROOT)) {
     res.statusCode = 403
@@ -128,7 +129,31 @@ function serveStatic(req, res, urlPath) {
       return
     }
     res.statusCode = 404
-    res.end("Not found")
+    res.setHeader("Content-Type", "text/html; charset=utf-8")
+    res.setHeader("Cache-Control", "no-cache")
+    res.end(
+      '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>Not found - Dietinator</title></head><body style="font-family:monospace;padding:32px"><h1>Page not found</h1><p>That address does not exist in this tracker. Your diary is safe.</p><p><a href="/">Go home</a> - <a href="/login">Sign in</a></p></body></html>',
+    )
+    return
+  }
+
+  const stat = statSync(filePath)
+  const etag = `"${stat.size.toString(16)}-${Number(stat.mtimeMs).toString(16)}"`
+  const lastModified = stat.mtime.toUTCString()
+  res.setHeader("ETag", etag)
+  res.setHeader("Last-Modified", lastModified)
+  if (req.headers["if-none-match"] === etag) {
+    res.statusCode = 304
+    res.end()
+    return
+  }
+  const ifModifiedSince = req.headers["if-modified-since"]
+  if (
+    ifModifiedSince &&
+    new Date(ifModifiedSince).getTime() >= Math.floor(stat.mtimeMs / 1000) * 1000
+  ) {
+    res.statusCode = 304
+    res.end()
     return
   }
 
@@ -260,6 +285,20 @@ const BROTLI_QUALITY = 5
 const compressCache = new Map()
 const agentMiddleware = createAgentMiddleware(createSnapshotStore())
 
+function setSecurityHeaders(res) {
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin")
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  )
+  res.setHeader("X-Frame-Options", "DENY")
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://yzapi.yazio.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+  )
+}
+
 function decorateHtml(raw) {
   let out = raw
   if (WASM_PRELOAD_URL && !out.includes('rel="preload" href="' + WASM_PRELOAD_URL + '"')) {
@@ -280,6 +319,7 @@ function decorateHtml(raw) {
 createServer((req, res) => {
   res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+  setSecurityHeaders(res)
 
   // Agent API + MCP take the request when they recognize the path.
   const fallback = (innerReq, innerRes) => {
