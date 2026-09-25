@@ -2,18 +2,20 @@ import { ScrollViewStyleReset } from "expo-router/html"
 import type { PropsWithChildren } from "react"
 
 /**
- * Root HTML shell for static web output (Node-only at build time; also
- * rendered per-route by the dev server when `web.output` is "static").
- * Adds global head elements: title, meta description, theme color, and a
- * `<main>` landmark so every route satisfies the basic document checks.
+ * Root HTML shell for static web output.
+ * The shell runs in Node at build time. When `web.output` is "static", the dev
+ * server also renders the shell per route.
+ * The shell adds global head elements. Those elements are title, meta
+ * description, theme color, and a `<main>` landmark. Every route then passes
+ * the basic document checks.
  *
- * NOTE: do not add a `public/index.html`. With static output the dev server
- * serves that file raw (no bundle script, no placeholder substitution), which
- * leaves the app shell spinning forever.
+ * With static output, do not add a `public/index.html`. The dev server serves
+ * that file raw with no bundle script and no placeholder substitution. The
+ * raw file leaves the app shell spinning forever.
  *
- * Theme note: hard-coded hex here (#f1f5f9 / #1a1b26 / #0b57d0 / #7aa2f7) mirrors
- * `src/theme/themes.ts` light/dark for the first paint before JS/CSS loads.
- * Keep in sync with `src/theme/css.ts` lightCssVars/darkCssVars when palette changes.
+ * Hard-coded hex here mirrors `src/theme/themes.ts` light and dark. The hex
+ * covers the first paint before JS and CSS load. Keep the hex in sync with
+ * `src/theme/css.ts` lightCssVars and darkCssVars when the palette changes.
  */
 export default function Root({ children }: PropsWithChildren) {
   return (
@@ -45,6 +47,7 @@ export default function Root({ children }: PropsWithChildren) {
         */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b26" />
+        <meta name="color-scheme" content="light dark" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta property="og:title" content="Dietinator: calorie and macro tracker" />
@@ -52,7 +55,7 @@ export default function Root({ children }: PropsWithChildren) {
           property="og:description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta property="og:image" content="https://dietinator.pages.dev/assets/icon.png" />
+        <meta property="og:image" content="https://dietinator.pages.dev/assets/icon.webp" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://dietinator.pages.dev/" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -61,13 +64,12 @@ export default function Root({ children }: PropsWithChildren) {
           name="twitter:description"
           content="Dietinator is a fast, ad-free calorie tracker that works offline. Log meals, track calories and macros, and search the YAZIO food database."
         />
-        <meta name="twitter:image" content="https://dietinator.pages.dev/assets/icon.png" />
+        <meta name="twitter:image" content="https://dietinator.pages.dev/assets/icon.webp" />
         <link rel="canonical" href="https://dietinator.pages.dev/" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
         <link rel="icon" type="image/png" href="/assets/favicon.png?v=4" sizes="48x48" />
         <link rel="apple-touch-icon" href="/assets/icon.png?v=4" />
-        <link rel="preconnect" href="https://yzapi.yazio.com" crossOrigin="anonymous" />
         <ScrollViewStyleReset />
         {/*
           The app's height chain is html/body, then main, then #root. `main` has no
