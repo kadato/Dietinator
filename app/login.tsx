@@ -48,6 +48,7 @@ export default function LoginScreen() {
   const [googleHelpExpanded, setGoogleHelpExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
   const togglePress = usePressedState()
   const passwordRef = useRef<TextInput>(null)
 
@@ -75,9 +76,11 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (loading) return
     if (!email.trim() || !password) {
+      setFormError("Enter your YAZIO email and password.")
       showWarning("Enter your YAZIO email and password.", "Missing fields")
       return
     }
+    setFormError(null)
     setLoading(true)
     try {
       await loginWithCredentials(email.trim(), password)
@@ -91,6 +94,7 @@ export default function LoginScreen() {
       await refreshAuth()
       router.replace("/(tabs)")
     } catch (error) {
+      setFormError("Check your YAZIO credentials and try again.")
       showError(error, "Check your YAZIO credentials.", "Login failed")
     } finally {
       setLoading(false)
@@ -266,6 +270,15 @@ export default function LoginScreen() {
                 elevation: 0,
               }}
             >
+              <Text
+                size="xs"
+                bold
+                nativeID="login-email-label"
+                className="mb-1 font-mono uppercase tracking-widest"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              >
+                YAZIO email
+              </Text>
               <Input
                 size="lg"
                 variant="outline"
@@ -273,12 +286,13 @@ export default function LoginScreen() {
                 className="rounded-none border"
                 style={{
                   borderWidth: borders.width,
-                  borderColor: colors.border,
+                  borderColor: formError && !email.trim() ? colors.primary : colors.border,
                   borderRadius: radii.none,
                 }}
               >
                 <InputField
                   placeholder="YAZIO email"
+                  accessibilityLabel="YAZIO email"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="username"
@@ -287,12 +301,24 @@ export default function LoginScreen() {
                   enterKeyHint="next"
                   blurOnSubmit={false}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(value) => {
+                    setEmail(value)
+                    if (formError) setFormError(null)
+                  }}
                   onSubmitEditing={() => passwordRef.current?.focus()}
-                  style={{ fontFamily: fonts.mono }}
+                  style={{ fontFamily: fonts.mono, fontSize: 16 }}
                 />
               </Input>
 
+              <Text
+                size="xs"
+                bold
+                nativeID="login-password-label"
+                className="mb-1 mt-4 font-mono uppercase tracking-widest"
+                style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              >
+                Password
+              </Text>
               <Input
                 size="lg"
                 variant="outline"
@@ -300,24 +326,28 @@ export default function LoginScreen() {
                 className="rounded-none border"
                 style={{
                   borderWidth: borders.width,
-                  borderColor: colors.border,
+                  borderColor: formError && !password ? colors.primary : colors.border,
                   borderRadius: radii.none,
                 }}
               >
                 <InputField
                   ref={passwordRef as never}
                   placeholder="Password"
+                  accessibilityLabel="Password"
                   secureTextEntry={!passwordVisible}
                   textContentType="password"
                   autoComplete="password"
                   returnKeyType="go"
                   enterKeyHint="go"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(value) => {
+                    setPassword(value)
+                    if (formError) setFormError(null)
+                  }}
                   onSubmitEditing={handleLogin}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={{ fontFamily: fonts.mono }}
+                  style={{ fontFamily: fonts.mono, fontSize: 16 }}
                 />
                 <Pressable
                   onPress={() => setPasswordVisible((visible) => !visible)}
@@ -346,6 +376,18 @@ export default function LoginScreen() {
                   />
                 </Pressable>
               </Input>
+
+              {formError ? (
+                <Text
+                  size="sm"
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="polite"
+                  nativeID="login-form-error"
+                  style={{ color: colors.primary, fontFamily: fonts.mono, marginTop: 8 }}
+                >
+                  {formError}
+                </Text>
+              ) : null}
 
               <Box className="flex-row items-center justify-between">
                 <Text
@@ -496,6 +538,20 @@ export default function LoginScreen() {
               Unofficial YAZIO API. For personal use only. Credentials are stored securely on this
               device.
             </Text>
+            <Pressable
+              onPress={() => router.push("/privacy")}
+              accessibilityRole="link"
+              accessibilityLabel="Read the privacy policy"
+              className="mt-3 items-center"
+            >
+              <Text
+                size="xs"
+                className="font-mono uppercase tracking-widest underline"
+                style={{ color: colors.primary, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+              >
+                Privacy policy
+              </Text>
+            </Pressable>
           </Box>
         </PageContainer>
       </ScrollView>
