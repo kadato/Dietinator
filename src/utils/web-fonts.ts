@@ -16,6 +16,13 @@ import * as Font from "expo-font"
 const FAMILY_DEPARTURE = "Departure Mono"
 
 const FONT_SOURCE = require("../../assets/fonts/DepartureMono-Regular.otf")
+let FONT_SOURCE_WOFF2: string | number | null = null
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  FONT_SOURCE_WOFF2 = require("../../assets/fonts/DepartureMono-Regular.woff2")
+} catch {
+  FONT_SOURCE_WOFF2 = null
+}
 
 const FONT_FILES = (["400", "500", "600", "700", "800"] as const).map((weight) => ({
   family: FAMILY_DEPARTURE,
@@ -44,7 +51,8 @@ export function useBundledTerminalFont(): boolean {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const Asset = require("expo-asset").Asset
-        assetUri = Asset.fromModule(FONT_SOURCE).uri
+        const woff2Uri = FONT_SOURCE_WOFF2 ? Asset.fromModule(FONT_SOURCE_WOFF2).uri : null
+        assetUri = woff2Uri ?? Asset.fromModule(FONT_SOURCE).uri
       } catch {
         assetUri = String(FONT_SOURCE)
       }

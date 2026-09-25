@@ -37,6 +37,8 @@ config.resolver.unstable_enablePackageExports = true
 
 // Required for expo-sqlite on web (wa-sqlite.wasm).
 config.resolver.assetExts.push("wasm")
+// Prefer WOFF2 web font when present; fallback is OTF.
+if (!config.resolver.assetExts.includes("woff2")) config.resolver.assetExts.push("woff2")
 
 // react-native-svg fetchData.ts imports `buffer` on native. Alias it to the
 // npm polyfill. This is the documented react-native-svg setup for Expo.
@@ -101,6 +103,13 @@ config.server.enhanceMiddleware = (middleware) => {
   return (req, res, next) => {
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+    res.setHeader("X-Content-Type-Options", "nosniff")
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin")
+    res.setHeader(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    )
+    res.setHeader("X-Frame-Options", "DENY")
 
     // Dev PWA assets: manifest icon at /assets/icon.png lives in public/assets.
     // Metro's asset pipeline serves hashed Expo assets, not the plain public file,
