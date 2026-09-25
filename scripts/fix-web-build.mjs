@@ -45,7 +45,7 @@ function ensureIcons() {
   }
   const targetDir = join(DIST, "assets")
   if (!existsSync(targetDir)) mkdirSync(targetDir, { recursive: true })
-  for (const name of ["icon.png", "favicon.png"]) {
+  for (const name of ["icon.png", "favicon.png", "icon.webp"]) {
     const dst = join(targetDir, name)
     if (existsSync(dst)) {
       console.log(`[fix-web-build] icon ok: ${relative(ROOT, dst)}`)
@@ -273,10 +273,164 @@ function syncHeaders() {
   }
 }
 
+function syncManifest() {
+  try {
+    const src = join(ROOT, "public", "manifest.json")
+    const dst = join(DIST, "manifest.json")
+    if (existsSync(src)) {
+      cpSync(src, dst)
+      console.log("[fix-web-build] synced dist/manifest.json from public/manifest.json")
+    }
+  } catch (err) {
+    console.warn("[fix-web-build] manifest sync failed:", err.message)
+  }
+}
+
+function syncWellKnown() {
+  try {
+    const srcDir = join(ROOT, "public", ".well-known")
+    const dstDir = join(DIST, ".well-known")
+    if (existsSync(srcDir)) {
+      mkdirSync(dstDir, { recursive: true })
+      for (const entry of readdirSync(srcDir)) {
+        cpSync(join(srcDir, entry), join(dstDir, entry))
+        console.log(`[fix-web-build] synced dist/.well-known/${entry}`)
+      }
+    }
+  } catch (err) {
+    console.warn("[fix-web-build] well-known sync failed:", err.message)
+  }
+}
+
+const SITE_BASE = "https://dietinator.pages.dev"
+
+function routeFromHtmlFile(rel) {
+  if (rel === "index.html") return "/"
+  if (rel === "+not-found.html" || rel === "404.html" || rel === "_sitemap.html") return null
+  if (rel.startsWith("(tabs)/")) {
+    const base = rel.slice("(tabs)/".length).replace(/\.html$/, "")
+    if (base === "index") return "/"
+    return `/${base}`
+  }
+  return `/${rel.replace(/\.html$/, "")}`
+}
+
+function fixHeadTags() {
+  if (!existsSync(DIST)) return
+  const htmlFiles = []
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith(".") || entry.name === "_expo" || entry.name === "assets")
+          continue
+        walk(full)
+      } else if (entry.name.endsWith(".html")) {
+        htmlFiles.push(full)
+      }
+    }
+  }
+  walk(DIST)
+  for (const file of htmlFiles) {
+    let text = readFileSync(file, "utf8")
+    const original = text
+    const titles = text.match(/<title[^>]*>.*?<\/title>/gs) || []
+    if (titles.length > 1) {
+      const keep = titles[titles.length - 1]
+      let seen = 0
+      text = text.replace(/<title[^>]*>.*?<\/title>/gs, (m) => {
+        seen++
+        return seen === titles.length ? keep : ""
+      })
+    }
+    if (!/<meta name="color-scheme"/.test(text)) {
+      text = text.replace(
+        /<meta name="theme-color"[^>]*>/,
+        (m) => `${m}\n<meta name="color-scheme" content="light dark">`,
+      )
+    }
+    const rel = relative(DIST, file).replaceAll("\\", "/")
+    const route = routeFromHtmlFile(rel)
+    if (route) {
+      const canonical = `${SITE_BASE}${route === "/" ? "/" : route}`
+      if (/<link rel="canonical"/.test(text)) {
+        text = text.replace(
+          /<link rel="canonical" href="[^"]*"/,
+          `<link rel="canonical" href="${canonical}"`,
+        )
+      }
+      if (/<meta property="og:url"/.test(text)) {
+        text = text.replace(
+          /<meta property="og:url" content="[^"]*"/,
+          `<meta property="og:url" content="${canonical}"`,
+        )
+      }
+    }
+    if (text !== original) {
+      writeFileSync(file, text, "utf8")
+      console.log(`[fix-web-build] head fix ${relative(ROOT, file)}`)
+    }
+  }
+}
+
+function buildSitemap() {
+  if (!existsSync(DIST)) return
+  const routes = new Map()
+  routes.set("/", { changefreq: "weekly", priority: "1.0" })
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith(".") || entry.name === "_expo" || entry.name === "assets")
+          continue
+        walk(full)
+      } else if (entry.name.endsWith(".html")) {
+        const rel = relative(DIST, full).replaceAll("\\", "/")
+        const route = routeFromHtmlFile(rel)
+        if (route && !routes.has(route)) {
+          routes.set(route, {
+            changefreq: route === "/login" || route === "/privacy" ? "monthly" : "weekly",
+            priority: route === "/" ? "1.0" : route === "/login" ? "0.5" : "0.7",
+          })
+        }
+      }
+    }
+  }
+  walk(DIST)
+  const urls = [...routes.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(
+      ([route, meta]) =>
+        `  <url>\n    <loc>${SITE_BASE}${route === "/" ? "/" : route}</loc>\n    <changefreq>${meta.changefreq}</changefreq>\n    <priority>${meta.priority}</priority>\n  </url>`,
+    )
+    .join("\n")
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`
+  writeFileSync(join(DIST, "sitemap.xml"), xml, "utf8")
+  console.log(`[fix-web-build] sitemap ${routes.size} routes`)
+}
+
+function ensureNotFoundPage() {
+  try {
+    const src = join(DIST, "+not-found.html")
+    const dst = join(DIST, "404.html")
+    if (existsSync(src) && !existsSync(dst)) {
+      cpSync(src, dst)
+      console.log("[fix-web-build] copied +not-found.html to 404.html")
+    }
+  } catch (err) {
+    console.warn("[fix-web-build] 404 copy failed:", err.message)
+  }
+}
+
 ensureIcons()
 fixWasm()
 ensureFonts()
 fixVectorIcons()
 syncServiceWorker()
 syncHeaders()
+syncManifest()
+syncWellKnown()
+fixHeadTags()
+buildSitemap()
+ensureNotFoundPage()
 console.log("[fix-web-build] done")
