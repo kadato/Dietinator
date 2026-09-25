@@ -4,7 +4,6 @@ import {
   useRouter,
   useSegments,
 } from "expo-router"
-import Head from "expo-router/head"
 import { useEffect, useMemo, useState } from "react"
 import { LogBox, Platform, StyleSheet, View } from "react-native"
 import { StatusBar } from "expo-status-bar"
@@ -196,6 +195,7 @@ function RootNavigator() {
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}
       >
         <Stack.Screen name="login" />
+        <Stack.Screen name="privacy" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log-meal" options={{ presentation: "modal" }} />
         <Stack.Screen name="create-options" options={{ presentation: "modal" }} />
@@ -246,9 +246,6 @@ export default function RootLayout() {
 
   return (
     <>
-      <Head>
-        <title>Dietinator: calorie and macro tracker</title>
-      </Head>
       <AppErrorBoundary>
         <AppProvider>
           <ThemeProvider>
