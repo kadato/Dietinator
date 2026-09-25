@@ -39,7 +39,7 @@ export default function Root({ children }: PropsWithChildren) {
           }}
         />
         {/*
-          Departure Mono is loaded at runtime via src/utils/web-fonts.ts
+          Departure Mono is loaded at runtime via src/utils/web-fonts.web.ts
           using the CSS Font Loading API with the Metro-hashed asset URL.
           Do not hardcode /assets/fonts/...otf here. The export writes the
           file to /assets/assets/fonts/DepartureMono-Regular.<hash>.otf and the
