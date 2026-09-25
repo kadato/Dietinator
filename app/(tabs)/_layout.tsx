@@ -3,10 +3,11 @@ import { useState } from "react"
 import { Tabs } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Platform, Pressable, View } from "react-native"
+import { Platform, Linking, Pressable, View } from "react-native"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { useApp } from "@/context/AppContext"
+import { RELEASE_PAGE_URL } from "@/services/updates"
 import { layout, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
 
@@ -208,6 +209,66 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             </Pressable>
           )
         })}
+
+        {/* Source link — same square-key language as the rail items, kept
+            out of the tab semantics with role="link" so tab queries stay clean. */}
+        <View
+          style={{
+            width: "100%",
+            alignItems: "center",
+            marginTop: 4,
+            paddingTop: 12,
+            borderTopWidth: borders.widthThin,
+            borderTopColor: colors.border,
+          }}
+        >
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Open Dietinator GitHub repository"
+            accessibilityHint="Opens the source repository in a new tab"
+            onPress={() => Linking.openURL(RELEASE_PAGE_URL).catch(() => undefined)}
+            onHoverIn={() => setHoveredRoute("github")}
+            onHoverOut={() => setHoveredRoute(null)}
+            onPressIn={() => setPressedRoute("github")}
+            onPressOut={() => setPressedRoute(null)}
+            style={{
+              width: layout.sideTabItemWidth,
+              paddingVertical: 10,
+              paddingHorizontal: 6,
+              borderRadius: radii.none,
+              borderWidth: hoveredRoute === "github" ? borders.width : borders.widthThin,
+              borderColor: hoveredRoute === "github" ? colors.primary : colors.border,
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
+              backgroundColor: pressedRoute === "github" ? colors.surfaceAlt : colors.surface,
+              cursor: "pointer",
+            }}
+          >
+            <Feather
+              name="github"
+              size={20}
+              color={hoveredRoute === "github" ? colors.primary : colors.textMuted}
+            />
+            <Text
+              size="xs"
+              style={{
+                color: hoveredRoute === "github" ? colors.primary : colors.textMuted,
+                marginTop: 1,
+                fontSize: 10,
+                letterSpacing: 0.06,
+                textAlign: "center",
+                textTransform: "uppercase",
+                alignSelf: "center",
+                width: "100%",
+              }}
+              numberOfLines={1}
+            >
+              GitHub
+            </Text>
+          </Pressable>
+        </View>
       </View>
     )
   }
