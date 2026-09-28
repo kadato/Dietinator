@@ -92,9 +92,11 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_diary_date ON diary_entries(date);
+    CREATE INDEX IF NOT EXISTS idx_diary_date_created ON diary_entries(date, created_at);
     CREATE INDEX IF NOT EXISTS idx_diary_yazio_item ON diary_entries(yazio_item_id);
     CREATE INDEX IF NOT EXISTS idx_diary_synced ON diary_entries(yazio_synced);
     CREATE INDEX IF NOT EXISTS idx_diary_food_id ON diary_entries(food_id);
+    CREATE INDEX IF NOT EXISTS idx_diary_food_amount ON diary_entries(food_id, amount, created_at);
 
     CREATE TABLE IF NOT EXISTS food_cache (
       yazio_product_id TEXT PRIMARY KEY NOT NULL,
@@ -139,6 +141,7 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_water_date ON water_log(date);
+    CREATE INDEX IF NOT EXISTS idx_water_date_created ON water_log(date, created_at);
 
     INSERT OR IGNORE INTO settings (id) VALUES (1);
 
@@ -287,14 +290,16 @@ export async function migrate(database: SQLite.SQLiteDatabase): Promise<void> {
   )
 
   // One-time cleanup from user_version 0 to 1. Drop cached foods whose stored
-  // nutrients look per-gram, where kcal is less than 10. They are either legacy raw per-gram
-  // rows or rare normalized low-cal rows. Both are ambiguous to read back, so
-  // they get refetched and re-normalized from the API instead.
+  // nutrients look per-gram, where kcal is less than 10. Only legacy rows with
+  // no source marker are ambiguous. Detail rows for water, tea, or diet soda
+  // are genuinely low-cal and must survive, and search rows are per-gram by
+  // design and get normalized on read.
   const versionRow = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version")
   if ((versionRow?.user_version ?? 0) < 1) {
     await database.execAsync(
       `DELETE FROM food_cache
-       WHERE base_unit IN ('g', 'ml')
+       WHERE source IS NULL
+         AND base_unit IN ('g', 'ml')
          AND CAST(json_extract(nutrients_json, '$.kcal') AS REAL) < 10`,
     )
     await database.execAsync("PRAGMA user_version = 1")

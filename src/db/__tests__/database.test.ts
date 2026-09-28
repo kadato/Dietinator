@@ -81,7 +81,10 @@ describe("migrate", () => {
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meals")
     expect(db.sql[0]).toContain("CREATE TABLE IF NOT EXISTS meal_items")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_date")
+    expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_date_created")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_food_id")
+    expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_diary_food_amount")
+    expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_water_date_created")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_food_barcode")
     expect(db.sql[0]).toContain("CREATE INDEX IF NOT EXISTS idx_meals_last_used")
     expect(db.sql.join("\n")).toContain("CREATE INDEX IF NOT EXISTS idx_food_favorite_order")
@@ -135,6 +138,7 @@ describe("migrate", () => {
     const cleanup = db.sql.find((sql) => sql.includes("json_extract(nutrients_json"))
     expect(cleanup).toBeDefined()
     expect(cleanup).toContain("DELETE FROM food_cache")
+    expect(cleanup).toContain("source IS NULL")
     expect(db.sql).toContain("PRAGMA user_version = 1")
   })
 
