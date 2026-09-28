@@ -48,6 +48,9 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
     onClick,
     accessibilityRole,
     role,
+    nativeID: _nativeID,
+    id: idProp,
+    testID: _testID,
     style,
     ...props
   }: { className?: string } & ITextProps & {
@@ -59,6 +62,8 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
       ellipsizeMode?: string
       onPress?: (event: unknown) => void
       accessibilityRole?: string
+      nativeID?: string
+      testID?: string
     },
   ref,
 ) {
@@ -93,6 +98,8 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
 
   return (
     <span
+      id={idProp ?? _nativeID}
+      data-testid={_testID}
       className={textStyle({
         isTruncated: isTruncated as boolean,
         bold: bold as boolean,
