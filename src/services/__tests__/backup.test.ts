@@ -60,10 +60,11 @@ describe("isValidBackup", () => {
 describe("restoreBackup", () => {
   const runAsync = jest.fn().mockResolvedValue(undefined)
   const execAsync = jest.fn().mockResolvedValue(undefined)
+  const getAllAsync = jest.fn(async () => [{ name: "calorie_goal" }])
   const withTransactionAsync = jest.fn(async (fn: () => Promise<void>) => {
     await fn()
   })
-  const db = { runAsync, execAsync, withTransactionAsync }
+  const db = { runAsync, execAsync, withTransactionAsync, getAllAsync }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -83,6 +84,7 @@ describe("restoreBackup", () => {
       meals: 0,
       waterLogs: 0,
       weightEntries: 0,
+      chatMessages: 0,
     })
 
     const clearSql = String(execAsync.mock.calls[0][0])
@@ -94,6 +96,7 @@ describe("restoreBackup", () => {
       "deleted_yazio_items",
       "water_log",
       "weight_entries",
+      "ai_chat_messages",
       "settings",
     ]) {
       expect(clearSql).toContain(`DELETE FROM ${table}`)
@@ -120,5 +123,25 @@ describe("restoreBackup", () => {
       (sql as string).includes("INSERT INTO settings (id)"),
     )
     expect(settingsInsert).toBeDefined()
+  })
+
+  it("rejects rows with missing ids before touching the database", async () => {
+    const payload = validPayload()
+    payload.diary_entries = [{ date: "2026-08-08" }]
+    await expect(restoreBackup(payload)).rejects.toThrow("id and date")
+    expect(db.withTransactionAsync).not.toHaveBeenCalled()
+  })
+
+  it("restores chat messages when present", async () => {
+    const payload = validPayload()
+    payload.ai_chat_messages = [
+      { id: 1, role: "user", content: "hi", created_at: "2026-08-08T10:00:00.000Z" },
+    ]
+    const result = await restoreBackup(payload)
+    expect(result.chatMessages).toBe(1)
+    const chatInsert = runAsync.mock.calls.find(([sql]) =>
+      (sql as string).includes("INSERT OR REPLACE INTO ai_chat_messages"),
+    )
+    expect(chatInsert).toBeDefined()
   })
 })

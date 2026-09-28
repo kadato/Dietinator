@@ -17,6 +17,35 @@ export type BackupPayload = {
   meal_items: Record<string, unknown>[]
   water_log?: Record<string, unknown>[]
   weight_entries?: Record<string, unknown>[]
+  ai_chat_messages?: Record<string, unknown>[]
+}
+
+function hasRequiredString(row: Record<string, unknown>, key: string): boolean {
+  const value = row[key]
+  return typeof value === "string" && value.length > 0
+}
+
+function validateBackupRows(payload: BackupPayload): void {
+  for (const row of payload.diary_entries) {
+    if (!hasRequiredString(row, "id") || !hasRequiredString(row, "date")) {
+      throw new Error("Backup diary_entries rows must include id and date.")
+    }
+  }
+  for (const row of payload.food_cache) {
+    if (!hasRequiredString(row, "yazio_product_id")) {
+      throw new Error("Backup food_cache rows must include yazio_product_id.")
+    }
+  }
+  for (const row of payload.meals) {
+    if (!hasRequiredString(row, "id") || !hasRequiredString(row, "name")) {
+      throw new Error("Backup meals rows must include id and name.")
+    }
+  }
+  for (const row of payload.meal_items) {
+    if (!hasRequiredString(row, "meal_id") || !hasRequiredString(row, "product_id")) {
+      throw new Error("Backup meal_items rows must include meal_id and product_id.")
+    }
+  }
 }
 
 export function isValidBackup(payload: unknown): payload is BackupPayload {
@@ -35,6 +64,7 @@ export function isValidBackup(payload: unknown): payload is BackupPayload {
   }
   if (p.water_log !== undefined && !Array.isArray(p.water_log)) return false
   if (p.weight_entries !== undefined && !Array.isArray(p.weight_entries)) return false
+  if (p.ai_chat_messages !== undefined && !Array.isArray(p.ai_chat_messages)) return false
   if (p.settings !== null && typeof p.settings !== "object") return false
   return true
 }
@@ -50,6 +80,7 @@ export async function createBackup(): Promise<BackupPayload> {
     mealItems,
     waterLogs,
     weightEntries,
+    chatMessages,
   ] = await Promise.all([
     db.getFirstAsync<Record<string, unknown>>("SELECT * FROM settings WHERE id = 1"),
     db.getAllAsync<Record<string, unknown>>(
@@ -63,6 +94,7 @@ export async function createBackup(): Promise<BackupPayload> {
     db.getAllAsync<Record<string, unknown>>("SELECT * FROM meal_items ORDER BY meal_id, position"),
     db.getAllAsync<Record<string, unknown>>("SELECT * FROM water_log ORDER BY date, created_at"),
     db.getAllAsync<Record<string, unknown>>("SELECT * FROM weight_entries ORDER BY date"),
+    db.getAllAsync<Record<string, unknown>>("SELECT * FROM ai_chat_messages ORDER BY id"),
   ])
   return {
     app: "dietinator",
@@ -76,6 +108,7 @@ export async function createBackup(): Promise<BackupPayload> {
     meal_items: mealItems,
     water_log: waterLogs,
     weight_entries: weightEntries,
+    ai_chat_messages: chatMessages,
   }
 }
 
@@ -85,6 +118,7 @@ export type RestoreResult = {
   meals: number
   waterLogs?: number
   weightEntries?: number
+  chatMessages?: number
 }
 
 /**
@@ -96,6 +130,7 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
   if (!isValidBackup(payload)) {
     throw new Error("This file is not a valid Dietinator backup.")
   }
+  validateBackupRows(payload)
 
   const db = await getDatabase()
   let result: RestoreResult = {
@@ -104,6 +139,7 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
     meals: 0,
     waterLogs: 0,
     weightEntries: 0,
+    chatMessages: 0,
   }
 
   await db.withTransactionAsync(async () => {
@@ -115,38 +151,26 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
       DELETE FROM deleted_yazio_items;
       DELETE FROM water_log;
       DELETE FROM weight_entries;
+      DELETE FROM ai_chat_messages;
       DELETE FROM settings;
     `)
 
     if (payload.settings) {
-      await db.runAsync(
-        `INSERT INTO settings (
-          id, calorie_goal, protein_goal, carbs_goal, fat_goal, units,
-          yazio_sync_enabled, food_database_country, update_check_enabled,
-          ai_enabled, ai_provider, ai_base_url, ai_model, ai_system_prompt,
-          agent_bridge_rev, theme_preference, water_goal_ml, height_cm, target_weight_kg
-        ) VALUES (
-          1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )`,
-        Number(payload.settings.calorie_goal ?? 2000),
-        Number(payload.settings.protein_goal ?? 150),
-        Number(payload.settings.carbs_goal ?? 200),
-        Number(payload.settings.fat_goal ?? 65),
-        String(payload.settings.units ?? "metric"),
-        payload.settings.yazio_sync_enabled ? 1 : 0,
-        String(payload.settings.food_database_country ?? ""),
-        payload.settings.update_check_enabled === 0 ? 0 : 1,
-        payload.settings.ai_enabled ? 1 : 0,
-        String(payload.settings.ai_provider ?? "openai"),
-        String(payload.settings.ai_base_url ?? ""),
-        String(payload.settings.ai_model ?? ""),
-        String(payload.settings.ai_system_prompt ?? ""),
-        Number(payload.settings.agent_bridge_rev ?? 0),
-        String(payload.settings.theme_preference ?? "system"),
-        Number(payload.settings.water_goal_ml ?? 2500),
-        Number(payload.settings.height_cm ?? 0),
-        Number(payload.settings.target_weight_kg ?? 0),
+      const columns = await db.getAllAsync<{ name: string }>("PRAGMA table_info(settings)")
+      const names = new Set(columns.map((c) => c.name))
+      const entries = Object.entries(payload.settings).filter(
+        ([key, value]) => key !== "id" && names.has(key) && value !== undefined,
       )
+      if (entries.length > 0) {
+        const cols = entries.map(([key]) => key).join(", ")
+        const placeholders = entries.map(() => "?").join(", ")
+        await db.runAsync(
+          `INSERT INTO settings (id, ${cols}) VALUES (1, ${placeholders})`,
+          ...entries.map(([, value]) => value as string | number | null),
+        )
+      } else {
+        await db.runAsync(`INSERT INTO settings (id) VALUES (1)`)
+      }
     } else {
       await db.runAsync(`INSERT INTO settings (id) VALUES (1)`)
     }
@@ -261,6 +285,26 @@ export async function restoreBackup(payload: unknown): Promise<RestoreResult> {
         )
       }
       result.weightEntries = payload.weight_entries.length
+    }
+
+    if (payload.ai_chat_messages && Array.isArray(payload.ai_chat_messages)) {
+      for (const row of payload.ai_chat_messages) {
+        await db.runAsync(
+          `INSERT OR REPLACE INTO ai_chat_messages (
+            id, role, content, reasoning, tool_calls_json, tool_call_id, tool_name, is_error, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          row.id != null ? Number(row.id) : null,
+          String(row.role ?? "user"),
+          String(row.content ?? ""),
+          String(row.reasoning ?? ""),
+          row.tool_calls_json ? String(row.tool_calls_json) : null,
+          row.tool_call_id ? String(row.tool_call_id) : null,
+          row.tool_name ? String(row.tool_name) : null,
+          row.is_error ? 1 : 0,
+          String(row.created_at ?? new Date().toISOString()),
+        )
+      }
+      result.chatMessages = payload.ai_chat_messages.length
     }
   })
 
