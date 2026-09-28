@@ -9,6 +9,8 @@ import { pushSnapshot } from "@/services/agent-bridge"
 
 type AppContextValue = {
   ready: boolean
+  dbHealthy: boolean
+  bootError: string | null
   authenticated: boolean
   settings: AppSettings
   yazioAvailable: boolean
@@ -16,12 +18,15 @@ type AppContextValue = {
   refreshSettings: () => Promise<void>
   updateSettings: (partial: Partial<AppSettings>) => Promise<void>
   setYazioAvailable: (value: boolean) => void
+  retryBoot: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
+  const [dbHealthy, setDbHealthy] = useState(true)
+  const [bootError, setBootError] = useState<string | null>(null)
   const [authenticated, setAuthenticated] = useState(false)
   const [settings, setSettings] = useState<AppSettings>({
     calorie_goal: 2000,
@@ -58,38 +63,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const boot = useCallback(async () => {
+    setBootError(null)
+    try {
+      await getDatabase()
+      setDbHealthy(true)
+    } catch (error) {
+      setDbHealthy(false)
+      setBootError(error instanceof Error ? error.message : "Database failed to open.")
+    }
+    const results = await Promise.allSettled([refreshSettings(), refreshAuth()])
+    if (results.some((r) => r.status === "rejected")) {
+      const first = results.find((r) => r.status === "rejected")
+      if (first?.status === "rejected") {
+        const message = first.reason instanceof Error ? first.reason.message : "Boot step failed."
+        setBootError((prev) => prev ?? message)
+      }
+    }
+    try {
+      await initializeActiveAccountFromAuth(getCredentials, isLoggedIn)
+    } catch (error) {
+      setBootError((prev) => prev ?? (error instanceof Error ? error.message : null))
+    }
+    try {
+      await healLeakedDemoDataIfNeeded()
+    } catch (error) {
+      setBootError((prev) => prev ?? (error instanceof Error ? error.message : null))
+    }
+  }, [refreshAuth, refreshSettings])
+
+  const retryBoot = useCallback(async () => {
+    setReady(false)
+    await boot()
+    setReady(true)
+  }, [boot])
+
   useEffect(() => {
     let cancelled = false
     let timeout: ReturnType<typeof setTimeout> | null = null
     ;(async () => {
       // Hard fallback: boot must finish even if SQLite or SecureStore hangs
       // after a storage clear. 3.5s is enough for a cold start but short
-      // enough that a stuck splash never looks frozen.
+      // enough that a stuck splash never looks frozen. Health flags still
+      // record which step failed so the UI can offer retry.
       timeout = setTimeout(() => {
         if (!cancelled) setReady(true)
       }, 3500)
       try {
-        // Run each init with its own catch so one failure does not block the others.
-        // getDatabase must settle first: settings and auth read from it, so await
-        // it alone before running the other two in parallel.
-        try {
-          await getDatabase()
-        } catch {}
-        await Promise.all([
-          refreshSettings().catch(() => undefined),
-          refreshAuth().catch(() => undefined),
-        ])
-        // Stamp the active account for per-user isolation without wiping.
-        // Existing installs had no tracking, so infer from the stored auth.
-        try {
-          await initializeActiveAccountFromAuth(getCredentials, isLoggedIn)
-        } catch {}
-        try {
-          await healLeakedDemoDataIfNeeded()
-        } catch {}
-      } catch {
-        // Boot must never hang on a failure. A spinner with no recovery is worse
-        // than starting up with local-only state.
+        await boot()
       } finally {
         if (timeout) clearTimeout(timeout)
         if (!cancelled) setReady(true)
@@ -102,7 +123,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cancelled = true
       if (timeout) clearTimeout(timeout)
     }
-  }, [refreshAuth, refreshSettings])
+  }, [boot])
 
   const updateSettingsFn = useCallback(
     async (partial: Partial<AppSettings>) => {
@@ -115,6 +136,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       ready,
+      dbHealthy,
+      bootError,
       authenticated,
       settings,
       yazioAvailable,
@@ -122,15 +145,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       refreshSettings,
       updateSettings: updateSettingsFn,
       setYazioAvailable,
+      retryBoot,
     }),
     [
       ready,
+      dbHealthy,
+      bootError,
       authenticated,
       settings,
       yazioAvailable,
       refreshAuth,
       refreshSettings,
       updateSettingsFn,
+      retryBoot,
     ],
   )
 

@@ -82,6 +82,10 @@ export async function clearAuth(): Promise<void> {
   await deleteSecureItem(TOKEN_KEY)
   await deleteSecureItem(CREDENTIALS_KEY)
   await deleteSecureItem(LOGGED_IN_KEY)
+  await deleteSecureItem(REMEMBER_LOGIN_KEY)
+  await deleteSecureItem(REMEMBERED_EMAIL_KEY)
+  await deleteSecureItem(REMEMBERED_PASSWORD_KEY)
+  await deleteSecureItem(ACTIVE_ACCOUNT_KEY)
 }
 
 /** Demo mode: mark the session signed in without real YAZIO credentials. */
