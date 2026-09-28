@@ -21,7 +21,6 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "npm"
     cooldown:
       default-days: 3
     groups:
@@ -66,8 +65,6 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "github-actions"
-      - "ci"
     groups:
       actions:
         patterns: ["*"]
