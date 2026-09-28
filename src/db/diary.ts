@@ -112,27 +112,81 @@ export async function updateDiaryEntryDetails(
   },
 ): Promise<void> {
   const db = await getDatabase()
-  await db.runAsync(
-    `UPDATE diary_entries SET
-      amount = ?,
-      unit = ?,
-      meal_type = ?,
-      food_name = ?,
-      kcal = ?,
-      protein = ?,
-      carbs = ?,
-      fat = ?
-    WHERE id = ?`,
-    details.amount,
-    details.unit ?? "g",
-    details.meal_type ?? "lunch",
-    details.food_name ?? "",
-    details.nutrients?.kcal ?? 0,
-    details.nutrients?.protein ?? 0,
-    details.nutrients?.carbs ?? 0,
-    details.nutrients?.fat ?? 0,
-    id,
-  )
+  const sets: string[] = ["amount = ?"]
+  const args: (string | number | null)[] = [details.amount]
+  if (details.unit !== undefined) {
+    sets.push("unit = ?")
+    args.push(details.unit)
+  }
+  if (details.meal_type !== undefined) {
+    sets.push("meal_type = ?")
+    args.push(details.meal_type)
+  }
+  if (details.food_name !== undefined) {
+    sets.push("food_name = ?")
+    args.push(details.food_name)
+  }
+  if (details.nutrients !== undefined) {
+    sets.push("kcal = ?", "protein = ?", "carbs = ?", "fat = ?")
+    args.push(
+      details.nutrients.kcal,
+      details.nutrients.protein,
+      details.nutrients.carbs,
+      details.nutrients.fat,
+    )
+  }
+  if (sets.length === 1) {
+    await db.runAsync("UPDATE diary_entries SET amount = ? WHERE id = ?", details.amount, id)
+    return
+  }
+  args.push(id)
+  await db.runAsync(`UPDATE diary_entries SET ${sets.join(", ")} WHERE id = ?`, ...args)
+}
+
+/** Mark an entry unsynced so syncPendingEntries retries it after a failed push. */
+export async function markDiaryEntryUnsynced(id: string): Promise<void> {
+  const db = await getDatabase()
+  await db.runAsync("UPDATE diary_entries SET yazio_synced = 0 WHERE id = ?", id)
+}
+
+/** Bulk insert inside one transaction for copy-yesterday and meal logging. */
+export async function bulkAddDiaryEntries(
+  entries: (Omit<DiaryEntry, "yazio_synced" | "yazio_item_id"> & {
+    yazio_synced?: number
+    yazio_item_id?: string | null
+  })[],
+): Promise<DiaryEntry[]> {
+  const db = await getDatabase()
+  const full = entries.map((entry) => ({
+    ...entry,
+    yazio_synced: entry.yazio_synced ?? 0,
+    yazio_item_id: entry.yazio_item_id ?? null,
+  }))
+  await db.withTransactionAsync(async () => {
+    for (const item of full) {
+      await db.runAsync(
+        `INSERT INTO diary_entries (
+          id, date, meal_type, food_id, food_name, amount, unit,
+          kcal, protein, carbs, fat, created_at, yazio_synced, yazio_item_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        item.id,
+        item.date,
+        item.meal_type,
+        item.food_id,
+        item.food_name,
+        item.amount,
+        item.unit,
+        item.kcal,
+        item.protein,
+        item.carbs,
+        item.fat,
+        item.created_at,
+        item.yazio_synced,
+        item.yazio_item_id,
+      )
+    }
+  })
+  return full
 }
 
 /** Reserve the YAZIO item id before the network push so retries reuse it (idempotent sync). */

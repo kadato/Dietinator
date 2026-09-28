@@ -8,6 +8,7 @@ import { installYazioWebFetch } from "./web-fetch"
 installYazioWebFetch()
 
 let client: Yazio | null = null
+let initPromise: Promise<Yazio | null> | null = null
 
 type YazioProfileSlice = {
   unit_energy: string
@@ -16,6 +17,8 @@ type YazioProfileSlice = {
 }
 
 let cachedProfile: YazioProfileSlice | null = null
+let cachedProfileAt = 0
+const PROFILE_TTL_MS = 10 * 60_000
 
 export function getYazioClient(): Yazio | null {
   return client
@@ -23,21 +26,31 @@ export function getYazioClient(): Yazio | null {
 
 /** Return the singleton client, initializing it from stored tokens/credentials if needed. */
 export async function ensureYazioClient(): Promise<Yazio | null> {
-  let yazio = getYazioClient()
-  if (!yazio) yazio = await initYazioClient()
-  return yazio
+  const existing = getYazioClient()
+  if (existing) return existing
+  if (!initPromise) {
+    initPromise = initYazioClient().finally(() => {
+      initPromise = null
+    })
+  }
+  return initPromise
 }
 
 /** Cached YAZIO profile fields used for search and nutrient units. */
 export async function getYazioProfile(): Promise<YazioProfileSlice | null> {
-  if (cachedProfile) return cachedProfile
+  if (cachedProfile && Date.now() - cachedProfileAt < PROFILE_TTL_MS) return cachedProfile
   const yazio = await ensureYazioClient()
   if (!yazio) return null
-  const profile = await yazio.user.get()
-  cachedProfile = {
-    unit_energy: profile.unit_energy ?? "kcal",
-    food_database_country: profile.food_database_country || profile.country || "DE",
-    sex: profile.sex ?? "male",
+  try {
+    const profile = await yazio.user.get()
+    cachedProfile = {
+      unit_energy: profile.unit_energy ?? "kcal",
+      food_database_country: profile.food_database_country || profile.country || "DE",
+      sex: profile.sex ?? "male",
+    }
+    cachedProfileAt = Date.now()
+  } catch {
+    return cachedProfile
   }
   return cachedProfile
 }
@@ -67,6 +80,7 @@ export async function getYazioProductSearchOptions(): Promise<{
 
 export function clearYazioProfileCache(): void {
   cachedProfile = null
+  cachedProfileAt = 0
 }
 
 export async function initYazioClient(): Promise<Yazio | null> {
@@ -127,6 +141,9 @@ export async function loginWithCredentials(username: string, password: string): 
 
 export async function logoutYazio(): Promise<void> {
   client = null
+  initPromise = null
   clearYazioProfileCache()
   await clearAuth()
+  const { clearImportCache } = await import("./sync")
+  clearImportCache()
 }

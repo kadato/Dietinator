@@ -78,4 +78,11 @@ describe("withRetry", () => {
     await assertion
     expect(fn).toHaveBeenCalledTimes(2)
   })
+
+  it("times out a hanging attempt", async () => {
+    jest.useRealTimers()
+    const fn = jest.fn(() => new Promise(() => {}))
+    await expect(withRetry(fn, 1, 10, { timeoutMs: 20 })).rejects.toThrow("Timed out")
+    jest.useFakeTimers()
+  })
 })

@@ -8,11 +8,15 @@ import { removeEntryFromYazio, syncEntryToYazio } from "../yazio/sync"
 
 jest.mock("@/db/diary", () => ({
   addDiaryEntry: jest.fn(),
+  bulkAddDiaryEntries: jest.fn(async (entries) =>
+    entries.map((e: unknown) => ({ ...(e as object), yazio_synced: 0, yazio_item_id: null })),
+  ),
   getDiaryEntriesForDate: jest.fn(),
   getDiaryEntryById: jest.fn(),
   removeDiaryEntry: jest.fn(),
   updateDiaryEntryNutrients: jest.fn(),
   updateDiaryEntryDetails: jest.fn(),
+  markDiaryEntryUnsynced: jest.fn().mockResolvedValue(undefined),
   addDeletedYazioItemId: jest.fn(),
   pruneDeletedYazioItems: jest.fn().mockResolvedValue(undefined),
 }))

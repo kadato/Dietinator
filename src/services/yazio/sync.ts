@@ -21,6 +21,15 @@ export type YazioDailySummary = {
 const inFlightSyncs = new Map<string, Promise<boolean>>()
 
 /**
+ * Entries imported from YAZIO simple products or recipe portions have no
+ * food_id behind them. They are local-only: edits and deletes never push.
+ * Deletes still tombstone so imports do not resurrect them.
+ */
+export function isLocalOnlyEntry(entry: Pick<DiaryEntry, "food_id" | "yazio_item_id">): boolean {
+  return !entry.food_id && Boolean(entry.yazio_item_id)
+}
+
+/**
  * In-memory import throttle: the dashboard focuses the diary on every tab
  * switch, and re-importing the same day back-to-back just repeats YAZIO
  * round-trips. Results are reused within a short window; pull-to-refresh and
@@ -28,6 +37,11 @@ const inFlightSyncs = new Map<string, Promise<boolean>>()
  */
 const importCache = new Map<string, { at: number; result: DiaryImportResult }>()
 const IMPORT_TTL_MS = 2 * 60_000
+const IMPORT_ERROR_TTL_MS = 15_000
+
+function importCacheKey(date: string, accountId: string | null): string {
+  return `${accountId ?? "local"}:${date}`
+}
 
 export function clearImportCache(): void {
   importCache.clear()
@@ -59,21 +73,18 @@ async function doSyncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
     const product = await getFoodRemote(foodId)
     if (!product) return false
 
+    const isResync = entry.yazio_synced === 1 && Boolean(entry.yazio_item_id)
     const yazioId = entry.yazio_item_id ?? generateId()
 
-    if (entry.yazio_synced === 1 && entry.yazio_item_id) {
-      // Re-syncing an edited entry: remove the old remote item first.
-      try {
-        await yazio.user.removeConsumedItem(yazioId)
-      } catch {
-        // Best-effort: the item may not exist remotely.
-      }
-    } else {
+    if (!isResync) {
       // Reserve the id before the network call so a crash between push and
       // confirmation cannot lead to a duplicate on retry.
       await diaryDb.reserveYazioItemId(entry.id, yazioId)
     }
 
+    // Push first with the same id. YAZIO overwrites the item when the id
+    // already exists, so no delete-before-push is needed. Deleting first
+    // loses the remote copy when the add fails afterwards.
     await withRetry(() =>
       yazio.user.addConsumedItem({
         id: yazioId,
@@ -88,6 +99,12 @@ async function doSyncEntryToYazio(entry: DiaryEntry): Promise<boolean> {
     await diaryDb.markDiaryEntrySynced(entry.id, yazioId)
     return true
   } catch {
+    // Leave the row retryable instead of stuck as synced with a missing remote.
+    try {
+      await diaryDb.markDiaryEntryUnsynced(entry.id)
+    } catch {
+      // Local mark failure must not mask the sync result.
+    }
     return false
   }
 }
@@ -105,9 +122,11 @@ export async function syncPendingEntries(): Promise<number> {
 
   // Oldest-first, bounded batch. Syncing years of history at once is not useful.
   const pending = await diaryDb.getUnsyncedEntries(20)
+  const deadline = Date.now() + 60_000
   let synced = 0
   let consecutiveFailures = 0
   for (const entry of pending) {
+    if (Date.now() > deadline) break
     const ok = await syncEntryToYazio(entry)
     if (ok) {
       synced += 1
@@ -344,9 +363,18 @@ export async function importDiaryFromYazio(
   }
 
   const now = Date.now()
-  const cached = importCache.get(date)
-  if (!options?.force && cached && now - cached.at < IMPORT_TTL_MS) {
-    return cached.result
+  let accountId: string | null = null
+  try {
+    const { getActiveAccountId } = await import("./auth-storage")
+    accountId = await getActiveAccountId()
+  } catch {
+    accountId = null
+  }
+  const key = importCacheKey(date, accountId)
+  const cached = importCache.get(key)
+  if (!options?.force && cached) {
+    const ttl = cached.result.error ? IMPORT_ERROR_TTL_MS : IMPORT_TTL_MS
+    if (now - cached.at < ttl) return cached.result
   }
 
   const yazio = await ensureYazioClient()
@@ -393,7 +421,7 @@ export async function importDiaryFromYazio(
     }
 
     const result: DiaryImportResult = { imported, skipped, failed, mealGoals, summary }
-    importCache.set(date, { at: now, result })
+    importCache.set(key, { at: now, result })
     if (importCache.size > 10) {
       const oldest = importCache.keys().next().value
       if (oldest !== undefined) importCache.delete(oldest)
@@ -402,7 +430,13 @@ export async function importDiaryFromYazio(
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not reach YAZIO."
     const result: DiaryImportResult = { ...empty, mealGoals, error: message }
-    importCache.set(date, { at: now, result })
+    // Do not poison the cache with failures. A short error TTL avoids a
+    // retry storm while letting the next focus retry soon.
+    importCache.set(key, { at: Date.now(), result })
+    if (importCache.size > 10) {
+      const oldest = importCache.keys().next().value
+      if (oldest !== undefined) importCache.delete(oldest)
+    }
     return result
   }
 }

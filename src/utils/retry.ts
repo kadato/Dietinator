@@ -23,11 +23,13 @@ export async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
   baseDelayMs = 400,
+  options?: { timeoutMs?: number },
 ): Promise<T> {
+  const timeoutMs = options?.timeoutMs ?? 15000
   let lastError: unknown
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      return await fn()
+      return await withTimeout(fn(), timeoutMs)
     } catch (error) {
       lastError = error
       if (!isRetriableError(error)) throw error
@@ -38,4 +40,17 @@ export async function withRetry<T>(
     }
   }
   throw lastError
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`Timed out after ${ms}ms`) as Error & { status?: number }
+      reject(err)
+    }, ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  }) as Promise<T>
 }

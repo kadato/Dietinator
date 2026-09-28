@@ -25,13 +25,15 @@ export function rawEnergyKcal(nutrients: Record<string, number>, unitEnergy = "k
  * is 8.84, lettuce is 0.15. Default servings are named portions such as whole.regular
  * at 150 g, so the serving label is not a per-100 g signal.
  */
+export const PER_GRAM_KCAL_THRESHOLD = 10
+
 export function isPerGramRawNutrients(
   nutrients: Record<string, number>,
   baseUnit: string,
   unitEnergy = "kcal",
 ): boolean {
   const kcal = rawEnergyKcal(nutrients, unitEnergy)
-  return (baseUnit === "g" || baseUnit === "ml") && kcal > 0 && kcal < 10
+  return (baseUnit === "g" || baseUnit === "ml") && kcal > 0 && kcal < PER_GRAM_KCAL_THRESHOLD
 }
 
 /**
@@ -49,7 +51,7 @@ export function isPerGramNutrients(
   servingQuantity?: number,
 ): boolean {
   if (!(baseUnit === "g" || baseUnit === "ml")) return false
-  if (nutrients.kcal <= 0 || nutrients.kcal >= 10) return false
+  if (nutrients.kcal <= 0 || nutrients.kcal >= PER_GRAM_KCAL_THRESHOLD) return false
   if (servingQuantity !== undefined && servingQuantity > 1) return false
   return true
 }

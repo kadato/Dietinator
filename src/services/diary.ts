@@ -238,16 +238,16 @@ function scaleFromStored(entry: DiaryEntry, amount: number): FoodNutrients {
   }
 }
 
-/** Re-push an edited entry: remove the old YAZIO item, then push the new values. */
+/** Re-push an edited entry by overwriting the same YAZIO item id. */
 async function syncUpdatedEntryToYazio(entry: DiaryEntry): Promise<void> {
   const settings = await getSettings()
   if (!settings.yazio_sync_enabled || !entry.food_id || !entry.yazio_item_id) return
 
   try {
-    await removeEntryFromYazio(entry.yazio_item_id)
-    await syncEntryToYazio({ ...entry, yazio_item_id: null })
+    await syncEntryToYazio(entry)
   } catch {
-    // Best-effort; the diary stays correct locally.
+    // Best-effort; the diary stays correct locally and the row is marked
+    // unsynced by the sync layer for a later retry.
   }
 }
 
@@ -290,9 +290,8 @@ export async function copyEntriesToDate(sourceDate: string, targetDate: string):
 
 export async function copyDiaryEntries(entries: DiaryEntry[], targetDate: string): Promise<number> {
   if (entries.length === 0) return 0
-  let count = 0
-  for (const entry of entries) {
-    const created = await diaryDb.addDiaryEntry({
+  const created = await diaryDb.bulkAddDiaryEntries(
+    entries.map((entry) => ({
       id: generateId(),
       yazio_item_id: generateId(),
       date: targetDate,
@@ -306,10 +305,13 @@ export async function copyDiaryEntries(entries: DiaryEntry[], targetDate: string
       carbs: entry.carbs,
       fat: entry.fat,
       created_at: new Date().toISOString(),
-    })
+    })),
+  )
+  let count = 0
+  for (const item of created) {
     count += 1
-    if (created.food_id) {
-      syncEntryToYazio(created).catch(() => undefined)
+    if (item.food_id) {
+      syncEntryToYazio(item).catch(() => undefined)
     }
   }
   if (count > 0) {
