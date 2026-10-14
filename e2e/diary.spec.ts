@@ -59,7 +59,9 @@ test.describe("diary flows (offline, local-first)", () => {
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    const row = page.getByRole("button", { name: /^Quick add.*180/i })
+    const row = page
+      .getByRole("button", { name: /^Quick add.*180/i })
+      .or(page.getByLabel(/^Quick add.*180/i))
     await expect(row).toHaveCount(1)
 
     // Reject first. Nothing should change. The visible delete button is the

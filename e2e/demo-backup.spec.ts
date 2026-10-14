@@ -68,7 +68,9 @@ test.describe("backup and restore (offline)", () => {
     // Delete the entry locally.
     await page.getByRole("tab", { name: /Today/ }).click()
     await page.getByRole("button", { name: /Snacks \d/i }).click()
-    const row = page.getByRole("button", { name: /^Quick add.*777/i })
+    const row = page
+      .getByRole("button", { name: /^Quick add.*777/i })
+      .or(page.getByLabel(/^Quick add.*777/i))
     await expect(row).toHaveCount(1)
     page.once("dialog", (dialog) => void dialog.accept())
     await page.getByRole("button", { name: "Delete Quick add" }).click()
