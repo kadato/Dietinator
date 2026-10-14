@@ -6,6 +6,7 @@ import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { formatMacro } from "@/utils/format"
+import { formatEntryAmount } from "@/utils/food-display"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
 import { useTheme } from "@/hooks/useTheme"
@@ -256,17 +257,36 @@ export const MealSection = memo(function MealSection({
           </Text>
         </Box>
       ) : !expanded && entries.length > 0 ? (
-        <Box className="gap-1 px-3 pb-2.5 pt-0">
+        <Pressable
+          onPress={() => setExpanded(true)}
+          className="cursor-pointer gap-1 px-3 pb-2.5 pt-0"
+          accessibilityRole="button"
+          accessibilityLabel={`Expand ${MEAL_LABELS[mealType]}`}
+        >
           {entries.slice(0, 2).map((entry) => (
             <Box key={entry.id} className="flex-row items-center justify-between">
-              <Text
-                size="xs"
-                numberOfLines={1}
-                className="flex-1 font-mono"
-                style={{ color: colors.text, fontFamily: fonts.mono, fontSize: 12 }}
-              >
-                {entry.food_name}
-              </Text>
+              <Box className="min-w-0 flex-1 flex-row items-center gap-1.5 pr-2">
+                <Text
+                  size="xs"
+                  numberOfLines={1}
+                  className="shrink font-mono"
+                  style={{ color: colors.text, fontFamily: fonts.mono, fontSize: 12 }}
+                >
+                  {entry.food_name}
+                </Text>
+                <Text
+                  size="2xs"
+                  className="shrink-0 font-mono"
+                  style={{
+                    color: accent,
+                    fontFamily: fonts.mono,
+                    fontSize: 11,
+                    fontWeight: "600",
+                  }}
+                >
+                  · {formatEntryAmount(entry)}
+                </Text>
+              </Box>
               <Text
                 size="xs"
                 className="ml-2 shrink-0 font-mono tabular-nums"
@@ -308,7 +328,7 @@ export const MealSection = memo(function MealSection({
               Tap to expand
             </Text>
           )}
-        </Box>
+        </Pressable>
       ) : null}
 
       {expanded && entries.length > 0 ? (

@@ -1,4 +1,4 @@
-import { memo, useState } from "react"
+import { memo } from "react"
 import { Pressable, Text, View, StyleSheet } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { DiaryEntry } from "@/types"
@@ -10,7 +10,7 @@ import { getFoodIcon } from "@/utils/food-icon"
 import { fonts, borders, radii, type ColorPalette } from "@/theme"
 import { chipTint } from "@/theme.helpers"
 import { withAlpha } from "@/utils/color"
-import { NumberStepper } from "@/components/NumberStepper"
+import { formatEntryAmount } from "@/utils/food-display"
 
 type Props = {
   entry: DiaryEntry
@@ -25,127 +25,20 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
   accentColor,
   onEdit,
   onDelete,
-  onUpdateAmount,
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
-  const amountLabel =
-    entry.unit === "serving" ? "1 serving " : `${formatNumber(entry.amount)}${entry.unit} `
-  const mainPress = usePressedState()
+  const amountLabel = `${formatEntryAmount(entry)} `
   const editPress = usePressedState()
   const deletePress = usePressedState()
-  const [inlineEditing, setInlineEditing] = useState(false)
-  const [draftAmount, setDraftAmount] = useState(String(entry.amount))
-  const [savingInline, setSavingInline] = useState(false)
-
-  const canInline = Boolean(onUpdateAmount) && entry.unit !== "serving"
-  const stepperStep = entry.unit === "g" || entry.unit === "ml" ? 10 : 1
-
-  const handleInlineSave = async () => {
-    if (!onUpdateAmount) return
-    const val = Number(draftAmount)
-    if (!val || val <= 0) return
-    setSavingInline(true)
-    try {
-      await onUpdateAmount(entry.id, val)
-      setInlineEditing(false)
-    } finally {
-      setSavingInline(false)
-    }
-  }
-
-  const startInlineEdit = () => {
-    if (!canInline) {
-      onEdit(entry.id)
-      return
-    }
-    setDraftAmount(String(entry.amount))
-    setInlineEditing(true)
-  }
-
-  if (inlineEditing) {
-    return (
-      <View style={styles.rowInline}>
-        <View
-          style={[
-            styles.iconWrap,
-            { backgroundColor: chipTint(accentColor), borderColor: colors.border },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={getFoodIcon(entry.food_name, entry)}
-            size={18}
-            color={accentColor}
-          />
-        </View>
-        <View style={styles.inlineInfo}>
-          <Text style={styles.name} numberOfLines={1}>
-            {entry.food_name}
-          </Text>
-          <View style={styles.inlineStepperWrap}>
-            <NumberStepper
-              value={draftAmount}
-              onChangeText={setDraftAmount}
-              step={stepperStep}
-              decimals={entry.unit === "g" || entry.unit === "ml" ? 1 : 0}
-              size="sm"
-              inputWidth={72}
-              accessibilityLabel={`Amount for ${entry.food_name} in ${entry.unit}`}
-              onSubmit={() => void handleInlineSave()}
-            />
-            <Text style={[styles.kcalUnit, { marginLeft: 4 }]}>{entry.unit}</Text>
-          </View>
-        </View>
-        <View style={styles.actions}>
-          <Pressable
-            onPress={() => void handleInlineSave()}
-            disabled={savingInline}
-            hitSlop={8}
-            className="cursor-pointer"
-            style={[
-              styles.actionBtn,
-              {
-                backgroundColor: colors.primary,
-                borderColor: colors.primary,
-                opacity: savingInline ? 0.5 : 1,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`Save amount for ${entry.food_name}`}
-          >
-            <Feather name="check" size={16} color={colors.onPrimary} />
-          </Pressable>
-          <Pressable
-            onPress={() => setInlineEditing(false)}
-            hitSlop={8}
-            className="cursor-pointer"
-            style={[
-              styles.actionBtn,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel inline edit"
-          >
-            <Feather name="x" size={16} color={colors.text} />
-          </Pressable>
-        </View>
-      </View>
-    )
-  }
 
   return (
     <View style={styles.row}>
-      <Pressable
-        onPress={startInlineEdit}
-        onPressIn={mainPress.onPressIn}
-        onPressOut={mainPress.onPressOut}
-        style={[styles.main, ...(mainPress.pressed ? [styles.rowPressed] : [])]}
-        className="cursor-pointer hover:opacity-90"
-        accessibilityRole="button"
+      <View
+        style={styles.main}
         // Accessible name: the exact visible row text (2.5.3 label-in-name),
         // then the macro breakdown as data for assistive tech summaries.
         accessibilityLabel={`${entry.food_name} ${amountLabel.trim()} ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
-        accessibilityHint={canInline ? "Tap to edit amount inline" : "Tap to edit"}
       >
         <View
           style={[styles.iconWrap, { backgroundColor: accentColor, borderColor: colors.border }]}
@@ -164,7 +57,7 @@ export const DiaryEntryRow = memo(function DiaryEntryRow({
           <Text style={[styles.kcalValue, { color: accentColor }]}>{Math.round(entry.kcal)}</Text>
           <Text style={styles.kcalUnit}> kcal</Text>
         </View>
-      </Pressable>
+      </View>
       <View style={styles.actions}>
         <Pressable
           onPress={() => onEdit(entry.id)}
@@ -233,10 +126,6 @@ const createStyles = (colors: ColorPalette) =>
       boxShadow: "none",
       elevation: 0,
       overflow: "hidden",
-    },
-    rowPressed: {
-      backgroundColor: colors.surfaceAlt,
-      opacity: 0.9,
     },
     iconWrap: {
       width: 46,
@@ -343,23 +232,5 @@ const createStyles = (colors: ColorPalette) =>
     },
     actionPressed: {
       opacity: 0.7,
-    },
-    rowInline: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
-      borderRadius: radii.none,
-      borderWidth: 0,
-      borderBottomWidth: borders.widthThin,
-      borderBottomColor: withAlpha(colors.border, 0.08),
-      backgroundColor: `${colors.primary}08`,
-    },
-    inlineInfo: { flex: 1, minWidth: 0, gap: 6 },
-    inlineStepperWrap: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
     },
   })
