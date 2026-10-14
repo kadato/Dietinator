@@ -1,7 +1,10 @@
-import type { DiaryEntry, FoodNutrients, MealType } from "@/types"
+import type { DiaryEntry, FoodNutrients, FoodServing, MealType } from "@/types"
 import { getDatabase } from "./database"
+import { parseJson } from "@/utils/json"
 
 function rowToEntry(row: Record<string, unknown>): DiaryEntry {
+  const serving = row.serving_json ? parseJson<FoodServing>(String(row.serving_json)) : null
+  const servings = row.servings_json ? parseJson<FoodServing[]>(String(row.servings_json)) : null
   return {
     id: String(row.id),
     date: String(row.date),
@@ -17,13 +20,23 @@ function rowToEntry(row: Record<string, unknown>): DiaryEntry {
     created_at: String(row.created_at),
     yazio_synced: Number(row.yazio_synced),
     yazio_item_id: row.yazio_item_id ? String(row.yazio_item_id) : null,
+    serving: serving ?? undefined,
+    servings: servings ?? undefined,
   }
 }
 
 export async function getDiaryEntriesForDate(date: string): Promise<DiaryEntry[]> {
   const db = await getDatabase()
   const rows = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM diary_entries WHERE date = ? ORDER BY created_at ASC",
+    `SELECT
+      d.*,
+      c.serving_json,
+      c.servings_json,
+      c.base_unit AS cache_base_unit
+    FROM diary_entries d
+    LEFT JOIN food_cache c ON d.food_id = c.yazio_product_id
+    WHERE date = ?
+    ORDER BY d.created_at ASC`,
     date,
   )
   return rows.map(rowToEntry)
@@ -40,7 +53,14 @@ export async function getDiaryEntryCount(): Promise<number> {
 export async function getDiaryEntryById(id: string): Promise<DiaryEntry | null> {
   const db = await getDatabase()
   const row = await db.getFirstAsync<Record<string, unknown>>(
-    "SELECT * FROM diary_entries WHERE id = ?",
+    `SELECT
+      d.*,
+      c.serving_json,
+      c.servings_json,
+      c.base_unit AS cache_base_unit
+    FROM diary_entries d
+    LEFT JOIN food_cache c ON d.food_id = c.yazio_product_id
+    WHERE d.id = ?`,
     id,
   )
   return row ? rowToEntry(row) : null

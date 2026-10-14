@@ -67,10 +67,21 @@ export async function getDiaryEntriesForDate(
         entry.amount,
         resolved.base_unit,
       )
-      if (!nutrientsDiffer(scaled, entry)) return entry
+      if (!nutrientsDiffer(scaled, entry)) {
+        return {
+          ...entry,
+          serving: entry.serving ?? resolved.serving,
+          servings: entry.servings ?? resolved.servings,
+        }
+      }
 
       await diaryDb.updateDiaryEntryNutrients(entry.id, scaled)
-      return { ...entry, ...scaled }
+      return {
+        ...entry,
+        ...scaled,
+        serving: entry.serving ?? resolved.serving,
+        servings: entry.servings ?? resolved.servings,
+      }
     }),
   )
 }
@@ -111,7 +122,11 @@ export async function logFood(params: {
   // Web-host agent bridge: keep the /mcp snapshot current (web only).
   pushSnapshot().catch(() => undefined)
 
-  return entry
+  return {
+    ...entry,
+    serving: food.serving,
+    servings: food.servings,
+  }
 }
 
 /**

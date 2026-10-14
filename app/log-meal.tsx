@@ -41,7 +41,7 @@ import type {
 import { mergeFoodResults } from "@/utils/food-search"
 import { normalizedSearchAmount, sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
-import { displayUnit } from "@/utils/food-display"
+import { displayUnit, formatEntryAmount } from "@/utils/food-display"
 import { formatNumber, formatThousands } from "@/utils/format"
 import { confirmAction } from "@/utils/confirm"
 import { formatDisplayDate, toDateKey } from "@/utils/date"
@@ -690,8 +690,7 @@ export default function LogMealScreen() {
                         <Text style={styles.loggedName}>{entry.food_name}</Text>
                         <View style={styles.loggedSubRow}>
                           <Text style={styles.loggedSub}>
-                            {formatNumber(entry.amount)} {displayUnit(entry.unit)} ·{" "}
-                            {Math.round(entry.kcal)} kcal
+                            {formatEntryAmount(entry)} · {Math.round(entry.kcal)} kcal
                           </Text>
                           <MacroPills
                             protein={entry.protein}

@@ -15,6 +15,8 @@ export interface DiaryEntry {
   created_at: string
   yazio_synced: number
   yazio_item_id: string | null
+  serving?: FoodServing | null
+  servings?: FoodServing[] | null
 }
 
 export interface CachedFood {

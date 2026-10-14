@@ -29,7 +29,15 @@ import {
   resolveNutrientsRefAmount,
   sumNutrients,
 } from "@/utils/nutrients"
-import { formatNutrientsServingLabel, formatServingOption, displayUnit } from "@/utils/food-display"
+import {
+  formatNutrientsServingLabel,
+  formatServingOption,
+  displayUnit,
+  getPortionSummary,
+  formatUnitName,
+  isCountableUnit,
+  formatFoodAmount,
+} from "@/utils/food-display"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
 import { DailyImpactCard } from "@/components/DailyImpactCard"
@@ -302,6 +310,11 @@ export default function AddFoodScreen() {
     return nutrientsForAmount(food.nutrients, food.serving, amt, food.base_unit)
   }, [food, amount])
 
+  const portionSummary = useMemo(() => {
+    if (!food) return null
+    return getPortionSummary(food, Number(amount) || 0)
+  }, [food, amount])
+
   /**
    * Stepper step follows the selected serving. A named portion such as
    * "1 medium (118g)" steps whole portions, so every press adds the same
@@ -514,7 +527,18 @@ export default function AddFoodScreen() {
           <View style={styles.portionCard}>
             <View style={styles.portionHeaderRow}>
               <Text style={styles.portionTitle}>Portion and Serving</Text>
-              <Text style={styles.unitBadge}>Base unit: {displayUnit(unit)}</Text>
+              <View style={styles.headerBadgeGroup}>
+                {portionSummary?.isPiece ? (
+                  <View style={styles.pieceCountBadge}>
+                    <Text style={styles.pieceCountBadgeText}>{portionSummary.countText}</Text>
+                  </View>
+                ) : null}
+                <Text style={styles.unitBadge}>
+                  {isCountableUnit(unit)
+                    ? `Unit: ${formatUnitName(unit, 2)}`
+                    : `Base unit: ${displayUnit(unit)}`}
+                </Text>
+              </View>
             </View>
 
             {/* Serving Unit Chips */}
@@ -550,17 +574,31 @@ export default function AddFoodScreen() {
 
             {/* Amount Stepper Control */}
             <View style={styles.stepperContainer}>
-              <NumberStepper
-                value={amount}
-                onChangeText={(text) => {
-                  amountTouched.current = true
-                  setAmount(text)
-                }}
-                onSubmit={() => void handleSave()}
-                step={stepperStep}
-                decimals={1}
-                accessibilityLabel={`Amount in ${displayUnit(unit)}`}
-              />
+              <View style={styles.stepperWrapper}>
+                <NumberStepper
+                  value={amount}
+                  onChangeText={(text) => {
+                    amountTouched.current = true
+                    setAmount(text)
+                  }}
+                  onSubmit={() => void handleSave()}
+                  step={stepperStep}
+                  decimals={unit === "g" || unit === "ml" ? 1 : 0}
+                  accessibilityLabel={`Amount in ${displayUnit(unit)}`}
+                />
+                <Text style={styles.stepperUnitLabel}>
+                  {isCountableUnit(unit) ? formatUnitName(unit, Number(amount) || 1) : unit}
+                </Text>
+              </View>
+
+              {portionSummary?.isPiece ? (
+                <View style={styles.glanceableCallout}>
+                  <Text style={styles.glanceableCalloutMain}>{portionSummary.countText}</Text>
+                  {portionSummary.subText ? (
+                    <Text style={styles.glanceableCalloutSub}>({portionSummary.subText})</Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
 
             {/* Quick Multiplier Chips */}
@@ -605,7 +643,11 @@ export default function AddFoodScreen() {
             >
               <Feather name="check" size={20} color={colors.onPrimary} />
               <Text style={styles.dockSaveText}>
-                {saving ? "Saving…" : isEditing ? "Update entry" : "Add to diary"}
+                {saving
+                  ? "Saving…"
+                  : isEditing
+                    ? `Update (${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)})`
+                    : `Add ${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)}`}
               </Text>
             </Pressable>
           </View>
@@ -814,10 +856,66 @@ const createStyles = (colors: ColorPalette) =>
       fontWeight: "700",
       fontFamily: fonts.mono,
     },
+    headerBadgeGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    pieceCountBadge: {
+      backgroundColor: `${colors.primary}18`,
+      borderWidth: borders.width,
+      borderColor: colors.primary,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    pieceCountBadgeText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.primary,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+    },
     stepperContainer: {
       alignItems: "center",
       justifyContent: "center",
       marginVertical: 2,
+    },
+    stepperWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    stepperUnitLabel: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.text,
+      fontFamily: fonts.mono,
+      minWidth: 28,
+    },
+    glanceableCallout: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      marginTop: 6,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      backgroundColor: `${colors.primary}12`,
+      borderWidth: borders.widthThin,
+      borderColor: `${colors.primary}33`,
+    },
+    glanceableCalloutMain: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: colors.primary,
+      fontFamily: fonts.mono,
+    },
+    glanceableCalloutSub: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: colors.textMuted,
+      fontFamily: fonts.mono,
     },
     multiplierRow: {
       flexDirection: "row",
