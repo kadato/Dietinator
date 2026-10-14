@@ -3,7 +3,6 @@ import { Platform, ScrollView, View } from "react-native"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useFocusEffect } from "expo-router"
 import { Feather } from "@expo/vector-icons"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { PageContainer } from "@/components/PageContainer"
 import { SegmentedControl } from "@/components/SegmentedControl"
 import { EmptyState } from "@/components/EmptyState"
@@ -87,7 +86,6 @@ export default function StatsScreen() {
   const { showError, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isLarge } = useLayout()
-  const insets = useSafeAreaInsets()
   const [range, setRange] = useState<RangeId>("1m")
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
   const [latest, setLatest] = useState<WeightEntry | null>(null)
@@ -315,14 +313,12 @@ export default function StatsScreen() {
     />
   )
 
-  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-
   return (
-    <Box className="flex-1" style={{ backgroundColor: "transparent" }}>
+    <Box className="flex-1" style={{ backgroundColor: colors.background }}>
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <Box
           className={`w-full pb-2 ${isWide ? (isLarge ? "px-6" : "px-5") : "px-4"}`}
-          style={{ paddingTop: safeTop + spacing.md }}
+          style={{ paddingTop: spacing.md }}
         >
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats

@@ -10,6 +10,7 @@ import { useApp } from "@/context/AppContext"
 import { RELEASE_PAGE_URL } from "@/services/updates"
 import { layout, borders, radii } from "@/theme"
 import { Text } from "@ui/text"
+import { StatusBarGuard } from "@/components/StatusBarGuard"
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>["tabBar"]>>[0]
 
@@ -530,52 +531,57 @@ export default function TabLayout() {
   }
 
   return (
-    <Tabs
-      tabBar={(props) => <AppTabBar {...props} />}
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.textOnBackground,
-        headerShown: !isWide,
-        tabBarPosition: isWide ? "left" : "bottom",
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Today",
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBarGuard />
+      <Tabs
+        tabBar={(props) => <AppTabBar {...props} />}
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.textOnBackground,
           headerShown: false,
-          tabBarAccessibilityLabel: "Today",
-          tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
+          tabBarPosition: isWide ? "left" : "bottom",
         }}
-      />
-      <Tabs.Screen
-        name="ai"
-        options={{
-          title: "AI",
-          href: settings.ai_enabled === 1 ? "/(tabs)/ai" : null,
-          headerShown: false,
-          tabBarAccessibilityLabel: "AI Assistant",
-          tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: "Stats",
-          headerShown: false,
-          tabBarAccessibilityLabel: "Stats",
-          tabBarIcon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          headerShown: false,
-          tabBarAccessibilityLabel: "Settings",
-          tabBarIcon: ({ color, size }) => <Feather name="settings" size={size} color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Today",
+            headerShown: false,
+            tabBarAccessibilityLabel: "Today",
+            tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="ai"
+          options={{
+            title: "AI",
+            href: settings.ai_enabled === 1 ? "/(tabs)/ai" : null,
+            headerShown: false,
+            tabBarAccessibilityLabel: "AI Assistant",
+            tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="stats"
+          options={{
+            title: "Stats",
+            headerShown: false,
+            tabBarAccessibilityLabel: "Stats",
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="bar-chart-2" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+            headerShown: false,
+            tabBarAccessibilityLabel: "Settings",
+            tabBarIcon: ({ color, size }) => <Feather name="settings" size={size} color={color} />,
+          }}
+        />
+      </Tabs>
+    </View>
   )
 }

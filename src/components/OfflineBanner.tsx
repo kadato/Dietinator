@@ -35,9 +35,7 @@ export function OfflineBanner({
         borderRadius: radii.none,
         boxShadow: "none",
         elevation: 0,
-        // On headerless screens the banner is the topmost element, so it
-        // clears the status bar and camera cutout itself.
-        paddingTop: insets.top > 0 ? insets.top + 10 : undefined,
+        paddingTop: 10,
         paddingLeft: insets.left + 16,
         paddingRight: insets.right + 16,
       }}

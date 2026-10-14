@@ -11,7 +11,6 @@ import {
 } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
 import { MealSection } from "@/components/MealSection"
@@ -421,7 +420,6 @@ export default function TodayScreen() {
   // Locally logged water wins; YAZIO's intake fills in until the first pour.
   const waterIntake = localWaterMl > 0 ? localWaterMl : (summary?.waterIntake ?? 0)
   const waterGoal = settings.water_goal_ml > 0 ? settings.water_goal_ml : (summary?.waterGoal ?? 0)
-  const insets = useSafeAreaInsets()
 
   const handleQuickWater = async (amount: number) => {
     try {
@@ -966,7 +964,7 @@ export default function TodayScreen() {
   )
 
   return (
-    <Box className="flex-1" style={{ backgroundColor: "transparent" }}>
+    <Box className="flex-1" style={{ backgroundColor: colors.background }}>
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <ScrollView
@@ -978,10 +976,7 @@ export default function TodayScreen() {
             />
           }
           contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-2 pb-24" : "max-w-[720px] self-center p-2 pb-56"}`}
-          style={{
-            paddingTop:
-              (insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0) + spacing.xs,
-          }}
+          style={{ paddingTop: spacing.xs }}
         >
           {isWide ? (
             <Box className={`w-full flex-row items-start ${isLarge ? "gap-6" : "gap-5"}`}>

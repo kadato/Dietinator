@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from "react-native"
 import { useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useAiChat } from "@/hooks/useAiChat"
 import { useApp } from "@/context/AppContext"
 import { useTheme } from "@/hooks/useTheme"
@@ -43,7 +42,6 @@ export default function AiScreen() {
   const router = useRouter()
   const { settings } = useApp()
   const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
   const { width, isWide, isLarge } = useLayout()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
@@ -379,7 +377,7 @@ export default function AiScreen() {
   const canSend = draft.trim().length > 0 && !busy && configured
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "transparent" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View
         style={{
           flex: 1,
@@ -391,7 +389,7 @@ export default function AiScreen() {
         <Box
           style={{
             backgroundColor: colors.weight ?? colors.primary,
-            paddingTop: insets.top > 0 ? insets.top + 8 : 16,
+            paddingTop: 16,
           }}
           className="px-4 pb-3.5"
         >

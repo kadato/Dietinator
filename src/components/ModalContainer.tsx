@@ -79,7 +79,7 @@ export function ModalContainer({
         aria-modal={true}
         className={`w-full ${hug ? "" : "flex-1"} ${outerClassName ?? ""}`}
         style={[
-          surface ? { backgroundColor: colors.surface } : undefined,
+          { backgroundColor: surface ? colors.surface : colors.background },
           {
             paddingTop: thumbTop,
             paddingBottom: safeBottom,

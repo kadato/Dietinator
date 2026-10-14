@@ -5,6 +5,7 @@ import { Text } from "@ui/text"
 import { PageContainer } from "@/components/PageContainer"
 import { useTheme } from "@/hooks/useTheme"
 import { borders, fonts, radii } from "@/theme"
+import { StatusBarGuard } from "@/components/StatusBarGuard"
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -34,90 +35,93 @@ export default function PrivacyScreen() {
   const { colors } = useTheme()
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "transparent" }}>
-      <PageContainer variant="narrow" contentClassName="px-6 py-8">
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontFamily: fonts.mono,
-            fontSize: 24,
-            fontWeight: "700",
-            textTransform: "uppercase",
-            letterSpacing: 0.06,
-          }}
-        >
-          Privacy
-        </Text>
-        <Text
-          style={{ color: colors.textMuted, fontFamily: fonts.mono, fontSize: 12, marginTop: 8 }}
-        >
-          Last updated 2026-09-25. The tracker stores data on the device and sends no analytics.
-        </Text>
-        {SECTIONS.map((section) => (
-          <View
-            key={section.heading}
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBarGuard />
+      <ScrollView style={{ flex: 1 }}>
+        <PageContainer variant="narrow" contentClassName="px-6 py-8">
+          <Text
+            accessibilityRole="header"
             style={{
-              marginTop: 16,
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              backgroundColor: colors.surface,
-              padding: 16,
+              color: colors.text,
+              fontFamily: fonts.mono,
+              fontSize: 24,
+              fontWeight: "700",
+              textTransform: "uppercase",
+              letterSpacing: 0.06,
             }}
           >
-            <Text
-              accessibilityRole="header"
-              style={{
-                color: colors.text,
-                fontFamily: fonts.mono,
-                fontSize: 14,
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: 0.04,
-              }}
-            >
-              {section.heading}
-            </Text>
-            <Text
-              style={{
-                color: colors.text,
-                fontFamily: fonts.mono,
-                fontSize: 14,
-                lineHeight: 20,
-                marginTop: 8,
-              }}
-            >
-              {section.body}
-            </Text>
-          </View>
-        ))}
-        <Box className="mt-6">
-          <Pressable
-            onPress={() => router.replace("/")}
-            accessibilityRole="button"
-            accessibilityLabel="Back to tracker"
-            style={{
-              borderWidth: borders.width,
-              borderColor: colors.primary,
-              backgroundColor: colors.primary,
-              paddingVertical: 12,
-              alignItems: "center",
-            }}
+            Privacy
+          </Text>
+          <Text
+            style={{ color: colors.textMuted, fontFamily: fonts.mono, fontSize: 12, marginTop: 8 }}
           >
-            <Text
+            Last updated 2026-09-25. The tracker stores data on the device and sends no analytics.
+          </Text>
+          {SECTIONS.map((section) => (
+            <View
+              key={section.heading}
               style={{
-                color: colors.onPrimary,
-                fontFamily: fonts.mono,
-                textTransform: "uppercase",
-                letterSpacing: 0.06,
+                marginTop: 16,
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderRadius: radii.none,
+                backgroundColor: colors.surface,
+                padding: 16,
               }}
             >
-              Back to tracker
-            </Text>
-          </Pressable>
-        </Box>
-      </PageContainer>
-    </ScrollView>
+              <Text
+                accessibilityRole="header"
+                style={{
+                  color: colors.text,
+                  fontFamily: fonts.mono,
+                  fontSize: 14,
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.04,
+                }}
+              >
+                {section.heading}
+              </Text>
+              <Text
+                style={{
+                  color: colors.text,
+                  fontFamily: fonts.mono,
+                  fontSize: 14,
+                  lineHeight: 20,
+                  marginTop: 8,
+                }}
+              >
+                {section.body}
+              </Text>
+            </View>
+          ))}
+          <Box className="mt-6">
+            <Pressable
+              onPress={() => router.replace("/")}
+              accessibilityRole="button"
+              accessibilityLabel="Back to tracker"
+              style={{
+                borderWidth: borders.width,
+                borderColor: colors.primary,
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.onPrimary,
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.06,
+                }}
+              >
+                Back to tracker
+              </Text>
+            </Pressable>
+          </Box>
+        </PageContainer>
+      </ScrollView>
+    </View>
   )
 }

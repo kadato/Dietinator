@@ -87,7 +87,7 @@ function RootNavigator() {
       dark: isDark,
       colors: {
         primary: colors.primary,
-        background: "transparent",
+        background: colors.background,
         card: colors.surface,
         text: colors.text,
         border: colors.border,
@@ -192,7 +192,7 @@ function RootNavigator() {
     <NavigationThemeProvider value={navTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
       >
         <Stack.Screen name="login" />
         <Stack.Screen name="privacy" />
@@ -262,12 +262,12 @@ export default function RootLayout() {
  * gluestack mode and the status bar follow the user's explicit theme choice.
  */
 function ThemedApp() {
-  const { isDark } = useTheme()
+  const { colors, isDark } = useTheme()
   const gluestackMode = isDark ? "dark" : "light"
 
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
         <GluestackUIProvider mode={gluestackMode}>
           <NetworkProvider>
             <ToastProvider>

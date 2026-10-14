@@ -28,6 +28,7 @@ import { PageContainer } from "@/components/PageContainer"
 import { withAlpha } from "@/utils/color"
 import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
+import { StatusBarGuard } from "@/components/StatusBarGuard"
 import { Text } from "@ui/text"
 import { Input, InputField } from "@ui/input"
 import { Button, ButtonSpinner, ButtonText } from "@ui/button"
@@ -101,16 +102,16 @@ export default function LoginScreen() {
     }
   }
 
-  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
   const safeBottom = insets.bottom
 
   return (
     <KeyboardAvoidingView
       className="flex-1"
-      style={{ backgroundColor: "transparent" }}
+      style={{ backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={safeTop}
+      keyboardVerticalOffset={0}
     >
+      <StatusBarGuard />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         keyboardDismissMode="on-drag"
@@ -120,7 +121,7 @@ export default function LoginScreen() {
           variant={isWide ? "wide" : "narrow"}
           contentClassName="px-6 justify-center"
           contentStyle={[
-            { paddingTop: safeTop + 24, paddingBottom: safeBottom + 24 },
+            { paddingTop: 24, paddingBottom: safeBottom + 24 },
             isWide ? { maxWidth: 720, alignSelf: "center", width: "100%" } : undefined,
           ]}
         >

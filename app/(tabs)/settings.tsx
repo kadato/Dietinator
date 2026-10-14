@@ -1394,14 +1394,13 @@ export default function SettingsScreen() {
   }
 
   const currentSection = SETTINGS_SECTIONS.find((s) => s.id === effectiveSectionId)
-  const safeTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
 
   return (
     <KeyboardAvoidingView
       className="flex-1"
-      style={{ backgroundColor: "transparent" }}
+      style={{ backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={safeTop}
+      keyboardVerticalOffset={0}
     >
       <ScrollView
         ref={scrollRef}
@@ -1413,7 +1412,7 @@ export default function SettingsScreen() {
         <PageContainer
           grow={false}
           contentStyle={[
-            { padding: spacing.lg, paddingTop: insets.top + spacing.lg },
+            { padding: spacing.lg },
             isWide ? { maxWidth: isLarge ? 1360 : 1280 } : undefined,
           ]}
         >
