@@ -1,4 +1,4 @@
-import { mergeFoodResults } from "../food-search"
+import { filterFoodsByQuery, filterRecentUsagesByQuery, mergeFoodResults } from "../food-search"
 import { parseJson } from "../json"
 import type { SearchFoodResult } from "@/types"
 
@@ -31,6 +31,65 @@ describe("mergeFoodResults", () => {
     const local = [food("a")]
     mergeFoodResults(local, [food("a")])
     expect(local).toHaveLength(1)
+  })
+})
+
+describe("filterFoodsByQuery", () => {
+  const items = [
+    { ...food("1", "Rolled Oats"), producer: "Quaker" },
+    { ...food("2", "Greek Yogurt"), producer: "Chobani" },
+    { ...food("3", "Oat Milk"), producer: "Oatly" },
+    { ...food("4", "Banana"), producer: "" },
+  ]
+
+  it("returns all items when query is empty or whitespace", () => {
+    expect(filterFoodsByQuery(items, "")).toEqual(items)
+    expect(filterFoodsByQuery(items, "   ")).toEqual(items)
+  })
+
+  it("filters items by name case-insensitively", () => {
+    const results = filterFoodsByQuery(items, "oat")
+    expect(results.map((r) => r.name)).toEqual(["Rolled Oats", "Oat Milk"])
+  })
+
+  it("filters items by producer case-insensitively", () => {
+    const results = filterFoodsByQuery(items, "chobani")
+    expect(results.map((r) => r.name)).toEqual(["Greek Yogurt"])
+  })
+
+  it("returns empty array when no items match", () => {
+    expect(filterFoodsByQuery(items, "nonexistent food item")).toEqual([])
+  })
+})
+
+describe("filterRecentUsagesByQuery", () => {
+  const usages = [
+    {
+      food: { ...food("1", "Scrambled Eggs"), producer: "Farm" },
+      amount: 150,
+      lastLoggedAt: "2026-10-17",
+    },
+    {
+      food: { ...food("2", "Whole Milk"), producer: "Dairy" },
+      amount: 250,
+      lastLoggedAt: "2026-10-16",
+    },
+  ]
+
+  it("returns all usages when query is empty", () => {
+    expect(filterRecentUsagesByQuery(usages, "")).toEqual(usages)
+  })
+
+  it("filters usages by food name", () => {
+    const results = filterRecentUsagesByQuery(usages, "egg")
+    expect(results).toHaveLength(1)
+    expect(results[0].food.name).toBe("Scrambled Eggs")
+  })
+
+  it("filters usages by producer", () => {
+    const results = filterRecentUsagesByQuery(usages, "dairy")
+    expect(results).toHaveLength(1)
+    expect(results[0].food.name).toBe("Whole Milk")
   })
 })
 

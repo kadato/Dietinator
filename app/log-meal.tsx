@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   View,
   Text,
@@ -8,9 +8,6 @@ import {
   FlatList,
   ScrollView,
   ActivityIndicator,
-  Keyboard,
-  LayoutAnimation,
-  Platform,
 } from "react-native"
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
 import { Swipeable } from "react-native-gesture-handler"
@@ -23,6 +20,7 @@ import { OfflineBanner } from "@/components/OfflineBanner"
 import { CreateOptionsModal } from "@/components/CreateOptionsModal"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useFoodSearch } from "@/hooks/useFoodSearch"
+import { useKeyboardHeight } from "@/hooks/useKeyboardVisible"
 import { useApp } from "@/context/AppContext"
 import { useToast } from "@/context/ToastContext"
 import { getFoodIcon } from "@/utils/food-icon"
@@ -38,7 +36,11 @@ import type {
   RecentFoodUsage,
   SearchFoodResult,
 } from "@/types"
-import { mergeFoodResults } from "@/utils/food-search"
+import {
+  filterFoodsByQuery,
+  filterRecentUsagesByQuery,
+  mergeFoodResults,
+} from "@/utils/food-search"
 import { normalizedSearchAmount, sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
 import { displayUnit, formatEntryAmount } from "@/utils/food-display"
@@ -66,7 +68,7 @@ interface TabOption {
 }
 
 const TABS: TabOption[] = [
-  { id: "frequent", label: "Frequent", icon: "star", activeIcon: "star" },
+  { id: "frequent", label: "Frequent", icon: "zap", activeIcon: "zap" },
   { id: "recent", label: "Recent", icon: "clock", activeIcon: "clock" },
   { id: "favorites", label: "Favorites", icon: "star", activeIcon: "star" },
   { id: "meals", label: "Meals", icon: "shopping-bag", activeIcon: "shopping-bag" },
@@ -130,17 +132,15 @@ export default function LogMealScreen() {
     searchInputRef.current?.blur()
   }, [])
 
-  const handleTabPress = useCallback(
-    (tabId: ActiveTab) => {
-      if (tabId === "meals") {
-        setCategory("meals")
-      } else {
-        setCategory("foods")
-        setListMode(tabId)
-      }
-    },
-    [setCategory, setListMode],
-  )
+  const handleTabPress = useCallback((tabId: ActiveTab) => {
+    setReorderFavorites(false)
+    if (tabId === "meals") {
+      setCategory("meals")
+    } else {
+      setCategory("foods")
+      setListMode(tabId)
+    }
+  }, [])
   // YAZIO's suggestions for this meal slot arrive async and patch into the
   // "Frequent" list, so the local favorites/recents render instantly instead of
   // waiting on the network.
@@ -156,48 +156,7 @@ export default function LogMealScreen() {
   const [addingKey, setAddingKey] = useState<string | null>(null)
   // Open swipeable logged rows, so a cancelled swipe-delete can snap back.
   const swipeableRefs = useRef(new Map<string, Swipeable | null>())
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
-
-  useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
-
-    const onShow = (e: { endCoordinates?: { height?: number } }) => {
-      if (Platform.OS === "ios") {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-      }
-      setKeyboardHeight(e.endCoordinates?.height ?? 0)
-    }
-    const onHide = () => {
-      if (Platform.OS === "ios") {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-      }
-      setKeyboardHeight(0)
-    }
-
-    const showSub = Keyboard.addListener(showEvent, onShow)
-    const hideSub = Keyboard.addListener(hideEvent, onHide)
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined" || !window.visualViewport) return
-    const vv = window.visualViewport
-    const update = () => {
-      const offset = Math.max(0, Math.round(window.innerHeight - vv.height))
-      setKeyboardHeight(offset > 50 ? offset : 0)
-    }
-    vv.addEventListener("resize", update)
-    vv.addEventListener("scroll", update)
-    return () => {
-      vv.removeEventListener("resize", update)
-      vv.removeEventListener("scroll", update)
-    }
-  }, [])
+  const { keyboardHeight } = useKeyboardHeight()
 
   const loadLoggedEntries = useCallback(async () => {
     try {
@@ -245,6 +204,35 @@ export default function LogMealScreen() {
   const dayConsumedKcal = Math.round(dayTotals.kcal)
   const dayProgressPct = dayGoalKcal > 0 ? Math.min((dayTotals.kcal / dayGoalKcal) * 100, 100) : 0
 
+  const [favoriteFoods, setFavoriteFoods] = useState<SearchFoodResult[]>([])
+  const [recentUsages, setRecentUsages] = useState<RecentFoodUsage[]>([])
+
+  const loadFavorites = useCallback(async () => {
+    try {
+      const items = await getFavoriteFoods()
+      setFavoriteFoods(items)
+    } catch {
+      setFavoriteFoods([])
+    }
+  }, [])
+
+  const loadRecents = useCallback(async () => {
+    try {
+      const usages = await getRecentFoodUsages(30)
+      setRecentUsages(usages)
+    } catch {
+      setRecentUsages([])
+    }
+  }, [])
+
+  const loadMeals = useCallback(async () => {
+    try {
+      setMeals(await listMeals())
+    } catch (error) {
+      showError(error, "Could not load meals.")
+    }
+  }, [showError])
+
   useEffect(() => {
     if (category !== "foods" || debounced.trim() || listMode !== "frequent") return
     let cancelled = false
@@ -258,70 +246,63 @@ export default function LogMealScreen() {
     }
   }, [category, date, debounced, listMode, mealType])
 
-  const emptyQuery = useCallback(async () => {
-    if (listMode === "favorites") return getFavoriteFoods()
-    if (listMode === "recent") return getRecentFoodUsages(20)
-    // Frequent list: local picks first, YAZIO's suggestions patch in when ready.
-    const [favorites, usages] = await Promise.all([getFavoriteFoods(), getRecentFoodUsages(20)])
-    return mergeFoodResults(mergeFoodResults(suggestions, favorites), usageFoods(usages))
-  }, [listMode, suggestions])
-
-  // Keep the current recents/favorites list rendered below search results
-  // instead of replacing it the moment the user types.
-  // Reset synchronously when the query clears. Render-adjustment pattern.
-  const [prevDebounced, setPrevDebounced] = useState(debounced)
-  const [contextual, setContextual] = useState<FoodRow[]>([])
-  if (prevDebounced !== debounced) {
-    setPrevDebounced(debounced)
-    if (!debounced.trim()) setContextual([])
-  }
-  useEffect(() => {
-    if (!debounced.trim()) return
-    let cancelled = false
-    emptyQuery()
-      .then((items) => {
-        if (!cancelled) setContextual(items)
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [debounced, emptyQuery])
-
   const handleSearchError = useCallback(
     (error: unknown) => showError(error, "Could not load foods."),
     [showError],
   )
 
-  const { foods, loading, refresh } = useFoodSearch<FoodRow>(debounced, {
-    enabled: category === "foods",
-    emptyQuery,
+  const {
+    foods: searchFoods,
+    loading,
+    refresh,
+  } = useFoodSearch<SearchFoodResult>(debounced, {
+    enabled: category === "foods" && activeTab === "frequent" && Boolean(debounced.trim()),
     onError: handleSearchError,
   })
 
-  const loadMeals = useCallback(async () => {
-    try {
-      setMeals(await listMeals())
-    } catch (error) {
-      showError(error, "Could not load meals.")
-    }
-  }, [showError])
+  const loadAllData = useCallback(async () => {
+    await Promise.all([loadLoggedEntries(), loadFavorites(), loadRecents(), loadMeals()])
+  }, [loadFavorites, loadLoggedEntries, loadMeals, loadRecents])
 
   // Refetch favorites/recent/meals/logged entries when returning from add-food or meal-builder.
   useFocusEffect(
     useCallback(() => {
-      loadLoggedEntries()
-      if (category === "meals") {
-        loadMeals()
-      } else if (!debounced.trim() && listMode !== "frequent") {
+      void loadAllData()
+      if (activeTab === "frequent" && debounced.trim()) {
         refresh()
-      } else if (debounced.trim()) {
-        emptyQuery()
-          .then(setContextual)
-          .catch(() => undefined)
       }
-    }, [category, debounced, emptyQuery, listMode, loadLoggedEntries, loadMeals, refresh]),
+    }, [activeTab, debounced, loadAllData, refresh]),
   )
+
+  const frequentList = useMemo(() => {
+    return mergeFoodResults(mergeFoodResults(suggestions, favoriteFoods), usageFoods(recentUsages))
+  }, [suggestions, favoriteFoods, recentUsages])
+
+  const filteredFavorites = useMemo(
+    () => filterFoodsByQuery(favoriteFoods, debounced),
+    [debounced, favoriteFoods],
+  )
+
+  const filteredRecents = useMemo(
+    () => filterRecentUsagesByQuery(recentUsages, debounced),
+    [debounced, recentUsages],
+  )
+
+  const filteredMeals = useMemo(() => {
+    const q = debounced.trim().toLowerCase()
+    if (!q) return meals
+    return meals.filter((meal) => meal.name.toLowerCase().includes(q))
+  }, [debounced, meals])
+
+  const activeFoodItems: FoodRow[] = useMemo(() => {
+    if (activeTab === "favorites") {
+      return filteredFavorites
+    }
+    if (activeTab === "recent") {
+      return filteredRecents
+    }
+    return debounced.trim() ? searchFoods : frequentList
+  }, [activeTab, debounced, filteredFavorites, filteredRecents, frequentList, searchFoods])
 
   const openFood = useCallback(
     (food: SearchFoodResult) => {
@@ -347,11 +328,13 @@ export default function LogMealScreen() {
           amount: targetAmount,
         })
         await loadLoggedEntries()
+        await loadRecents()
         // Show only the small Undo FAB, no huge toast banner that covers the dock.
         showUndoFab(`${food.name} added`, () => {
           deleteFoodEntry(entry.id)
-            .then(() => {
-              void loadLoggedEntries()
+            .then(async () => {
+              await loadLoggedEntries()
+              await loadRecents()
             })
             .catch(() => undefined)
         })
@@ -361,7 +344,7 @@ export default function LogMealScreen() {
         setAddingKey(null)
       }
     },
-    [addingKey, date, loadLoggedEntries, mealType, showError, showUndoFab],
+    [addingKey, date, loadLoggedEntries, loadRecents, mealType, showError, showUndoFab],
   )
 
   const openEdit = useCallback(
@@ -448,24 +431,25 @@ export default function LogMealScreen() {
   const handleReorderFavorites = useCallback(
     async (reordered: SearchFoodResult[]) => {
       const orderedIds = reordered.map((f) => f.product_id)
+      setFavoriteFoods(reordered)
       await updateFavoriteOrder(orderedIds)
-      refresh()
+      await loadFavorites()
     },
-    [refresh],
+    [loadFavorites],
   )
 
   const moveFavorite = useCallback(
     async (index: number, direction: -1 | 1) => {
       const targetIndex = index + direction
-      if (targetIndex < 0 || targetIndex >= foods.length) return
-      const currentList = [...foods]
+      if (targetIndex < 0 || targetIndex >= favoriteFoods.length) return
+      const currentList = [...favoriteFoods]
       const [item] = currentList.splice(index, 1)
       currentList.splice(targetIndex, 0, item)
-      const orderedIds = currentList.map((f) => (isUsageRow(f) ? f.food.product_id : f.product_id))
+      setFavoriteFoods(currentList)
+      const orderedIds = currentList.map((f) => f.product_id)
       await updateFavoriteOrder(orderedIds)
-      refresh()
     },
-    [foods, refresh],
+    [favoriteFoods],
   )
 
   const renderFood = useCallback(
@@ -485,17 +469,17 @@ export default function LogMealScreen() {
             quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
             isReordering={isReordering}
             canMoveUp={index > 0}
-            canMoveDown={index < foods.length - 1}
+            canMoveDown={index < activeFoodItems.length - 1}
             onMoveUp={() => moveFavorite(index, -1)}
             onMoveDown={() => moveFavorite(index, 1)}
           />
         )
       }
-      // Search results normalize to one comparable basis, 100 g or ml (1
-      // whole item for countable units). Favorites without a search query
-      // keep the last-used amount for one-tap logging.
+      // Search results on Frequent normalize to standard 100g/ml baseline for comparison.
+      // Favorites and Recents retain personal/custom logged amounts.
       const searching = Boolean(debounced.trim())
-      const quickAmount = searching ? normalizedSearchAmount(item.base_unit) : undefined
+      const quickAmount =
+        searching && activeTab === "frequent" ? normalizedSearchAmount(item.base_unit) : undefined
       return (
         <FoodListItem
           food={item}
@@ -510,7 +494,7 @@ export default function LogMealScreen() {
           }
           isReordering={isReordering}
           canMoveUp={index > 0}
-          canMoveDown={index < foods.length - 1}
+          canMoveDown={index < activeFoodItems.length - 1}
           onMoveUp={() => moveFavorite(index, -1)}
           onMoveDown={() => moveFavorite(index, 1)}
         />
@@ -518,10 +502,11 @@ export default function LogMealScreen() {
     },
     [
       accent,
+      activeFoodItems.length,
+      activeTab,
       addingKey,
       category,
       debounced,
-      foods.length,
       handleQuickAdd,
       listMode,
       moveFavorite,
@@ -535,14 +520,6 @@ export default function LogMealScreen() {
     for (const meal of meals) map.set(meal.id, mealTotals(meal))
     return map
   }, [meals])
-
-  // Meals are stored locally. The query filters them by name so the search
-  // box stays useful when browsing the "Meals" category.
-  const filteredMeals = useMemo(() => {
-    const q = debounced.trim().toLowerCase()
-    if (!q) return meals
-    return meals.filter((meal) => meal.name.toLowerCase().includes(q))
-  }, [debounced, meals])
 
   const renderMeal = useCallback(
     ({ item }: { item: Meal }) => {
@@ -576,16 +553,178 @@ export default function LogMealScreen() {
     [accent, handleDuplicateMeal, handleLogMeal, loggingMealId, mealTotalsById, router],
   )
 
-  const emptyMessage = useMemo(() => {
-    if (category === "meals") {
-      if (debounced.trim()) return "No meals match your search."
-      return "No meals yet. Create one to see it here."
+  const searchPlaceholder = useMemo(() => {
+    switch (activeTab) {
+      case "meals":
+        return "Search meals…"
+      case "favorites":
+        return "Search favorites…"
+      case "recent":
+        return "Search recent foods…"
+      case "frequent":
+      default:
+        return "Search foods…"
     }
-    if (debounced.trim()) return "No foods found. Try a different search."
-    if (listMode === "favorites") return "No favorites yet. Star foods to see them here."
-    if (listMode === "recent") return "No recent foods yet. Log something to see it here."
-    return "Search or scan to log food."
-  }, [category, debounced, listMode])
+  }, [activeTab])
+
+  const emptyInfo = useMemo((): { title: string; action?: ReactNode } => {
+    const q = debounced.trim()
+    if (category === "meals") {
+      if (q) {
+        return {
+          title: `No meals match "${q}".`,
+          action: (
+            <Pressable
+              style={[styles.emptyActionBtn, { borderColor: accent }]}
+              onPress={() => handleTabPress("frequent")}
+              accessibilityRole="button"
+              accessibilityLabel={`Search all foods for ${q}`}
+            >
+              <Feather name="search" size={14} color={accent} />
+              <Text style={[styles.emptyActionText, { color: accent }]}>
+                {`Search all foods for "${q}"`}
+              </Text>
+            </Pressable>
+          ),
+        }
+      }
+      return {
+        title: "No meals yet. Create one to see it here.",
+        action: (
+          <Pressable
+            style={[styles.emptyActionBtn, { borderColor: accent }]}
+            onPress={() => router.push({ pathname: "/meal-builder" })}
+            accessibilityRole="button"
+            accessibilityLabel="Create a new meal"
+          >
+            <Feather name="plus" size={14} color={accent} />
+            <Text style={[styles.emptyActionText, { color: accent }]}>New meal</Text>
+          </Pressable>
+        ),
+      }
+    }
+
+    if (listMode === "favorites") {
+      if (q) {
+        return {
+          title: `No favorites match "${q}".`,
+          action: (
+            <Pressable
+              style={[styles.emptyActionBtn, { borderColor: accent }]}
+              onPress={() => handleTabPress("frequent")}
+              accessibilityRole="button"
+              accessibilityLabel={`Search all foods for ${q}`}
+            >
+              <Feather name="search" size={14} color={accent} />
+              <Text style={[styles.emptyActionText, { color: accent }]}>
+                {`Search all foods for "${q}"`}
+              </Text>
+            </Pressable>
+          ),
+        }
+      }
+      return { title: "No favorites yet. Star foods to see them here." }
+    }
+
+    if (listMode === "recent") {
+      if (q) {
+        return {
+          title: `No recent foods match "${q}".`,
+          action: (
+            <Pressable
+              style={[styles.emptyActionBtn, { borderColor: accent }]}
+              onPress={() => handleTabPress("frequent")}
+              accessibilityRole="button"
+              accessibilityLabel={`Search all foods for ${q}`}
+            >
+              <Feather name="search" size={14} color={accent} />
+              <Text style={[styles.emptyActionText, { color: accent }]}>
+                {`Search all foods for "${q}"`}
+              </Text>
+            </Pressable>
+          ),
+        }
+      }
+      return { title: "No recent foods yet. Log something to see it here." }
+    }
+
+    // Frequent:
+    if (q) {
+      return {
+        title: `No foods found matching "${q}".`,
+        action: (
+          <Pressable
+            style={[styles.emptyActionBtn, { borderColor: accent }]}
+            onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
+            accessibilityRole="button"
+            accessibilityLabel="Scan barcode"
+          >
+            <MaterialCommunityIcons name="barcode-scan" size={15} color={accent} />
+            <Text style={[styles.emptyActionText, { color: accent }]}>Scan barcode</Text>
+          </Pressable>
+        ),
+      }
+    }
+    return { title: "Search or scan to log food." }
+  }, [accent, category, date, debounced, handleTabPress, listMode, mealType, router, styles])
+
+  const filterStatusBar = useMemo(() => {
+    const q = debounced.trim()
+    if (!q) return null
+    const count = category === "meals" ? filteredMeals.length : activeFoodItems.length
+    return (
+      <View style={styles.filterStatusRow}>
+        <View style={styles.filterStatusLeft}>
+          <Feather name="filter" size={12} color={accent} />
+          <Text style={[styles.filterStatusText, { color: colors.textMuted }]} numberOfLines={1}>
+            {activeTab === "frequent"
+              ? loading
+                ? `SEARCHING ALL FOODS FOR "${q.toUpperCase()}"…`
+                : `${count} RESULT${count === 1 ? "" : "S"} FOR "${q.toUpperCase()}"`
+              : `${count} MATCH${count === 1 ? "" : "ES"} IN ${activeTab.toUpperCase()}`}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => setQuery("")}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search filter"
+        >
+          <Text style={[styles.filterStatusClear, { color: accent }]}>CLEAR</Text>
+        </Pressable>
+      </View>
+    )
+  }, [
+    accent,
+    activeFoodItems.length,
+    activeTab,
+    category,
+    colors.textMuted,
+    debounced,
+    filteredMeals.length,
+    loading,
+    styles,
+  ])
+
+  const listFooter = useMemo(() => {
+    const q = debounced.trim()
+    if (!q) return null
+    if (activeTab === "frequent") return null
+    return (
+      <Pressable
+        style={[styles.searchAllFooter, { borderColor: `${accent}40` }]}
+        onPress={() => handleTabPress("frequent")}
+        accessibilityRole="button"
+        accessibilityLabel={`Search all foods for ${q}`}
+      >
+        <Feather name="search" size={14} color={accent} />
+        <Text style={[styles.searchAllFooterText, { color: accent }]}>
+          {`Search all foods for "${q}"`}
+        </Text>
+        <Feather name="arrow-right" size={14} color={accent} />
+      </Pressable>
+    )
+  }, [accent, activeTab, debounced, handleTabPress, styles])
 
   const loggedSection =
     loggedEntries.length > 0 ? (
@@ -730,10 +869,13 @@ export default function LogMealScreen() {
     ) : null
 
   const favoritesToolbar =
-    category === "foods" && listMode === "favorites" && !debounced.trim() && foods.length > 1 ? (
+    category === "foods" &&
+    listMode === "favorites" &&
+    !debounced.trim() &&
+    favoriteFoods.length > 1 ? (
       <View style={styles.reorderBar}>
         <Text style={styles.reorderTitle}>
-          {foods.length} {foods.length === 1 ? "Favorite" : "Favorites"}
+          {favoriteFoods.length} {favoriteFoods.length === 1 ? "Favorite" : "Favorites"}
         </Text>
         <Pressable
           style={[
@@ -886,7 +1028,7 @@ export default function LogMealScreen() {
                         styles.tabItemActive,
                         {
                           backgroundColor: `${accent}1f`,
-                          borderColor: `${accent}55`,
+                          borderColor: accent,
                         },
                       ]
                     : styles.tabItemInactive,
@@ -917,7 +1059,7 @@ export default function LogMealScreen() {
 
         <OfflineBanner visible={!yazioAvailable && debounced.length > 0} />
 
-        {loading && foods.length === 0 ? (
+        {loading && activeFoodItems.length === 0 ? (
           <View style={styles.loaderWrap}>
             <ActivityIndicator color={accent} />
           </View>
@@ -940,7 +1082,7 @@ export default function LogMealScreen() {
                   ) : null}
                   {favoritesToolbar}
                   <SortableFavoriteList
-                    foods={foods as SearchFoodResult[]}
+                    foods={favoriteFoods}
                     onReorder={handleReorderFavorites}
                     onOpenFood={openFood}
                     onMoveOne={moveFavorite}
@@ -952,14 +1094,14 @@ export default function LogMealScreen() {
           ) : (
             <FlatList
               style={styles.list}
-              data={foods}
+              data={activeFoodItems}
               keyExtractor={(item) =>
                 isUsageRow(item) ? `${item.food.product_id}-${item.amount}` : item.product_id
               }
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               contentContainerClassName={
-                foods.length === 0 && !loading ? "grow justify-center" : "pt-1"
+                activeFoodItems.length === 0 && !loading ? "grow justify-center" : "pt-1"
               }
               contentContainerStyle={{
                 paddingBottom: keyboardHeight > 0 ? keyboardHeight + 76 : 112,
@@ -970,56 +1112,30 @@ export default function LogMealScreen() {
                     <View style={styles.loggedSectionWrap}>{loggedSection}</View>
                   ) : null}
                   {favoritesToolbar}
+                  {filterStatusBar}
                 </>
               }
               renderItem={renderFood}
               ListEmptyComponent={
                 !loading ? (
                   <EmptyState
-                    icon="shopping-bag"
+                    icon={
+                      activeTab === "frequent"
+                        ? debounced.trim()
+                          ? "search"
+                          : "zap"
+                        : activeTab === "recent"
+                          ? "clock"
+                          : "star"
+                    }
                     iconColor={accent}
-                    title={emptyMessage}
+                    title={emptyInfo.title}
+                    action={emptyInfo.action}
                     variant="compact"
                   />
                 ) : null
               }
-              ListFooterComponent={
-                debounced && contextual.length > 0 ? (
-                  <View style={styles.contextualWrap}>
-                    <Text style={styles.contextualTitle}>
-                      {listMode === "favorites"
-                        ? "Favorite picks"
-                        : listMode === "recent"
-                          ? "Recently used"
-                          : "Frequent picks"}
-                    </Text>
-                    {contextual.map((item) =>
-                      isUsageRow(item) ? (
-                        <FoodListItem
-                          key={`${item.food.product_id}-${item.amount}`}
-                          food={item.food}
-                          amount={item.amount}
-                          accentColor={accent}
-                          quickAddVariant="pill"
-                          onPress={() => openFood(item.food)}
-                          onQuickAdd={() => handleQuickAdd(item.food, item.amount)}
-                          quickAdding={addingKey === `${item.food.product_id}:${item.amount}`}
-                        />
-                      ) : (
-                        <FoodListItem
-                          key={item.product_id}
-                          food={item}
-                          accentColor={accent}
-                          quickAddVariant="pill"
-                          onPress={() => openFood(item)}
-                          onQuickAdd={() => handleQuickAdd(item)}
-                          quickAdding={addingKey === item.product_id}
-                        />
-                      ),
-                    )}
-                  </View>
-                ) : undefined
-              }
+              ListFooterComponent={listFooter}
             />
           )
         ) : (
@@ -1049,6 +1165,7 @@ export default function LogMealScreen() {
                   <Feather name="shopping-bag" size={20} color={colors.onPrimary} />
                   <Text style={styles.newMealText}>New meal</Text>
                 </Pressable>
+                {filterStatusBar}
               </>
             }
             renderItem={renderMeal}
@@ -1057,11 +1174,13 @@ export default function LogMealScreen() {
                 <EmptyState
                   icon="shopping-bag"
                   iconColor={accent}
-                  title={emptyMessage}
+                  title={emptyInfo.title}
+                  action={emptyInfo.action}
                   variant="compact"
                 />
               ) : null
             }
+            ListFooterComponent={listFooter}
           />
         )}
 
@@ -1095,7 +1214,7 @@ export default function LogMealScreen() {
                 // Borderless field inside the bordered container: focus draws
                 // on the container via .logmeal-search-input in global.css.
                 className="logmeal-search-input"
-                placeholder={category === "meals" ? "Search meals…" : "Search foods…"}
+                placeholder={searchPlaceholder}
                 placeholderTextColor={colors.textMuted}
                 value={query}
                 onChangeText={setQuery}
@@ -1104,7 +1223,7 @@ export default function LogMealScreen() {
                 returnKeyType="search"
                 enterKeyHint="search"
                 onSubmitEditing={() => searchInputRef.current?.blur()}
-                accessibilityLabel="Search foods"
+                accessibilityLabel={searchPlaceholder}
               />
               {query.length > 0 ? (
                 <Pressable
@@ -1124,11 +1243,11 @@ export default function LogMealScreen() {
               hitSlop={8}
               style={styles.searchFab}
               accessibilityRole="button"
-              accessibilityLabel="Search foods"
+              accessibilityLabel={searchPlaceholder}
             >
               <Feather name="search" size={20} color={colors.textMuted} />
-              <Text style={styles.searchFabText}>
-                {category === "meals" ? "Search meals…" : "Search foods…"}
+              <Text style={styles.searchFabText} numberOfLines={1}>
+                {searchPlaceholder}
               </Text>
             </Pressable>
           )}
@@ -1656,17 +1775,80 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    contextualWrap: {
-      paddingTop: spacing.md,
-      marginHorizontal: spacing.md,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
+    emptyActionBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      backgroundColor: colors.surfaceAlt,
     },
-    contextualTitle: {
-      fontSize: 14,
+    emptyActionText: {
+      fontSize: 11.5,
       fontWeight: "700",
-      color: colors.textMuted,
-      marginBottom: spacing.xs,
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    searchAllFooter: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginHorizontal: spacing.md,
+      marginTop: spacing.xs,
+      marginBottom: spacing.md,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      backgroundColor: colors.surfaceAlt,
+    },
+    searchAllFooterText: {
+      fontSize: 11.5,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    filterStatusRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.md,
+      paddingVertical: 6,
+      marginHorizontal: spacing.md,
+      marginBottom: 6,
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      borderRadius: radii.none,
+    },
+    filterStatusLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      flex: 1,
+      minWidth: 0,
+    },
+    filterStatusText: {
+      fontSize: 10.5,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      flex: 1,
+    },
+    filterStatusClear: {
+      fontSize: 10.5,
+      fontWeight: "800",
+      fontFamily: fonts.mono,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      paddingLeft: 6,
     },
     reorderBar: {
       flexDirection: "row",
