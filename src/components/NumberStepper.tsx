@@ -25,6 +25,8 @@ type NumberStepperProps = {
   accessibilityLabel: string
   placeholder?: string
   onSubmit?: () => void
+  onFocus?: () => void
+  onBlur?: () => void
   style?: StyleProp<ViewStyle>
 }
 
@@ -44,6 +46,8 @@ export function NumberStepper({
   accessibilityLabel,
   placeholder,
   onSubmit,
+  onFocus,
+  onBlur,
   style,
 }: NumberStepperProps) {
   const { colors } = useTheme()
@@ -62,16 +66,21 @@ export function NumberStepper({
   }, [value])
 
   const [ghost, setGhost] = useState("")
+  const [isFocused, setIsFocused] = useState(false)
 
   const handleFocus = useCallback(() => {
+    setIsFocused(true)
     setGhost(value)
-  }, [value])
+    onFocus?.()
+  }, [onFocus, value])
 
   const handleBlur = useCallback(() => {
+    setIsFocused(false)
     if (value === "" && ghost !== "") {
       onChangeText(ghost)
     }
-  }, [ghost, onChangeText, value])
+    onBlur?.()
+  }, [ghost, onBlur, onChangeText, value])
 
   const stepBy = useCallback(
     (direction: 1 | -1) => {
@@ -120,6 +129,7 @@ export function NumberStepper({
   return (
     <View style={[styles.row, sm && styles.rowSm, style]}>
       <Pressable
+        testID="stepper-minus"
         onPress={() => stepBy(-1)}
         onLongPress={() => startRepeat(-1)}
         onPressIn={minusPress.onPressIn}
@@ -150,6 +160,7 @@ export function NumberStepper({
           styles.input,
           sm && styles.inputSm,
           inputWidth != null ? { width: inputWidth } : null,
+          isFocused && styles.inputFocused,
         ]}
         keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "decimal-pad"}
         enterKeyHint="done"
@@ -167,6 +178,7 @@ export function NumberStepper({
         maxFontSizeMultiplier={2}
       />
       <Pressable
+        testID="stepper-plus"
         onPress={() => stepBy(1)}
         onLongPress={() => startRepeat(1)}
         onPressIn={plusPress.onPressIn}
@@ -247,5 +259,9 @@ const createStyles = (colors: ColorPalette) =>
       fontVariant: ["tabular-nums"],
       textTransform: "uppercase",
       letterSpacing: 0.4,
+    },
+    inputFocused: {
+      borderColor: colors.primary,
+      backgroundColor: `${colors.primary}0D`,
     },
   })

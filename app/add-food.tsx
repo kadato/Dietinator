@@ -1,13 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native"
+import { View, Text, StyleSheet, Pressable, ScrollView, Keyboard } from "react-native"
+import { useKeyboardHeight } from "@/hooks/useKeyboardVisible"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useLocalSearchParams } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
@@ -142,6 +135,7 @@ export default function AddFoodScreen() {
   const { isWide } = useLayout()
   const { showError, showWarning } = useToast()
   const insets = useSafeAreaInsets()
+  const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight()
   const params = useLocalSearchParams<{
     meal: string
     date: string
@@ -354,6 +348,7 @@ export default function AddFoodScreen() {
   }
 
   const handleSave = async () => {
+    Keyboard.dismiss()
     if (saving) return
     if (!food) return
     const amt = Number(amount)
@@ -416,15 +411,11 @@ export default function AddFoodScreen() {
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`
 
   const TOP_OFFSET = 44
-  const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
-  const safeTop = baseTop + TOP_OFFSET
+  const safeBottom = insets.bottom
+  const dockBottomMargin = keyboardHeight > 0 ? Math.max(0, keyboardHeight - safeBottom) : 0
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={safeTop}
-    >
+    <View style={styles.container}>
       <ModalContainer maxWidth={560} topOffset={TOP_OFFSET}>
         <ScrollView
           style={styles.scroll}
@@ -522,22 +513,47 @@ export default function AddFoodScreen() {
         </ScrollView>
 
         {/* Bottom portion dock: exact amount, serving presets, save. Pinned
-            for thumb reach so the primary controls never scroll away. */}
-        <View style={styles.bottomDock}>
-          <View style={styles.portionCard}>
+            for thumb reach so the primary controls never scroll away.
+            When keyboard is open on phone, dynamically lifts above the software keyboard
+            so the amount input and save controls remain fully in view. */}
+        <View
+          style={[
+            styles.bottomDock,
+            dockBottomMargin > 0 && { marginBottom: dockBottomMargin },
+            isKeyboardVisible && styles.bottomDockKeyboard,
+          ]}
+        >
+          <View style={[styles.portionCard, isKeyboardVisible && styles.portionCardKeyboard]}>
             <View style={styles.portionHeaderRow}>
-              <Text style={styles.portionTitle}>Portion and Serving</Text>
+              <Text style={styles.portionTitle} numberOfLines={1}>
+                Portion & Serving
+              </Text>
               <View style={styles.headerBadgeGroup}>
                 {portionSummary?.isPiece ? (
                   <View style={styles.pieceCountBadge}>
-                    <Text style={styles.pieceCountBadgeText}>{portionSummary.countText}</Text>
+                    <Text style={styles.pieceCountBadgeText} numberOfLines={1} ellipsizeMode="tail">
+                      {portionSummary.countText}
+                    </Text>
                   </View>
                 ) : null}
-                <Text style={styles.unitBadge}>
-                  {isCountableUnit(unit)
-                    ? `Unit: ${formatUnitName(unit, 2)}`
-                    : `Base unit: ${displayUnit(unit)}`}
-                </Text>
+                <View style={styles.unitBadge}>
+                  <Text style={styles.unitBadgeText} numberOfLines={1}>
+                    {isCountableUnit(unit)
+                      ? `Unit: ${formatUnitName(unit, 2)}`
+                      : `Base: ${displayUnit(unit)}`}
+                  </Text>
+                </View>
+                {isKeyboardVisible ? (
+                  <Pressable
+                    onPress={() => Keyboard.dismiss()}
+                    hitSlop={8}
+                    style={styles.keyboardDismissBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Dismiss keyboard"
+                  >
+                    <Feather name="chevron-down" size={14} color={colors.textMuted} />
+                  </Pressable>
+                ) : null}
               </View>
             </View>
 
@@ -573,7 +589,7 @@ export default function AddFoodScreen() {
             ) : null}
 
             {/* Amount Stepper Control */}
-            <View style={styles.stepperContainer}>
+            <View style={[styles.stepperContainer, isKeyboardVisible && { marginVertical: 0 }]}>
               <View style={styles.stepperWrapper}>
                 <NumberStepper
                   value={amount}
@@ -585,48 +601,58 @@ export default function AddFoodScreen() {
                   step={stepperStep}
                   decimals={unit === "g" || unit === "ml" ? 1 : 0}
                   accessibilityLabel={`Amount in ${displayUnit(unit)}`}
+                  inputWidth={100}
                 />
-                <Text style={styles.stepperUnitLabel}>
+                <Text style={styles.stepperUnitLabel} numberOfLines={1}>
                   {isCountableUnit(unit) ? formatUnitName(unit, Number(amount) || 1) : unit}
                 </Text>
               </View>
 
               {portionSummary?.isPiece ? (
-                <View style={styles.glanceableCallout}>
-                  <Text style={styles.glanceableCalloutMain}>{portionSummary.countText}</Text>
+                <View style={[styles.glanceableCallout, isKeyboardVisible && { marginTop: 4 }]}>
+                  <Text style={styles.glanceableCalloutMain} numberOfLines={1}>
+                    {portionSummary.countText}
+                  </Text>
                   {portionSummary.subText ? (
-                    <Text style={styles.glanceableCalloutSub}>({portionSummary.subText})</Text>
+                    <Text style={styles.glanceableCalloutSub} numberOfLines={1}>
+                      ({portionSummary.subText})
+                    </Text>
                   ) : null}
                 </View>
               ) : null}
             </View>
 
             {/* Quick Multiplier Chips */}
-            <View style={styles.multiplierRow}>
-              {[0.5, 1, 1.5, 2, 3].map((mult) => (
-                <Pressable
-                  key={mult}
-                  onPress={() => {
-                    const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
-                    const val = Math.round(base * mult * 10) / 10
-                    amountTouched.current = true
-                    setAmount(String(val))
-                  }}
-                  style={styles.multiplierChip}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Scale to ${mult}x serving`}
-                >
-                  <Text style={styles.multiplierText}>{mult}×</Text>
-                </Pressable>
-              ))}
-            </View>
+            {!isKeyboardVisible && (
+              <View style={styles.multiplierRow}>
+                {[0.5, 1, 1.5, 2, 3].map((mult) => (
+                  <Pressable
+                    key={mult}
+                    onPress={() => {
+                      const base = food.serving.amount || (unit === "g" || unit === "ml" ? 100 : 1)
+                      const val = Math.round(base * mult * 10) / 10
+                      amountTouched.current = true
+                      setAmount(String(val))
+                    }}
+                    style={styles.multiplierChip}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Scale to ${mult}x serving`}
+                  >
+                    <Text style={styles.multiplierText}>{mult}×</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.dockActionRow}>
             <Pressable
-              onPress={safeBack}
+              onPress={() => {
+                Keyboard.dismiss()
+                safeBack()
+              }}
               hitSlop={8}
-              style={styles.dockBackBtn}
+              style={[styles.dockBackBtn, isKeyboardVisible && { minHeight: 46, height: 46 }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
@@ -636,13 +662,17 @@ export default function AddFoodScreen() {
               onPress={() => void handleSave()}
               disabled={saving}
               hitSlop={8}
-              style={[styles.dockSaveBtn, saving && styles.dockSaveBtnDisabled]}
+              style={[
+                styles.dockSaveBtn,
+                saving && styles.dockSaveBtnDisabled,
+                isKeyboardVisible && { minHeight: 46, height: 46 },
+              ]}
               accessibilityRole="button"
               accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
               accessibilityState={{ disabled: saving }}
             >
               <Feather name="check" size={20} color={colors.onPrimary} />
-              <Text style={styles.dockSaveText}>
+              <Text style={styles.dockSaveText} numberOfLines={1}>
                 {saving
                   ? "Saving…"
                   : isEditing
@@ -653,7 +683,7 @@ export default function AddFoodScreen() {
           </View>
         </View>
       </ModalContainer>
-    </KeyboardAvoidingView>
+    </View>
   )
 }
 
@@ -755,6 +785,11 @@ const createStyles = (colors: ColorPalette) =>
       paddingBottom: spacing.sm,
       gap: spacing.sm,
     },
+    bottomDockKeyboard: {
+      paddingTop: 4,
+      paddingBottom: 4,
+      gap: 4,
+    },
     dockActionRow: {
       flexDirection: "row",
       alignItems: "stretch",
@@ -803,20 +838,35 @@ const createStyles = (colors: ColorPalette) =>
       padding: spacing.md,
       gap: spacing.sm,
     },
+    portionCardKeyboard: {
+      padding: spacing.sm,
+      gap: 6,
+    },
     portionHeaderRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 2,
+      gap: 6,
+      marginBottom: 4,
+      flexWrap: "wrap",
     },
     portionTitle: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: "700",
       color: colors.text,
       letterSpacing: 0.2,
       fontFamily: fonts.mono,
+      textTransform: "uppercase",
     },
     unitBadge: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: radii.none,
+    },
+    unitBadgeText: {
       fontSize: 11,
       fontWeight: "600",
       color: colors.textMuted,
@@ -860,6 +910,9 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
+      flexWrap: "wrap",
+      flexShrink: 1,
+      justifyContent: "flex-end",
     },
     pieceCountBadge: {
       backgroundColor: `${colors.primary}18`,
@@ -867,6 +920,8 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.primary,
       paddingHorizontal: 6,
       paddingVertical: 2,
+      borderRadius: radii.none,
+      maxWidth: 160,
     },
     pieceCountBadgeText: {
       fontSize: 11,
@@ -874,6 +929,16 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.primary,
       fontFamily: fonts.mono,
       textTransform: "uppercase",
+    },
+    keyboardDismissBtn: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      borderRadius: radii.none,
+      alignItems: "center",
+      justifyContent: "center",
     },
     stepperContainer: {
       alignItems: "center",
@@ -885,6 +950,7 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
+      flexWrap: "nowrap",
     },
     stepperUnitLabel: {
       fontSize: 14,
@@ -892,6 +958,7 @@ const createStyles = (colors: ColorPalette) =>
       color: colors.text,
       fontFamily: fonts.mono,
       minWidth: 28,
+      maxWidth: 90,
     },
     glanceableCallout: {
       flexDirection: "row",

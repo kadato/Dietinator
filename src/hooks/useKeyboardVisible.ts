@@ -1,31 +1,62 @@
 import { useEffect, useState } from "react"
-import { Keyboard, Platform } from "react-native"
+import { Keyboard, LayoutAnimation, Platform } from "react-native"
+
+export interface KeyboardState {
+  keyboardHeight: number
+  isKeyboardVisible: boolean
+}
 
 /**
- * True while the software keyboard is open, but only on iOS. Floating action
- * buttons are hidden while it is true so they never sit behind the keyboard:
- *
- * - On iOS the keyboard overlaps the content, so hiding is required.
- * - On Android `adjustResize` lifts the content (and absolute FABs) above the
- *   keyboard automatically. Hiding is redundant, and a missed
- *   `keyboardDidHide` would leave the button gone for good.
- * - On web react-native-web's Keyboard is a stub and never fires events.
+ * Hook to track software keyboard height and visibility across iOS, Android, and Web.
+ * Smoothly animates on iOS and handles Android and Web visualViewport accurately.
  */
-export function useKeyboardVisible(): boolean {
-  const [visible, setVisible] = useState(false)
-  const enabled = Platform.OS === "ios"
+export function useKeyboardHeight(): KeyboardState {
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   useEffect(() => {
-    if (!enabled) return
-    const showEvent = "keyboardWillShow"
-    const hideEvent = "keyboardWillHide"
-    const show = Keyboard.addListener(showEvent, () => setVisible(true))
-    const hide = Keyboard.addListener(hideEvent, () => setVisible(false))
-    return () => {
-      show.remove()
-      hide.remove()
-    }
-  }, [enabled])
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
 
-  return visible
+    const onShow = (e: { endCoordinates?: { height?: number } }) => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(e.endCoordinates?.height ?? 0)
+    }
+    const onHide = () => {
+      if (Platform.OS === "ios") {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      }
+      setKeyboardHeight(0)
+    }
+
+    const showSub = Keyboard.addListener(showEvent, onShow)
+    const hideSub = Keyboard.addListener(hideEvent, onHide)
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => {
+      const offset = Math.max(0, Math.round(window.innerHeight - vv.height))
+      setKeyboardHeight(offset > 50 ? offset : 0)
+    }
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
+
+  return { keyboardHeight, isKeyboardVisible: keyboardHeight > 0 }
+}
+
+export function useKeyboardVisible(): boolean {
+  return useKeyboardHeight().isKeyboardVisible
 }
