@@ -750,7 +750,7 @@ export default function LogMealScreen() {
             size={14}
             color={colors.textMuted}
           />
-          <Text style={styles.loggedCollapsedTextCompact}>
+          <Text style={styles.loggedCollapsedTextCompact} numberOfLines={1}>
             Logged in {MEAL_LABELS[mealType]} · {loggedEntries.length}{" "}
             {loggedEntries.length === 1 ? "item" : "items"} · {mealKcal} kcal
           </Text>
@@ -1524,6 +1524,7 @@ const createStyles = (colors: ColorPalette) =>
       paddingVertical: spacing.xs,
     },
     loggedCollapsedTextCompact: {
+      flex: 1,
       fontSize: 11,
       fontWeight: "700",
       color: colors.text,

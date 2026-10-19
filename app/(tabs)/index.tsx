@@ -1083,7 +1083,7 @@ export default function TodayScreen() {
                 {nutritionHeader}
                 {entries.length === 0 && !isInitialLoading ? (
                   <Box
-                    className="mb-3 gap-2 border px-4 py-3"
+                    className="mb-3 gap-2 overflow-hidden border px-4 py-3"
                     style={{
                       borderWidth: borders.width,
                       borderColor: colors.primary,
@@ -1096,6 +1096,7 @@ export default function TodayScreen() {
                       <Text
                         size="xs"
                         bold
+                        className="flex-1"
                         style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
                       >
                         Your diary is empty. Tap Log food or a + on Breakfast to start
@@ -1156,7 +1157,7 @@ export default function TodayScreen() {
               {nutritionHeader}
               {entries.length === 0 && !isInitialLoading ? (
                 <Box
-                  className="mb-3 gap-2 border px-4 py-3"
+                  className="mb-3 gap-2 overflow-hidden border px-4 py-3"
                   style={{
                     borderWidth: borders.width,
                     borderColor: colors.primary,
@@ -1169,6 +1170,7 @@ export default function TodayScreen() {
                     <Text
                       size="xs"
                       bold
+                      className="flex-1"
                       style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
                     >
                       Your diary is empty. Tap Log food to start

@@ -318,7 +318,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               </Box>
               <Text
                 size="xs"
-                className="text-center"
+                className="max-w-[260px] text-center"
                 style={{
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"],

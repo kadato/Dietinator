@@ -245,7 +245,7 @@ export const MealSection = memo(function MealSection({
           <Feather name="plus" size={11} color={colors.textMuted} />
           <Text
             size="2xs"
-            className="font-mono uppercase tracking-wider"
+            className="flex-1 font-mono uppercase tracking-wider"
             style={{
               color: colors.textMuted,
               fontFamily: fonts.mono,
