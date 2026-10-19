@@ -21,8 +21,6 @@ import type { DiaryEntry, MealType } from "@/types"
 import { MEAL_LABELS, MEAL_TYPES } from "@/utils/meals"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
-import { Fab } from "@/components/Fab"
-import { FabCluster } from "@/components/FabCluster"
 import { usePressedState } from "@/hooks/usePressedState"
 
 type Props = {
@@ -216,7 +214,7 @@ export function CopyFromDateModal({
             styles.centerWrap,
             {
               justifyContent: isMedium ? "center" : "flex-end",
-              paddingBottom: isMedium ? 24 : safeBottom + 84,
+              paddingBottom: isMedium ? 24 : safeBottom + 16,
             },
           ]}
         >
@@ -383,7 +381,9 @@ export function CopyFromDateModal({
               <View style={styles.previewContent}>
                 {count === 0 ? (
                   <View style={styles.emptyPreview}>
-                    <Feather name="inbox" size={20} color={colors.textMuted} />
+                    <View style={styles.emptyIconBox}>
+                      <Feather name="inbox" size={20} color={colors.textMuted} />
+                    </View>
                     <Text style={styles.emptyText}>
                       No meals on this day. Pick another with a dot.
                     </Text>
@@ -548,13 +548,6 @@ export function CopyFromDateModal({
             </View>
           </View>
         </View>
-
-        <FabCluster
-          bottomOffset={safeBottom + 16}
-          left={
-            <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close copy picker" />
-          }
-        />
       </View>
     </Modal>
   )
@@ -689,6 +682,7 @@ const createStyles = (colors: ColorPalette) =>
       backgroundColor: colors.surfaceAlt,
       padding: spacing.sm,
       height: 260,
+      overflow: "hidden",
     },
     previewHeader: {
       flexDirection: "row",
@@ -700,6 +694,7 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
+      flexShrink: 1,
     },
     previewTitle: {
       fontSize: 13,
@@ -708,6 +703,7 @@ const createStyles = (colors: ColorPalette) =>
       fontFamily: fonts.mono,
       textTransform: "uppercase",
       letterSpacing: 0.04,
+      flexShrink: 1,
     },
     previewMeta: {
       fontSize: 12,
@@ -767,17 +763,30 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     emptyPreview: {
-      flexDirection: "row",
+      flex: 1,
       alignItems: "center",
-      gap: 8,
-      paddingVertical: 32,
+      justifyContent: "center",
+      gap: 10,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    emptyIconBox: {
+      width: 40,
+      height: 40,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      borderRadius: radii.none,
+      alignItems: "center",
       justifyContent: "center",
     },
     emptyText: {
       fontSize: 12,
+      lineHeight: 18,
       color: colors.textMuted,
       fontFamily: fonts.mono,
       textAlign: "center",
+      maxWidth: 240,
     },
     previewList: {
       flex: 1,
