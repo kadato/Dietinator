@@ -1590,22 +1590,9 @@ export default function SettingsScreen() {
             /* 2. SECTION DRILLDOWN VIEW                                  */
             /* ========================================================== */
             <>
-              {/* Section Title */}
-              <Box className="mb-2 flex-row items-center gap-3 pt-1">
-                <Pressable
-                  onPress={backToHub}
-                  accessibilityRole="button"
-                  accessibilityLabel="Back to settings"
-                  hitSlop={8}
-                  className="h-9 w-9 items-center justify-center rounded-none border"
-                  style={{
-                    borderWidth: borders.width,
-                    borderColor: colors.border,
-                    backgroundColor: colors.surface,
-                  }}
-                >
-                  <Feather name="arrow-left" size={16} color={colors.text} />
-                </Pressable>
+              {/* The bottom-left FAB and the system gesture handle back navigation.
+                  The title row keeps no back button. */}
+              <Box className="mb-2 flex-row items-center pt-1">
                 <Text
                   size="2xl"
                   bold

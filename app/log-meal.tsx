@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
+  BackHandler,
+  Platform,
   View,
   Text,
   TextInput,
@@ -131,6 +133,25 @@ export default function LogMealScreen() {
     setSearchOpen(false)
     searchInputRef.current?.blur()
   }, [])
+
+  // System back closes search and the options sheet first. Without that handler the
+  // gesture closes the whole log-meal modal while the user searches.
+  useEffect(() => {
+    if (Platform.OS === "web") return
+    if (!searchOpen && !optionsOpen) return
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (searchOpen) {
+        closeSearch()
+        return true
+      }
+      if (optionsOpen) {
+        setOptionsOpen(false)
+        return true
+      }
+      return false
+    })
+    return () => sub.remove()
+  }, [searchOpen, optionsOpen, closeSearch])
 
   const handleTabPress = useCallback((tabId: ActiveTab) => {
     setReorderFavorites(false)

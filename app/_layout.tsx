@@ -192,7 +192,15 @@ function RootNavigator() {
     <NavigationThemeProvider value={navTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
+          // Use only edge swipe. Full-screen swipe conflicts with horizontal serving
+          // chips, swipeable diary rows, and the calorie ring.
+          fullScreenGestureEnabled: false,
+        }}
       >
         <Stack.Screen name="login" />
         <Stack.Screen name="privacy" />

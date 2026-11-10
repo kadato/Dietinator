@@ -357,7 +357,7 @@ export default function ScanScreen() {
       router.back()
       return
     }
-    router.replace({
+    router.push({
       pathname: "/add-food",
       params: {
         meal: mealType,
