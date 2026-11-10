@@ -323,9 +323,6 @@ export default function StatsScreen() {
           <Text size="2xl" bold style={{ color: colors.textOnBackground }}>
             Stats
           </Text>
-          <Text size="xs" className="mt-1" style={{ color: colors.textMuted }}>
-            Weight, calories and macro trends
-          </Text>
         </Box>
 
         <ScrollView
@@ -432,31 +429,8 @@ export default function StatsScreen() {
                       <Text size="md" bold className="" style={{ color: colors.text }}>
                         Consistency
                       </Text>
-                      <Text size="xs" className="" style={{ color: colors.textMuted }}>
-                        {RANGES.find((r) => r.id === range)?.days} days · {adherence.loggedDays}{" "}
-                        logged
-                      </Text>
                     </Box>
                   </Box>
-                  {logStreak > 2 ? (
-                    <Box
-                      className="flex-row items-center gap-1 rounded-none border px-2 py-1"
-                      style={{
-                        borderWidth: borders.widthThin,
-                        borderColor: colors.warning,
-                        backgroundColor: `${colors.warning}14`,
-                      }}
-                    >
-                      <Feather name="zap" size={12} color={colors.warning} />
-                      <Text
-                        size="xs"
-                        bold
-                        style={{ color: colors.warning, fontFamily: fonts.mono }}
-                      >
-                        {logStreak} day streak
-                      </Text>
-                    </Box>
-                  ) : null}
                 </Box>
 
                 <Box className="mt-3 gap-3">
@@ -490,13 +464,6 @@ export default function StatsScreen() {
                           {" "}
                           days
                         </Text>
-                      </Text>
-                      <Text size="2xs" className="font-mono" style={{ color: colors.textMuted }}>
-                        {logStreak === 0
-                          ? "Log today to start"
-                          : logStreak === 1
-                            ? "Keep going"
-                            : "On fire"}
                       </Text>
                     </Box>
                     <Box
@@ -593,33 +560,6 @@ export default function StatsScreen() {
                       )}
                     </Box>
                   </Box>
-                  <Box className="flex-row items-center gap-1.5 pt-1">
-                    <View
-                      style={{
-                        width: 6,
-                        height: 6,
-                        backgroundColor:
-                          adherence.onTargetPct !== null && adherence.onTargetPct >= 80
-                            ? colors.primary
-                            : colors.warning,
-                        borderWidth: borders.widthThin,
-                        borderColor: colors.border,
-                      }}
-                    />
-                    <Text
-                      size="2xs"
-                      className="font-mono uppercase tracking-widest"
-                      style={{ color: colors.textMuted }}
-                    >
-                      {adherence.onTargetPct !== null
-                        ? adherence.onTargetPct >= 80
-                          ? "Great adherence"
-                          : adherence.onTargetPct >= 50
-                            ? "Steady, aim for 80%"
-                            : "Log more to see pattern"
-                        : "Start logging to see adherence"}
-                    </Text>
-                  </Box>
                 </Box>
               </Card>
 
@@ -674,28 +614,14 @@ export default function StatsScreen() {
                   </Text>
                 </Box>
 
-                {latest && (bmi !== null || goalDelta !== null) ? (
+                {latest && bmi !== null ? (
                   <Box className="mt-2 flex-row flex-wrap gap-x-4 gap-y-1">
-                    {bmi !== null ? (
-                      <Box className="flex-row items-center gap-1">
-                        <Feather name="user" size={13} color={colors.textMuted} />
-                        <Text
-                          size="xs"
-                          bold
-                          className="font-tabular"
-                          style={{ color: colors.text }}
-                        >
-                          BMI {bmi}
-                        </Text>
-                      </Box>
-                    ) : null}
-                    {goalDelta !== null ? (
+                    <Box className="flex-row items-center gap-1">
+                      <Feather name="user" size={13} color={colors.textMuted} />
                       <Text size="xs" bold className="font-tabular" style={{ color: colors.text }}>
-                        {goalDelta <= 0.05
-                          ? "At goal weight"
-                          : `${formatWeight(Math.abs(goalDelta), settings.units)} to goal`}
+                        BMI {bmi}
                       </Text>
-                    ) : null}
+                    </Box>
                   </Box>
                 ) : null}
 
@@ -703,7 +629,7 @@ export default function StatsScreen() {
                   <Box className="mt-3">
                     <Box className="mb-1 flex-row items-center justify-between">
                       <Text size="xs" bold className="" style={{ color: colors.text }}>
-                        {goalProgress >= 1 ? "Goal reached" : "Goal progress"}
+                        Goal ·
                       </Text>
                       {goalProgress < 1 ? (
                         <Text
@@ -850,9 +776,9 @@ export default function StatsScreen() {
                         Calories
                       </Text>
                       <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
-                        Daily average {avgKcal !== null ? `${avgKcal} kcal` : "No data"}
+                        Avg {avgKcal !== null ? `${avgKcal}` : "No data"}
                         {settings.calorie_goal > 0
-                          ? ` · goal ${Math.round(settings.calorie_goal)}`
+                          ? ` · Goal ${Math.round(settings.calorie_goal)}`
                           : ""}
                       </Text>
                     </Box>
@@ -886,11 +812,11 @@ export default function StatsScreen() {
                     className="font-tabular mt-2 px-1"
                     style={{ color: colors.text }}
                   >
-                    {formatDisplayDate(selectedKcal.date)}, {Math.round(selectedKcal.value)} kcal
+                    {formatDisplayDate(selectedKcal.date)} · {Math.round(selectedKcal.value)}
                     {settings.calorie_goal > 0
                       ? selectedKcal.value > settings.calorie_goal
-                        ? ` · +${Math.round(selectedKcal.value - settings.calorie_goal)} over`
-                        : ` · ${Math.round(settings.calorie_goal - selectedKcal.value)} left`
+                        ? ` (+${Math.round(selectedKcal.value - settings.calorie_goal)})`
+                        : ` (-${Math.round(settings.calorie_goal - selectedKcal.value)})`
                       : ""}
                   </Text>
                 ) : null}
@@ -913,9 +839,6 @@ export default function StatsScreen() {
                     <Box>
                       <Text size="md" bold className="" style={{ color: colors.text }}>
                         Macronutrients
-                      </Text>
-                      <Text size="xs" className="" style={{ color: colors.textMuted }}>
-                        Daily average breakdown
                       </Text>
                     </Box>
                   </Box>
@@ -975,15 +898,14 @@ export default function StatsScreen() {
                     className="font-tabular mt-2 px-1"
                     style={{ color: colors.text }}
                   >
-                    {formatDisplayDate(selectedMacro.date)}, {Math.round(selectedMacro.value)}g{" "}
-                    {macroMetric}
+                    {formatDisplayDate(selectedMacro.date)} · {Math.round(selectedMacro.value)}g
                   </Text>
                 ) : null}
 
                 {avgMacros ? (
                   <Box className="mt-3 border-t border-outline-100 pt-3">
                     <Text size="2xs" bold className="mb-2" style={{ color: colors.textMuted }}>
-                      AVERAGE MACRO SPLIT
+                      {" "}
                     </Text>
                     <Box className="flex-row gap-2">
                       <Box
@@ -1010,7 +932,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.textMuted }}
                         >
-                          {avgMacros.proteinPct}%
+                          {" "}
                         </Text>
                       </Box>
                       <Box
@@ -1037,7 +959,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.textMuted }}
                         >
-                          {avgMacros.carbsPct}%
+                          {" "}
                         </Text>
                       </Box>
                       <Box
@@ -1064,7 +986,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.textMuted }}
                         >
-                          {avgMacros.fatPct}%
+                          {" "}
                         </Text>
                       </Box>
                     </Box>
@@ -1090,9 +1012,9 @@ export default function StatsScreen() {
                       Water
                     </Text>
                     <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
-                      Daily intake
+                      Goal
                       {settings.water_goal_ml > 0
-                        ? ` · goal ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
+                        ? ` ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
                         : ""}
                     </Text>
                   </Box>
@@ -1130,12 +1052,12 @@ export default function StatsScreen() {
                     className="font-tabular mt-2 px-1"
                     style={{ color: colors.text }}
                   >
-                    {formatDisplayDate(selectedWater.date)},{" "}
+                    {formatDisplayDate(selectedWater.date)} ·{" "}
                     {formatWaterAmount(selectedWater.value, settings.units)}
                     {settings.water_goal_ml > 0
                       ? selectedWater.value > settings.water_goal_ml
-                        ? " · over goal"
-                        : " · under goal"
+                        ? ` (+${formatWaterAmount(selectedWater.value - settings.water_goal_ml, settings.units)})`
+                        : ` (-${formatWaterAmount(settings.water_goal_ml - selectedWater.value, settings.units)})`
                       : ""}
                   </Text>
                 ) : null}
