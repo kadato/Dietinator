@@ -169,7 +169,6 @@ function GoalInput({
   unit,
   last = false,
   error,
-  inputWidth = 76,
   accent,
   mci,
 }: {
@@ -184,7 +183,6 @@ function GoalInput({
   unit: string
   last?: boolean
   error?: string
-  inputWidth?: number
   /** Accent color for the icon well (macro rows use the meal accents). */
   accent?: string
   /** Render the glyph from MaterialCommunityIcons instead of Feather. */
@@ -194,49 +192,38 @@ function GoalInput({
   const tint = accent ?? colors.primary
 
   return (
-    <View className={`px-4 py-3.5 ${!last ? "border-b border-outline-100" : ""}`}>
-      <View className="flex-row items-center justify-between gap-3">
-        <View className="min-w-0 flex-1 flex-row items-center gap-3">
-          <View
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
-            style={{
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              backgroundColor: `${tint}14`,
-            }}
-          >
-            {mci ? (
-              <MaterialCommunityIcons name={icon as never} size={20} color={tint} />
-            ) : (
-              <Feather name={icon as IconName} size={20} color={tint} />
-            )}
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text size="sm" bold className="" style={{ color: colors.text }}>
-              {label}
-            </Text>
-            {unit ? (
-              <Text size="xs" className="" style={{ color: colors.textMuted }}>
-                {unit}
-              </Text>
-            ) : null}
-          </View>
+    <View className={`gap-2 px-4 py-3 ${!last ? "border-b border-outline-100" : ""}`}>
+      <View className="flex-row items-center gap-3">
+        <View
+          className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
+          style={{
+            borderWidth: borders.width,
+            borderColor: colors.border,
+            borderRadius: radii.none,
+            backgroundColor: `${tint}14`,
+          }}
+        >
+          {mci ? (
+            <MaterialCommunityIcons name={icon as never} size={20} color={tint} />
+          ) : (
+            <Feather name={icon as IconName} size={20} color={tint} />
+          )}
         </View>
-
-        <View className="flex-row items-center gap-2">
-          <NumberStepper
-            value={value}
-            onChangeText={onChange}
-            onSubmit={onSubmit}
-            step={step}
-            min={min}
-            size="sm"
-            inputWidth={inputWidth}
-            accessibilityLabel={`${label} in ${unit}`}
-          />
-        </View>
+        <Text size="sm" bold className="min-w-0 flex-1" style={{ color: colors.text }}>
+          {label}
+        </Text>
       </View>
+
+      <NumberStepper
+        value={value}
+        onChangeText={onChange}
+        onSubmit={onSubmit}
+        step={step}
+        min={min}
+        unit={unit}
+        style={{ flex: 1 }}
+        accessibilityLabel={`${label} in ${unit}`}
+      />
       {error ? (
         <Text size="xs" bold className="mt-1" style={{ color: colors.danger }}>
           {error}
@@ -484,7 +471,7 @@ function GoalsSettings({
         <GoalInput
           icon="box"
           accent={colors.lunch}
-          label="Carbohydrates"
+          label="Carbs"
           value={carbsGoal}
           onChange={setCarbsGoal}
           onSubmit={saveGoals}
@@ -553,13 +540,13 @@ function GoalsSettings({
           </View>
           <View className="mt-2 flex-row items-center justify-between text-xs">
             <Text size="xs" bold style={{ color: colors.breakfast }}>
-              Protein {pPct}% ({Math.round(p)}g)
+              Protein {pPct}%
             </Text>
             <Text size="xs" bold style={{ color: colors.lunch }}>
-              Carbs {cPct}% ({Math.round(c)}g)
+              Carbs {cPct}%
             </Text>
             <Text size="xs" bold style={{ color: colors.dinner }}>
-              Fat {fPct}% ({Math.round(f)}g)
+              Fat {fPct}%
             </Text>
           </View>
         </View>
@@ -568,7 +555,7 @@ function GoalsSettings({
       <SettingsSection title="Body and hydration">
         <GoalInput
           icon="droplet"
-          label="Water intake goal"
+          label="Water"
           value={waterGoal}
           onChange={setWaterGoal}
           onSubmit={saveGoals}
@@ -590,7 +577,7 @@ function GoalsSettings({
         />
         <GoalInput
           icon="activity"
-          label="Target weight"
+          label="Weight"
           value={targetWeight}
           onChange={setTargetWeight}
           onSubmit={saveGoals}
@@ -1016,7 +1003,7 @@ function AiSettingsForm({
               className="font-mono uppercase tracking-widest"
               style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
-              {fetchedModels.length} models available — tap to select
+              {fetchedModels.length} models available. Tap to select
             </Text>
             <Box className="flex-row flex-wrap gap-1.5">
               {fetchedModels.map((model) => (
@@ -1565,7 +1552,7 @@ export default function SettingsScreen() {
                           ) : (
                             <Text
                               size="xs"
-                              numberOfLines={2}
+                              numberOfLines={1}
                               className="mt-1"
                               style={{ color: colors.textMuted }}
                             >
@@ -1756,11 +1743,6 @@ export default function SettingsScreen() {
                     <SettingsRow
                       icon="activity"
                       title="Units"
-                      subtitle={
-                        settings.units === "imperial"
-                          ? "Weight and water in pounds and fluid ounces"
-                          : "Weight and water in kilograms and liters"
-                      }
                       stackOnNarrow
                       right={
                         <SegmentedControl
@@ -1842,7 +1824,7 @@ export default function SettingsScreen() {
                     <SettingsRow
                       icon="download-cloud"
                       title="Check for updates"
-                      subtitle="Look for new versions on GitHub when the app starts"
+                      subtitle="On startup"
                       right={
                         <Switch
                           value={settings.update_check_enabled === 1}
@@ -1860,7 +1842,7 @@ export default function SettingsScreen() {
                     <SettingsRow
                       icon="refresh-cw"
                       title={checking ? "Checking…" : "Check now"}
-                      subtitle={`Version ${getCurrentVersion()} · releases on GitHub`}
+                      subtitle={`v${getCurrentVersion()}`}
                       last
                       onPress={() => void checkForUpdates({ manual: true })}
                       accessibilityLabel="Check for updates now"
@@ -1869,7 +1851,7 @@ export default function SettingsScreen() {
                 </>
               ) : null}
 
-              {/* YAZIO Sync — now under Data and Sync */}
+              {/* YAZIO Sync, now under Data and Sync */}
               {effectiveSectionId === "data" ? (
                 <SettingsSection title="YAZIO Cloud Sync">
                   {/* Connectivity Status Banner */}
@@ -1911,16 +1893,16 @@ export default function SettingsScreen() {
                     >
                       {authenticated
                         ? settings.yazio_sync_enabled === 1
-                          ? "CLOUD SYNC: ACTIVE (BEST-EFFORT)"
-                          : "CLOUD SYNC: PAUSED (LOCAL-ONLY)"
-                        : "CLOUD SYNC: DISCONNECTED (NOT LOGGED IN)"}
+                          ? "Sync on"
+                          : "Sync paused"
+                        : "Sync off"}
                     </Text>
                   </View>
 
                   <SettingsRow
                     icon="repeat"
                     title="Automatic Cloud Sync"
-                    subtitle="Push diary entries to YAZIO automatically as you log them"
+                    subtitle="As you log"
                     right={
                       <Switch
                         value={settings.yazio_sync_enabled === 1}
@@ -1970,7 +1952,7 @@ export default function SettingsScreen() {
                           letterSpacing: 0.08,
                         }}
                       >
-                        Sync Pending Entries Now
+                        Sync now
                       </Text>
                     </Pressable>
 
@@ -2018,7 +2000,7 @@ export default function SettingsScreen() {
                           letterSpacing: 0.08,
                         }}
                       >
-                        Import Today From YAZIO
+                        Import today
                       </Text>
                     </Pressable>
                   </View>
@@ -2031,25 +2013,25 @@ export default function SettingsScreen() {
                   <SettingsRow
                     icon="download"
                     title="Export diary (JSON)"
-                    subtitle="All entries as a JSON file"
+                    subtitle="JSON file"
                     onPress={() => void handleExport("json")}
                   />
                   <SettingsRow
                     icon="file-text"
                     title="Export diary (CSV)"
-                    subtitle="All entries as a spreadsheet file"
+                    subtitle="CSV file"
                     onPress={() => void handleExport("csv")}
                   />
                   <SettingsRow
                     icon="archive"
                     title="Back up all data"
-                    subtitle="Diary, cached foods and meals in one file"
+                    subtitle="One file"
                     onPress={handleBackup}
                   />
                   <SettingsRow
                     icon="inbox"
                     title="Restore from backup"
-                    subtitle="Replace local data with a backup file"
+                    subtitle="From file"
                     onPress={() =>
                       confirmAction({
                         title: "Restore backup?",
@@ -2063,7 +2045,7 @@ export default function SettingsScreen() {
                   <SettingsRow
                     icon="trash-2"
                     title="Clear food cache"
-                    subtitle="Remove cached YAZIO foods"
+                    subtitle="Cached foods"
                     danger
                     last
                     onPress={() => {
@@ -2085,14 +2067,14 @@ export default function SettingsScreen() {
                 </SettingsSection>
               ) : null}
 
-              {/* Account and About — includes AI config, previously its own tile */}
+              {/* Account and About, includes AI config, previously its own tile */}
               {effectiveSectionId === "account" ? (
                 <>
                   <SettingsSection title="AI Assistant">
                     <SettingsRow
                       icon="cpu"
                       title="Enable AI Assistant"
-                      subtitle="Chat with your diary. Key and data stay on this device. Full config in the AI tab."
+                      subtitle="On-device key"
                       right={
                         <Switch
                           value={settings.ai_enabled === 1}
@@ -2119,7 +2101,7 @@ export default function SettingsScreen() {
                         <AiSettingsForm settings={settings} onDirtyChange={setAiDirty} />
                         <View className="border-t border-outline-100 p-4">
                           <Text size="xs" className="" style={{ color: colors.textMuted }}>
-                            AI provider config below. Also open chat in the AI tab.
+                            Config below.
                           </Text>
                           <Pressable
                             onPress={() => router.push("/(tabs)/ai")}
@@ -2238,7 +2220,7 @@ export default function SettingsScreen() {
                     <SettingsRow
                       icon="info"
                       title="Dietinator"
-                      subtitle={`Version ${getCurrentVersion()} · Local-first tracker`}
+                      subtitle={`v${getCurrentVersion()}`}
                       last
                     />
                   </SettingsSection>

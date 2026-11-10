@@ -11,8 +11,8 @@ import { useSafeBack } from "@/hooks/useSafeBack"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
 import { useKeyboardHeight } from "@/hooks/useKeyboardVisible"
 import { routeParam } from "@/utils/route"
-import { toDateKey, formatDisplayDate } from "@/utils/date"
-import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
+import { toDateKey } from "@/utils/date"
+import { MEAL_ICONS } from "@/utils/meals"
 import { ModalContainer } from "@/components/ModalContainer"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
@@ -192,11 +192,11 @@ export default function ManualEntryScreen() {
     }
   }
 
-  const TOP_OFFSET = 44
+  const TOP_OFFSET = 110
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
   const safeTop = baseTop + TOP_OFFSET
-  const fabBottomOffset = keyboardHeight > 0 ? keyboardHeight + 12 : safeBottom + 20
+  const fabBottomOffset = keyboardHeight > 0 ? keyboardHeight + 12 : safeBottom + 16
 
   return (
     <KeyboardAvoidingView
@@ -204,7 +204,7 @@ export default function ManualEntryScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={safeTop}
     >
-      <ModalContainer maxWidth={520} outerClassName="" topOffset={TOP_OFFSET}>
+      <ModalContainer maxWidth={520} outerClassName="justify-end" topOffset={TOP_OFFSET}>
         <Box className="flex-row items-center gap-3 px-4 pb-2 pt-3">
           <Box
             className="h-10 w-10 items-center justify-center rounded-none border"
@@ -230,17 +230,10 @@ export default function ManualEntryScreen() {
             >
               {isQuickAdd ? "Quick Add" : "New Food"}
             </Text>
-            <Text
-              size="xs"
-              className="mt-0.5 font-mono uppercase tracking-widest"
-              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
-            >
-              {MEAL_LABELS[mealType]} · {formatDisplayDate(date)}
-            </Text>
           </Box>
         </Box>
         <ScrollView
-          className="flex-1"
+          className="shrink grow-0"
           contentContainerClassName="px-4 pb-28 pt-2"
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -273,7 +266,7 @@ export default function ManualEntryScreen() {
             </>
           ) : null}
 
-          <Text style={styles.label}>Calories (kcal)</Text>
+          <Text style={styles.label}>Calories</Text>
           <NumberStepper
             value={kcal}
             onChangeText={setKcal}
@@ -281,11 +274,11 @@ export default function ManualEntryScreen() {
             step={10}
             min={0}
             accessibilityLabel="Calories"
+            unit="kcal"
             placeholder="0"
             style={{ marginBottom: spacing.md }}
           />
 
-          <Text style={styles.label}>Nutrient Breakdown</Text>
           <Box className="gap-2">
             <MacroInput
               icon="zap"

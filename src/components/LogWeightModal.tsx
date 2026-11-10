@@ -135,19 +135,13 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
           },
         ]}
       >
-        <ModalHeader
-          icon="activity"
-          accent={accent}
-          title="Log weight"
-          subtitle={isImperial(settings.units) ? "Pounds · BMI on save" : "Kilograms · BMI on save"}
-        />
+        <ModalHeader icon="activity" accent={accent} title="Log weight" />
         <ScrollView
           style={{ flexGrow: 0 }}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.label}>Date</Text>
           <Pressable
             style={[styles.dateRow, datePress.pressed && styles.pressed]}
             onPress={() => setPickerOpen(true)}
@@ -173,8 +167,8 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
             <Feather name="chevron-right" size={16} color={colors.textMuted} />
           </Pressable>
 
-          <Text style={styles.label}>Weight ({isImperial(settings.units) ? "lb" : "kg"})</Text>
-          <Box className="flex-row items-center justify-center gap-2">
+          <Text style={styles.label}>Weight</Text>
+          <Box className="flex-row items-center gap-2">
             <NumberStepper
               value={weightText}
               onChangeText={setWeightText}
@@ -183,21 +177,9 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
               decimals={1}
               accessibilityLabel="Weight"
               placeholder={isImperial(settings.units) ? "165.4" : "75.2"}
+              unit={isImperial(settings.units) ? "lb" : "kg"}
               style={{ flex: 1 }}
             />
-            <Text
-              size="sm"
-              bold
-              style={{
-                fontFamily: fonts.mono,
-                fontVariant: ["tabular-nums"],
-                textTransform: "uppercase",
-                letterSpacing: 0.4,
-                color: colors.textMuted,
-              }}
-            >
-              {isImperial(settings.units) ? "lb" : "kg"}
-            </Text>
           </Box>
 
           {bmi !== null ? (
@@ -223,19 +205,6 @@ export function LogWeightModal({ visible, initialDateKey, onClose, onSaved }: Pr
                   }}
                 >
                   BMI {bmi}
-                </Text>
-                <Text
-                  size="2xs"
-                  className="font-tabular"
-                  style={{
-                    fontFamily: fonts.mono,
-                    fontVariant: ["tabular-nums"],
-                    textTransform: "uppercase",
-                    letterSpacing: 0.4,
-                    color: colors.textMuted,
-                  }}
-                >
-                  Height: {settings.height_cm} cm
                 </Text>
               </Box>
               <Text

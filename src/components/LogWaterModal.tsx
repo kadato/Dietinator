@@ -136,19 +136,10 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           isMedium ? styles.dialogBodyWide : undefined,
         ]}
       >
-        <ModalHeader
-          icon="droplet"
-          accent={accent}
-          title="Water"
-          subtitle={
-            goalMl > 0
-              ? `${formatWaterAmount(totalMl, settings.units)} of ${formatWaterAmount(goalMl, settings.units)}`
-              : formatDisplayDate(dateKey)
-          }
-        />
+        <ModalHeader icon="droplet" accent={accent} title="Water" />
         <ScrollView
           style={{ flexGrow: 0 }}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, paddingTop: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12 }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
@@ -226,16 +217,14 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
             ) : null}
           </Box>
 
-          <Text style={styles.label}>
-            Quick add ({settings.units === "imperial" ? "fl oz" : "ml"})
-          </Text>
+          <Text style={styles.label}>Quick add</Text>
           <Box className="mb-3 flex-row flex-wrap gap-2">
             {QUICK_AMOUNTS.map((amount) => {
               const isImperial = settings.units === "imperial"
               const label = isImperial
                 ? `+${formatWaterAmount(amount, settings.units)}`
-                : `+${amount}`
-              const a11y = isImperial ? formatWaterAmount(amount, settings.units) : `${amount} ml`
+                : `+${amount}ml`
+              const a11y = isImperial ? formatWaterAmount(amount, settings.units) : `${amount}ml`
               return (
                 <Pressable
                   key={amount}
@@ -272,7 +261,7 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           </Box>
 
           <Text style={styles.label}>Custom amount</Text>
-          <Box className="flex-row items-center justify-center gap-2">
+          <Box className="flex-row items-center gap-2">
             <NumberStepper
               value={customMl}
               onChangeText={setCustomMl}
@@ -280,26 +269,9 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
               step={50}
               accessibilityLabel="Water amount in ml"
               placeholder="200"
-              style={{ flexGrow: 0 }}
+              unit="ml"
+              style={{ flex: 1 }}
             />
-            <Pressable
-              onPress={() => handleAdd(Number(customMl) || 0)}
-              disabled={saving || !(Number(customMl) > 0)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Log custom water amount"
-              className="h-10 items-center justify-center rounded-none border px-4"
-              style={{
-                backgroundColor: accent,
-                borderWidth: borders.width,
-                borderColor: accent,
-                borderRadius: radii.none,
-                opacity: saving || !(Number(customMl) > 0) ? 0.5 : 1,
-                elevation: 0,
-              }}
-            >
-              <Feather name="plus" size={18} color={colors.onPrimary} />
-            </Pressable>
           </Box>
 
           {entries.length === 0 ? (
@@ -327,12 +299,11 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
                   color: colors.textMuted,
                 }}
               >
-                Nothing logged for this day yet.
+                No water yet.
               </Text>
             </Box>
           ) : (
             <Box className="mt-4">
-              <Text style={styles.label}>Logged pours</Text>
               {entries.map((entry) => (
                 <Box
                   key={entry.id}
@@ -435,6 +406,14 @@ export function LogWaterModal({ visible, initialDateKey, onClose, onSaved }: Pro
           bottomOffset={safeBottom + 16}
           left={
             <Fab icon="x" tone="surface" onPress={onClose} accessibilityLabel="Close water modal" />
+          }
+          right={
+            <Fab
+              icon="check"
+              onPress={() => handleAdd(Number(customMl) || 0)}
+              disabled={saving || !(Number(customMl) > 0)}
+              accessibilityLabel="Log custom water amount"
+            />
           }
         />
       </View>

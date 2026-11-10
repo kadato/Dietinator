@@ -3,6 +3,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   TextInput,
   View,
   type StyleProp,
@@ -22,6 +23,9 @@ type NumberStepperProps = {
   min?: number
   size?: "md" | "sm"
   inputWidth?: number
+  /** Unit shown inside the input box (for example "g" or "kcal"), so the
+      plus and minus keys stay at the container edges. */
+  unit?: string
   accessibilityLabel: string
   placeholder?: string
   onSubmit?: () => void
@@ -43,6 +47,7 @@ export function NumberStepper({
   min = 0,
   size = "md",
   inputWidth,
+  unit,
   accessibilityLabel,
   placeholder,
   onSubmit,
@@ -126,6 +131,31 @@ export function NumberStepper({
   )
   useEffect(() => stopRepeat, [stopRepeat])
 
+  const textField = (
+    <TextInput
+      style={[
+        unit ? styles.inputInner : styles.input,
+        sm && (unit ? styles.inputInnerSm : styles.inputSm),
+        unit ? { width: inputWidth ?? 64 } : inputWidth != null ? { width: inputWidth } : null,
+        !unit && isFocused ? styles.inputFocused : null,
+      ]}
+      keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "decimal-pad"}
+      enterKeyHint="done"
+      value={value}
+      onChangeText={handleTextChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      selectTextOnFocus
+      placeholder={placeholder}
+      placeholderTextColor={colors.textMuted}
+      returnKeyType="done"
+      blurOnSubmit={true}
+      onSubmitEditing={onSubmit}
+      accessibilityLabel={accessibilityLabel}
+      maxFontSizeMultiplier={2}
+    />
+  )
+
   return (
     <View style={[styles.row, sm && styles.rowSm, style]}>
       <Pressable
@@ -155,28 +185,21 @@ export function NumberStepper({
           color={minusDisabled ? colors.textMuted : colors.text}
         />
       </Pressable>
-      <TextInput
-        style={[
-          styles.input,
-          sm && styles.inputSm,
-          inputWidth != null ? { width: inputWidth } : null,
-          isFocused && styles.inputFocused,
-        ]}
-        keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "decimal-pad"}
-        enterKeyHint="done"
-        value={value}
-        onChangeText={handleTextChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        selectTextOnFocus
-        placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
-        returnKeyType="done"
-        blurOnSubmit={true}
-        onSubmitEditing={onSubmit}
-        accessibilityLabel={accessibilityLabel}
-        maxFontSizeMultiplier={2}
-      />
+      {unit ? (
+        <View
+          style={[
+            styles.inputWrap,
+            sm && styles.inputWrapSm,
+            inputWidth != null ? { width: inputWidth } : styles.inputWrapFlex,
+            isFocused && styles.inputWrapFocused,
+          ]}
+        >
+          {textField}
+          <Text style={styles.unitSuffix}>{unit}</Text>
+        </View>
+      ) : (
+        textField
+      )}
       <Pressable
         testID="stepper-plus"
         onPress={() => stepBy(1)}
@@ -204,12 +227,14 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
-      justifyContent: "center",
+      justifyContent: "space-between",
+      width: "100%",
     },
-    rowSm: { gap: 6 },
+    rowSm: { gap: 6, justifyContent: "flex-end", width: "auto", flexShrink: 0 },
     btn: {
       width: 44,
       height: 44,
+      flexShrink: 0,
       borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
@@ -223,9 +248,8 @@ const createStyles = (colors: ColorPalette) =>
     btnDisabled: { opacity: 0.4 },
     btnPressed: { opacity: 0.7 },
     input: {
-      flexGrow: 0,
-      flexShrink: 0,
-      width: 120,
+      flexGrow: 1,
+      flexShrink: 1,
       minWidth: 0,
       height: 44,
       backgroundColor: colors.surface,
@@ -263,5 +287,60 @@ const createStyles = (colors: ColorPalette) =>
     inputFocused: {
       borderColor: colors.primary,
       backgroundColor: `${colors.primary}0D`,
+    },
+    inputWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      height: 44,
+      minWidth: 0,
+      backgroundColor: colors.surface,
+      borderRadius: radii.none,
+      borderWidth: borders.width,
+      borderColor: colors.border,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    inputWrapSm: {
+      height: 36,
+    },
+    inputWrapFlex: {
+      flexGrow: 1,
+      flexShrink: 1,
+    },
+    inputWrapFocused: {
+      borderColor: colors.primary,
+      backgroundColor: `${colors.primary}0D`,
+    },
+    inputInner: {
+      flexShrink: 0,
+      minWidth: 0,
+      height: "100%",
+      backgroundColor: "transparent",
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: "700",
+      textAlign: "right",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      letterSpacing: 0.4,
+      boxShadow: "none",
+      elevation: 0,
+    },
+    inputInnerSm: {
+      paddingHorizontal: 0,
+      fontSize: 14,
+    },
+    unitSuffix: {
+      flexShrink: 0,
+      paddingLeft: 6,
+      paddingRight: spacing.sm,
+      color: colors.textMuted,
+      fontSize: 14,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
     },
   })

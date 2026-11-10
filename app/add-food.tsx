@@ -410,7 +410,7 @@ export default function AddFoodScreen() {
   const unit = food.base_unit || "g"
   const selectedServingKey = `${food.serving.serving}-${food.serving.amount}`
 
-  const TOP_OFFSET = 44
+  const TOP_OFFSET = 24
   const safeBottom = insets.bottom
   const dockBottomMargin = keyboardHeight > 0 ? Math.max(0, keyboardHeight - safeBottom) : 0
 
@@ -529,20 +529,6 @@ export default function AddFoodScreen() {
                 Portion & Serving
               </Text>
               <View style={styles.headerBadgeGroup}>
-                {portionSummary?.isPiece ? (
-                  <View style={styles.pieceCountBadge}>
-                    <Text style={styles.pieceCountBadgeText} numberOfLines={1} ellipsizeMode="tail">
-                      {portionSummary.countText}
-                    </Text>
-                  </View>
-                ) : null}
-                <View style={styles.unitBadge}>
-                  <Text style={styles.unitBadgeText} numberOfLines={1}>
-                    {isCountableUnit(unit)
-                      ? `Unit: ${formatUnitName(unit, 2)}`
-                      : `Base: ${displayUnit(unit)}`}
-                  </Text>
-                </View>
                 {isKeyboardVisible ? (
                   <Pressable
                     onPress={() => Keyboard.dismiss()}
@@ -601,11 +587,13 @@ export default function AddFoodScreen() {
                   step={stepperStep}
                   decimals={unit === "g" || unit === "ml" ? 1 : 0}
                   accessibilityLabel={`Amount in ${displayUnit(unit)}`}
-                  inputWidth={100}
+                  unit={
+                    isCountableUnit(unit)
+                      ? formatUnitName(unit, Number(amount) || 1)
+                      : displayUnit(unit)
+                  }
+                  style={{ flex: 1 }}
                 />
-                <Text style={styles.stepperUnitLabel} numberOfLines={1}>
-                  {isCountableUnit(unit) ? formatUnitName(unit, Number(amount) || 1) : unit}
-                </Text>
               </View>
 
               {portionSummary?.isPiece ? (
@@ -613,11 +601,6 @@ export default function AddFoodScreen() {
                   <Text style={styles.glanceableCalloutMain} numberOfLines={1}>
                     {portionSummary.countText}
                   </Text>
-                  {portionSummary.subText ? (
-                    <Text style={styles.glanceableCalloutSub} numberOfLines={1}>
-                      ({portionSummary.subText})
-                    </Text>
-                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -941,24 +924,16 @@ const createStyles = (colors: ColorPalette) =>
       justifyContent: "center",
     },
     stepperContainer: {
-      alignItems: "center",
+      alignItems: "stretch",
       justifyContent: "center",
       marginVertical: 2,
     },
     stepperWrapper: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
+      justifyContent: "space-between",
       gap: 8,
       flexWrap: "nowrap",
-    },
-    stepperUnitLabel: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: colors.text,
-      fontFamily: fonts.mono,
-      minWidth: 28,
-      maxWidth: 90,
     },
     glanceableCallout: {
       flexDirection: "row",
