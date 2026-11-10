@@ -293,7 +293,7 @@ export default function MealBuilderScreen() {
             <Box className="flex-row items-center gap-2">
               <Pressable
                 onPress={handleDuplicate}
-                hitSlop={8}
+                hitSlop={12}
                 className="h-10 w-10 items-center justify-center rounded-none border active:bg-background-200"
                 style={{
                   backgroundColor: colors.surfaceAlt,
@@ -308,7 +308,7 @@ export default function MealBuilderScreen() {
               </Pressable>
               <Pressable
                 onPress={handleDelete}
-                hitSlop={8}
+                hitSlop={12}
                 className="h-10 w-10 items-center justify-center rounded-none border active:bg-background-200"
                 style={{
                   backgroundColor: colors.surfaceAlt,
@@ -544,7 +544,7 @@ export default function MealBuilderScreen() {
               <Pressable
                 className="mt-8 items-center rounded-none active:opacity-80"
                 onPress={handleDelete}
-                hitSlop={8}
+                hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel="Delete meal"
                 style={{
@@ -575,7 +575,7 @@ export default function MealBuilderScreen() {
         >
           <Pressable
             onPress={safeBack}
-            hitSlop={8}
+            hitSlop={12}
             style={bottomStyles.dockIconBtn}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -586,7 +586,7 @@ export default function MealBuilderScreen() {
             <View style={[bottomStyles.searchExpanded, { borderColor: colors.primary }]}>
               <Pressable
                 onPress={closeSearch}
-                hitSlop={8}
+                hitSlop={12}
                 style={bottomStyles.searchCollapse}
                 accessibilityRole="button"
                 accessibilityLabel="Close search"
@@ -623,7 +623,7 @@ export default function MealBuilderScreen() {
           ) : (
             <Pressable
               onPress={openSearch}
-              hitSlop={8}
+              hitSlop={12}
               style={bottomStyles.searchFab}
               accessibilityRole="button"
               accessibilityLabel="Search foods"
@@ -634,7 +634,7 @@ export default function MealBuilderScreen() {
           )}
           <Pressable
             onPress={() => router.push({ pathname: "/scan", params: { from: "meal-builder" } })}
-            hitSlop={8}
+            hitSlop={12}
             style={[bottomStyles.dockIconBtn, bottomStyles.dockScanBtn]}
             accessibilityRole="button"
             accessibilityLabel="Scan barcode"
@@ -644,7 +644,7 @@ export default function MealBuilderScreen() {
           <Pressable
             onPress={() => void handleSave()}
             disabled={saving}
-            hitSlop={8}
+            hitSlop={12}
             style={[
               bottomStyles.dockIconBtn,
               bottomStyles.dockSaveBtn,

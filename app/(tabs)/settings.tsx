@@ -1463,7 +1463,7 @@ export default function SettingsScreen() {
                         onPress={() => openSection(section.id)}
                         accessibilityRole="button"
                         accessibilityLabel={`Open ${section.label}`}
-                        hitSlop={4}
+                        hitSlop={12}
                         style={{
                           borderWidth: borders.width,
                           borderColor: isActive ? colors.primary : colors.border,
@@ -1549,7 +1549,7 @@ export default function SettingsScreen() {
                         }`}
                         accessibilityRole="button"
                         accessibilityLabel={`Open ${section.label}`}
-                        hitSlop={4}
+                        hitSlop={12}
                       >
                         <Box
                           className="h-11 w-11 shrink-0 items-center justify-center rounded-none border bg-primary-500/10"
@@ -1644,7 +1644,7 @@ export default function SettingsScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={s.label}
                         accessibilityState={{ selected: active }}
-                        hitSlop={4}
+                        hitSlop={12}
                         style={{
                           paddingHorizontal: 12,
                           paddingVertical: 8,

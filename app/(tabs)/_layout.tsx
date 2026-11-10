@@ -163,6 +163,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               onHoverOut={() => setHoveredRoute(null)}
               onPressIn={() => setPressedRoute(route.key)}
               onPressOut={() => setPressedRoute(null)}
+              hitSlop={12}
               style={[
                 {
                   width: layout.sideTabItemWidth,
@@ -359,7 +360,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             onHoverOut={() => setHoveredRoute(null)}
             onPressIn={() => setPressedRoute(route.key)}
             onPressOut={() => setPressedRoute(null)}
-            hitSlop={4}
+            hitSlop={12}
             style={{
               flex: 1,
               minHeight: tabBarHeight,

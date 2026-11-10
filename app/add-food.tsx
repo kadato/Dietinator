@@ -395,7 +395,7 @@ export default function AddFoodScreen() {
           {productId || entryId ? (
             <Pressable
               onPress={() => safeBack()}
-              hitSlop={8}
+              hitSlop={12}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
@@ -441,7 +441,7 @@ export default function AddFoodScreen() {
                   <Pressable
                     onPress={handleToggleFavorite}
                     disabled={favoriteToggling}
-                    hitSlop={8}
+                    hitSlop={12}
                     accessibilityRole="button"
                     accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
                     accessibilityState={{ disabled: favoriteToggling }}
@@ -546,7 +546,7 @@ export default function AddFoodScreen() {
                 {isKeyboardVisible ? (
                   <Pressable
                     onPress={() => Keyboard.dismiss()}
-                    hitSlop={8}
+                    hitSlop={12}
                     style={styles.keyboardDismissBtn}
                     accessibilityRole="button"
                     accessibilityLabel="Dismiss keyboard"
@@ -651,7 +651,7 @@ export default function AddFoodScreen() {
                 Keyboard.dismiss()
                 safeBack()
               }}
-              hitSlop={8}
+              hitSlop={12}
               style={[styles.dockBackBtn, isKeyboardVisible && { minHeight: 46, height: 46 }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
@@ -661,7 +661,7 @@ export default function AddFoodScreen() {
             <Pressable
               onPress={() => void handleSave()}
               disabled={saving}
-              hitSlop={8}
+              hitSlop={12}
               style={[
                 styles.dockSaveBtn,
                 saving && styles.dockSaveBtnDisabled,

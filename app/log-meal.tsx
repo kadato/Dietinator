@@ -1020,7 +1020,7 @@ export default function LogMealScreen() {
               <Pressable
                 key={tab.id}
                 onPress={() => handleTabPress(tab.id)}
-                hitSlop={4}
+                hitSlop={12}
                 style={[
                   styles.tabItem,
                   isActive
@@ -1190,7 +1190,7 @@ export default function LogMealScreen() {
         <View style={[styles.bottomCluster, { bottom: bottomOffset }]} pointerEvents="box-none">
           <Pressable
             onPress={safeBack}
-            hitSlop={8}
+            hitSlop={12}
             style={styles.dockIconBtn}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -1240,7 +1240,7 @@ export default function LogMealScreen() {
           ) : (
             <Pressable
               onPress={openSearch}
-              hitSlop={8}
+              hitSlop={12}
               style={styles.searchFab}
               accessibilityRole="button"
               accessibilityLabel={searchPlaceholder}
@@ -1253,7 +1253,7 @@ export default function LogMealScreen() {
           )}
           <Pressable
             onPress={() => router.push({ pathname: "/scan", params: { meal: mealType, date } })}
-            hitSlop={8}
+            hitSlop={12}
             style={[styles.dockIconBtn, styles.dockScanBtn]}
             accessibilityRole="button"
             accessibilityLabel="Scan barcode"
