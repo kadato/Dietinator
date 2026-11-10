@@ -9,6 +9,7 @@ import { useThemedStyles } from "@/hooks/useThemedStyles"
 import { useTheme } from "@/hooks/useTheme"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { useEscapeToClose } from "@/hooks/useEscapeToClose"
+import { useKeyboardHeight } from "@/hooks/useKeyboardVisible"
 import { routeParam } from "@/utils/route"
 import { toDateKey, formatDisplayDate } from "@/utils/date"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
@@ -104,6 +105,7 @@ export default function ManualEntryScreen() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
+  const { keyboardHeight } = useKeyboardHeight()
   const [name, setName] = useState("")
   const [kcal, setKcal] = useState("")
   const [protein, setProtein] = useState("")
@@ -146,6 +148,7 @@ export default function ManualEntryScreen() {
   const safeBottom = insets.bottom
   const baseTop = insets.top > 0 ? insets.top : Platform.OS === "android" ? 24 : 0
   const safeTop = baseTop + TOP_OFFSET
+  const fabBottomOffset = keyboardHeight > 0 ? keyboardHeight + 12 : safeBottom + 20
 
   return (
     <KeyboardAvoidingView
@@ -265,7 +268,8 @@ export default function ManualEntryScreen() {
       </ModalContainer>
 
       <FabCluster
-        bottomOffset={safeBottom + 20}
+        bottomOffset={fabBottomOffset}
+        insetX={16}
         left={
           <Fab icon="arrow-left" tone="surface" onPress={safeBack} accessibilityLabel="Go back" />
         }

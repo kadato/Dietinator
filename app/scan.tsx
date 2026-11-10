@@ -577,6 +577,7 @@ export default function ScanScreen() {
         </PageContainer>
         <FabCluster
           bottomOffset={insets.bottom + 20}
+          insetX={16}
           left={
             <Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />
           }
@@ -608,7 +609,7 @@ export default function ScanScreen() {
       ) : (
         <PageContainer>
           {notFound ? (
-            <Box className="flex-1 items-center justify-center px-6">
+            <Box className="flex-1 items-center justify-center px-3">
               <Box
                 className="h-16 w-16 items-center justify-center rounded-none border"
                 style={{
@@ -678,6 +679,7 @@ export default function ScanScreen() {
 
       <FabCluster
         bottomOffset={insets.bottom + 20}
+        insetX={12}
         left={<Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />}
         right={
           cameraActive ? (

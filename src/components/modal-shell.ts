@@ -39,7 +39,9 @@ export function createModalShellStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: spacing.lg,
-      paddingHorizontal: spacing.lg,
+      // Sheet gutter matches the FabCluster inset and other sheets.
+      // Dialog edges align with the FABs.
+      paddingHorizontal: 20,
       pointerEvents: "box-none",
     },
     dialogBox: {

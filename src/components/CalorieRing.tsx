@@ -35,7 +35,7 @@ export function CalorieRing({
 
   const swipePan = Gesture.Pan()
     .runOnJS(true)
-    .activeOffsetX([-15, 15])
+    .activeOffsetX([-24, 24])
     .failOffsetY([-12, 12])
     .onEnd((event) => {
       const direction = getSwipeDirection(event.translationX, event.translationY)

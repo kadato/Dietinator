@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native"
 import { useFocusEffect, useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
@@ -58,6 +59,7 @@ export default function TodayScreen() {
   const { showError, showWarning, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isLarge, width } = useLayout()
+  const insets = useSafeAreaInsets()
   // Phone metrics below the medium breakpoint, and sidebar metrics on wide
   // displays. On wide screens, the date chrome and hydration row sit inside
   // a ~380px sidebar, so they require compact sizing to avoid overflowing.
@@ -975,7 +977,7 @@ export default function TodayScreen() {
               tintColor={colors.primary}
             />
           }
-          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-2 pb-24" : "max-w-[720px] self-center p-2 pb-56"}`}
+          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : width < layout.breakpointMedium ? "max-w-[720px] self-center p-3 pb-24" : "max-w-[720px] self-center p-3 pb-56"}`}
           style={{ paddingTop: spacing.xs }}
         >
           {isWide ? (
@@ -1375,8 +1377,8 @@ export default function TodayScreen() {
 
       {!keyboardVisible ? (
         <FabCluster
-          bottomOffset={isWide ? (isLarge ? 28 : 24) : 8}
-          insetX={isWide ? 24 : 20}
+          bottomOffset={isWide ? (isLarge ? 28 : 24) : insets.bottom + 16}
+          insetX={isWide ? 24 : 12}
           right={
             <Fab
               size="md"

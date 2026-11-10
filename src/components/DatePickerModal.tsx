@@ -222,7 +222,8 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      padding: 24,
+      // Same 20px sheet gutter as the FabCluster inset and other sheets.
+      padding: 20,
       pointerEvents: "box-none",
     },
     sheet: {
@@ -232,7 +233,9 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
       padding: spacing.md,
       width: "100%",
-      maxWidth: 380,
+      // maxWidth stays 420 like other sheets.
+      // Stacked sheets then share one width.
+      maxWidth: 420,
       alignSelf: "center",
       elevation: 0,
     },

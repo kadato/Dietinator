@@ -563,7 +563,8 @@ const createStyles = (colors: ColorPalette) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      padding: 16,
+      // Same 20px sheet gutter as the FabCluster inset and other sheets.
+      padding: 20,
       pointerEvents: "box-none",
     },
     sheet: {

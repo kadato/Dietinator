@@ -280,9 +280,9 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
   // Keep the bar short so it never covers content on 320-390px phones.
   const showLabels = width >= 640
   const compactBar = width < 380
-  // Single source: theme.layout.tabBarHeight, so the constant cannot drift
-  // from the real bar again. Compact phones get a shorter bar.
-  const tabBarHeight = compactBar ? 48 : layout.tabBarHeight
+  // theme.layout.tabBarHeight is the single source. The constant cannot drift from the real bar.
+  // Compact phones use a shorter bar that stays above the 48dp Android minimum.
+  const tabBarHeight = compactBar ? 52 : layout.tabBarHeight
   // With edgeToEdge disabled the system nav bar is opaque, so the tab
   // bar sits directly above it and needs no extra inset. When the provider
   // still reports 0 (first frame), keep 0 so no strip appears below.

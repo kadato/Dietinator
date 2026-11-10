@@ -2229,6 +2229,7 @@ export default function SettingsScreen() {
       {effectiveSectionId !== null && !isWide ? (
         <FabCluster
           bottomOffset={insets.bottom + 20}
+          insetX={16}
           left={
             <Fab
               icon="arrow-left"

@@ -86,7 +86,7 @@ export default function CreateOptionsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ModalContainer maxWidth={560} outerClassName="">
-        <Box className="px-6 pb-2 pt-4">
+        <Box className="px-4 pb-2 pt-4">
           <Text
             size="2xl"
             bold
@@ -168,6 +168,7 @@ export default function CreateOptionsScreen() {
 
       <FabCluster
         bottomOffset={insets.bottom + 20}
+        insetX={16}
         left={
           <Fab
             icon="x"
