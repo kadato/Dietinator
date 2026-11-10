@@ -92,6 +92,18 @@ To change the schema, update `migrate` in `src/db/database.ts` only with additiv
 - SQLite runs in WASM and OPFS on web. Secure-store falls back to prefixed
   localStorage in `src/utils/secure-storage.ts`.
 
+## Agent bridge and MCP
+
+- Web only. After local mutations, `src/services/agent-bridge.ts` pushes a
+  14-day snapshot (diary, water, weight, meals, favorites, goals) to the Node
+  server that serves the build. It then pulls and applies queued agent changes
+  back into SQLite.
+- The server exposes MCP at `/mcp` (Streamable HTTP, stateless JSON-RPC, see
+  `scripts/mcp-server.cjs`). `/mcp` requires an API key (`MCP_API_KEY` env).
+  `/api/agent/*` is same-origin only.
+- The in-app AI assistant does not use MCP. It calls the provider directly
+  and runs tools in-process through `AiToolRegistry` in `src/services/ai/`.
+
 ## Release pipeline
 
 - To cut a release, run `pnpm run release` with `major`, `minor`, or `patch`. The script bumps `app.json`

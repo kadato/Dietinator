@@ -96,7 +96,7 @@ Every `v*` tag builds a signed APK via `.github/workflows/release.yml`. On first
 - **Barcode.** The camera scans EAN and UPC on device with cache lookup. The scan is limited on web.
 - **Weight and water.** You log water with presets. You track weight with BMI and trend charts.
 - **Micronutrients.** The dashboard and food detail show fiber, sugar, saturated fat, sodium, potassium, calcium, and iron.
-- **AI assistant.** Turn it on in Settings. It supports OpenAI, OpenRouter, Ollama, and any OpenAI-compatible endpoint. It streams answers. It runs tools against your local SQLite. It asks before destructive writes. It keeps history in SQLite. Read [Dietinator architecture](ARCHITECTURE.md) for the MCP endpoint at `/mcp`.
+- **AI assistant.** Turn it on in Settings. It supports OpenAI, OpenRouter, OpenCode, Ollama, and any OpenAI-compatible endpoint. It streams answers. It runs tools against your local SQLite. It asks before destructive writes. It keeps history in SQLite. Read [Dietinator architecture](ARCHITECTURE.md) for the MCP endpoint at `/mcp`.
 - **Backup and export.** Export JSON or CSV. Back up and restore the full SQLite file. You start every export and restore.
 - **Demo mode.** `/?demo=1` loads sample data. You need no account. Themes follow the system, or you pick light or dark manually.
 
