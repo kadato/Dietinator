@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from "react-native"
+import { KeyboardAvoidingView, Platform, Pressable, TextInput, View } from "react-native"
 import { useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Feather } from "@expo/vector-icons"
 import { useAiChat } from "@/hooks/useAiChat"
 import { useApp } from "@/context/AppContext"
 import { useTheme } from "@/hooks/useTheme"
 import { useLayout } from "@/hooks/useLayout"
 import { usePressedState } from "@/hooks/usePressedState"
-import { ChatMessage, ChatComposer } from "@/components/ai-chat"
+import { ChatComposer, ChatMessageList } from "@/components/ai-chat"
 import { withAlpha } from "@/utils/color"
 import { confirmAction } from "@/utils/confirm"
 import { AI_PRESETS, presetPrompt, type AiPreset } from "@/services/ai/presets"
 import type { PendingConfirmation } from "@/services/ai/assistant"
-import type { AiChatMessage } from "@/types"
 import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -43,6 +43,7 @@ export default function AiScreen() {
   const { settings } = useApp()
   const { colors } = useTheme()
   const { width, isWide, isLarge } = useLayout()
+  const insets = useSafeAreaInsets()
   const { messages, busy, pending, send, stop, confirm, clear } = useAiChat()
   const [draft, setDraft] = useState("")
   const inputRef = useRef<TextInput>(null)
@@ -107,79 +108,26 @@ export default function AiScreen() {
   const emptyState = (
     <Box className="items-center px-5 pb-24 pt-8">
       <Box
-        className="h-20 w-20 items-center justify-center rounded-none border"
+        className="h-14 w-14 items-center justify-center rounded-none border"
         style={{
           borderWidth: borders.width,
           borderColor: colors.border,
           borderRadius: radii.none,
-          backgroundColor: withAlpha(colors.weight ?? colors.primary, 0.08),
+          backgroundColor: withAlpha(colors.weight ?? colors.primary, 0.12),
         }}
       >
-        <Box
-          className="h-14 w-14 items-center justify-center rounded-none border"
-          style={{
-            borderWidth: borders.width,
-            borderColor: colors.border,
-            borderRadius: radii.none,
-            backgroundColor: withAlpha(colors.weight ?? colors.primary, 0.12),
-          }}
-        >
-          <Feather name="cpu" size={28} color={colors.weight ?? colors.primary} />
-        </Box>
+        <Feather name="cpu" size={24} color={colors.weight ?? colors.primary} />
       </Box>
       <Text
-        size="xl"
+        size={compact ? "lg" : "xl"}
         bold
         className="mt-4 text-center font-mono uppercase tracking-widest"
         style={{ fontFamily: fonts.mono, letterSpacing: 0.04, color: colors.text }}
       >
         How can I help you eat well?
       </Text>
-      <Text
-        size="sm"
-        className="mt-2 text-center font-mono leading-5"
-        style={{ maxWidth: 380, fontFamily: fonts.mono, color: colors.textMuted }}
-      >
-        Ask about your diary, log foods, or adjust goals. Your data stays private.
-      </Text>
 
-      <Box className="mt-5 flex-row flex-wrap justify-center gap-1.5">
-        {[
-          { icon: "calendar" as const, label: "Review my day", preset: "daily-review" },
-          { icon: "activity" as const, label: "Check protein", preset: "protein-check" },
-          { icon: "shopping-bag" as const, label: "Plan dinner", preset: "plan-dinner" },
-          { icon: "flag" as const, label: "Update goals", preset: "reset-goals" },
-        ].map((chip) => (
-          <Pressable
-            key={chip.label}
-            onPress={() => {
-              const preset = suggestionPrompts.find((p) => p.id === chip.preset)
-              if (preset) runPreset(preset)
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={chip.label}
-            className="flex-row items-center gap-1.5 rounded-none border px-3 py-1.5 active:opacity-80"
-            style={{
-              borderWidth: borders.width,
-              borderColor: colors.border,
-              borderRadius: radii.none,
-              backgroundColor: colors.surface,
-            }}
-          >
-            <Feather name={chip.icon} size={12} color={colors.weight ?? colors.primary} />
-            <Text
-              size="xs"
-              bold
-              className="font-mono uppercase tracking-widest"
-              style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.text }}
-            >
-              {chip.label}
-            </Text>
-          </Pressable>
-        ))}
-      </Box>
-
-      <Box className="mt-7 w-full">
+      <Box className="mt-5 w-full">
         <Text
           size="xs"
           bold
@@ -195,7 +143,7 @@ export default function AiScreen() {
               onPress={() => runPreset(preset)}
               accessibilityRole="button"
               accessibilityLabel={`Preset: ${preset.title}`}
-              className="w-[calc(50%-4px)] max-w-[240px] rounded-none border p-3 active:opacity-80"
+              className="rounded-none border p-3 active:opacity-80"
               style={{
                 borderWidth: borders.width,
                 borderColor: colors.border,
@@ -203,6 +151,11 @@ export default function AiScreen() {
                 backgroundColor: colors.surface,
                 boxShadow: "none",
                 elevation: 0,
+                // Web calc() widths never resolve on native and overflow
+                // 320px phones. One column when compact, two otherwise.
+                flexGrow: 1,
+                flexBasis: compact ? "100%" : "48%",
+                maxWidth: 240,
               }}
             >
               <Box className="flex-row items-center gap-2">
@@ -406,7 +359,7 @@ export default function AiScreen() {
               >
                 <Feather name="cpu" size={20} color={colors.onPrimary} />
               </Box>
-              <Box className="min-w-0">
+              <Box className="min-w-0 justify-center">
                 <Text
                   size="md"
                   bold
@@ -414,17 +367,6 @@ export default function AiScreen() {
                   style={{ color: colors.onPrimary, fontFamily: fonts.mono, letterSpacing: 0.04 }}
                 >
                   Dietinator AI
-                </Text>
-                <Text
-                  size="xs"
-                  className="font-mono uppercase tracking-widest"
-                  style={{
-                    color: colors.onPrimaryMuted,
-                    fontFamily: fonts.mono,
-                    letterSpacing: 0.06,
-                  }}
-                >
-                  Your nutrition assistant
                 </Text>
               </Box>
             </Box>
@@ -436,7 +378,7 @@ export default function AiScreen() {
                 onPressOut={headerPress.onPressOut}
                 accessibilityRole="button"
                 accessibilityLabel="Clear chat history"
-                className="h-9 w-9 items-center justify-center rounded-none border"
+                className="h-10 w-10 items-center justify-center rounded-none border"
                 style={[
                   {
                     backgroundColor: withAlpha("#ffffff", 0.18),
@@ -447,7 +389,7 @@ export default function AiScreen() {
                   ...(headerPress.pressed ? [{ opacity: 0.7 }] : []),
                 ]}
               >
-                <Feather name="trash-2" size={16} color={colors.onPrimary} />
+                <Feather name="trash-2" size={18} color={colors.onPrimary} />
               </Pressable>
             </Box>
           </Box>
@@ -634,60 +576,41 @@ export default function AiScreen() {
             >
               <KeyboardAvoidingView
                 className="flex-1"
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                behavior={
+                  Platform.OS === "ios"
+                    ? "padding"
+                    : Platform.OS === "android"
+                      ? "height"
+                      : undefined
+                }
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
               >
-                {messages.length === 0 ? (
-                  <FlatList
-                    data={[]}
-                    renderItem={null}
-                    ListEmptyComponent={
-                      <Box className="items-center px-6 py-12">
-                        <Box
-                          className="h-16 w-16 items-center justify-center rounded-none border"
-                          style={{
-                            borderWidth: borders.width,
-                            borderColor: colors.border,
-                            backgroundColor: withAlpha(colors.weight ?? colors.primary, 0.08),
-                          }}
-                        >
-                          <Feather name="cpu" size={24} color={colors.weight ?? colors.primary} />
-                        </Box>
-                        <Text
-                          size="md"
-                          bold
-                          className="mt-4 text-center font-mono uppercase tracking-widest"
-                          style={{ fontFamily: fonts.mono, color: colors.text }}
-                        >
-                          How can I help you eat well?
-                        </Text>
-                        <Text
-                          size="sm"
-                          className="mt-2 max-w-[420px] text-center font-mono leading-5"
-                          style={{ fontFamily: fonts.mono, color: colors.textMuted }}
-                        >
-                          Ask about your diary, log foods, or adjust goals. Data stays private,
-                          prompts run on the left.
-                        </Text>
+                <ChatMessageList
+                  messages={reversedMessages}
+                  compact={compact}
+                  emptyState={
+                    <Box className="items-center px-6 py-12">
+                      <Box
+                        className="h-16 w-16 items-center justify-center rounded-none border"
+                        style={{
+                          borderWidth: borders.width,
+                          borderColor: colors.border,
+                          backgroundColor: withAlpha(colors.weight ?? colors.primary, 0.08),
+                        }}
+                      >
+                        <Feather name="cpu" size={24} color={colors.weight ?? colors.primary} />
                       </Box>
-                    }
-                    contentContainerClassName="flex-grow justify-center"
-                    keyboardDismissMode="on-drag"
-                    keyboardShouldPersistTaps="handled"
-                  />
-                ) : (
-                  <FlatList
-                    data={reversedMessages}
-                    renderItem={({ item }: { item: AiChatMessage }) => (
-                      <ChatMessage item={item} compact={compact} />
-                    )}
-                    keyExtractor={(item) => String(item.id ?? item.created_at)}
-                    inverted
-                    contentContainerClassName="px-4 pb-20 pt-3"
-                    keyboardDismissMode="on-drag"
-                    keyboardShouldPersistTaps="handled"
-                  />
-                )}
+                      <Text
+                        size="md"
+                        bold
+                        className="mt-4 text-center font-mono uppercase tracking-widest"
+                        style={{ fontFamily: fonts.mono, color: colors.text }}
+                      >
+                        How can I help you eat well?
+                      </Text>
+                    </Box>
+                  }
+                />
 
                 {confirmationCard}
 
@@ -700,6 +623,7 @@ export default function AiScreen() {
                   onSubmit={submit}
                   onStop={stop}
                   inputRef={inputRef}
+                  bottomPad={insets.bottom}
                 />
               </KeyboardAvoidingView>
             </View>
@@ -707,31 +631,16 @@ export default function AiScreen() {
         ) : (
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={
+              Platform.OS === "ios" ? "padding" : Platform.OS === "android" ? "height" : undefined
+            }
             keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
           >
-            {messages.length === 0 ? (
-              <FlatList
-                data={[]}
-                renderItem={null}
-                ListEmptyComponent={emptyState}
-                contentContainerClassName="flex-grow justify-center pb-24"
-                keyboardDismissMode="on-drag"
-                keyboardShouldPersistTaps="handled"
-              />
-            ) : (
-              <FlatList
-                data={reversedMessages}
-                renderItem={({ item }: { item: AiChatMessage }) => (
-                  <ChatMessage item={item} compact={compact} />
-                )}
-                keyExtractor={(item) => String(item.id ?? item.created_at)}
-                inverted
-                contentContainerClassName="px-4 pb-20 pt-3"
-                keyboardDismissMode="on-drag"
-                keyboardShouldPersistTaps="handled"
-              />
-            )}
+            <ChatMessageList
+              messages={reversedMessages}
+              compact={compact}
+              emptyState={emptyState}
+            />
 
             {confirmationCard}
 
@@ -744,6 +653,7 @@ export default function AiScreen() {
               onSubmit={submit}
               onStop={stop}
               inputRef={inputRef}
+              bottomPad={insets.bottom}
             />
           </KeyboardAvoidingView>
         )}

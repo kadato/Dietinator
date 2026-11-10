@@ -1,6 +1,14 @@
-import { useState } from "react"
-import type { RefObject } from "react"
-import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput } from "react-native"
+import { memo, useCallback, useRef, useState } from "react"
+import type { ReactElement, RefObject } from "react"
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+} from "react-native"
+import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native"
 import { useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { Markdown } from "@/components/Markdown"
@@ -49,7 +57,7 @@ export function ChatToolChips({ toolCalls }: { toolCalls: AiChatMessage["tool_ca
   )
 }
 
-export function ChatMessage({ item, compact }: { item: AiChatMessage; compact: boolean }) {
+function ChatMessageInner({ item, compact }: { item: AiChatMessage; compact: boolean }) {
   const router = useRouter()
   const modal = useOptionalAiChatModal()
   const { colors } = useTheme()
@@ -86,6 +94,7 @@ export function ChatMessage({ item, compact }: { item: AiChatMessage; compact: b
             borderRadius: radii.none,
             boxShadow: "none",
             elevation: 0,
+            flexShrink: 1,
           }}
         >
           <Text
@@ -213,6 +222,112 @@ export function ChatMessage({ item, compact }: { item: AiChatMessage; compact: b
 }
 
 /**
+ * Memoized row so a streaming token re-renders only the growing bubble.
+ * Without this the whole transcript re-renders 20-60 times a second, which
+ * collapses mid-range Android phones. Keep renderItem/keyExtractor in
+ * useCallback (see ChatMessageList) or memoization never engages.
+ */
+export const ChatMessage = memo(ChatMessageInner)
+
+/**
+ * One inverted transcript list for the AI tab and the AI modal. Inverted
+ * keeps new turns at the visual bottom with no scroll arithmetic, and
+ * stick-to-bottom releases the moment the reader scrolls up: a "Latest"
+ * pill appears instead of yanking the reader back down mid-token.
+ */
+export function ChatMessageList({
+  messages,
+  compact,
+  emptyState,
+}: {
+  /** Newest first. Callers pass [...messages].reverse(). */
+  messages: AiChatMessage[]
+  compact: boolean
+  emptyState?: ReactElement
+}) {
+  const { colors } = useTheme()
+  const listRef = useRef<FlatList>(null)
+  const [showJump, setShowJump] = useState(false)
+
+  const renderChatItem = useCallback(
+    ({ item }: { item: AiChatMessage }) => <ChatMessage item={item} compact={compact} />,
+    [compact],
+  )
+  const chatKey = useCallback((item: AiChatMessage) => String(item.id ?? item.created_at), [])
+  // Inverted lists read offset 0 as the bottom. Past ~160px the reader has
+  // left the tail, so offer an explicit way back instead of auto-scrolling.
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setShowJump(event.nativeEvent.contentOffset.y > 160)
+  }, [])
+  const jumpToLatest = useCallback(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true })
+  }, [])
+
+  if (messages.length === 0 && emptyState) {
+    return (
+      <FlatList
+        data={[]}
+        renderItem={null}
+        ListEmptyComponent={emptyState}
+        contentContainerClassName="flex-grow justify-center pb-24"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+      />
+    )
+  }
+
+  return (
+    <Box className="flex-1">
+      <FlatList
+        ref={listRef}
+        data={messages}
+        renderItem={renderChatItem}
+        keyExtractor={chatKey}
+        inverted
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        updateCellsBatchingPeriod={80}
+        maintainVisibleContentPosition={
+          Platform.OS === "ios" ? { minIndexForVisible: 0 } : undefined
+        }
+        contentContainerClassName="px-4 pb-20 pt-3"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+      />
+      {showJump ? (
+        <Pressable
+          onPress={jumpToLatest}
+          accessibilityRole="button"
+          accessibilityLabel="Jump to latest messages"
+          className="cursor-pointer flex-row items-center gap-1.5 self-center rounded-none border px-3 py-2 active:opacity-80"
+          style={{
+            position: "absolute",
+            bottom: 12,
+            borderWidth: borders.width,
+            borderColor: colors.border,
+            borderRadius: radii.none,
+            backgroundColor: colors.surface,
+          }}
+        >
+          <Feather name="arrow-down" size={14} color={colors.primary} />
+          <Text
+            size="xs"
+            bold
+            className="font-mono uppercase tracking-widest"
+            style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.text }}
+          >
+            Latest
+          </Text>
+        </Pressable>
+      ) : null}
+    </Box>
+  )
+}
+
+/**
  * Single message composer. One bordered box holds the field and the send
  * key, so the bar reads as one control. The border turns violet on focus;
  * the send key is solid violet when ready.
@@ -271,7 +386,7 @@ export function ChatComposer({
           }
           placeholderTextColor={colors.textMuted}
           editable={configured}
-          multiline={Platform.OS !== "web"}
+          multiline
           style={[styles.input, { flex: 1, color: colors.text, fontFamily: fonts.mono }]}
           selectionColor={accent}
           accessibilityLabel="Message the AI assistant"
@@ -279,6 +394,16 @@ export function ChatComposer({
           enterKeyHint="send"
           blurOnSubmit={false}
           onSubmitEditing={canSend ? onSubmit : undefined}
+          onKeyPress={(event) => {
+            // Web textareas take Enter as a newline. Plain Enter sends like
+            // native return, Shift+Enter keeps the newline.
+            if (Platform.OS !== "web") return
+            const native = event.nativeEvent as { key?: string; shiftKey?: boolean }
+            if (native.key === "Enter" && !native.shiftKey) {
+              ;(event as unknown as { preventDefault?: () => void }).preventDefault?.()
+              if (canSend) onSubmit()
+            }
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
         />
@@ -289,8 +414,9 @@ export function ChatComposer({
             accessibilityLabel="Stop generating"
             className="shrink-0 cursor-pointer items-center justify-center rounded-none border active:opacity-80"
             style={{
-              width: 44,
-              height: 44,
+              width: 48,
+              minHeight: 48,
+              alignSelf: "stretch",
               borderWidth: borders.width,
               borderColor: colors.danger,
               borderRadius: radii.none,
@@ -307,8 +433,9 @@ export function ChatComposer({
             accessibilityLabel="Send message"
             className="shrink-0 cursor-pointer items-center justify-center rounded-none border active:opacity-80"
             style={{
-              width: 44,
-              height: 44,
+              width: 48,
+              minHeight: 48,
+              alignSelf: "stretch",
               backgroundColor: canSend ? accent : "transparent",
               borderWidth: borders.width,
               borderColor: canSend ? accent : colors.border,

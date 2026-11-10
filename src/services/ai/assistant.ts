@@ -308,6 +308,33 @@ export class AiAssistant {
     let content = ""
     let reasoning = ""
 
+    // Coalesce rapid token deltas into fewer SQLite writes and list renders.
+    // Research and production experience agree: per-token setState at 20-60Hz
+    // collapses mid-range Android phones, while ~8Hz still reads as streaming.
+    // First chunk flushes immediately so "Thinking" clears fast; the tail
+    // flushes at turn end so no text is ever lost.
+    const FLUSH_MS = 120
+    let lastFlush = 0
+    let dirtyContent = false
+    let dirtyReasoning = false
+    const flush = async (force: boolean): Promise<void> => {
+      if (!dirtyContent && !dirtyReasoning) return
+      const now = Date.now()
+      if (!force && now - lastFlush < FLUSH_MS) return
+      lastFlush = now
+      const patch: { content?: string; reasoning?: string } = {}
+      if (dirtyContent) {
+        dirtyContent = false
+        patch.content = content
+      }
+      if (dirtyReasoning) {
+        dirtyReasoning = false
+        patch.reasoning = reasoning
+      }
+      await aiChatDb.updateChatMessage(messageId, patch)
+      callbacks.onMessages()
+    }
+
     const stream = streamChatCompletion(
       settings,
       this.messages,
@@ -320,13 +347,13 @@ export class AiAssistant {
       }
       if (chunk.reasoning) {
         reasoning += chunk.reasoning
-        await aiChatDb.updateChatMessage(messageId, { reasoning })
-        callbacks.onMessages()
+        dirtyReasoning = true
+        await flush(false)
       }
       if (chunk.delta) {
         content += chunk.delta
-        await aiChatDb.updateChatMessage(messageId, { content })
-        callbacks.onMessages()
+        dirtyContent = true
+        await flush(false)
       }
       for (const call of chunk.tool_calls ?? []) {
         const existing = toolCalls.find((c) => c.id === call.id)
@@ -338,6 +365,7 @@ export class AiAssistant {
         }
       }
     }
+    await flush(true)
     return { toolCalls, error: null }
   }
 

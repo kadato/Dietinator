@@ -16,7 +16,6 @@ test.describe("AI assistant + FABs (offline)", () => {
 
     await page.getByRole("tab", { name: "AI" }).click()
     await expect(page.getByText("Dietinator AI", { exact: true })).toBeVisible()
-    await expect(page.getByText("Your nutrition assistant", { exact: true })).toBeVisible()
 
     // Assistant is enabled → the chat is ready with suggestion chips.
     await expect(page.getByText("How can I help you eat well?")).toBeVisible()

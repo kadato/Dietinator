@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react"
-import { Linking } from "react-native"
+import { Linking, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { useTheme } from "@/hooks/useTheme"
 import { fonts, borders } from "@/theme"
@@ -371,42 +371,50 @@ function BlockContent({
     case "hr":
       return <Box className="border-t" style={{ borderTopColor: colors.border }} />
     case "table":
+      // Phones are 320-380px wide and the assistant loves macro tables.
+      // Squeezing 4-5 columns into the bubble makes them unreadable, so the
+      // table scrolls sideways instead. Cells keep a 96px floor and stretch
+      // to fill the bubble when the table is narrow.
       return (
         <Box
           className="overflow-hidden rounded-lg border"
           style={{ borderWidth: borders.widthThin, borderColor: colors.border }}
         >
-          <Box className="flex-row" style={{ backgroundColor: colors.surfaceAlt }}>
-            {block.header.map((cell, index) => (
-              <Text
-                key={index}
-                size="xs"
-                bold
-                className="flex-1 px-2 py-1.5"
-                style={{ color: colors.text }}
-              >
-                {cell}
-              </Text>
-            ))}
-          </Box>
-          {block.rows.map((row, rowIndex) => (
-            <Box
-              key={rowIndex}
-              className="flex-row border-t"
-              style={{ borderTopColor: colors.border, borderTopWidth: borders.widthThin }}
-            >
-              {row.map((cell, cellIndex) => (
-                <Text
-                  key={cellIndex}
-                  size="xs"
-                  className="flex-1 px-2 py-1.5"
-                  style={{ color: colors.text }}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <Box style={{ minWidth: "100%" }}>
+              <Box className="flex-row" style={{ backgroundColor: colors.surfaceAlt }}>
+                {block.header.map((cell, index) => (
+                  <Text
+                    key={index}
+                    size="xs"
+                    bold
+                    className="flex-1 px-2 py-1.5"
+                    style={{ color: colors.text, minWidth: 96 }}
+                  >
+                    {cell}
+                  </Text>
+                ))}
+              </Box>
+              {block.rows.map((row, rowIndex) => (
+                <Box
+                  key={rowIndex}
+                  className="flex-row border-t"
+                  style={{ borderTopColor: colors.border, borderTopWidth: borders.widthThin }}
                 >
-                  {cell}
-                </Text>
+                  {row.map((cell, cellIndex) => (
+                    <Text
+                      key={cellIndex}
+                      size="xs"
+                      className="flex-1 px-2 py-1.5"
+                      style={{ color: colors.text, minWidth: 96 }}
+                    >
+                      {cell}
+                    </Text>
+                  ))}
+                </Box>
               ))}
             </Box>
-          ))}
+          </ScrollView>
         </Box>
       )
     default:
