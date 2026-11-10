@@ -15,7 +15,7 @@ test.describe("food search (offline)", () => {
     await page.getByPlaceholder("Search foods…").fill("oats")
     // No YAZIO in tests → remote fails, offline banner appears, cached list stays usable.
     // The dashboard behind the modal renders the same banner, so match the visible one.
-    await expect(page.getByText(/YAZIO unavailable/i).filter({ visible: true })).toBeVisible({
+    await expect(page.getByText(/YAZIO offline/i).filter({ visible: true })).toBeVisible({
       timeout: 20_000,
     })
   })
