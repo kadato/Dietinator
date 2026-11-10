@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
+  BackHandler,
   Keyboard,
   LayoutAnimation,
   Platform,
@@ -10,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -44,6 +45,7 @@ function servingAmountFor(food: SearchFoodResult): number {
 export default function MealBuilderScreen() {
   const safeBack = useSafeBack()
   const router = useRouter()
+  const navigation = useNavigation()
   const params = useLocalSearchParams<{ mealId?: string }>()
   const mealId = routeParam(params.mealId)
   const isEditing = Boolean(mealId)
@@ -55,6 +57,8 @@ export default function MealBuilderScreen() {
 
   const [name, setName] = useState("")
   const [items, setItems] = useState<MealItem[]>([])
+  const [initialName, setInitialName] = useState("")
+  const [initialItemsKey, setInitialItemsKey] = useState("[]")
   const [query, setQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
   const searchInputRef = useRef<TextInput>(null)
@@ -62,6 +66,9 @@ export default function MealBuilderScreen() {
   const [loadingMeal, setLoadingMeal] = useState(isEditing)
   const [saving, setSaving] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  const isDirty =
+    !saving && (name.trim() !== initialName.trim() || JSON.stringify(items) !== initialItemsKey)
 
   const openSearch = useCallback(() => {
     setSearchOpen(true)
@@ -72,6 +79,46 @@ export default function MealBuilderScreen() {
     setSearchOpen(false)
     searchInputRef.current?.blur()
   }, [])
+
+  // An edge swipe can discard unsaved meal text.
+  // If edits remain unsaved, confirm before you leave.
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", (e) => {
+      if (!isDirty || searchOpen) return
+      e.preventDefault()
+      confirmAction({
+        title: "Discard changes?",
+        message: "This meal has unsaved edits. Discard them and go back?",
+        confirmLabel: "Discard",
+        onConfirm: () => navigation.dispatch(e.data.action),
+      })
+    })
+    return unsub
+  }, [navigation, isDirty, searchOpen])
+
+  // Hardware back closes search first.
+  // If edits remain unsaved, the handler confirms before you leave.
+  useEffect(() => {
+    if (Platform.OS === "web") return
+    if (!searchOpen && !isDirty) return
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (searchOpen) {
+        closeSearch()
+        return true
+      }
+      if (isDirty) {
+        confirmAction({
+          title: "Discard changes?",
+          message: "This meal has unsaved edits. Discard them and go back?",
+          confirmLabel: "Discard",
+          onConfirm: () => safeBack(),
+        })
+        return true
+      }
+      return false
+    })
+    return () => sub.remove()
+  }, [searchOpen, isDirty, closeSearch, safeBack])
 
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
@@ -138,6 +185,8 @@ export default function MealBuilderScreen() {
         }
         setName(meal.name)
         setItems(meal.items)
+        setInitialName(meal.name)
+        setInitialItemsKey(JSON.stringify(meal.items))
       } catch (error) {
         if (!cancelled) showError(error, "Could not load meal.")
       } finally {

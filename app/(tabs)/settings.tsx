@@ -329,7 +329,13 @@ type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"]
  * Goals tab owns its own form state so typing in one field never re-renders
  * the rest of the settings screen.
  */
-function GoalsSettings({ settings }: { settings: AppSettings }) {
+function GoalsSettings({
+  settings,
+  onDirtyChange,
+}: {
+  settings: AppSettings
+  onDirtyChange?: (dirty: boolean) => void
+}) {
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
   const { colors } = useTheme()
@@ -429,6 +435,10 @@ function GoalsSettings({ settings }: { settings: AppSettings }) {
     String(Math.round(settings.water_goal_ml)) !== waterGoal ||
     formatNumber(settings.height_cm) !== heightCm ||
     formatNumber(settings.target_weight_kg) !== targetWeight
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
 
   const fieldErrors: Record<string, string> = {}
   if (goalError) {
@@ -677,7 +687,13 @@ function SettingsField({
 }
 
 /** AI form with vibrant cyberpunk palette, model chips, telemetry cards, and distinct action buttons. */
-function AiSettingsForm({ settings }: { settings: AppSettings }) {
+function AiSettingsForm({
+  settings,
+  onDirtyChange,
+}: {
+  settings: AppSettings
+  onDirtyChange?: (dirty: boolean) => void
+}) {
   const router = useRouter()
   const { updateSettings } = useApp()
   const { showError, showSuccess } = useToast()
@@ -688,6 +704,7 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
   const [aiSystemPrompt, setAiSystemPrompt] = useState("")
   const [aiProvider, setAiProvider] = useState<AiProviderId>("custom")
   const [aiFormLoaded, setAiFormLoaded] = useState(false)
+  const [initialAiKey, setInitialAiKey] = useState("")
   const [aiSaving, setAiSaving] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [showApiKey, setShowApiKey] = useState(false)
@@ -706,6 +723,9 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         setAiModel(provider.model)
         setAiSystemPrompt(provider.system_prompt)
         setAiProvider(provider.provider)
+        setInitialAiKey(
+          `${provider.provider}|${provider.base_url}|${provider.model}|${provider.system_prompt}`,
+        )
         setAiFormLoaded(true)
       } catch {
         if (!cancelled) setAiFormLoaded(true)
@@ -715,6 +735,16 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
       cancelled = true
     }
   }, [])
+
+  const isAiDirty =
+    aiFormLoaded &&
+    !aiSaving &&
+    (`${aiProvider}|${aiBaseUrl}|${aiModel}|${aiSystemPrompt}` !== initialAiKey ||
+      aiApiKey.trim() !== "")
+
+  useEffect(() => {
+    onDirtyChange?.(isAiDirty)
+  }, [isAiDirty, onDirtyChange])
 
   const aiSettingsForTest = (): AiProviderSettings => ({
     enabled: true,
@@ -785,6 +815,8 @@ function AiSettingsForm({ settings }: { settings: AppSettings }) {
         }),
         saveAiApiKey(aiApiKey),
       ])
+      setInitialAiKey(`${aiProvider}|${aiBaseUrl}|${aiModel}|${aiSystemPrompt}`)
+      setAiApiKey("")
       setTestResult(null)
       showSuccess("AI settings saved.", "Settings")
     } catch (error) {
@@ -1250,6 +1282,9 @@ export default function SettingsScreen() {
   const [profileCountry, setProfileCountry] = useState<string | null>(null)
   const [mcpExpanded, setMcpExpanded] = useState(false)
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null)
+  const [goalsDirty, setGoalsDirty] = useState(false)
+  const [aiDirty, setAiDirty] = useState(false)
+  const hasUnsavedSection = goalsDirty || aiDirty
   const searchParams = useLocalSearchParams<{ section?: string }>()
   const sectionParam = (routeParam(searchParams.section) ?? null) as SettingsSectionId | null
   const effectiveSectionId =
@@ -1284,27 +1319,58 @@ export default function SettingsScreen() {
 
   const openSection = useCallback(
     (id: SettingsSectionId) => {
+      if (hasUnsavedSection && id !== activeSection) {
+        confirmAction({
+          title: "Discard changes?",
+          message: "This section has unsaved edits. Discard them and continue?",
+          confirmLabel: "Discard",
+          onConfirm: () => {
+            setGoalsDirty(false)
+            setAiDirty(false)
+            setActiveSection(id)
+            scrollRef.current?.scrollTo({ y: 0, animated: false })
+            router.setParams({ section: id } as never)
+          },
+        })
+        return
+      }
       setActiveSection(id)
       scrollRef.current?.scrollTo({ y: 0, animated: false })
       router.setParams({ section: id } as never)
     },
-    [router],
+    [router, hasUnsavedSection, activeSection],
   )
 
   // One shared pop-to-hub for the header button and hardware Back alike.
   // On wide the hub cards are not used, so back stays on the first tab.
+  // Confirm goals and AI edits first.
+  // An edge swipe must not discard unsaved text.
   const backToHub = useCallback(() => {
-    if (isWide) {
-      const first = SETTINGS_SECTIONS[0].id
-      setActiveSection(first)
+    const doPop = () => {
+      setGoalsDirty(false)
+      setAiDirty(false)
+      if (isWide) {
+        const first = SETTINGS_SECTIONS[0].id
+        setActiveSection(first)
+        scrollRef.current?.scrollTo({ y: 0, animated: false })
+        router.setParams({ section: first } as never)
+        return
+      }
+      setActiveSection(null)
       scrollRef.current?.scrollTo({ y: 0, animated: false })
-      router.setParams({ section: first } as never)
+      router.setParams({ section: undefined } as never)
+    }
+    if (hasUnsavedSection) {
+      confirmAction({
+        title: "Discard changes?",
+        message: "This section has unsaved edits. Discard them and go back?",
+        confirmLabel: "Discard",
+        onConfirm: doPop,
+      })
       return
     }
-    setActiveSection(null)
-    scrollRef.current?.scrollTo({ y: 0, animated: false })
-    router.setParams({ section: undefined } as never)
-  }, [router, isWide])
+    doPop()
+  }, [router, isWide, hasUnsavedSection])
 
   // The drilldown lives in component state, invisible to the navigation
   // stack. Without this handler, system Back from any subsection exits the
@@ -1667,7 +1733,9 @@ export default function SettingsScreen() {
               ) : null}
 
               {/* Goals and Nutrition */}
-              {effectiveSectionId === "goals" ? <GoalsSettings settings={settings} /> : null}
+              {effectiveSectionId === "goals" ? (
+                <GoalsSettings settings={settings} onDirtyChange={setGoalsDirty} />
+              ) : null}
 
               {/* Device and Preferences */}
               {effectiveSectionId === "device" ? (
@@ -2048,7 +2116,7 @@ export default function SettingsScreen() {
                     />
                     {settings.ai_enabled === 1 ? (
                       <>
-                        <AiSettingsForm settings={settings} />
+                        <AiSettingsForm settings={settings} onDirtyChange={setAiDirty} />
                         <View className="border-t border-outline-100 p-4">
                           <Text size="xs" className="" style={{ color: colors.textMuted }}>
                             AI provider config below. Also open chat in the AI tab.

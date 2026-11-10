@@ -1,6 +1,6 @@
-import { useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useEffect, useState } from "react"
+import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { logManualEntry } from "@/services/diary"
@@ -17,6 +17,7 @@ import { ModalContainer } from "@/components/ModalContainer"
 import { NumberStepper } from "@/components/NumberStepper"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
+import { confirmAction } from "@/utils/confirm"
 import type { MealType } from "@/types"
 import { spacing, fonts, type ColorPalette, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
@@ -95,6 +96,7 @@ function MacroInput({
 
 export default function ManualEntryScreen() {
   const router = useRouter()
+  const navigation = useNavigation()
   const safeBack = useSafeBack()
   useEscapeToClose(true, safeBack)
   const params = useLocalSearchParams<{ meal?: string; date?: string; quickAdd?: string }>()
@@ -112,6 +114,44 @@ export default function ManualEntryScreen() {
   const [carbs, setCarbs] = useState("")
   const [fat, setFat] = useState("")
   const [saving, setSaving] = useState(false)
+
+  const isDirty =
+    !saving &&
+    (name.trim() !== "" ||
+      kcal.trim() !== "" ||
+      protein.trim() !== "" ||
+      carbs.trim() !== "" ||
+      fat.trim() !== "")
+
+  // Edge swipe and hardware back discard typed input.
+  // If input remains unsaved, confirm before you leave.
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", (e) => {
+      if (!isDirty) return
+      e.preventDefault()
+      confirmAction({
+        title: "Discard entry?",
+        message: "This entry has unsaved values. Discard them and go back?",
+        confirmLabel: "Discard",
+        onConfirm: () => navigation.dispatch(e.data.action),
+      })
+    })
+    return unsub
+  }, [navigation, isDirty])
+
+  useEffect(() => {
+    if (Platform.OS === "web" || !isDirty) return
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      confirmAction({
+        title: "Discard entry?",
+        message: "This entry has unsaved values. Discard them and go back?",
+        confirmLabel: "Discard",
+        onConfirm: () => safeBack(),
+      })
+      return true
+    })
+    return () => sub.remove()
+  }, [isDirty, safeBack])
 
   const handleSave = async () => {
     if (saving) return
