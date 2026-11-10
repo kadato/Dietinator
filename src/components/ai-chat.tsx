@@ -387,6 +387,7 @@ export function ChatComposer({
           placeholderTextColor={colors.textMuted}
           editable={configured}
           multiline
+          numberOfLines={1}
           style={[styles.input, { flex: 1, color: colors.text, fontFamily: fonts.mono }]}
           selectionColor={accent}
           accessibilityLabel="Message the AI assistant"
