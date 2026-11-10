@@ -76,3 +76,12 @@ export function formatHeaderDate(dateKey: string): string {
   if (dateKey === shiftDateKey(today, -1)) return `Yesterday, ${shortDisplayDate(dateKey)}`
   return formatDisplayDate(dateKey)
 }
+
+/**
+ * Compact label for narrow phone chrome. Today collapses to "Today" so the
+ * row never truncates. Any other day shows numeric month and day.
+ */
+export function formatCompactDate(dateKey: string): string {
+  if (dateKey === toDateKey()) return "Today"
+  return dateKey.slice(5).replace("-", "/")
+}

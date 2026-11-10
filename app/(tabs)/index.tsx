@@ -41,7 +41,13 @@ import { addWaterEntry, deleteWaterEntry, getWaterTotalForDate } from "@/db/wate
 import { getCalorieHistory } from "@/db/stats"
 import { computeLogStreak } from "@/utils/adherence"
 import { confirmAction } from "@/utils/confirm"
-import { shiftDateKey, toDateKey, formatDisplayDate, formatHeaderDate } from "@/utils/date"
+import {
+  shiftDateKey,
+  toDateKey,
+  formatDisplayDate,
+  formatHeaderDate,
+  formatCompactDate,
+} from "@/utils/date"
 import { sumNutrients } from "@/utils/nutrients"
 import { formatWaterAmount, formatWeight } from "@/utils/units"
 import { formatNumber, formatThousands } from "@/utils/format"
@@ -64,6 +70,10 @@ export default function TodayScreen() {
   // displays. On wide screens, the date chrome and hydration row sit inside
   // a ~380px sidebar, so they require compact sizing to avoid overflowing.
   const compact = width < layout.breakpointMedium || isWide
+  // Very narrow phones (320-375px) lose the date to truncation when the
+  // streak, refresh, and copy keys all show. Shrink the chrome so the
+  // compact date label always fits on one line.
+  const narrow = width < 380
   const [dateKey, setDateKey] = useState(toDateKey())
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -449,8 +459,12 @@ export default function TodayScreen() {
         backgroundColor: colors.surface,
       }}
     >
-      <View className={`flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
-        <Box className={`min-w-0 flex-1 flex-row items-center ${compact ? "gap-1.5" : "gap-2.5"}`}>
+      <View
+        className={`flex-row items-center ${narrow ? "gap-1" : compact ? "gap-1.5" : "gap-2.5"}`}
+      >
+        <Box
+          className={`min-w-0 flex-1 flex-row items-center ${narrow ? "gap-1" : compact ? "gap-1.5" : "gap-2.5"}`}
+        >
           <Pressable
             onPress={() => setDateKeyTransition((d) => shiftDateKey(d, -1))}
             hitSlop={8}
@@ -461,8 +475,8 @@ export default function TodayScreen() {
               <Box
                 className="items-center justify-center"
                 style={{
-                  width: compact ? 38 : 42,
-                  height: compact ? 38 : 42,
+                  width: narrow ? 34 : compact ? 38 : 42,
+                  height: narrow ? 34 : compact ? 38 : 42,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
@@ -471,7 +485,11 @@ export default function TodayScreen() {
                   opacity: isPending ? 0.7 : 1,
                 }}
               >
-                <Feather name="chevron-left" size={compact ? 18 : 20} color={colors.text} />
+                <Feather
+                  name="chevron-left"
+                  size={narrow ? 16 : compact ? 18 : 20}
+                  color={colors.text}
+                />
               </Box>
             )}
           </Pressable>
@@ -481,14 +499,14 @@ export default function TodayScreen() {
             hitSlop={6}
             className="min-w-0 flex-1"
             accessibilityRole="button"
-            accessibilityLabel={`${compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}. Tap to open calendar.`}
+            accessibilityLabel={`${formatHeaderDate(dateKey)}. Tap to open calendar.`}
           >
             {({ pressed }) => (
               <Box
                 className="w-full flex-row items-center justify-center"
                 style={{
-                  height: compact ? 38 : 42,
-                  paddingHorizontal: compact ? 8 : 14,
+                  height: narrow ? 34 : compact ? 38 : 42,
+                  paddingHorizontal: narrow ? 4 : compact ? 8 : 14,
                   gap: 5,
                   borderWidth: borders.width,
                   borderColor: colors.border,
@@ -498,7 +516,11 @@ export default function TodayScreen() {
                   overflow: "hidden",
                 }}
               >
-                <Feather name="calendar" size={compact ? 14 : 17} color={colors.primary} />
+                <Feather
+                  name="calendar"
+                  size={narrow ? 12 : compact ? 14 : 17}
+                  color={colors.primary}
+                />
                 <Text
                   size={compact ? "xs" : "sm"}
                   bold
@@ -507,7 +529,7 @@ export default function TodayScreen() {
                   className="truncate text-center"
                   style={{
                     color: colors.text,
-                    fontSize: compact ? 12 : 15,
+                    fontSize: narrow ? 11 : compact ? 12 : 15,
                     flexShrink: 1,
                     textAlign: "center",
                     fontFamily: fonts.mono,
@@ -522,7 +544,7 @@ export default function TodayScreen() {
                       : {}),
                   }}
                 >
-                  {compact ? formatDisplayDate(dateKey) : formatHeaderDate(dateKey)}
+                  {compact ? formatCompactDate(dateKey) : formatHeaderDate(dateKey)}
                 </Text>
               </Box>
             )}
@@ -538,8 +560,8 @@ export default function TodayScreen() {
               <Box
                 className="items-center justify-center"
                 style={{
-                  width: compact ? 38 : 42,
-                  height: compact ? 38 : 42,
+                  width: narrow ? 34 : compact ? 38 : 42,
+                  height: narrow ? 34 : compact ? 38 : 42,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
@@ -548,7 +570,11 @@ export default function TodayScreen() {
                   opacity: isPending ? 0.7 : 1,
                 }}
               >
-                <Feather name="chevron-right" size={compact ? 18 : 20} color={colors.text} />
+                <Feather
+                  name="chevron-right"
+                  size={narrow ? 16 : compact ? 18 : 20}
+                  color={colors.text}
+                />
               </Box>
             )}
           </Pressable>
@@ -557,7 +583,7 @@ export default function TodayScreen() {
             <Box
               className="flex-row items-center justify-center gap-1.5 px-2.5"
               style={{
-                height: compact ? 38 : 42,
+                height: narrow ? 34 : compact ? 38 : 42,
                 borderWidth: borders.width,
                 borderColor: colors.border,
                 borderStyle: "solid",
@@ -569,7 +595,7 @@ export default function TodayScreen() {
             >
               <MaterialCommunityIcons
                 name="fire"
-                size={compact ? 16 : 18}
+                size={narrow ? 14 : compact ? 16 : 18}
                 color={colors.onWarning}
               />
               <Text
@@ -600,8 +626,8 @@ export default function TodayScreen() {
               <Box
                 className="items-center justify-center"
                 style={{
-                  width: compact ? 38 : 42,
-                  height: compact ? 38 : 42,
+                  width: narrow ? 34 : compact ? 38 : 42,
+                  height: narrow ? 34 : compact ? 38 : 42,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
@@ -611,19 +637,43 @@ export default function TodayScreen() {
               >
                 <Feather
                   name="download-cloud"
-                  size={compact ? 16 : 18}
+                  size={narrow ? 14 : compact ? 16 : 18}
                   color={importing ? colors.textMuted : colors.primary}
                 />
               </Box>
             )}
           </Pressable>
         ) : null}
+        <Pressable
+          onPress={() => setCopyPickerOpen(true)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Copy from another date"
+        >
+          {({ pressed }) => (
+            <Box
+              className="items-center justify-center"
+              style={{
+                width: narrow ? 34 : compact ? 38 : 42,
+                height: narrow ? 34 : compact ? 38 : 42,
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderStyle: "solid",
+                borderRadius: radii.none,
+                backgroundColor: pressed ? `${colors.primary}20` : colors.surfaceAlt,
+              }}
+            >
+              <Feather name="copy" size={narrow ? 14 : compact ? 16 : 18} color={colors.primary} />
+            </Box>
+          )}
+        </Pressable>
       </View>
 
       <Pressable
         onPress={() => setCopyPickerOpen(true)}
         hitSlop={8}
         className="mt-2.5 w-full"
+        style={{ display: "none" }}
         accessibilityRole="button"
         accessibilityLabel="Copy from another date"
       >
@@ -731,7 +781,7 @@ export default function TodayScreen() {
           <Text
             size="2xs"
             className="font-mono uppercase tracking-widest"
-            style={{ color: colors.textMuted }}
+            style={{ color: colors.textMuted, display: "none" }}
           >
             · today
           </Text>
@@ -877,8 +927,8 @@ export default function TodayScreen() {
               className="font-mono uppercase tracking-widest"
               style={{ color: colors.textMuted, fontSize: 11, letterSpacing: 0.06 }}
             >
-              {weightHistory.length > 1
-                ? `${weightHistory.length} weigh-ins`
+              {weightHistory.length >= 2
+                ? ""
                 : weightHistory.length === 1
                   ? "1 weigh-in"
                   : "Tap to log"}
@@ -917,7 +967,7 @@ export default function TodayScreen() {
   )
 
   const nutritionHeader = (
-    <Box className="mb-3 flex-row items-center justify-between px-1">
+    <Box className="mb-3 flex-row items-center justify-between px-1" style={{ display: "none" }}>
       <Box className="flex-row items-center gap-2">
         <Box
           style={{
@@ -993,7 +1043,7 @@ export default function TodayScreen() {
                 {dateChrome}
                 {summaryCard}
                 {hydrationRow}
-                {isLarge ? (
+                {false ? (
                   <Box
                     className="hidden rounded-none border p-3 lg:flex"
                     style={{
@@ -1101,7 +1151,7 @@ export default function TodayScreen() {
                         className="flex-1"
                         style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
                       >
-                        Your diary is empty. Tap Log food or a + on Breakfast to start
+                        Log a meal
                       </Text>
                     </Box>
                     <Pressable
@@ -1175,7 +1225,7 @@ export default function TodayScreen() {
                       className="flex-1"
                       style={{ fontFamily: fonts.mono, color: colors.text, letterSpacing: 0.04 }}
                     >
-                      Your diary is empty. Tap Log food to start
+                      Log a meal
                     </Text>
                   </Box>
                   <Pressable

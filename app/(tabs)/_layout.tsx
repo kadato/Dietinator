@@ -73,14 +73,14 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
         {/* Brand mark — square ink stamp */}
         <View
           style={{
-            width: 44,
-            height: 44,
+            width: 32,
+            height: 32,
             borderWidth: borders.width,
             borderColor: colors.primary,
             backgroundColor: colors.primary,
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 14,
+            marginBottom: 8,
           }}
           accessibilityLabel="Dietinator"
         >
@@ -88,8 +88,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
             style={{
               color: colors.onPrimary,
               fontFamily: "Departure Mono",
-              fontSize: 22,
-              lineHeight: 22,
+              fontSize: 18,
+              lineHeight: 18,
               fontWeight: "700",
               textAlign: "center",
             }}
