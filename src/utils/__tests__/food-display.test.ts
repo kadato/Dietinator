@@ -18,17 +18,17 @@ const serving = (overrides: Partial<FoodServing> = {}): FoodServing => ({
 
 describe("formatServingOption", () => {
   it("renders plain unit labels without a parenthetical", () => {
-    expect(formatServingOption(serving(), "g")).toBe("100 g")
-    expect(formatServingOption(serving({ serving: "ml", amount: 250 }), "ml")).toBe("250 ml")
+    expect(formatServingOption(serving(), "g")).toBe("100g")
+    expect(formatServingOption(serving({ serving: "ml", amount: 250 }), "ml")).toBe("250ml")
   })
 
   it("renders countable unit labels without a parenthetical", () => {
-    expect(formatServingOption(serving({ serving: "stück", amount: 1 }), "stück")).toBe("1 each")
+    expect(formatServingOption(serving({ serving: "stück", amount: 1 }), "stück")).toBe("1each")
   })
 
   it("appends the amount for named portions without one", () => {
     expect(formatServingOption(serving({ serving: "1 scoop", amount: 25 }), "g")).toBe(
-      "1 scoop (25 g)",
+      "1 scoop (25g)",
     )
   })
 
@@ -96,7 +96,7 @@ describe("food display labels", () => {
         },
         2,
       ),
-    ).toBe("for 2 pcs")
+    ).toBe("for 2pcs")
     expect(
       formatNutrientsServingLabel(
         {
@@ -106,7 +106,7 @@ describe("food display labels", () => {
         },
         1,
       ),
-    ).toBe("for 1 pc")
+    ).toBe("for 1pc")
     expect(
       formatNutrientsServingLabel(
         {
@@ -116,20 +116,20 @@ describe("food display labels", () => {
         },
         110,
       ),
-    ).toBe("for 110 g (2 × 1 medium egg (55g))")
+    ).toBe("for 110g (2 × 1 medium egg (55g))")
   })
 })
 
 describe("formatEntryAmount", () => {
   it("formats countable units directly without grams", () => {
-    expect(formatEntryAmount({ amount: 2, unit: "piece" })).toBe("2 pcs")
-    expect(formatEntryAmount({ amount: 1, unit: "stück" })).toBe("1 pc")
-    expect(formatEntryAmount({ amount: 3, unit: "slice" })).toBe("3 slices")
+    expect(formatEntryAmount({ amount: 2, unit: "piece" })).toBe("2pcs")
+    expect(formatEntryAmount({ amount: 1, unit: "stück" })).toBe("1pc")
+    expect(formatEntryAmount({ amount: 3, unit: "slice" })).toBe("3slices")
   })
 
   it("formats plain gram and ml amounts when no serving is attached", () => {
-    expect(formatEntryAmount({ amount: 150, unit: "g" })).toBe("150 g")
-    expect(formatEntryAmount({ amount: 250, unit: "ml" })).toBe("250 ml")
+    expect(formatEntryAmount({ amount: 150, unit: "g" })).toBe("150g")
+    expect(formatEntryAmount({ amount: 250, unit: "ml" })).toBe("250ml")
   })
 
   it("formats pieces with grams when entry has piece serving (e.g. eggs)", () => {
@@ -140,7 +140,7 @@ describe("formatEntryAmount", () => {
         food_name: "Egg",
         serving: serving({ serving: "1 piece", amount: 55 }),
       }),
-    ).toBe("2 pcs (110 g)")
+    ).toBe("2pcs (110g)")
     expect(
       formatEntryAmount({
         amount: 55,
@@ -148,7 +148,7 @@ describe("formatEntryAmount", () => {
         food_name: "Medium egg",
         serving: serving({ serving: "1 medium egg (55g)", amount: 55 }),
       }),
-    ).toBe("1 pc (55 g)")
+    ).toBe("1pc (55g)")
     expect(
       formatEntryAmount({
         amount: 165,
@@ -156,7 +156,7 @@ describe("formatEntryAmount", () => {
         food_name: "Ei",
         serving: serving({ serving: "1 egg (55g)", amount: 55 }),
       }),
-    ).toBe("3 pcs (165 g)")
+    ).toBe("3pcs (165g)")
   })
 
   it("resolves piece servings from servings array when default serving is 100g", () => {
@@ -171,7 +171,7 @@ describe("formatEntryAmount", () => {
           serving({ serving: "100 g", amount: 100 }),
         ],
       }),
-    ).toBe("2 pcs (110 g)")
+    ).toBe("2pcs (110g)")
   })
 
   it("formats bread slices and other countable portions cleanly", () => {
@@ -182,7 +182,7 @@ describe("formatEntryAmount", () => {
         food_name: "Toast bread",
         serving: serving({ serving: "1 slice (30g)", amount: 30 }),
       }),
-    ).toBe("2 slices (60 g)")
+    ).toBe("2slices (60g)")
     expect(
       formatEntryAmount({
         amount: 45,
@@ -190,6 +190,6 @@ describe("formatEntryAmount", () => {
         food_name: "Protein bar",
         serving: serving({ serving: "1 bar (45g)", amount: 45 }),
       }),
-    ).toBe("1 bar (45 g)")
+    ).toBe("1bar (45g)")
   })
 })

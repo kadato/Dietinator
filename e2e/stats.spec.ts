@@ -17,7 +17,7 @@ test.describe("stats: weight and calorie trends (offline, local-first)", () => {
     await page.getByRole("button", { name: "Save weight" }).click()
 
     // Back on Stats. The header shows the latest entry and the chart is drawn.
-    await expect(page.getByText("75.5 kg", { exact: true }).first()).toBeVisible({
+    await expect(page.getByText("75.5kg", { exact: true }).first()).toBeVisible({
       timeout: 15_000,
     })
     await expect(page.getByLabel(/Body weight trend/)).toBeVisible()
@@ -27,7 +27,7 @@ test.describe("stats: weight and calorie trends (offline, local-first)", () => {
 
     // Changing the range keeps the data (the default range is 1M, so try 1Y).
     await page.getByRole("button", { name: "1Y" }).click()
-    await expect(page.getByText("75.5 kg", { exact: true }).first()).toBeVisible()
+    await expect(page.getByText("75.5kg", { exact: true }).first()).toBeVisible()
     await expect(page.getByLabel(/Body weight trend/)).toBeVisible()
 
     // Delete the latest entry to leave a clean state for other specs.

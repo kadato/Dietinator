@@ -4,7 +4,7 @@ import {
   nutrientsForAmount,
   resolveNutrientsRefAmount,
 } from "@/utils/nutrients"
-import { formatNumber } from "@/utils/format"
+import { formatNumber, joinAmountUnit } from "@/utils/format"
 
 /** YAZIO serving keys are dotted ids, such as whole.regular and small.piece. Show readable labels. */
 export function formatServingLabel(label: string): string {
@@ -41,14 +41,14 @@ export function formatServingOption(serving: FoodServing, baseUnit: string): str
     label.endsWith(` ${baseUnit}`) ||
     pretty.toLowerCase() === unit
   ) {
-    return `${formatNumber(serving.amount)} ${unit}`
+    return joinAmountUnit(formatNumber(serving.amount), unit)
   }
   // Names like "1 medium (118g)" already carry the amount. Appending it again
   // would read "1 medium (118g) (118 g)".
   if (new RegExp(`\\b${serving.amount}\\s*${unit}\\b`, "i").test(label)) {
     return pretty
   }
-  return `${pretty} (${formatNumber(serving.amount)} ${unit})`
+  return `${pretty} (${joinAmountUnit(formatNumber(serving.amount), unit)})`
 }
 
 /**
@@ -140,9 +140,9 @@ export function formatUnitName(unit: string, amount: number = 1): string {
 export function formatFoodAmount(amount: number, unit: string): string {
   const cleanAmt = formatNumber(amount)
   if (isCountableUnit(unit)) {
-    return `${cleanAmt} ${formatUnitName(unit, amount)}`
+    return joinAmountUnit(cleanAmt, formatUnitName(unit, amount))
   }
-  return `${cleanAmt} ${displayUnit(unit)}`
+  return joinAmountUnit(cleanAmt, displayUnit(unit))
 }
 
 function isPieceServingCandidate(serving: FoodServing, baseUnit: string): boolean {
@@ -261,7 +261,7 @@ export function getEntryPieceSummary(entry: {
     unitWord = pretty || (isSingle ? "portion" : "portions")
   }
 
-  return `${formatNumber(rounded)} ${unitWord} (${formatNumber(amt)} ${entry.unit})`
+  return `${formatNumber(rounded)}${unitWord} (${joinAmountUnit(formatNumber(amt), entry.unit)})`
 }
 
 /**
@@ -302,7 +302,9 @@ export function getPortionSummary(
     const countText = formatFoodAmount(amt, baseUnit)
     const servingWeight = food.serving?.amount
     const subText =
-      servingWeight && servingWeight > 1 ? `${formatNumber(amt * servingWeight)} g` : undefined
+      servingWeight && servingWeight > 1
+        ? joinAmountUnit(formatNumber(amt * servingWeight), "g")
+        : undefined
     return { countText, subText, isPiece: true }
   }
 
@@ -329,19 +331,19 @@ export function getPortionSummary(
 
       const pieceWord = roundedRatio === 1 ? "pc" : "pcs"
       const label = isEggOrPiece
-        ? `${formatNumber(roundedRatio)} ${pieceWord}`
+        ? `${formatNumber(roundedRatio)}${pieceWord}`
         : `${formatNumber(roundedRatio)} × ${formatServingLabel(servingName)}`
 
       return {
         countText: label,
-        subText: `${formatNumber(amt)} ${baseUnit}`,
+        subText: joinAmountUnit(formatNumber(amt), baseUnit),
         isPiece: true,
       }
     }
   }
 
   return {
-    countText: `${formatNumber(amt)} ${baseUnit}`,
+    countText: joinAmountUnit(formatNumber(amt), baseUnit),
     isPiece: false,
   }
 }
@@ -353,7 +355,7 @@ export function formatNutrientsServingLabel(
   const unit = food.base_unit || "g"
   const ref = resolveNutrientsRefAmount(food.nutrients, food.serving, unit)
   const amt = Number(amount) || 0
-  if (amt <= 0) return `per ${formatNumber(ref)} ${displayUnit(unit)}`
+  if (amt <= 0) return `per ${joinAmountUnit(formatNumber(ref), displayUnit(unit))}`
 
   if (isCountableUnit(unit)) {
     return `for ${formatFoodAmount(amt, unit)}`
@@ -365,12 +367,12 @@ export function formatNutrientsServingLabel(
     if (servingAmt > 0 && Math.abs(servingAmt - amt) > 0.01) {
       const ratio = Math.round((amt / servingAmt) * 10) / 10
       if (ratio > 0 && Math.abs(ratio * servingAmt - amt) <= 1) {
-        return `for ${formatNumber(amt)} ${unit} (${formatNumber(ratio)} × ${formatServingLabel(name)})`
+        return `for ${joinAmountUnit(formatNumber(amt), unit)} (${formatNumber(ratio)} × ${formatServingLabel(name)})`
       }
     }
-    return `for ${formatNumber(amt)} ${unit}, ${formatServingLabel(name)}`
+    return `for ${joinAmountUnit(formatNumber(amt), unit)}, ${formatServingLabel(name)}`
   }
-  return `for ${formatNumber(amt)} ${unit}`
+  return `for ${joinAmountUnit(formatNumber(amt), unit)}`
 }
 
 export function formatListNutrientLine(food: SearchFoodResult): string {
@@ -384,8 +386,8 @@ export function formatListNutrientLine(food: SearchFoodResult): string {
 
   const prefix = food.producer?.trim() ? `${food.producer.trim()}, ` : ""
   const portion = perGram
-    ? `100 ${unit}`
-    : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
+    ? joinAmountUnit("100", unit)
+    : joinAmountUnit(formatNumber(food.serving.amount), displayUnit(unit))
 
   return `${prefix}${kcal} kcal, ${p}g P, ${c}g C, ${f}g F, ${portion}`
 }
@@ -399,5 +401,5 @@ export function formatUsageAmountLine(food: SearchFoodResult, amount: number): s
   const c = Math.round(nutrients.carbs * 10) / 10
   const f = Math.round(nutrients.fat * 10) / 10
   const prefix = food.producer?.trim() ? `${food.producer.trim()}, ` : ""
-  return `${prefix}${kcal} kcal, ${p}g P, ${c}g C, ${f}g F, ${formatNumber(amount)} ${unit}`
+  return `${prefix}${kcal} kcal, ${p}g P, ${c}g C, ${f}g F, ${joinAmountUnit(formatNumber(amount), unit)}`
 }

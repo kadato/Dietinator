@@ -66,7 +66,7 @@ test.describe("ui rework geometry checks", () => {
     await page.getByRole("button", { name: "Save weight" }).click()
 
     // After saving: still exactly one Log weight button (action row, chart shown).
-    await expect(page.getByText("75.5 kg", { exact: true }).first()).toBeVisible({
+    await expect(page.getByText("75.5kg", { exact: true }).first()).toBeVisible({
       timeout: 15_000,
     })
     await expect(page.getByRole("button", { name: "Log weight" })).toHaveCount(1)

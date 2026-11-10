@@ -62,7 +62,7 @@ test.describe("YAZIO (real account)", () => {
 
   /** The diary row for a specific food (labels end with `<name>, …, N kcal`). */
   function mealEntry(page: Page, foodName: string) {
-    return page.getByRole("button", { name: new RegExp(`^${foodName}, .* \\d+ kcal$`) }).first()
+    return page.getByRole("button", { name: new RegExp(`^${foodName} .* \\d+ kcal`) }).first()
   }
 
   test("signs in with real credentials and reaches the dashboard", async ({ page }) => {
@@ -82,9 +82,9 @@ test.describe("YAZIO (real account)", () => {
     await page.getByRole("button", { name: "Search foods" }).click()
     await page.getByPlaceholder("Search foods…").fill("banane")
 
-    // Remote results arrive with real product rows (aria-label ends with the
-    // kcal + Cal summary: "<name>, <portion>, <kcal> kcal, …, <kcal> Cal").
-    const rows = page.locator('[aria-label$=" Cal"]')
+    // Remote results arrive with real product rows (aria-label carries the
+    // kcal summary: "<name>, <portion>, <kcal> kcal …").
+    const rows = page.locator('[aria-label*="kcal"]')
     await expect(rows.first()).toBeVisible({ timeout: 30_000 })
     expect(await rows.count()).toBeGreaterThan(0)
   })

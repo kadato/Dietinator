@@ -23,6 +23,16 @@ export function formatThousands(value: number): string {
   return int.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
 
+/**
+ * Short measurement units attach directly to the number ("10g", "250ml",
+ * "72kg", "312kcal", "2pcs"), word units keep their internal spacing
+ * ("8fl oz" stays two words). Single place that owns the rule so every
+ * screen formats amounts the same way.
+ */
+export function joinAmountUnit(amount: string, unit: string): string {
+  return `${amount}${unit}`
+}
+
 /** Format an ISO date as HH:MM (24h) without Intl. */
 export function formatTimeHM(iso: string): string {
   const date = new Date(iso)

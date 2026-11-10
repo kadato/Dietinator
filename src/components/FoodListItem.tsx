@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, View } from "react-native"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import type { SearchFoodResult } from "@/types"
 import { displayUnit } from "@/utils/food-display"
-import { formatNumber } from "@/utils/format"
+import { formatNumber, joinAmountUnit } from "@/utils/format"
 import { isPerGramNutrients, nutrientsForAmount } from "@/utils/nutrients"
 import { getFoodIcon } from "@/utils/food-icon"
 import { useTheme } from "@/hooks/useTheme"
@@ -98,19 +98,19 @@ export const FoodListItem = memo(function FoodListItem({
 
   const portion =
     effectiveAmount !== undefined
-      ? `${formatNumber(effectiveAmount)} ${displayUnit(unit)}`
+      ? joinAmountUnit(formatNumber(effectiveAmount), displayUnit(unit))
       : perGram
-        ? `100 ${displayUnit(unit)}`
-        : `${formatNumber(food.serving.amount)} ${displayUnit(unit)}`
+        ? joinAmountUnit("100", displayUnit(unit))
+        : joinAmountUnit(formatNumber(food.serving.amount), displayUnit(unit))
 
   const prefix = food.producer?.trim() ? `${food.producer.trim()}, ` : ""
 
   // Accessible name: the exact visible row text (2.5.3 label-in-name), then
-  // the calorie figure as data. When showKcal renders "{kcal} Cal" on the
+  // the calorie figure as data. When showKcal renders "{kcal} kcal" on the
   // right it is already part of the visible text, so it joins with a space;
   // otherwise it is appended after a comma as extra context.
   const macroText = `${formatNumber(nutrients.protein)}g ${formatNumber(nutrients.carbs)}g ${formatNumber(nutrients.fat)}g`
-  const kcalText = `${Math.round(nutrients.kcal)} Cal`
+  const kcalText = `${Math.round(nutrients.kcal)} kcal`
   const rowText = subtitle
     ? `${food.name} ${subtitle}`
     : `${food.name} ${prefix}${portion}, ${Math.round(nutrients.kcal)} kcal ${macroText}`
@@ -213,7 +213,7 @@ export const FoodListItem = memo(function FoodListItem({
               letterSpacing: 0.4,
             }}
           >
-            {Math.round(nutrients.kcal)} Cal
+            {Math.round(nutrients.kcal)} kcal
           </Text>
         ) : null}
       </Pressable>
