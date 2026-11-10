@@ -100,9 +100,7 @@ export function ThemePicker({ visible, selected, onClose, onSelect }: Props) {
                 <Feather name="x" size={16} color={colors.textMuted} />
               </Pressable>
             </View>
-            <Text style={styles.subtitle}>
-              VSCode-popular themes are preseeded. Tap to apply instantly.
-            </Text>
+            <Text style={styles.subtitle}>Tap to apply</Text>
             <ScrollView
               style={styles.list}
               contentContainerStyle={styles.listContent}
@@ -144,7 +142,6 @@ export function ThemePicker({ visible, selected, onClose, onSelect }: Props) {
                             >
                               {t.label}
                             </Text>
-                            <Text style={styles.optionId}>{t.name}</Text>
                           </View>
                         </View>
                         {isSelected ? (

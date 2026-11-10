@@ -398,14 +398,6 @@ export default function MealBuilderScreen() {
           <Box className="px-3">
             <Text
               size="xs"
-              className="mb-4 font-mono uppercase tracking-widest"
-              style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
-            >
-              Ready to log into any meal slot.
-            </Text>
-
-            <Text
-              size="xs"
               bold
               className="mb-1.5 font-mono uppercase tracking-widest"
               style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
@@ -531,9 +523,7 @@ export default function MealBuilderScreen() {
                 <Box className="mb-4 mt-2">
                   <NutritionFactsCard
                     nutrients={totals}
-                    servingLabel={
-                      items.length === 1 ? "1 food in meal" : `${items.length} foods in meal total`
-                    }
+                    servingLabel=""
                     baseAmount={items.reduce((s, i) => s + (i.amount || 0), 0) || 100}
                   />
                 </Box>
@@ -556,16 +546,6 @@ export default function MealBuilderScreen() {
             >
               Add foods
             </Text>
-            {isBlank && results.length > 0 ? (
-              <Text
-                size="xs"
-                bold
-                className="mb-2 mt-1 font-mono uppercase tracking-widest"
-                style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.08 }}
-              >
-                Favorite and recent picks
-              </Text>
-            ) : null}
             {searching ? <ActivityIndicator className="py-2" color={colors.primary} /> : null}
           </Box>
 
@@ -587,7 +567,7 @@ export default function MealBuilderScreen() {
                 className="py-2 text-center font-mono uppercase tracking-widest"
                 style={{ color: colors.textMuted, fontFamily: fonts.mono }}
               >
-                Showing the first 30 results. Refine your search for more.
+                First 30 - refine search.
               </Text>
             ) : null}
             {!searching && !isBlank && query.trim().length > 0 && results.length === 0 ? (

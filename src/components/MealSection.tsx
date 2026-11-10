@@ -189,6 +189,7 @@ export const MealSection = memo(function MealSection({
               size="2xs"
               className="font-mono uppercase tracking-wider"
               style={{
+                display: "none",
                 color: colors.textMuted,
                 fontSize: 11,
                 letterSpacing: 0.04,
@@ -223,24 +224,10 @@ export const MealSection = memo(function MealSection({
               </Text>
             </View>
           </Box>
-          {overKcal ? (
-            <Text
-              size="2xs"
-              className="font-mono tracking-wider"
-              style={{
-                color: colors.textMuted,
-                fontSize: 10,
-                letterSpacing: 0.02,
-                fontFamily: fonts.mono,
-              }}
-            >
-              Adjust tomorrow
-            </Text>
-          ) : null}
         </Box>
       ) : null}
 
-      {entries.length === 0 ? (
+      {entries.length === 0 && false ? (
         <Box className="flex-row items-center gap-1 px-3 pb-2.5 pt-0">
           <Feather name="plus" size={11} color={colors.textMuted} />
           <Text
@@ -312,13 +299,14 @@ export const MealSection = memo(function MealSection({
                 letterSpacing: 0.04,
               }}
             >
-              +{entries.length - 2} more · tap to expand
+              +{entries.length - 2} more
             </Text>
           ) : (
             <Text
               size="2xs"
               className="font-mono uppercase tracking-wider"
               style={{
+                display: "none",
                 color: colors.textMuted,
                 fontFamily: fonts.mono,
                 fontSize: 10,

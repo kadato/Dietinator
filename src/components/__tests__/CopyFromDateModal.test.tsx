@@ -107,7 +107,7 @@ describe("CopyFromDateModal", () => {
       />,
     )
 
-    expect(screen.getByText("No meals on this day. Pick another with a dot.")).toBeTruthy()
+    expect(screen.getByText("No meals - pick a dotted day.")).toBeTruthy()
     expect(screen.getByText("Nothing logged")).toBeTruthy()
   })
 })

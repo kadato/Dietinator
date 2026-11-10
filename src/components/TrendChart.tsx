@@ -280,7 +280,7 @@ export function TrendChart({
                 fill={colors.warning}
                 textAnchor="end"
               >
-                Goal {formatValue(goalValue as number)}
+                {formatValue(goalValue as number)}
               </SvgText>
             </>
           ) : null}

@@ -47,7 +47,8 @@ function NutrientProgressBar({
         </View>
         <View style={styles.valueCol}>
           <Text style={styles.nutrientValue}>
-            {formattedVal} <Text style={styles.unitText}>{unit}</Text>
+            {formattedVal}
+            <Text style={styles.unitText}>{unit}</Text>
           </Text>
           {pct !== null ? (
             <Text style={[styles.rdiPct, { color: pct > 100 ? color : styles.rdiColor.color }]}>
@@ -150,7 +151,7 @@ export const NutritionBreakdownModal = memo(function NutritionBreakdownModal({
             styles={styles}
           />
           <NutrientProgressBar
-            label="Total Carbohydrates"
+            label="Carbs"
             value={nutrients.carbs}
             unit="g"
             color={colors.lunch}

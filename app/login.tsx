@@ -129,8 +129,8 @@ export default function LoginScreen() {
             <Box className="mb-8 w-full max-w-[640px] flex-row items-center gap-6 self-center">
               <View
                 style={{
-                  width: 96,
-                  height: 96,
+                  width: 72,
+                  height: 72,
                   borderWidth: borders.width,
                   borderColor: colors.primary,
                   backgroundColor: colors.primary,
@@ -143,8 +143,8 @@ export default function LoginScreen() {
                   style={{
                     color: colors.onPrimary,
                     fontFamily: "Departure Mono",
-                    fontSize: 44,
-                    lineHeight: 44,
+                    fontSize: 33,
+                    lineHeight: 33,
                     fontWeight: "700",
                     textAlign: "center",
                   }}
@@ -170,7 +170,7 @@ export default function LoginScreen() {
                     marginTop: 4,
                   }}
                 >
-                  {[{ k: "OFFLINE", v: "SQLite first" }].map((chip) => (
+                  {([] as { k: string; v: string }[]).map((chip) => (
                     <Box
                       key={chip.k}
                       className="flex-row items-center gap-1.5 rounded-none border px-2.5 py-1.5"
@@ -204,9 +204,9 @@ export default function LoginScreen() {
             {isWide ? null : (
               <View
                 style={{
-                  width: 80,
-                  height: 80,
-                  marginBottom: 20,
+                  width: 64,
+                  height: 64,
+                  marginBottom: 12,
                   borderWidth: borders.width,
                   borderColor: colors.primary,
                   backgroundColor: colors.primary,
@@ -219,8 +219,8 @@ export default function LoginScreen() {
                   style={{
                     color: colors.onPrimary,
                     fontFamily: "Departure Mono",
-                    fontSize: 33,
-                    lineHeight: 33,
+                    fontSize: 26,
+                    lineHeight: 26,
                     fontWeight: "700",
                     textAlign: "center",
                   }}
@@ -241,12 +241,12 @@ export default function LoginScreen() {
             <Text
               size="xs"
               bold
-              className={`${isWide ? "hidden" : ""} mt-2 max-w-[340px] text-center font-mono uppercase tracking-widest`}
+              className="mt-2 hidden max-w-[340px] text-center font-mono uppercase tracking-widest"
               style={{ letterSpacing: 0.08, color: colors.textMuted }}
             >
               Track calories. No ads.
             </Text>
-            {isWide ? (
+            {false ? (
               <Text
                 size="xs"
                 bold
@@ -261,7 +261,7 @@ export default function LoginScreen() {
           <Box className={isWide ? "mx-auto w-full max-w-[440px]" : ""}>
             <Card
               variant="elevated"
-              className="gap-4 p-5"
+              className="gap-3 p-4"
               style={{
                 borderWidth: borders.width,
                 borderColor: colors.border,
@@ -292,7 +292,7 @@ export default function LoginScreen() {
                 }}
               >
                 <InputField
-                  placeholder="YAZIO email"
+                  placeholder="you@example.com"
                   accessibilityLabel="YAZIO email"
                   autoCapitalize="none"
                   keyboardType="email-address"
@@ -333,7 +333,7 @@ export default function LoginScreen() {
               >
                 <InputField
                   ref={passwordRef as never}
-                  placeholder="Password"
+                  placeholder="••••••••"
                   accessibilityLabel="Password"
                   secureTextEntry={!passwordVisible}
                   textContentType="password"
@@ -525,25 +525,23 @@ export default function LoginScreen() {
                   className="mt-1 px-4 pb-4 leading-5"
                   style={{ color: colors.textMuted, fontFamily: fonts.mono }}
                 >
-                  In the YAZIO app: sign out, select email login, tap &apos;Forgot password&apos;,
-                  and set a password. Sign in here with it.
+                  In YAZIO app: sign out &gt; email login &gt; Forgot password.
                 </Text>
               ) : null}
             </Card>
 
             <Text
               size="xs"
-              className="mt-8 px-2 text-center font-mono uppercase tracking-widest"
+              className="mt-4 px-2 text-center font-mono uppercase tracking-widest"
               style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
-              Unofficial YAZIO API. For personal use only. Credentials are stored securely on this
-              device.
+              Unofficial API. Personal use only. Stored on device.
             </Text>
             <Pressable
               onPress={() => router.push("/privacy")}
               accessibilityRole="link"
               accessibilityLabel="Read the privacy policy"
-              className="mt-3 items-center"
+              className="mt-2 items-center"
             >
               <Text
                 size="xs"

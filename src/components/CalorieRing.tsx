@@ -275,6 +275,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     statsRow: {
+      display: "none",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -291,6 +292,7 @@ const createStyles = (colors: ColorPalette) =>
       paddingVertical: 5,
     },
     legendRow: {
+      display: "none",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",

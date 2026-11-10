@@ -17,12 +17,8 @@ const SECTIONS: { heading: string; body: string }[] = [
     body: "If you sign in, the app stores your YAZIO email, API tokens, and password when you select remember me. The app stores secrets with expo-secure-store on native and with prefixed localStorage on web. The web fallback is weaker than the native keystore. Tokens go to YAZIO through a same-origin proxy and never to another third party.",
   },
   {
-    heading: "What is not collected",
-    body: "No analytics SDKs. No ads. No crash reporters. No cookies. No tracking across sites.",
-  },
-  {
     heading: "Retention and deletion",
-    body: "Data stays until you delete it. Sign out clears tokens. You remove diary data when you delete entries or clear app storage.",
+    body: "Data stays on this device. Sign out clears tokens.",
   },
   {
     heading: "Your rights",
@@ -55,18 +51,18 @@ export default function PrivacyScreen() {
           <Text
             style={{ color: colors.textMuted, fontFamily: fonts.mono, fontSize: 12, marginTop: 8 }}
           >
-            Last updated 2026-09-25. The tracker stores data on the device and sends no analytics.
+            Last updated 2026-09-25.
           </Text>
           {SECTIONS.map((section) => (
             <View
               key={section.heading}
               style={{
-                marginTop: 16,
+                marginTop: 12,
                 borderWidth: borders.width,
                 borderColor: colors.border,
                 borderRadius: radii.none,
                 backgroundColor: colors.surface,
-                padding: 16,
+                padding: 12,
               }}
             >
               <Text

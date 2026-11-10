@@ -298,7 +298,7 @@ function AiChatModalContent() {
           className="mt-0.5 leading-4"
           style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.2 }}
         >
-          Enable it and add an API key in Settings.
+          Add API key in Settings.
         </Text>
       </Box>
       <Pressable

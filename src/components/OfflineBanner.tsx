@@ -11,17 +11,14 @@ type Props = {
   message?: string
 }
 
-export function OfflineBanner({
-  visible,
-  message = "YAZIO unavailable, using cached foods",
-}: Props) {
+export function OfflineBanner({ visible, message = "YAZIO offline - cached" }: Props) {
   const { isOnline } = useNetwork()
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
   if (!visible && isOnline) return null
 
-  const text = isOnline ? message : "Offline, diary works, sync resumes later"
+  const text = isOnline ? message : "Offline - sync later"
 
   return (
     <Box

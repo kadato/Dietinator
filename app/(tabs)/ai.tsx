@@ -269,7 +269,7 @@ export default function AiScreen() {
           className="mt-0.5 font-mono leading-4"
           style={{ fontFamily: fonts.mono, color: colors.textMuted }}
         >
-          Enable it and add an API key in Settings.
+          Add API key in Settings.
         </Text>
       </Box>
       <Pressable

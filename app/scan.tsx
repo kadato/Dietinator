@@ -399,10 +399,7 @@ export default function ScanScreen() {
               <MaterialCommunityIcons name="barcode-scan" size={36} color={colors.primary} />
             </Box>
             <Text style={styles.webScanTitle}>Barcode Lookup</Text>
-            <Text style={styles.webScanHint}>
-              Enter the numeric barcode (EAN-13 / UPC) from product packaging to query food
-              database.
-            </Text>
+            <Text style={styles.webScanHint}>Enter EAN-13 / UPC to search.</Text>
             <View style={{ width: "100%", maxWidth: 440 }}>
               <Input
                 size="lg"

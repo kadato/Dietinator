@@ -837,7 +837,7 @@ export default function LogMealScreen() {
                       onPress={() => openEdit(entry)}
                       accessibilityRole="button"
                       // Mirrors the visible name + portion + kcal + macro pills (2.5.3).
-                      accessibilityLabel={`Edit ${entry.food_name}, ${formatNumber(entry.amount)} ${displayUnit(entry.unit)}, ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
+                      accessibilityLabel={`Edit ${entry.food_name}, ${formatEntryAmount(entry)}, ${Math.round(entry.kcal)} kcal, ${formatNumber(entry.protein)}g ${formatNumber(entry.carbs)}g ${formatNumber(entry.fat)}g`}
                     >
                       <View style={[styles.loggedIconWrap, { backgroundColor: `${accent}18` }]}>
                         <MaterialCommunityIcons
@@ -1027,9 +1027,6 @@ export default function LogMealScreen() {
                 size="sm"
               />
             </View>
-            {dayOverKcal > 0 ? (
-              <Text style={styles.budgetHint}>Over budget · adjust tomorrow</Text>
-            ) : null}
           </View>
         ) : null}
 
@@ -1376,9 +1373,9 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 3,
+      gap: 2,
       paddingVertical: 7,
-      paddingHorizontal: 2,
+      paddingHorizontal: 1,
       borderRadius: radii.none,
       borderWidth: borders.width,
     },
@@ -1388,11 +1385,11 @@ const createStyles = (colors: ColorPalette) =>
       borderColor: colors.border,
     },
     tabLabel: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: "700",
       fontFamily: fonts.mono,
       textTransform: "uppercase",
-      letterSpacing: 0.4,
+      letterSpacing: 0.2,
     },
     tabLabelActive: {
       fontWeight: "800",
@@ -1781,14 +1778,6 @@ const createStyles = (colors: ColorPalette) =>
       fontFamily: fonts.mono,
       textTransform: "uppercase",
       letterSpacing: 0.6,
-    },
-    budgetHint: {
-      fontSize: 11,
-      fontWeight: "600",
-      fontFamily: fonts.mono,
-      color: colors.danger,
-      letterSpacing: 0.3,
-      textTransform: "uppercase",
     },
     loggedIconBtn: {
       width: 32,

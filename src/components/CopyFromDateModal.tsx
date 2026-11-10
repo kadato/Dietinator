@@ -144,7 +144,6 @@ export function CopyFromDateModal({
     })
   }
 
-  const totalKcal = entries.reduce((s, e) => s + e.kcal, 0)
   const count = entries.length
   const selectedCount = selectedIds.size
   const selectedKcal = useMemo(
@@ -372,9 +371,6 @@ export function CopyFromDateModal({
                       {selectedCount === count ? "Deselect all" : "Select all"}
                     </Text>
                   </Pressable>
-                  <Text style={styles.previewMetaSmall}>
-                    {selectedCount} selected · {Math.round(totalKcal)} total
-                  </Text>
                 </View>
               ) : null}
 
@@ -384,9 +380,7 @@ export function CopyFromDateModal({
                     <View style={styles.emptyIconBox}>
                       <Feather name="inbox" size={20} color={colors.textMuted} />
                     </View>
-                    <Text style={styles.emptyText}>
-                      No meals on this day. Pick another with a dot.
-                    </Text>
+                    <Text style={styles.emptyText}>No meals - pick a dotted day.</Text>
                   </View>
                 ) : (
                   <ScrollView

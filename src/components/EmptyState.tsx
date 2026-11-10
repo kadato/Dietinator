@@ -58,7 +58,7 @@ export function EmptyState({
         >
           {title}
         </Text>
-        {message ? (
+        {message && message !== title ? (
           <Text
             size="sm"
             className="mt-1 max-w-[420px] text-center leading-5"
@@ -74,7 +74,7 @@ export function EmptyState({
 
   return (
     <Box
-      className={`items-center px-6 pb-10 ${className} ${isWide ? "mx-auto w-full max-w-[720px] border p-8" : ""}`}
+      className={`items-center px-6 pb-6 ${className} ${isWide ? "mx-auto w-full max-w-[720px] border p-8" : ""}`}
       style={
         isWide
           ? {
@@ -86,12 +86,12 @@ export function EmptyState({
       }
     >
       <Box
-        className="h-16 w-16 items-center justify-center rounded-none border"
+        className="h-12 w-12 items-center justify-center rounded-none border"
         style={{ backgroundColor: colors.surfaceAlt }}
       >
-        <Feather name={icon} size={28} color={tint} />
+        <Feather name={icon} size={22} color={tint} />
       </Box>
-      <Text size="lg" bold className="mt-4 text-center" style={{ color: colors.text }}>
+      <Text size="lg" bold className="mt-3 text-center" style={{ color: colors.text }}>
         {title}
       </Text>
       {message ? (
@@ -103,7 +103,7 @@ export function EmptyState({
           {message}
         </Text>
       ) : null}
-      {action ? <Box className="mt-5">{action}</Box> : null}
+      {action ? <Box className="mt-3">{action}</Box> : null}
     </Box>
   )
 }

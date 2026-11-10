@@ -49,7 +49,7 @@ export function ModalContainer({
   dismissable = true,
   topOffset,
 }: Props) {
-  const { isWide, isLarge } = useLayout()
+  const { isWide } = useLayout()
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const safeBack = useSafeBack()
@@ -71,7 +71,7 @@ export function ModalContainer({
     const baseTop =
       insets.top > 0 ? insets.top : Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) : 0
     const safeBottom = insets.bottom
-    const thumbTop = baseTop + (topOffset ?? 12)
+    const thumbTop = baseTop + (topOffset ?? 4)
     return (
       <Box
         {...(Platform.OS === "web" ? ({ accessibilityRole: "dialog" } as never) : {})}
@@ -94,9 +94,7 @@ export function ModalContainer({
   }
 
   return (
-    <Box
-      className={`w-full flex-1 items-center justify-center ${isLarge ? "px-10 py-12" : "px-6 py-10"}`}
-    >
+    <Box className={`w-full flex-1 items-center justify-center px-6 py-6`}>
       {dismissable ? (
         <Pressable
           onPress={handleDismiss}

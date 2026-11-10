@@ -68,7 +68,7 @@ export function FoodDatabaseCountryPicker({ visible, selectedCode, onSelect, onC
             <Feather name="x" size={22} color={styles.closeIcon.color} />
           </Pressable>
         </View>
-        <Text style={styles.hint}>Search uses this country&apos;s YAZIO catalog.</Text>
+        <Text style={styles.hint}>YAZIO catalog</Text>
         <TextInput
           style={styles.search}
           placeholder="Search country…"

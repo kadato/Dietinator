@@ -48,37 +48,32 @@ const MacroCompareRow = memo(function MacroCompareRow({
           <View
             style={[styles.iconBox, { backgroundColor: `${color}18`, borderColor: colors.border }]}
           >
-            <Feather name={iconName} size={10} color={color} />
+            <Feather name={iconName} size={12} color={color} />
           </View>
           <Text style={[styles.macroLabel, { color }]}>{label}</Text>
         </View>
 
-        <Text style={styles.macroProjected} numberOfLines={1}>
-          {Math.round(projected)}g
-          {goal > 0 ? <Text style={styles.macroGoal}> of {Math.round(goal)}g</Text> : null}
-        </Text>
-      </View>
-
-      <View style={styles.macroSubRow}>
-        <Text style={styles.macroSub} numberOfLines={1}>
-          Today {Math.round(current)} + this {Math.round(added)}
-        </Text>
-
-        {goal > 0 ? (
-          <View
-            style={[
-              styles.budgetBadge,
-              {
-                backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
-                borderColor: over > 0 ? colors.danger : color,
-              },
-            ]}
-          >
-            <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
-              {over > 0 ? `+${Math.round(over)} over` : `${Math.round(remaining)} left`}
-            </Text>
-          </View>
-        ) : null}
+        <View style={styles.projectedGroup}>
+          <Text style={styles.macroProjected} numberOfLines={1}>
+            {Math.round(projected)}g
+            {goal > 0 ? <Text style={styles.macroGoal}> of {Math.round(goal)}g</Text> : null}
+          </Text>
+          {goal > 0 ? (
+            <View
+              style={[
+                styles.budgetBadge,
+                {
+                  backgroundColor: over > 0 ? `${colors.danger}14` : `${color}14`,
+                  borderColor: over > 0 ? colors.danger : color,
+                },
+              ]}
+            >
+              <Text style={[styles.budgetBadgeText, { color: over > 0 ? colors.danger : color }]}>
+                {over > 0 ? `+${Math.round(over)}g over` : `${Math.round(remaining)}g left`}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {goal > 0 ? (
@@ -229,7 +224,6 @@ export const DailyImpactCard = memo(function DailyImpactCard({
           </View>
           <Text style={styles.cardTitle}>Daily Budget Impact</Text>
         </View>
-        <Text style={styles.cardSubtitle}>Where you will be after logging</Text>
       </View>
 
       <View style={styles.calorieHero}>
@@ -243,10 +237,6 @@ export const DailyImpactCard = memo(function DailyImpactCard({
               minimumFontScale={0.7}
             >
               {formatThousands(projectedKcal)} <Text style={styles.heroBigUnit}>kcal</Text>
-            </Text>
-            <Text style={styles.heroSub} numberOfLines={2}>
-              Today {formatThousands(currentKcal)} + this {formatThousands(addedKcal)}
-              {goalKcal > 0 ? ` · goal ${formatThousands(goalKcal)}` : ""}
             </Text>
           </View>
 
@@ -606,7 +596,7 @@ const createStyles = (colors: ColorPalette) =>
     macroRowHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "flex-start",
+      alignItems: "center",
       gap: spacing.xs,
       flexWrap: "wrap",
     },
@@ -622,8 +612,8 @@ const createStyles = (colors: ColorPalette) =>
       borderWidth: borders.widthThin,
     },
     iconBox: {
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       borderRadius: radii.none,
       borderWidth: borders.width,
       alignItems: "center",
@@ -632,7 +622,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     macroLabel: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -640,7 +630,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     macroProjected: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
@@ -649,26 +639,19 @@ const createStyles = (colors: ColorPalette) =>
       textAlign: "right",
     },
     macroGoal: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
     },
-    macroSubRow: {
+    projectedGroup: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing.xs,
-    },
-    macroSub: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: colors.textMuted,
-      fontFamily: fonts.mono,
-      fontVariant: ["tabular-nums"],
-      flex: 1,
-      minWidth: 0,
+      gap: 6,
+      flexShrink: 1,
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
     },
     arrowText: {
       color: colors.textMuted,
@@ -676,15 +659,15 @@ const createStyles = (colors: ColorPalette) =>
       fontFamily: fonts.mono,
     },
     budgetBadge: {
-      paddingHorizontal: 6,
-      paddingVertical: 1.5,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
       borderRadius: radii.none,
       borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
     },
     budgetBadgeText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
