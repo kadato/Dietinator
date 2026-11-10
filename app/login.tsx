@@ -244,7 +244,7 @@ export default function LoginScreen() {
               className="mt-2 hidden max-w-[340px] text-center font-mono uppercase tracking-widest"
               style={{ letterSpacing: 0.08, color: colors.textMuted }}
             >
-              Track calories. No ads.
+              Track calories.
             </Text>
             {false ? (
               <Text
