@@ -733,32 +733,60 @@ function AiSettingsForm({
     onDirtyChange?.(isAiDirty)
   }, [isAiDirty, onDirtyChange])
 
-  const aiSettingsForTest = (): AiProviderSettings => ({
+  const aiSettingsForTest = (apiKey: string): AiProviderSettings => ({
     enabled: true,
     provider: aiProvider,
     base_url: aiBaseUrl.trim() || presetFor(aiProvider).base_url,
-    api_key: aiApiKey.trim(),
+    api_key: apiKey,
     model: aiModel.trim() || presetFor(aiProvider).model,
     system_prompt: aiSystemPrompt,
   })
 
+  // The saved key is never echoed into the form, so fetch and test fall back
+  // to the stored key instead of forcing the user to re-paste it after every
+  // save or base/model edit.
+  const resolveApiKey = async (): Promise<string> => {
+    if (aiApiKey.trim()) return aiApiKey.trim()
+    try {
+      return (await getAiProviderSettings()).api_key.trim()
+    } catch {
+      return ""
+    }
+  }
+
   const selectAiProvider = (provider: AiProviderId) => {
-    setAiProvider(provider)
-    setAiBaseUrl(AI_PROVIDER_PRESETS[provider].base_url)
-    setAiModel(AI_PROVIDER_PRESETS[provider].model)
-    setFetchedModels([])
-    setTestResult(null)
+    if (provider === aiProvider) return
+    const apply = () => {
+      setAiProvider(provider)
+      setAiBaseUrl(AI_PROVIDER_PRESETS[provider].base_url)
+      setAiModel(AI_PROVIDER_PRESETS[provider].model)
+      setFetchedModels([])
+      setTestResult(null)
+    }
+    // Switching presets overwrites custom base/model edits, so confirm first
+    // when the form already holds unsaved work.
+    if (isAiDirty) {
+      confirmAction({
+        title: "Switch provider?",
+        message: "Switching presets replaces the base URL and model. Unsaved edits will be lost.",
+        confirmLabel: "Switch",
+        onConfirm: apply,
+      })
+      return
+    }
+    apply()
   }
 
   const fetchAiModels = async () => {
-    if (!aiApiKey.trim()) {
+    const key = await resolveApiKey()
+    if (!key && aiProvider !== "ollama") {
       setAiError("Add an API key first, then fetch the model list.")
       return
     }
     setAiError(null)
     setFetchingModels(true)
     try {
-      const models = await fetchAvailableModels(aiSettingsForTest())
+      const models = await fetchAvailableModels(aiSettingsForTest(key))
       setFetchedModels(models)
       if (models.length === 0) {
         setAiError("No models returned. The endpoint may not expose a model list.")
@@ -775,7 +803,7 @@ function AiSettingsForm({
     setTestResult(null)
     setTestingConnection(true)
     try {
-      setTestResult(await testProviderConnection(aiSettingsForTest()))
+      setTestResult(await testProviderConnection(aiSettingsForTest(await resolveApiKey())))
     } finally {
       setTestingConnection(false)
     }
@@ -784,6 +812,10 @@ function AiSettingsForm({
   const saveAiSettings = useCallback(async () => {
     if (!aiBaseUrl.trim()) {
       setAiError("Base URL is required (for example https://api.openai.com/v1).")
+      return
+    }
+    if (!/^https?:\/\/.+/i.test(aiBaseUrl.trim())) {
+      setAiError("Base URL must start with http:// or https://.")
       return
     }
     if (!aiModel.trim()) {
@@ -839,7 +871,7 @@ function AiSettingsForm({
             const providerColors: Record<string, string> = {
               openai: colors.lunch,
               ollama: colors.warning,
-              anthropic: colors.breakfast,
+              opencode: colors.breakfast,
               openrouter: colors.dinner,
               custom: colors.primary,
             }
@@ -1004,9 +1036,10 @@ function AiSettingsForm({
               style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
             >
               {fetchedModels.length} models available. Tap to select
+              {fetchedModels.length > 60 ? " (showing first 60)" : ""}
             </Text>
             <Box className="flex-row flex-wrap gap-1.5">
-              {fetchedModels.map((model) => (
+              {fetchedModels.slice(0, 60).map((model) => (
                 <Pressable
                   key={model}
                   onPress={() => setAiModel(model)}
@@ -1110,7 +1143,7 @@ function AiSettingsForm({
                   letterSpacing: 0.08,
                 }}
               >
-                {testResult.ok ? "Telemetry Connection: Verified" : "Telemetry Connection: Failed"}
+                {testResult.ok ? "AI Connection: Verified" : "AI Connection: Failed"}
               </Text>
               <Text
                 size="xs"
@@ -1154,7 +1187,7 @@ function AiSettingsForm({
               letterSpacing: 0.08,
             }}
           >
-            {testingConnection ? "Testing Telemetry..." : "Test Connection"}
+            {testingConnection ? "Testing AI..." : "Test Connection"}
           </Text>
         </Pressable>
 
