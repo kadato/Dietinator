@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native"
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router"
 import { Feather } from "@expo/vector-icons"
@@ -114,6 +114,11 @@ export default function ManualEntryScreen() {
   const [carbs, setCarbs] = useState("")
   const [fat, setFat] = useState("")
   const [saving, setSaving] = useState(false)
+  // Synchronous save flag. setSaving re-renders async, so the beforeRemove
+  // guard below can still see stale isDirty when handleSave navigates.
+  // The ref updates sync and keeps the save navigation from triggering
+  // the discard prompt.
+  const savingRef = useRef(false)
 
   const isDirty =
     !saving &&
@@ -127,7 +132,7 @@ export default function ManualEntryScreen() {
   // If input remains unsaved, confirm before you leave.
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", (e) => {
-      if (!isDirty) return
+      if (savingRef.current || !isDirty) return
       e.preventDefault()
       confirmAction({
         title: "Discard entry?",
@@ -142,6 +147,7 @@ export default function ManualEntryScreen() {
   useEffect(() => {
     if (Platform.OS === "web" || !isDirty) return
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (savingRef.current) return false
       confirmAction({
         title: "Discard entry?",
         message: "This entry has unsaved values. Discard them and go back?",
@@ -165,6 +171,7 @@ export default function ManualEntryScreen() {
       showWarning("Enter a name and calories.", "Missing fields")
       return
     }
+    savingRef.current = true
     setSaving(true)
     try {
       await logManualEntry({
@@ -178,6 +185,7 @@ export default function ManualEntryScreen() {
       })
       router.dismissAll()
     } catch (error) {
+      savingRef.current = false
       showError(error, "Could not save entry.")
     } finally {
       setSaving(false)

@@ -65,6 +65,10 @@ export default function MealBuilderScreen() {
   const debounced = useDebounce(query, 200)
   const [loadingMeal, setLoadingMeal] = useState(isEditing)
   const [saving, setSaving] = useState(false)
+  // Synchronous save flag, same race as manual-entry: setSaving re-renders
+  // async, so save/delete/duplicate navigation must bypass the discard
+  // guard via this ref.
+  const savingRef = useRef(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   const isDirty =
@@ -84,7 +88,7 @@ export default function MealBuilderScreen() {
   // If edits remain unsaved, confirm before you leave.
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", (e) => {
-      if (!isDirty || searchOpen) return
+      if (savingRef.current || !isDirty || searchOpen) return
       e.preventDefault()
       confirmAction({
         title: "Discard changes?",
@@ -102,6 +106,7 @@ export default function MealBuilderScreen() {
     if (Platform.OS === "web") return
     if (!searchOpen && !isDirty) return
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (savingRef.current) return false
       if (searchOpen) {
         closeSearch()
         return true
@@ -270,6 +275,7 @@ export default function MealBuilderScreen() {
       showWarning("Add at least one food to the meal.", "No foods yet")
       return
     }
+    savingRef.current = true
     setSaving(true)
     try {
       await saveMeal({ id: mealId ?? undefined, name: name.trim(), items })
@@ -277,6 +283,7 @@ export default function MealBuilderScreen() {
       safeBack()
     } catch (error) {
       showError(error, "Could not save meal.")
+      savingRef.current = false
     } finally {
       setSaving(false)
     }
@@ -289,11 +296,13 @@ export default function MealBuilderScreen() {
       message: `Remove "${name.trim() || "this meal"}" from your meals?`,
       confirmLabel: "Delete",
       onConfirm: async () => {
+        savingRef.current = true
         try {
           await deleteMeal(mealId)
           showSuccess("Meal deleted.", "Done")
           safeBack()
         } catch (error) {
+          savingRef.current = false
           showError(error, "Could not delete meal.")
         }
       },
@@ -302,11 +311,13 @@ export default function MealBuilderScreen() {
 
   const handleDuplicate = async () => {
     if (!mealId) return
+    savingRef.current = true
     try {
       const dup = await duplicateMeal(mealId)
       showSuccess(`Duplicated "${dup.name}".`, "Meal duplicated")
       safeBack()
     } catch (error) {
+      savingRef.current = false
       showError(error, "Could not duplicate meal.")
     }
   }
