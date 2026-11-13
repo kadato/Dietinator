@@ -1,0 +1,422 @@
+{
+  "login@phone@light": {
+    "url": "/login",
+    "theme": "light",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "today@phone@light": {
+    "url": "/",
+    "theme": "light",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "stats@phone@light": {
+    "url": "/stats",
+    "theme": "light",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "settings@phone@light": {
+    "url": "/settings",
+    "theme": "light",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "privacy@phone@light": {
+    "url": "/privacy",
+    "theme": "light",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-modal@phone@light": {
+    "url": "interactive:log-meal-modal",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "quick-add-modal@phone@light": {
+    "url": "interactive:quick-add-modal",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-favorites@phone@light": {
+    "url": "interactive:log-meal-favorites",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-search@phone@light": {
+    "url": "interactive:log-meal-search",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "add-food-detail@phone@light": {
+    "url": "interactive:add-food-detail",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "create-options-menu@phone@light": {
+    "url": "interactive:create-options-menu",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "manual-entry@phone@light": {
+    "url": "interactive:manual-entry",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "meal-builder@phone@light": {
+    "url": "interactive:meal-builder",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "scan@phone@light": {
+    "url": "interactive:scan",
+    "theme": "light",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "login@desktop@light": {
+    "url": "/login",
+    "theme": "light",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "today@desktop@light": {
+    "url": "/",
+    "theme": "light",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "stats@desktop@light": {
+    "url": "/stats",
+    "theme": "light",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "settings@desktop@light": {
+    "url": "/settings",
+    "theme": "light",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "privacy@desktop@light": {
+    "url": "/privacy",
+    "theme": "light",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": false,
+      "colorScheme": "light",
+      "bg": "rgb(241, 245, 249)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "login@phone@dark": {
+    "url": "/login",
+    "theme": "dark",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "today@phone@dark": {
+    "url": "/",
+    "theme": "dark",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "stats@phone@dark": {
+    "url": "/stats",
+    "theme": "dark",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "settings@phone@dark": {
+    "url": "/settings",
+    "theme": "dark",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "privacy@phone@dark": {
+    "url": "/privacy",
+    "theme": "dark",
+    "viewport": "phone",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-modal@phone@dark": {
+    "url": "interactive:log-meal-modal",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "quick-add-modal@phone@dark": {
+    "url": "interactive:quick-add-modal",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-favorites@phone@dark": {
+    "url": "interactive:log-meal-favorites",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "log-meal-search@phone@dark": {
+    "url": "interactive:log-meal-search",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "add-food-detail@phone@dark": {
+    "url": "interactive:add-food-detail",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "create-options-menu@phone@dark": {
+    "url": "interactive:create-options-menu",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "manual-entry@phone@dark": {
+    "url": "interactive:manual-entry",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "meal-builder@phone@dark": {
+    "url": "interactive:meal-builder",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "scan@phone@dark": {
+    "url": "interactive:scan",
+    "theme": "dark",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "login@desktop@dark": {
+    "url": "/login",
+    "theme": "dark",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "today@desktop@dark": {
+    "url": "/",
+    "theme": "dark",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "stats@desktop@dark": {
+    "url": "/stats",
+    "theme": "dark",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "settings@desktop@dark": {
+    "url": "/settings",
+    "theme": "dark",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  },
+  "privacy@desktop@dark": {
+    "url": "/privacy",
+    "theme": "dark",
+    "viewport": "desktop",
+    "resolvedTheme": {
+      "darkClass": true,
+      "colorScheme": "dark",
+      "bg": "rgb(26, 27, 38)"
+    },
+    "axe": [],
+    "layout": []
+  }
+}
