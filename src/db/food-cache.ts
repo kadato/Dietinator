@@ -118,15 +118,27 @@ export async function getFoodsByIds(productIds: string[]): Promise<Map<string, S
 
 export async function searchLocalFoods(query: string): Promise<SearchFoodResult[]> {
   const db = await getDatabase()
-  const pattern = `%${escapeLike(query.trim())}%`
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return []
+  // Every token must match somewhere in name, producer, or barcode, so
+  // multi-word queries work regardless of word order. Favorites surface
+  // first, then recently used entries surface.
+  const conditions = tokens
+    .map(
+      () =>
+        "(name LIKE ? ESCAPE '\\' OR producer LIKE ? ESCAPE '\\' OR barcode LIKE ? ESCAPE '\\')",
+    )
+    .join(" AND ")
+  const params = tokens.flatMap((token) => {
+    const pattern = `%${escapeLike(token)}%`
+    return [pattern, pattern, pattern]
+  })
   const rows = await db.getAllAsync<Record<string, unknown>>(
     `SELECT * FROM food_cache
-     WHERE name LIKE ? ESCAPE '\\' OR producer LIKE ? ESCAPE '\\' OR barcode LIKE ? ESCAPE '\\'
-     ORDER BY last_used_at DESC NULLS LAST
+     WHERE ${conditions}
+     ORDER BY is_favorite DESC, last_used_at DESC NULLS LAST
      LIMIT 50`,
-    pattern,
-    pattern,
-    pattern,
+    ...params,
   )
   return mapRows(rows)
 }

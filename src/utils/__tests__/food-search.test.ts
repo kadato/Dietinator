@@ -1,4 +1,12 @@
-import { filterFoodsByQuery, filterRecentUsagesByQuery, mergeFoodResults } from "../food-search"
+import {
+  filterFoodsByQuery,
+  filterRecentUsagesByQuery,
+  matchesAllTokens,
+  mergeFoodResults,
+  normalizeQueryText,
+  queryTokens,
+  rankFoodResults,
+} from "../food-search"
 import { parseJson } from "../json"
 import type { SearchFoodResult } from "@/types"
 
@@ -32,6 +40,18 @@ describe("mergeFoodResults", () => {
     mergeFoodResults(local, [food("a")])
     expect(local).toHaveLength(1)
   })
+
+  it("ranks exact and prefix matches first when a query is given", () => {
+    const local = [food("a", "Rolled Oats")]
+    const remote = [food("b", "Oats"), food("c", "Oatmeal")]
+    const merged = mergeFoodResults(local, remote, "Oats")
+    expect(merged.map((f) => f.product_id)).toEqual(["b", "a", "c"])
+  })
+
+  it("keeps input order without a query", () => {
+    const merged = mergeFoodResults([food("a")], [food("b")])
+    expect(merged.map((f) => f.product_id)).toEqual(["a", "b"])
+  })
 })
 
 describe("filterFoodsByQuery", () => {
@@ -59,6 +79,58 @@ describe("filterFoodsByQuery", () => {
 
   it("returns empty array when no items match", () => {
     expect(filterFoodsByQuery(items, "nonexistent food item")).toEqual([])
+  })
+
+  it("matches all tokens regardless of word order", () => {
+    const results = filterFoodsByQuery(items, "oats rolled")
+    expect(results.map((r) => r.name)).toEqual(["Rolled Oats"])
+  })
+
+  it("matches name and producer across tokens", () => {
+    const results = filterFoodsByQuery(items, "oatly milk")
+    expect(results.map((r) => r.name)).toEqual(["Oat Milk"])
+  })
+
+  it("ignores diacritics and extra whitespace", () => {
+    const withDiacritics = [{ ...food("5", "Crème Brûlée"), producer: "" }]
+    expect(filterFoodsByQuery(withDiacritics, "creme  brulee")).toHaveLength(1)
+  })
+})
+
+describe("rankFoodResults", () => {
+  it("orders exact, prefix, then substring matches", () => {
+    const ranked = rankFoodResults(
+      [food("a", "Rolled Oats"), food("b", "Oats"), food("c", "Oatmeal")],
+      "Oats",
+    )
+    expect(ranked.map((f) => f.product_id)).toEqual(["b", "a", "c"])
+  })
+
+  it("prefers verified foods within the same tier", () => {
+    const unverified = { ...food("a", "Oats"), is_verified: false }
+    const verified = { ...food("b", "Oats"), is_verified: true }
+    expect(rankFoodResults([unverified, verified], "oats")[0].product_id).toBe("b")
+  })
+
+  it("returns items untouched for an empty query", () => {
+    const list = [food("a", "Banana")]
+    expect(rankFoodResults(list, "   ")).toBe(list)
+  })
+})
+
+describe("normalizeQueryText", () => {
+  it("lowercases, strips diacritics, and collapses whitespace", () => {
+    expect(normalizeQueryText("  Crème   BRÛLÉE ")).toBe("creme brulee")
+  })
+
+  it("tokenizes queries", () => {
+    expect(queryTokens("chicken  breast ")).toEqual(["chicken", "breast"])
+    expect(queryTokens("   ")).toEqual([])
+  })
+
+  it("matches tokens order-independently", () => {
+    expect(matchesAllTokens("Grilled Chicken Breast", ["breast", "chicken"])).toBe(true)
+    expect(matchesAllTokens("Grilled Chicken", ["breast", "chicken"])).toBe(false)
   })
 })
 

@@ -19,6 +19,23 @@ type Options<T> = {
  * patch in when ready. Latest request wins; stale responses are dropped.
  * `T` is the empty-query row type (plain foods, or usage rows with amounts).
  */
+const MIN_REMOTE_QUERY_LENGTH = 2
+const REMOTE_CACHE_SIZE = 20
+const remoteCache = new Map<string, SearchFoodResult[]>()
+
+function getCachedRemote(query: string): SearchFoodResult[] | undefined {
+  return remoteCache.get(query)
+}
+
+function setCachedRemote(query: string, results: SearchFoodResult[]): void {
+  remoteCache.delete(query)
+  remoteCache.set(query, results)
+  while (remoteCache.size > REMOTE_CACHE_SIZE) {
+    const oldest = remoteCache.keys().next()
+    if (oldest.done) break
+    remoteCache.delete(oldest.value)
+  }
+}
 export function useFoodSearch<T = SearchFoodResult>(
   debounced: string,
   options?: Options<T>,
@@ -80,10 +97,22 @@ export function useFoodSearch<T = SearchFoodResult>(
         if (requestId !== requestRef.current || cancelled) return
         startTransition(() => setFoods(cached as T[]))
         setLoading(false)
+        // Short queries match plenty locally. Skip the network until the
+        // query is specific enough to be worth a remote round trip.
+        if (trimmed.length < MIN_REMOTE_QUERY_LENGTH) return
+        const cacheKey = trimmed.toLowerCase()
+        const previousRemote = getCachedRemote(cacheKey)
+        if (previousRemote) {
+          if (requestId !== requestRef.current || cancelled) return
+          startTransition(() => setFoods(mergeFoodResults(cached, previousRemote, trimmed) as T[]))
+          setYazioAvailable(true)
+          return
+        }
         try {
           const remote = await searchFoodsRemote(trimmed)
           if (requestId !== requestRef.current || cancelled) return
-          startTransition(() => setFoods(mergeFoodResults(cached, remote) as T[]))
+          setCachedRemote(cacheKey, remote)
+          startTransition(() => setFoods(mergeFoodResults(cached, remote, trimmed) as T[]))
           setYazioAvailable(true)
         } catch {
           if (requestId === requestRef.current && !cancelled) {
