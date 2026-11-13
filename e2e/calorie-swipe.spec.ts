@@ -18,9 +18,7 @@ test.describe("calorie square swipe", () => {
     const dateHeader = page.getByRole("button", { name: "Open calendar" })
     await expect(dateHeader.getByText(/^Today/)).toBeVisible()
 
-    const square = page.getByLabel(
-      "Daily calories. Swipe left for next day, right for previous day.",
-    )
+    const square = page.getByLabel(/Daily calories.*Swipe left for next day/)
     await expect(square).toBeVisible()
     const box = await square.boundingBox()
     expect(box).not.toBeNull()
