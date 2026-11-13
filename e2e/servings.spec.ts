@@ -55,7 +55,7 @@ test.describe("serving sizes (real account)", () => {
       })
     await row.scrollIntoViewIfNeeded()
     await row.click()
-    await expect(page.getByRole("button", { name: "Add to diary" })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Add.*to diary/ })).toBeVisible({
       timeout: 30_000,
     })
   }

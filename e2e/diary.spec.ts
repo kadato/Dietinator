@@ -18,10 +18,10 @@ test.describe("diary flows (offline, local-first)", () => {
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
 
     await page.getByRole("textbox", { name: "Calories" }).fill("320")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
 
     // Back on the dashboard, expand the snack card to reveal the entry.
-    await page.getByRole("button", { name: /Snacks \d/i }).click()
+    await page.getByRole("button", { name: /Snacks\s*\d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
@@ -37,10 +37,10 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByLabel("Food name").fill("Homemade soup")
     await page.getByRole("textbox", { name: "Calories" }).fill("250")
     await page.getByLabel("Protein (g)").fill("12")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
 
     // Expand the lunch card to reveal the new entry.
-    await page.getByRole("button", { name: /Lunch \d/i }).click()
+    await page.getByRole("button", { name: /Lunch\s*\d/i }).click()
     await expect(page.getByText("Homemade soup", { exact: true })).toBeVisible()
   })
 
@@ -52,10 +52,10 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "Quick Add" }).click()
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
     await page.getByRole("textbox", { name: "Calories" }).fill("180")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
 
     // Expand the dinner section to reveal the entry, then verify the row.
-    await page.getByRole("button", { name: /Dinner \d/i }).click()
+    await page.getByRole("button", { name: /Dinner\s*\d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
@@ -106,14 +106,14 @@ test.describe("diary flows (offline, local-first)", () => {
     await page.getByRole("button", { name: "More" }).click()
     await page.getByRole("button", { name: "Quick Add" }).click()
     await page.getByRole("textbox", { name: "Calories" }).fill("250")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
 
     // The entry appears on tomorrow's dashboard (and the ring reflects 250 kcal).
-    await page.getByRole("button", { name: /Snacks 250/i }).click()
+    await page.getByRole("button", { name: /Snacks\s*250/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(page.getByRole("button", { name: /Snacks 250/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Snacks\s*250/i })).toBeVisible()
 
     // Today stays empty.
     await page.getByRole("button", { name: "Open calendar" }).click()

@@ -51,10 +51,10 @@ test.describe("YAZIO (real account)", () => {
     await row.click()
 
     // add-food modal opens with the product; save with the default amount.
-    await expect(page.getByRole("button", { name: "Add to diary" })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Add.*to diary/ })).toBeVisible({
       timeout: 30_000,
     })
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
 
     // Back in the log-meal modal → close it via the cancel FAB to reach the dashboard.
     await page.getByRole("button", { name: "Cancel" }).click()
@@ -96,10 +96,10 @@ test.describe("YAZIO (real account)", () => {
     // Back on the dashboard, the lunch card lists the entry. Wait for the
     // focus-reload to land before clicking. An empty section header navigates
     // to log-meal instead of expanding.
-    await expect(page.getByRole("button", { name: /Lunch [1-9]\d* kcal/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Lunch\s*[1-9]\d* kcal/i })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /Lunch \d/i }).click()
+    await page.getByRole("button", { name: /Lunch\s*\d/i }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
   })
@@ -117,10 +117,10 @@ test.describe("YAZIO (real account)", () => {
     await logFoodViaSearch(page, "Dinner", "banane", "Banán")
 
     // Wait for the entry, then delete it (long-press → confirm).
-    await expect(page.getByRole("button", { name: /Dinner [1-9]\d* kcal/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Dinner\s*[1-9]\d* kcal/i })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /Dinner \d/i }).click()
+    await page.getByRole("button", { name: /Dinner\s*\d/i }).click()
     const entry = mealEntry(page, "Banán")
     await expect(entry).toBeVisible({ timeout: 15_000 })
 

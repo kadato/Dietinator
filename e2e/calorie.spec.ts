@@ -125,7 +125,7 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     const { amount, kcal } = preview!
     const kcal100 = await previewKcalAt(page, amount, kcal, "100")
     await amount.fill("120")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
     // Back in the log-meal modal, close it via the cancel FAB.
     await page.getByRole("button", { name: "Cancel" }).click()
 
@@ -133,7 +133,7 @@ test.describe("calorie accuracy (real YAZIO data)", () => {
     // math (preview at 100 g × 1.2), so no conversion drift through the pipeline.
     // The row selector demands the entry signature (kcal then macros), because
     // meal headers like "Breakfast 0 kcal" also contain a kcal figure.
-    await page.getByRole("button", { name: /Lunch \d/i }).click()
+    await page.getByRole("button", { name: /Lunch\s*\d/i }).click()
     const entryRow = page
       .getByRole("button", { name: /\d+ kcal, \d[\d.]*g \d[\d.]*g \d[\d.]*g/ })
       .first()

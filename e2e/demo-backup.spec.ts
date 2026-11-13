@@ -21,7 +21,7 @@ test.describe("demo mode", () => {
     await expect(page.getByText("Oatmeal, cooked", { exact: false })).toBeVisible({
       timeout: 15_000,
     })
-    await page.getByRole("button", { name: /Snacks \d/i }).click()
+    await page.getByRole("button", { name: /Snacks\s*\d/i }).click()
     await expect(page.getByText("Banana", { exact: false })).toBeVisible()
   })
 
@@ -48,9 +48,9 @@ test.describe("backup and restore (offline)", () => {
     await page.getByRole("button", { name: "Quick Add" }).click()
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
     await page.getByRole("textbox", { name: "Calories" }).fill("777")
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
     // The section stays collapsed. The header total proves the entry landed.
-    await expect(page.getByRole("button", { name: /Snacks 777/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Snacks\s*777/i })).toBeVisible({
       timeout: 15_000,
     })
 
@@ -67,7 +67,7 @@ test.describe("backup and restore (offline)", () => {
 
     // Delete the entry locally.
     await page.getByRole("tab", { name: /Today/ }).click()
-    await page.getByRole("button", { name: /Snacks \d/i }).click()
+    await page.getByRole("button", { name: /Snacks\s*\d/i }).click()
     const row = page
       .getByRole("button", { name: /^Quick add.*777/i })
       .or(page.getByLabel(/^Quick add.*777/i))
@@ -93,7 +93,7 @@ test.describe("backup and restore (offline)", () => {
     // The entry is back on the dashboard (section state may reset between
     // tab switches, so assert the collapsed header total instead of a row).
     await page.getByRole("tab", { name: /Today/ }).click()
-    await expect(page.getByRole("button", { name: /Snacks 777/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: /Snacks\s*777/i })).toBeVisible({
       timeout: 15_000,
     })
   })

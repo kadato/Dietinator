@@ -18,10 +18,10 @@ test.describe("ui rework geometry checks", () => {
     await page.getByRole("button", { name: "Quick Add" }).click()
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeVisible()
     await page.getByRole("textbox", { name: "Calories" }).fill(kcal)
-    await page.getByRole("button", { name: "Add to diary" }).click()
+    await page.getByRole("button", { name: /Add.*to diary/ }).click()
     await expect(page.getByRole("textbox", { name: "Calories" })).toBeHidden()
     // Sections start collapsed. Expand Snacks to reveal the entry.
-    await page.getByRole("button", { name: /Snacks \d/i }).click()
+    await page.getByRole("button", { name: /Snacks\s*\d/i }).click()
     await expect(page.getByText("Quick add", { exact: true })).toBeVisible({ timeout: 15_000 })
   }
 

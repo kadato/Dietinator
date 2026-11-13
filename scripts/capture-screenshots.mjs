@@ -86,6 +86,14 @@ async function captureAll() {
       // 4. FOOD SEARCH & FAVORITES
       console.log(`Capturing search-${scheme}...`)
       await page.goto(`${BASE_URL}/log-meal?meal=dinner`)
+      await page
+        .getByRole("button", { name: /Search foods/i })
+        .first()
+        .waitFor({ timeout: 15000 })
+      await page
+        .getByRole("button", { name: /Search foods/i })
+        .first()
+        .click()
       await page.getByPlaceholder(/Search/i).waitFor({ timeout: 15000 })
       await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1200)
@@ -102,14 +110,17 @@ async function captureAll() {
       } else {
         await page.locator('[aria-label*="calories"]').first().click()
       }
-      await page.getByRole("button", { name: "Add to diary" }).waitFor({ timeout: 15000 })
+      await page.getByRole("button", { name: /Add.*to diary/ }).waitFor({ timeout: 15000 })
       await page.evaluate(() => document.fonts?.ready)
       await page.waitForTimeout(1200)
       await page.screenshot({ path: join(OUT_DIR, `add-food-${scheme}.png`) })
 
       // Dismiss modal
+      const backBtn = page.getByRole("button", { name: "Go back" }).first()
       const cancelBtn = page.getByRole("button", { name: "Cancel" }).first()
-      if (await cancelBtn.isVisible()) {
+      if (await backBtn.isVisible()) {
+        await backBtn.click()
+      } else if (await cancelBtn.isVisible()) {
         await cancelBtn.click()
       } else {
         await page.keyboard.press("Escape")
@@ -144,8 +155,11 @@ async function captureAll() {
       await page.screenshot({ path: join(OUT_DIR, `meal-builder-${scheme}.png`) })
 
       // Dismiss
+      const backMb = page.getByRole("button", { name: "Go back" }).first()
       const cancelMb = page.getByRole("button", { name: "Cancel" }).first()
-      if (await cancelMb.isVisible()) {
+      if (await backMb.isVisible()) {
+        await backMb.click()
+      } else if (await cancelMb.isVisible()) {
         await cancelMb.click()
       } else {
         await page.keyboard.press("Escape")
