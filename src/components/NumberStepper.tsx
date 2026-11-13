@@ -152,7 +152,6 @@ export function NumberStepper({
       blurOnSubmit={true}
       onSubmitEditing={onSubmit}
       accessibilityLabel={accessibilityLabel}
-      maxFontSizeMultiplier={2}
     />
   )
 
@@ -244,7 +243,7 @@ const createStyles = (colors: ColorPalette) =>
       boxShadow: "none",
       elevation: 0,
     },
-    btnSm: { width: 36, height: 36, borderRadius: radii.none },
+    btnSm: { width: 44, height: 44, borderRadius: radii.none },
     btnDisabled: { opacity: 0.4 },
     btnPressed: { opacity: 0.7 },
     input: {
@@ -274,7 +273,7 @@ const createStyles = (colors: ColorPalette) =>
       flexShrink: 0,
       width: 68,
       minWidth: 56,
-      height: 36,
+      height: 44,
       paddingVertical: 0,
       paddingHorizontal: spacing.xs,
       fontSize: 14,
@@ -302,7 +301,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     inputWrapSm: {
-      height: 36,
+      height: 44,
     },
     inputWrapFlex: {
       flexGrow: 1,

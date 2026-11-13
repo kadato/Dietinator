@@ -337,8 +337,8 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   moveBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: radii.none,
     borderWidth: borders.width,
     alignItems: "center",

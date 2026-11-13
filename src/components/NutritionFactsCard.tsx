@@ -122,9 +122,7 @@ export function NutritionFactsCard({
       <View style={styles.compactCard}>
         <View style={styles.compactTopRow}>
           <Text style={styles.compactKcal}>
-            <Text testID="preview-kcal" maxFontSizeMultiplier={2}>
-              {nutrients.kcal}
-            </Text>{" "}
+            <Text testID="preview-kcal">{nutrients.kcal}</Text>{" "}
             <Text style={styles.compactKcalUnit}>kcal</Text>
           </Text>
           <Text style={styles.servingNote} numberOfLines={1}>
@@ -143,9 +141,6 @@ export function NutritionFactsCard({
               style={[styles.expandToggle]}
               onPress={() => setExpanded(!expanded)}
               accessibilityRole="button"
-              accessibilityLabel={
-                expanded ? "Hide micronutrients" : `Show micronutrients per ${unitLabel}`
-              }
             >
               <Text style={styles.expandToggleText}>
                 {expanded
@@ -156,6 +151,7 @@ export function NutritionFactsCard({
                 name={expanded ? "chevron-up" : "chevron-down"}
                 size={14}
                 color={colors.primary}
+                aria-hidden
               />
             </Pressable>
 
@@ -189,7 +185,7 @@ export function NutritionFactsCard({
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.calorieBlock}>
-          <Text style={styles.calorieValue} testID="preview-kcal" maxFontSizeMultiplier={2}>
+          <Text style={styles.calorieValue} testID="preview-kcal">
             {nutrients.kcal}
           </Text>
           <Text style={styles.calorieUnit}>kcal</Text>
@@ -224,9 +220,6 @@ export function NutritionFactsCard({
             style={[styles.expandToggle]}
             onPress={() => setExpanded(!expanded)}
             accessibilityRole="button"
-            accessibilityLabel={
-              expanded ? "Hide micronutrients" : `Show micronutrients per ${unitLabel}`
-            }
           >
             <Text style={styles.expandToggleText}>
               {expanded
@@ -237,6 +230,7 @@ export function NutritionFactsCard({
               name={expanded ? "chevron-up" : "chevron-down"}
               size={14}
               color={colors.primary}
+              aria-hidden
             />
           </Pressable>
 

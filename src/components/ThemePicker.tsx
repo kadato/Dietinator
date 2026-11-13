@@ -199,8 +199,8 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.06,
     },
     closeBtn: {
-      width: 32,
-      height: 32,
+      width: 44,
+      height: 44,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: borders.width,

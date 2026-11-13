@@ -619,7 +619,7 @@ export default function AddFoodScreen() {
                     }}
                     style={styles.multiplierChip}
                     accessibilityRole="button"
-                    accessibilityLabel={`Scale to ${mult}x serving`}
+                    accessibilityLabel={`Scale to ${mult}× serving`}
                   >
                     <Text style={styles.multiplierText}>{mult}×</Text>
                   </Pressable>
@@ -651,15 +651,21 @@ export default function AddFoodScreen() {
                 isKeyboardVisible && { minHeight: 46, height: 46 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={isEditing ? "Update entry" : "Add to diary"}
+              accessibilityLabel={
+                saving
+                  ? "Saving…"
+                  : isEditing
+                    ? `Update entry ${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)}`
+                    : `Add ${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)} to diary`
+              }
               accessibilityState={{ disabled: saving }}
             >
-              <Feather name="check" size={20} color={colors.onPrimary} />
+              <Feather name="check" size={20} color={colors.onPrimary} aria-hidden />
               <Text style={styles.dockSaveText} numberOfLines={1}>
                 {saving
                   ? "Saving…"
                   : isEditing
-                    ? `Update (${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)})`
+                    ? `Update ${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)}`
                     : `Add ${portionSummary?.countText ?? formatFoodAmount(Number(amount) || 0, unit)}`}
               </Text>
             </Pressable>

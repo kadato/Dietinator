@@ -766,8 +766,8 @@ const createStyles = (colors: ColorPalette) =>
       paddingVertical: spacing.md,
     },
     emptyIconBox: {
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       borderWidth: borders.width,
       borderColor: colors.border,
       backgroundColor: colors.surface,

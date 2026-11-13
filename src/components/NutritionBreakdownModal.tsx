@@ -401,7 +401,7 @@ const createStyles = (colors: ColorPalette) =>
       paddingBottom: spacing.xs,
     },
     dragHandle: {
-      width: 34,
+      width: 44,
       height: 4,
       borderRadius: radii.none,
       backgroundColor: colors.border,
@@ -439,8 +439,8 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     closeBtn: {
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       borderWidth: borders.width,
       borderColor: colors.border,

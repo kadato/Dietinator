@@ -806,8 +806,8 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.04,
     },
     closeBtn: {
-      width: 32,
-      height: 32,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       borderWidth: borders.width,
       borderColor: colors.border,

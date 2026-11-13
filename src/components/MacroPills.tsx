@@ -77,7 +77,12 @@ export const MacroPills = memo(function MacroPills({
                     },
                   ]}
                 >
-                  <Feather name={card.icon} size={dominant ? 14 : 12} color={card.accent} />
+                  <Feather
+                    name={card.icon}
+                    size={dominant ? 14 : 12}
+                    color={card.accent}
+                    aria-hidden
+                  />
                 </View>
                 <Text style={[styles.cardLabel, { color: card.accent }]}>{card.label}</Text>
               </View>
@@ -131,7 +136,13 @@ export const MacroPills = memo(function MacroPills({
               },
             ]}
           >
-            <Feather name={pill.icon} size={iconSize} color={pill.accent} style={styles.pillIcon} />
+            <Feather
+              name={pill.icon}
+              size={iconSize}
+              color={pill.accent}
+              style={styles.pillIcon}
+              aria-hidden
+            />
             <Text
               style={[
                 styles.pillText,

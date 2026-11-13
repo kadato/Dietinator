@@ -41,7 +41,9 @@ import type {
 import {
   filterFoodsByQuery,
   filterRecentUsagesByQuery,
+  matchesAllTokens,
   mergeFoodResults,
+  queryTokens,
 } from "@/utils/food-search"
 import { normalizedSearchAmount, sumNutrients } from "@/utils/nutrients"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
@@ -52,6 +54,7 @@ import { formatDisplayDate, toDateKey } from "@/utils/date"
 import { routeParam } from "@/utils/route"
 import { useTheme } from "@/hooks/useTheme"
 import { useThemedStyles } from "@/hooks/useThemedStyles"
+import { useLayout } from "@/hooks/useLayout"
 import { useSafeBack } from "@/hooks/useSafeBack"
 import { ModalContainer } from "@/components/ModalContainer"
 import { MealListItem } from "@/components/MealListItem"
@@ -108,6 +111,11 @@ export default function LogMealScreen() {
   const { colors } = useTheme()
   const styles = useThemedStyles(createStyles)
   const insets = useSafeAreaInsets()
+  const { width } = useLayout()
+  // Match the app tab bar: icon-only keys below 640px so the four
+  // destinations fit a phone without squeezing. Labels stay in the
+  // accessibility tree via accessibilityLabel either way.
+  const showTabLabels = width >= 640
 
   const accent = colors[mealType]
 
@@ -299,21 +307,23 @@ export default function LogMealScreen() {
     return mergeFoodResults(mergeFoodResults(suggestions, favoriteFoods), usageFoods(recentUsages))
   }, [suggestions, favoriteFoods, recentUsages])
 
+  // Tab lists filter on the raw query so they react keystroke-instantly.
+  // Only the Frequent remote fetch waits on the 200ms debounce.
   const filteredFavorites = useMemo(
-    () => filterFoodsByQuery(favoriteFoods, debounced),
-    [debounced, favoriteFoods],
+    () => filterFoodsByQuery(favoriteFoods, query),
+    [query, favoriteFoods],
   )
 
   const filteredRecents = useMemo(
-    () => filterRecentUsagesByQuery(recentUsages, debounced),
-    [debounced, recentUsages],
+    () => filterRecentUsagesByQuery(recentUsages, query),
+    [query, recentUsages],
   )
 
   const filteredMeals = useMemo(() => {
-    const q = debounced.trim().toLowerCase()
-    if (!q) return meals
-    return meals.filter((meal) => meal.name.toLowerCase().includes(q))
-  }, [debounced, meals])
+    const tokens = queryTokens(query)
+    if (tokens.length === 0) return meals
+    return meals.filter((meal) => matchesAllTokens(meal.name, tokens))
+  }, [query, meals])
 
   const activeFoodItems: FoodRow[] = useMemo(() => {
     if (activeTab === "favorites") {
@@ -475,7 +485,7 @@ export default function LogMealScreen() {
 
   const renderFood = useCallback(
     ({ item, index }: { item: FoodRow; index: number }) => {
-      const isFavMode = category === "foods" && listMode === "favorites" && !debounced.trim()
+      const isFavMode = category === "foods" && listMode === "favorites" && !query.trim()
       const isReordering = isFavMode && reorderFavorites
 
       if (isUsageRow(item)) {
@@ -532,6 +542,7 @@ export default function LogMealScreen() {
       listMode,
       moveFavorite,
       openFood,
+      query,
       reorderFavorites,
     ],
   )
@@ -599,9 +610,9 @@ export default function LogMealScreen() {
               style={[styles.emptyActionBtn, { borderColor: accent }]}
               onPress={() => handleTabPress("frequent")}
               accessibilityRole="button"
-              accessibilityLabel={`Search all foods for ${q}`}
+              accessibilityLabel={`Search all foods for "${q}"`}
             >
-              <Feather name="search" size={14} color={accent} />
+              <Feather name="search" size={14} color={accent} aria-hidden />
               <Text style={[styles.emptyActionText, { color: accent }]}>
                 {`Search all foods for "${q}"`}
               </Text>
@@ -634,9 +645,9 @@ export default function LogMealScreen() {
               style={[styles.emptyActionBtn, { borderColor: accent }]}
               onPress={() => handleTabPress("frequent")}
               accessibilityRole="button"
-              accessibilityLabel={`Search all foods for ${q}`}
+              accessibilityLabel={`Search all foods for "${q}"`}
             >
-              <Feather name="search" size={14} color={accent} />
+              <Feather name="search" size={14} color={accent} aria-hidden />
               <Text style={[styles.emptyActionText, { color: accent }]}>
                 {`Search all foods for "${q}"`}
               </Text>
@@ -656,9 +667,9 @@ export default function LogMealScreen() {
               style={[styles.emptyActionBtn, { borderColor: accent }]}
               onPress={() => handleTabPress("frequent")}
               accessibilityRole="button"
-              accessibilityLabel={`Search all foods for ${q}`}
+              accessibilityLabel={`Search all foods for "${q}"`}
             >
-              <Feather name="search" size={14} color={accent} />
+              <Feather name="search" size={14} color={accent} aria-hidden />
               <Text style={[styles.emptyActionText, { color: accent }]}>
                 {`Search all foods for "${q}"`}
               </Text>
@@ -708,6 +719,7 @@ export default function LogMealScreen() {
         <Pressable
           onPress={() => setQuery("")}
           hitSlop={8}
+          style={{ minHeight: 24, justifyContent: "center" }}
           accessibilityRole="button"
           accessibilityLabel="Clear search filter"
         >
@@ -736,13 +748,13 @@ export default function LogMealScreen() {
         style={[styles.searchAllFooter, { borderColor: `${accent}40` }]}
         onPress={() => handleTabPress("frequent")}
         accessibilityRole="button"
-        accessibilityLabel={`Search all foods for ${q}`}
+        accessibilityLabel={`Search all foods for "${q}"`}
       >
-        <Feather name="search" size={14} color={accent} />
+        <Feather name="search" size={14} color={accent} aria-hidden />
         <Text style={[styles.searchAllFooterText, { color: accent }]}>
           {`Search all foods for "${q}"`}
         </Text>
-        <Feather name="arrow-right" size={14} color={accent} />
+        <Feather name="arrow-right" size={14} color={accent} aria-hidden />
       </Pressable>
     )
   }, [accent, activeTab, debounced, handleTabPress, styles])
@@ -770,6 +782,7 @@ export default function LogMealScreen() {
             name={isLoggedExpanded ? "chevron-up" : "chevron-down"}
             size={14}
             color={colors.textMuted}
+            aria-hidden
           />
           <Text style={styles.loggedCollapsedTextCompact} numberOfLines={1}>
             Logged in {MEAL_LABELS[mealType]} · {loggedEntries.length}{" "}
@@ -892,7 +905,7 @@ export default function LogMealScreen() {
   const favoritesToolbar =
     category === "foods" &&
     listMode === "favorites" &&
-    !debounced.trim() &&
+    !query.trim() &&
     favoriteFoods.length > 1 ? (
       <View style={styles.reorderBar}>
         <Text style={styles.reorderTitle}>
@@ -1057,19 +1070,22 @@ export default function LogMealScreen() {
               >
                 <Feather
                   name={isActive ? tab.activeIcon : tab.icon}
-                  size={14.5}
+                  size={showTabLabels ? 14.5 : 20}
                   color={isActive ? accent : colors.textMuted}
+                  aria-hidden
                 />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: isActive ? accent : colors.textMuted },
-                    isActive && styles.tabLabelActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {tab.label}
-                </Text>
+                {showTabLabels ? (
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      { color: isActive ? accent : colors.textMuted },
+                      isActive && styles.tabLabelActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {tab.label}
+                  </Text>
+                ) : null}
               </Pressable>
             )
           })}
@@ -1088,7 +1104,7 @@ export default function LogMealScreen() {
         ) : null}
 
         {category === "foods" ? (
-          listMode === "favorites" && !debounced.trim() && reorderFavorites ? (
+          listMode === "favorites" && !query.trim() && reorderFavorites ? (
             <FlatList
               style={styles.list}
               data={[]}
@@ -1310,8 +1326,8 @@ const createStyles = (colors: ColorPalette) =>
       minWidth: 0,
     },
     headerCloseBtn: {
-      width: 32,
-      height: 32,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       borderWidth: borders.width,
       borderColor: colors.border,
@@ -1351,8 +1367,8 @@ const createStyles = (colors: ColorPalette) =>
       textTransform: "uppercase",
     },
     moreBtn: {
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       borderWidth: borders.width,
       borderColor: colors.border,
@@ -1370,12 +1386,13 @@ const createStyles = (colors: ColorPalette) =>
     tabItem: {
       flex: 1,
       minWidth: 0,
+      minHeight: 44,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 2,
-      paddingVertical: 7,
-      paddingHorizontal: 1,
+      gap: 4,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
       borderRadius: radii.none,
       borderWidth: borders.width,
     },
@@ -1540,6 +1557,7 @@ const createStyles = (colors: ColorPalette) =>
       alignItems: "center",
       gap: spacing.sm,
       paddingVertical: spacing.xs,
+      minHeight: 32,
     },
     loggedCollapsedTextCompact: {
       flex: 1,
@@ -1655,8 +1673,8 @@ const createStyles = (colors: ColorPalette) =>
       gap: spacing.sm + 2,
     },
     loggedIconWrap: {
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",
@@ -1780,8 +1798,8 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.6,
     },
     loggedIconBtn: {
-      width: 32,
-      height: 32,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       alignItems: "center",
       justifyContent: "center",

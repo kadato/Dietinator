@@ -121,8 +121,8 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
               <Box
                 className="items-center justify-center"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",
@@ -145,7 +145,7 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
               <Box
                 className="w-full flex-row items-center justify-center"
                 style={{
-                  height: 40,
+                  height: 44,
                   paddingHorizontal: 12,
                   gap: 6,
                   borderWidth: borders.width,
@@ -183,8 +183,8 @@ export function MealSlotModal({ visible, title, initialDateKey, onSelect, onClos
               <Box
                 className="items-center justify-center"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   borderWidth: borders.width,
                   borderColor: colors.border,
                   borderStyle: "solid",

@@ -37,8 +37,8 @@ export function ModalHeader({ icon, accent, title, subtitle }: Props) {
       >
         <View
           style={{
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: accent,
@@ -46,7 +46,7 @@ export function ModalHeader({ icon, accent, title, subtitle }: Props) {
             borderColor: colors.border,
           }}
         >
-          <Feather name={icon} size={18} color={colors.onPrimary} />
+          <Feather name={icon} size={20} color={colors.onPrimary} />
         </View>
         <Box className="min-w-0 flex-1">
           <Text
@@ -67,7 +67,7 @@ export function ModalHeader({ icon, accent, title, subtitle }: Props) {
               numberOfLines={1}
               style={{
                 fontFamily: fonts.mono,
-                fontSize: 11,
+                fontSize: 13,
                 letterSpacing: 0.04,
                 color: colors.textMuted,
                 marginTop: 2,

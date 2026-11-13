@@ -40,6 +40,7 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
     // to avoid "React does not recognize the `adjustsFontSizeToFit` prop" on web.
     adjustsFontSizeToFit: _adjustsFontSizeToFit,
     minimumFontScale: _minimumFontScale,
+    maxFontSizeMultiplier: _maxFontSizeMultiplier,
     allowFontScaling: _allowFontScaling,
     selectable: _selectable,
     suppressHighlighting: _suppressHighlighting,
@@ -56,6 +57,7 @@ const Text = React.forwardRef<React.ComponentRef<"span">, ITextProps>(function T
   }: { className?: string } & ITextProps & {
       adjustsFontSizeToFit?: boolean
       minimumFontScale?: number
+      maxFontSizeMultiplier?: number
       allowFontScaling?: boolean
       selectable?: boolean
       suppressHighlighting?: boolean

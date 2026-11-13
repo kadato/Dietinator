@@ -5,7 +5,7 @@ export const darkColors: ColorPalette = {
   background: "#1a1b26",
   surface: "#24283b",
   surfaceAlt: "#292e42",
-  primary: "#7aa2f7",
+  primary: "#90b4ff",
   primaryStrong: "#7dcfff",
   primaryMuted: "#bb9af7",
   onPrimary: "#1a1b26",
@@ -26,7 +26,7 @@ export const darkColors: ColorPalette = {
   // clear 4.5 to 1 as text on their own tinted chip wells.
   breakfast: "#8db8ff",
   lunch: "#FFB020",
-  dinner: "#ff92a6",
+  dinner: "#ff9dac",
   snack: "#2EC4B6",
   water: "#38bdf8",
   weight: "#c4b5fd",
@@ -54,11 +54,11 @@ export const lightColors: ColorPalette = {
   // their own tinted wells. Sky for breakfast and protein, amber-brown for
   // lunch and carbs, rose for dinner and fat, teal for snack. Water is cyan
   // distinct from breakfast blue, weight is violet, success is green.
-  breakfast: "#0369a1",
+  breakfast: "#035a8a",
   lunch: "#92400e",
-  dinner: "#be123c",
-  snack: "#0f766e",
-  water: "#0e7490",
+  dinner: "#9f1239",
+  snack: "#0e6e66",
+  water: "#0c6a85",
   weight: "#6d28d9",
   success: "#15803d",
 }

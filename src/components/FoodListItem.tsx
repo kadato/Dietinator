@@ -278,7 +278,7 @@ export const FoodListItem = memo(function FoodListItem({
               borderWidth: borders.width,
               borderColor: accent,
               borderRadius: radii.none,
-              minHeight: 34,
+              minHeight: 44,
               minWidth: 44,
               boxShadow: "none",
               elevation: 0,

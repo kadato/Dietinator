@@ -337,16 +337,16 @@ export const DailyImpactCard = memo(function DailyImpactCard({
             onPress={() => setShowMicros((v) => !v)}
             style={[styles.accordionBtn]}
             accessibilityRole="button"
-            accessibilityLabel="Toggle micronutrient impact"
           >
             <View style={styles.accordionLeft}>
-              <Feather name="sun" size={14} color={colors.textMuted} />
+              <Feather name="sun" size={14} color={colors.textMuted} aria-hidden />
               <Text style={styles.accordionTitle}>Micronutrient and Sub-Macro Impact</Text>
             </View>
             <Feather
               name={showMicros ? "chevron-up" : "chevron-down"}
               size={16}
               color={colors.textMuted}
+              aria-hidden
             />
           </Pressable>
 

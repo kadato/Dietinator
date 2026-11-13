@@ -44,7 +44,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
     // without chasing the top of a tall diary.
     return (
       <View
-        accessibilityRole="tablist"
+        accessibilityRole="none"
+        accessibilityLabel={undefined}
         style={{
           width: layout.sideTabWidth,
           alignSelf: "flex-start",
@@ -99,118 +100,124 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
         </View>
 
         {/* Rail items — compact square keys */}
-        {visibleRoutes.map((route: (typeof state.routes)[number]) => {
-          const { options } = descriptors[route.key]
-          const isFocused = state.routes[state.index]?.key === route.key
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-                ? options.title
-                : route.name
+        <View
+          accessibilityRole="tablist"
+          style={{ alignItems: "center", justifyContent: "flex-start", gap: 8, width: "100%" }}
+        >
+          {visibleRoutes.map((route: (typeof state.routes)[number]) => {
+            const { options } = descriptors[route.key]
+            const isFocused = state.routes[state.index]?.key === route.key
+            const label =
+              options.tabBarLabel !== undefined
+                ? options.tabBarLabel
+                : options.title !== undefined
+                  ? options.title
+                  : route.name
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            })
-            if (event.defaultPrevented) return
-            // Settings keeps its drilldown in the `section` query param. Tab screens stay
-            // mounted, so the param survives tab switches. Tapping the tab (whether it is
-            // already focused or not) should land on the hub, not the previous drilldown.
-            if (route.name === "settings") {
-              navigation.navigate(route.name, { section: undefined })
-              return
-            }
-            if (!isFocused) {
-              navigation.navigate(route.name, route.params)
-            }
-          }
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            })
-          }
-
-          const inactiveColor = colors.textMuted
-          // Vivid terminal: each destination owns its active hue so the rail
-          // reads as a legend. Today is primary blue, AI is violet, Stats is
-          // green, Settings is amber. All clear contrast with white or ink.
-          const activeBg =
-            route.name === "ai"
-              ? (colors.weight ?? colors.primary)
-              : route.name === "stats"
-                ? (colors.success ?? colors.primary)
-                : route.name === "settings"
-                  ? colors.warning
-                  : colors.primary
-          const activeFg = route.name === "settings" ? colors.onWarning : colors.onPrimary
-
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="tab"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={
-                options.tabBarAccessibilityLabel ?? (typeof label === "string" ? label : route.name)
+            const onPress = () => {
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              })
+              if (event.defaultPrevented) return
+              // Settings keeps its drilldown in the `section` query param. Tab screens stay
+              // mounted, so the param survives tab switches. Tapping the tab (whether it is
+              // already focused or not) should land on the hub, not the previous drilldown.
+              if (route.name === "settings") {
+                navigation.navigate(route.name, { section: undefined })
+                return
               }
-              onPress={onPress}
-              onLongPress={onLongPress}
-              onHoverIn={() => setHoveredRoute(route.key)}
-              onHoverOut={() => setHoveredRoute(null)}
-              onPressIn={() => setPressedRoute(route.key)}
-              onPressOut={() => setPressedRoute(null)}
-              hitSlop={12}
-              style={[
-                {
-                  width: layout.sideTabItemWidth,
-                  paddingVertical: 10,
-                  paddingHorizontal: 6,
-                  borderRadius: radii.none,
-                  borderWidth:
-                    isFocused || hoveredRoute === route.key ? borders.width : borders.widthThin,
-                  borderColor: isFocused || hoveredRoute === route.key ? activeBg : colors.border,
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 3,
-                  backgroundColor: isFocused
-                    ? activeBg
-                    : pressedRoute === route.key
-                      ? colors.surfaceAlt
-                      : colors.surface,
-                  cursor: "pointer",
-                },
-              ]}
-            >
-              {options.tabBarIcon?.({
-                focused: isFocused,
-                color: isFocused ? activeFg : inactiveColor,
-                size: 20,
-              })}
-              <Text
-                size="xs"
-                bold={isFocused}
-                style={{
-                  color: isFocused ? activeFg : inactiveColor,
-                  marginTop: 1,
-                  fontSize: 10,
-                  letterSpacing: 0.06,
-                  textAlign: "center",
-                  textTransform: "uppercase",
-                  alignSelf: "center",
-                  width: "100%",
-                }}
-                numberOfLines={1}
+              if (!isFocused) {
+                navigation.navigate(route.name, route.params)
+              }
+            }
+
+            const onLongPress = () => {
+              navigation.emit({
+                type: "tabLongPress",
+                target: route.key,
+              })
+            }
+
+            const inactiveColor = colors.textMuted
+            // Vivid terminal: each destination owns its active hue so the rail
+            // reads as a legend. Today is primary blue, AI is violet, Stats is
+            // green, Settings is amber. All clear contrast with white or ink.
+            const activeBg =
+              route.name === "ai"
+                ? (colors.weight ?? colors.primary)
+                : route.name === "stats"
+                  ? (colors.success ?? colors.primary)
+                  : route.name === "settings"
+                    ? colors.warning
+                    : colors.primary
+            const activeFg = route.name === "settings" ? colors.onWarning : colors.onPrimary
+
+            return (
+              <Pressable
+                key={route.key}
+                accessibilityRole="tab"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={
+                  options.tabBarAccessibilityLabel ??
+                  (typeof label === "string" ? label : route.name)
+                }
+                onPress={onPress}
+                onLongPress={onLongPress}
+                onHoverIn={() => setHoveredRoute(route.key)}
+                onHoverOut={() => setHoveredRoute(null)}
+                onPressIn={() => setPressedRoute(route.key)}
+                onPressOut={() => setPressedRoute(null)}
+                hitSlop={12}
+                style={[
+                  {
+                    width: layout.sideTabItemWidth,
+                    paddingVertical: 10,
+                    paddingHorizontal: 6,
+                    borderRadius: radii.none,
+                    borderWidth:
+                      isFocused || hoveredRoute === route.key ? borders.width : borders.widthThin,
+                    borderColor: isFocused || hoveredRoute === route.key ? activeBg : colors.border,
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 3,
+                    backgroundColor: isFocused
+                      ? activeBg
+                      : pressedRoute === route.key
+                        ? colors.surfaceAlt
+                        : colors.surface,
+                    cursor: "pointer",
+                  },
+                ]}
               >
-                {typeof label === "string" ? label : route.name}
-              </Text>
-            </Pressable>
-          )
-        })}
+                {options.tabBarIcon?.({
+                  focused: isFocused,
+                  color: isFocused ? activeFg : inactiveColor,
+                  size: 20,
+                })}
+                <Text
+                  size="xs"
+                  bold={isFocused}
+                  style={{
+                    color: isFocused ? activeFg : inactiveColor,
+                    marginTop: 1,
+                    fontSize: 12,
+                    letterSpacing: 0.06,
+                    textAlign: "center",
+                    textTransform: "uppercase",
+                    alignSelf: "center",
+                    width: "100%",
+                  }}
+                  numberOfLines={1}
+                >
+                  {typeof label === "string" ? label : route.name}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
 
         {/* Source link — same square-key language as the rail items, kept
             out of the tab semantics with role="link" so tab queries stay clean. */}
@@ -258,7 +265,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               style={{
                 color: hoveredRoute === "github" ? colors.primary : colors.textMuted,
                 marginTop: 1,
-                fontSize: 10,
+                fontSize: 12,
                 letterSpacing: 0.06,
                 textAlign: "center",
                 textTransform: "uppercase",
@@ -378,8 +385,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
           >
             <View
               style={{
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -387,7 +394,7 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
               {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? activeFg : inactiveColor,
-                size: 18,
+                size: 22,
               })}
             </View>
             {showLabels ? (
@@ -396,8 +403,8 @@ function AppTabBar({ state, descriptors, navigation }: TabBarProps) {
                 bold={isFocused}
                 style={{
                   color: isFocused ? activeFg : inactiveColor,
-                  fontSize: 11,
-                  lineHeight: 12,
+                  fontSize: 12,
+                  lineHeight: 16,
                   letterSpacing: 0.08,
                   textTransform: "uppercase",
                   textAlign: "center",

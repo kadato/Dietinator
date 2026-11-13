@@ -94,8 +94,8 @@ export function CalorieRing({
     <View style={styles.container}>
       <GestureDetector gesture={swipePan}>
         <View
-          style={[styles.ringWrap, { width: size, height: size }]}
-          accessibilityLabel="Daily calories. Swipe left for next day, right for previous day."
+          style={[styles.ringWrap, { width: size, height: size, minWidth: 44, minHeight: 44 }]}
+          accessibilityLabel={`Daily calories. ${Math.round(consumed)} eaten of ${Math.round(goal)} goal. Swipe left for next day, right for previous day.`}
           accessibilityHint="Swipes left or right to change the selected day"
         >
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.gaugeSvg}>
@@ -129,31 +129,36 @@ export function CalorieRing({
 
           <View style={[styles.ringCenter, { width: innerSize, height: innerSize }]}>
             <Text
-              maxFontSizeMultiplier={1.15}
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.65}
-              style={[
-                styles.remainingValue,
-                over > 0 && { color: colors.danger },
-                { fontSize: Math.min(26 * scale, 30) },
-              ]}
+              minimumFontScale={0.7}
+              style={[styles.consumedValue, { fontSize: Math.min(36 * scale, 44) }]}
+              accessibilityRole="header"
+              accessibilityLabel={`${formatThousands(Math.round(consumed))} kilocalories eaten`}
             >
-              {over > 0
-                ? formatThousands(Math.round(over))
-                : formatThousands(Math.round(remaining))}
+              {formatThousands(Math.round(consumed))}
             </Text>
             <Text
               numberOfLines={1}
-              style={[styles.remainingLabel, { fontSize: Math.max(Math.round(11 * scale), 10) }]}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              style={[
+                styles.goalLine,
+                over > 0 && { color: colors.danger },
+                { fontSize: Math.max(Math.round(12 * scale), 12) },
+              ]}
             >
-              {over > 0 ? "kcal over" : "kcal left"}
+              {over > 0
+                ? `${formatThousands(Math.round(over))} over`
+                : goal > 0
+                  ? `${formatThousands(Math.round(remaining))} left`
+                  : "no goal set"}
             </Text>
             {over > 0 ? (
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 10 * scale,
+                  fontSize: Math.max(Math.round(11 * scale), 11),
                   fontFamily: fonts.mono,
                   color: colors.textMuted,
                   letterSpacing: 0.3,
@@ -218,12 +223,13 @@ const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: {
       padding: spacing.lg,
-      paddingBottom: spacing.sm,
+      paddingBottom: spacing.md,
       alignItems: "center",
       borderRadius: radii.none,
       borderWidth: 0,
       boxShadow: "none",
       elevation: 0,
+      minHeight: 44,
     },
     ringWrap: {
       alignItems: "center",
@@ -253,6 +259,39 @@ const createStyles = (colors: ColorPalette) =>
       position: "absolute",
       alignItems: "center",
       justifyContent: "center",
+      paddingHorizontal: 8,
+    },
+    consumedValue: {
+      fontSize: 36,
+      fontWeight: "800",
+      color: colors.text,
+      letterSpacing: 0.4,
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      textAlign: "center",
+    },
+    consumedLabel: {
+      fontSize: 13,
+      color: colors.text,
+      marginTop: 2,
+      fontWeight: "800",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+      textAlign: "center",
+    },
+    goalLine: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 4,
+      fontWeight: "700",
+      fontFamily: fonts.mono,
+      fontVariant: ["tabular-nums"],
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      textAlign: "center",
     },
     remainingValue: {
       fontSize: 26,

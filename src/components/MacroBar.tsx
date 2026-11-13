@@ -21,11 +21,15 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
   const progress = goal > 0 ? Math.min(value / goal, 1) : 0
 
   return (
-    <View style={styles.row}>
+    <View
+      style={styles.row}
+      accessibilityRole="text"
+      accessibilityLabel={`${label} ${Math.round(value)} of ${Math.round(goal)} grams`}
+    >
       <View style={styles.rowHeader}>
         <View style={styles.labelGroup}>
           <View style={[styles.iconBox, { borderColor: colors.border, backgroundColor: color }]}>
-            <Feather name={icon} size={12} color={colors.onPrimary} />
+            <Feather name={icon} size={16} color={colors.onPrimary} />
           </View>
           <Text style={[styles.label, { color }]}>{label}</Text>
         </View>
@@ -60,11 +64,11 @@ function MacroRow({ label, icon, value, goal, color, styles, colors }: MacroRowP
       {over > 0 ? (
         <Text
           style={{
-            fontSize: 11,
+            fontSize: 13,
             fontFamily: fonts.mono,
             letterSpacing: 0.3,
             color: colors.textMuted,
-            marginTop: 2,
+            marginTop: 4,
           }}
         >
           Adjust tomorrow
@@ -135,33 +139,38 @@ export function MacroBar({ protein, carbs, fat, proteinGoal, carbsGoal, fatGoal 
 const createStyles = (colors: ColorPalette) =>
   StyleSheet.create({
     container: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      gap: 10,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      gap: 14,
       borderTopWidth: borders.width,
       borderTopColor: colors.border,
-      marginTop: spacing.xs,
+      marginTop: spacing.sm,
       borderRadius: radii.none,
       boxShadow: "none",
       elevation: 0,
     },
     row: {
-      gap: 6,
+      gap: 8,
       borderRadius: radii.none,
+      minHeight: 52,
+      justifyContent: "center",
     },
     rowHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+      minHeight: 36,
+      gap: 8,
     },
     labelGroup: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: 8,
+      minHeight: 36,
     },
     iconBox: {
-      width: 20,
-      height: 20,
+      width: 32,
+      height: 32,
       borderRadius: radii.none,
       borderWidth: borders.width,
       alignItems: "center",
@@ -170,7 +179,7 @@ const createStyles = (colors: ColorPalette) =>
       elevation: 0,
     },
     label: {
-      fontSize: 11,
+      fontSize: 14,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -181,10 +190,13 @@ const createStyles = (colors: ColorPalette) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
+      flexShrink: 1,
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
     },
     trackedText: {
-      fontSize: 12,
-      fontWeight: "700",
+      fontSize: 16,
+      fontWeight: "800",
       color: colors.text,
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -192,7 +204,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     goalText: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: "600",
       color: colors.textMuted,
       fontFamily: fonts.mono,
@@ -201,15 +213,18 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     budgetBadge: {
-      paddingHorizontal: 7,
-      paddingVertical: 2,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
       borderRadius: radii.none,
       borderWidth: borders.width,
       boxShadow: "none",
       elevation: 0,
+      minHeight: 32,
+      alignItems: "center",
+      justifyContent: "center",
     },
     budgetBadgeText: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "700",
       fontFamily: fonts.mono,
       fontVariant: ["tabular-nums"],
@@ -217,7 +232,7 @@ const createStyles = (colors: ColorPalette) =>
       letterSpacing: 0.4,
     },
     barBg: {
-      height: 10,
+      height: 14,
       backgroundColor: colors.surfaceAlt,
       borderRadius: radii.none,
       overflow: "hidden",

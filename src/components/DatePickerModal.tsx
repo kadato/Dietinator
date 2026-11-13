@@ -246,8 +246,8 @@ const createStyles = (colors: ColorPalette) =>
       borderRadius: radii.none,
     },
     navBtn: {
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       alignItems: "center",
       justifyContent: "center",
       borderRadius: radii.none,

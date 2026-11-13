@@ -5,7 +5,6 @@ import type { DiaryEntry, MealType } from "@/types"
 import { DiaryEntryRow } from "@/components/DiaryEntryRow"
 import { MacroPills } from "@/components/MacroPills"
 import { MEAL_LABELS, MEAL_ICONS } from "@/utils/meals"
-import { formatMacro } from "@/utils/format"
 import { formatEntryAmount } from "@/utils/food-display"
 import { Box } from "@ui/box"
 import { Text } from "@ui/text"
@@ -79,11 +78,7 @@ export const MealSection = memo(function MealSection({
           }}
           className="min-w-0 flex-1 cursor-pointer flex-row items-center gap-2.5"
           accessibilityRole="button"
-          accessibilityLabel={`${MEAL_LABELS[mealType].toUpperCase()} ${Math.round(totalKcal)} kcal${
-            entries.length > 0
-              ? ` ${formatMacro(totalProtein)}g ${formatMacro(totalCarbs)}g ${formatMacro(totalFat)}g`
-              : ""
-          }`}
+          accessibilityHint="Toggles meal details or adds food"
         >
           <Box
             className="h-10 w-10 shrink-0 items-center justify-center rounded-none border"
@@ -94,7 +89,7 @@ export const MealSection = memo(function MealSection({
               borderRadius: 0,
             }}
           >
-            <Feather name={MEAL_ICONS[mealType]} size={18} color={colors.onPrimary} />
+            <Feather name={MEAL_ICONS[mealType]} size={18} color={colors.onPrimary} aria-hidden />
           </Box>
 
           <Box className="min-w-0 flex-1 gap-1">
@@ -113,6 +108,7 @@ export const MealSection = memo(function MealSection({
                     name={expanded ? "chevron-up" : "chevron-down"}
                     size={12}
                     color={colors.textMuted}
+                    aria-hidden
                   />
                 ) : null}
               </Box>
@@ -146,18 +142,20 @@ export const MealSection = memo(function MealSection({
         />
 
         <Pressable
-          className="h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-none hover:opacity-90 active:opacity-80"
+          className="h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-none hover:opacity-90 active:opacity-80"
           style={{
             backgroundColor: accent,
             borderWidth: borders.width,
             borderColor: colors.border,
+            minHeight: 44,
+            minWidth: 44,
           }}
           onPress={() => onAdd(mealType)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${MEAL_LABELS[mealType]}`}
         >
-          <Feather name="plus" size={18} color={colors.onPrimary} />
+          <Feather name="plus" size={20} color={colors.onPrimary} />
         </Pressable>
       </Box>
 
@@ -170,7 +168,7 @@ export const MealSection = memo(function MealSection({
               borderWidth: borders.width,
               borderColor: colors.border,
               borderRadius: 0,
-              height: 8,
+              height: 12,
               backgroundColor: `${accent}26`,
             }}
           >
@@ -199,12 +197,15 @@ export const MealSection = memo(function MealSection({
               Goal {Math.round(goal)} kcal
             </Text>
             <View
-              className="rounded-none border px-2 py-0.5"
+              className="rounded-none border px-2.5 py-1.5"
               style={{
                 borderWidth: borders.width,
                 borderColor: overKcal ? colors.danger : accent,
                 backgroundColor: overKcal ? `${colors.danger}14` : `${accent}14`,
                 borderRadius: radii.none,
+                minHeight: 32,
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Text
@@ -212,7 +213,7 @@ export const MealSection = memo(function MealSection({
                 bold
                 className="font-mono uppercase tracking-wider"
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   letterSpacing: 0.04,
                   color: overKcal ? colors.danger : accent,
                   fontFamily: fonts.mono,
@@ -257,7 +258,7 @@ export const MealSection = memo(function MealSection({
                   size="xs"
                   numberOfLines={1}
                   className="shrink font-mono"
-                  style={{ color: colors.text, fontFamily: fonts.mono, fontSize: 12 }}
+                  style={{ color: colors.text, fontFamily: fonts.mono, fontSize: 13 }}
                 >
                   {entry.food_name}
                 </Text>
@@ -267,7 +268,7 @@ export const MealSection = memo(function MealSection({
                   style={{
                     color: accent,
                     fontFamily: fonts.mono,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: "600",
                   }}
                 >
@@ -281,7 +282,7 @@ export const MealSection = memo(function MealSection({
                   color: colors.textMuted,
                   fontFamily: fonts.mono,
                   fontVariant: ["tabular-nums"] as never,
-                  fontSize: 12,
+                  fontSize: 13,
                 }}
               >
                 {Math.round(entry.kcal)} kcal
@@ -295,7 +296,7 @@ export const MealSection = memo(function MealSection({
               style={{
                 color: colors.textMuted,
                 fontFamily: fonts.mono,
-                fontSize: 10,
+                fontSize: 12,
                 letterSpacing: 0.04,
               }}
             >

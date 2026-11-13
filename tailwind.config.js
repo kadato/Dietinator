@@ -238,8 +238,8 @@ module.exports = {
         extrablack: "400",
       },
       fontSize: {
-        "2xs": "10px",
-        xs: "11px",
+        "2xs": "12px",
+        xs: "13px",
         sm: "14px",
         base: "14px",
         lg: "16px",

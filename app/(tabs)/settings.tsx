@@ -1548,7 +1548,6 @@ export default function SettingsScreen() {
                         key={section.id}
                         onPress={() => openSection(section.id)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Open ${section.label}`}
                         hitSlop={12}
                         style={{
                           borderWidth: borders.width,
@@ -1634,7 +1633,6 @@ export default function SettingsScreen() {
                           !isLast ? "border-b border-outline-100" : ""
                         }`}
                         accessibilityRole="button"
-                        accessibilityLabel={`Open ${section.label}`}
                         hitSlop={12}
                       >
                         <Box

@@ -408,8 +408,8 @@ const createToastStyles = (colors: ColorPalette) =>
       gap: spacing.sm + 2,
     },
     iconChip: {
-      width: 34,
-      height: 34,
+      width: 44,
+      height: 44,
       borderRadius: radii.none,
       borderWidth: borders.width,
       alignItems: "center",
