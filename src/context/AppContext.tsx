@@ -2,9 +2,10 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { getDatabase } from "@/db/database"
 import { getSettings, updateSettings } from "@/db/settings"
 import type { AppSettings } from "@/types"
-import { getCredentials, isLoggedIn } from "@/services/yazio/auth-storage"
+import { getActiveAccountId, getCredentials, isLoggedIn } from "@/services/yazio/auth-storage"
 import { initYazioClient as setupClient } from "@/services/yazio/client"
 import { healLeakedDemoDataIfNeeded, initializeActiveAccountFromAuth } from "@/services/account"
+import { ensureFreshDemoSession } from "@/services/demo"
 import { pushSnapshot } from "@/services/agent-bridge"
 
 type AppContextValue = {
@@ -14,6 +15,8 @@ type AppContextValue = {
   authenticated: boolean
   settings: AppSettings
   yazioAvailable: boolean
+  /** True when the signed-in session is the sample demo account. */
+  isDemo: boolean
   refreshAuth: () => Promise<void>
   refreshSettings: () => Promise<void>
   updateSettings: (partial: Partial<AppSettings>) => Promise<void>
@@ -49,6 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     target_weight_kg: 0,
   })
   const [yazioAvailable, setYazioAvailable] = useState(true)
+  const [isDemo, setIsDemo] = useState(false)
 
   const refreshSettings = useCallback(async () => {
     const next = await getSettings()
@@ -58,6 +62,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refreshAuth = useCallback(async () => {
     const loggedIn = await isLoggedIn()
     setAuthenticated(loggedIn)
+    try {
+      setIsDemo(loggedIn && (await getActiveAccountId()) === "demo")
+    } catch {
+      setIsDemo(false)
+    }
     if (loggedIn) {
       await setupClient()
     }
@@ -87,6 +96,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       await healLeakedDemoDataIfNeeded()
+    } catch (error) {
+      setBootError((prev) => prev ?? (error instanceof Error ? error.message : null))
+    }
+    try {
+      if (await ensureFreshDemoSession()) {
+        await refreshSettings()
+      }
     } catch (error) {
       setBootError((prev) => prev ?? (error instanceof Error ? error.message : null))
     }
@@ -141,6 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       authenticated,
       settings,
       yazioAvailable,
+      isDemo,
       refreshAuth,
       refreshSettings,
       updateSettings: updateSettingsFn,
@@ -154,6 +171,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       authenticated,
       settings,
       yazioAvailable,
+      isDemo,
       refreshAuth,
       refreshSettings,
       updateSettingsFn,

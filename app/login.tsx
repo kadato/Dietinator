@@ -25,6 +25,7 @@ import { useTheme } from "@/hooks/useTheme"
 import { usePressedState } from "@/hooks/usePressedState"
 import { useLayout } from "@/hooks/useLayout"
 import { PageContainer } from "@/components/PageContainer"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { withAlpha } from "@/utils/color"
 import { fonts, borders, radii } from "@/theme"
 import { Box } from "@ui/box"
@@ -49,6 +50,7 @@ export default function LoginScreen() {
   const [googleHelpExpanded, setGoogleHelpExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
+  const [demoBoot] = useState(() => isDemoQuery())
   const [formError, setFormError] = useState<string | null>(null)
   const togglePress = usePressedState()
   const passwordRef = useRef<TextInput>(null)
@@ -103,6 +105,28 @@ export default function LoginScreen() {
   }
 
   const safeBottom = insets.bottom
+
+  // Shared `?demo=1` links land here. Show a loading state instead of the
+  // flash of the login form while the app seeds the sample data.
+  if (demoBoot) {
+    return (
+      <View
+        className="flex-1 items-center justify-center gap-4 px-6"
+        style={{ backgroundColor: colors.background }}
+      >
+        <StatusBarGuard />
+        <LoadingSpinner size={32} />
+        <Text
+          size="sm"
+          bold
+          className="text-center font-mono uppercase tracking-widest"
+          style={{ color: colors.textMuted, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+        >
+          Preparing fresh demo data
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <KeyboardAvoidingView
@@ -337,7 +361,7 @@ export default function LoginScreen() {
                   accessibilityLabel="Password"
                   secureTextEntry={!passwordVisible}
                   textContentType="password"
-                  autoComplete="password"
+                  autoComplete="current-password"
                   returnKeyType="go"
                   enterKeyHint="go"
                   value={password}
@@ -434,6 +458,24 @@ export default function LoginScreen() {
                   </ButtonText>
                 )}
               </Button>
+
+              <Box className="mt-3 items-center gap-1">
+                <Text
+                  size="xs"
+                  bold
+                  className="font-mono uppercase tracking-widest"
+                  style={{ color: colors.text, fontFamily: fonts.mono, letterSpacing: 0.06 }}
+                >
+                  No YAZIO account?
+                </Text>
+                <Text
+                  size="xs"
+                  className="px-2 text-center font-mono"
+                  style={{ color: colors.textMuted, fontFamily: fonts.mono }}
+                >
+                  Explore sample meals, weight, and water. No login needed. The demo resets daily.
+                </Text>
+              </Box>
 
               <Button
                 size="lg"

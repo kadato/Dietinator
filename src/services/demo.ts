@@ -3,9 +3,15 @@ import { saveFoodToCache } from "@/db/food-cache"
 import { addDiaryEntry } from "@/db/diary"
 import { saveMeal } from "@/db/meals"
 import { updateSettings } from "@/db/settings"
+import { hasDemoData } from "@/db/user-data"
 import { toDateKey, shiftDateKey } from "@/utils/date"
-import { setDemoLoggedIn } from "@/services/yazio/auth-storage"
+import { getActiveAccountId, isLoggedIn, setDemoLoggedIn } from "@/services/yazio/auth-storage"
+import { ensureAccountDataIsolation } from "@/services/account"
+import { getSecureItem, setSecureItem } from "@/utils/secure-storage"
 import type { FoodServing, SearchFoodResult } from "@/types"
+
+/** Secure-storage stamp of the last demo seed. The stamp holds `YYYY-MM-DD` and drives the daily refresh. */
+export const DEMO_LAST_SEED_KEY = "demo_last_seed_date"
 
 const serving100g: FoodServing = { serving: "100 g", amount: 100, serving_quantity: 100 }
 const serving100ml: FoodServing = { serving: "100 ml", amount: 100, serving_quantity: 100 }
@@ -373,7 +379,6 @@ const ALL_DEMO_FOODS: SearchFoodResult[] = [
  * All IDs are stable (`demo-*`) so re-seeding never duplicates rows.
  */
 export async function seedDemoSession(): Promise<void> {
-  const { ensureAccountDataIsolation } = await import("@/services/account")
   await ensureAccountDataIsolation("demo")
   const db = await getDatabase()
   await setDemoLoggedIn()
@@ -729,6 +734,99 @@ export async function seedDemoSession(): Promise<void> {
       { ...broccoli, amount: 120, nutrients: { kcal: 42, protein: 2.9, carbs: 8.6, fat: 0.5 } },
     ],
   })
+
+  try {
+    await setSecureItem(DEMO_LAST_SEED_KEY, today)
+  } catch {
+    // Stamping is best-effort. A missed stamp means the next boot
+    // re-checks the database and reseeds if today is still empty.
+  }
+}
+
+/**
+ * Returns true when demo rows already cover `today`. Any one dated table is enough:
+ * diary, weight, and water are always seeded together.
+ */
+export async function hasFreshDemoDataForToday(today: string = toDateKey()): Promise<boolean> {
+  try {
+    const db = await getDatabase()
+    const [diary, weight, water] = await Promise.all([
+      db.getFirstAsync<{ c: number }>(
+        "SELECT COUNT(*) as c FROM diary_entries WHERE id LIKE 'demo-%' AND date = ?",
+        today,
+      ),
+      db.getFirstAsync<{ c: number }>(
+        "SELECT COUNT(*) as c FROM weight_entries WHERE id LIKE 'demo-%' AND date = ?",
+        today,
+      ),
+      db.getFirstAsync<{ c: number }>(
+        "SELECT COUNT(*) as c FROM water_log WHERE id LIKE 'demo-%' AND date = ?",
+        today,
+      ),
+    ])
+    return Number(diary?.c ?? 0) > 0 || Number(weight?.c ?? 0) > 0 || Number(water?.c ?? 0) > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Keeps the shared demo session fresh without touching real accounts.
+ * Returns true when a reseed ran so the caller can reload settings.
+ *
+ * - Explicit `?demo=1` visits always reseed, even on the same day, so a
+ *   shared link resets whatever the last visitor changed.
+ * - Otherwise the first boot of a new day reseeds once. The stamp skips
+ *   repeat boots on the same day and preserves anything the user
+ *   deleted that day instead of resurrecting it.
+ * - The function leaves sessions with no demo rows alone. E2E fake-auth sessions look
+ *   like a demo account but start from an empty database.
+ * - The function adopts legacy demo installs seeded before the stamp existed when
+ *   they already cover today. Otherwise it reseeds them once.
+ */
+export async function ensureFreshDemoSession(): Promise<boolean> {
+  try {
+    const [active, loggedIn] = await Promise.all([getActiveAccountId(), isLoggedIn()])
+    if (active !== "demo" || !loggedIn) return false
+
+    if (isDemoQuery()) {
+      await seedDemoSession()
+      return true
+    }
+
+    const today = toDateKey()
+    let lastSeed: string | null = null
+    try {
+      lastSeed = await getSecureItem(DEMO_LAST_SEED_KEY)
+    } catch {
+      lastSeed = null
+    }
+    if (lastSeed === today) return false
+
+    let hasDemo = false
+    try {
+      hasDemo = await hasDemoData()
+    } catch {
+      hasDemo = false
+    }
+    if (!hasDemo) return false
+
+    if (!lastSeed) {
+      if (await hasFreshDemoDataForToday(today)) {
+        try {
+          await setSecureItem(DEMO_LAST_SEED_KEY, today)
+        } catch {
+          // The install counts as adopted anyway. Next boot re-checks the database.
+        }
+        return false
+      }
+    }
+
+    await seedDemoSession()
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function isDemoQuery(): boolean {

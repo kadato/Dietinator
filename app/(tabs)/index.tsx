@@ -16,6 +16,7 @@ import { CalorieRing } from "@/components/CalorieRing"
 import { MacroBar } from "@/components/MacroBar"
 import { MealSection } from "@/components/MealSection"
 import { OfflineBanner } from "@/components/OfflineBanner"
+import { DemoBanner } from "@/components/DemoBanner"
 import { PageContainer } from "@/components/PageContainer"
 import { DatePickerModal } from "@/components/DatePickerModal"
 import { CopyFromDateModal } from "@/components/CopyFromDateModal"
@@ -25,6 +26,8 @@ import { MealSlotModal } from "@/components/MealSlotModal"
 import { Fab } from "@/components/Fab"
 import { FabCluster } from "@/components/FabCluster"
 import { useApp } from "@/context/AppContext"
+import { seedDemoSession } from "@/services/demo"
+import { logoutYazio } from "@/services/yazio/client"
 import { importDiaryFromYazio, type MealGoals, type YazioDailySummary } from "@/services/yazio/sync"
 import { pullAgentChanges } from "@/services/agent-bridge"
 import { useToast } from "@/context/ToastContext"
@@ -61,8 +64,8 @@ import { Card } from "@ui/card"
 
 export default function TodayScreen() {
   const router = useRouter()
-  const { settings, yazioAvailable, authenticated } = useApp()
-  const { showError, showWarning, showUndo } = useToast()
+  const { settings, yazioAvailable, authenticated, isDemo, refreshSettings, refreshAuth } = useApp()
+  const { showError, showWarning, showUndo, showSuccess } = useToast()
   const { colors } = useTheme()
   const { isWide, isLarge, width } = useLayout()
   const insets = useSafeAreaInsets()
@@ -90,6 +93,7 @@ export default function TodayScreen() {
   const [logSlotOpen, setLogSlotOpen] = useState(false)
   const [localWaterMl, setLocalWaterMl] = useState(0)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [demoResetting, setDemoResetting] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   const [isPending, startTransition] = useTransition()
   // Session cache for the streak computation, see load() below.
@@ -276,6 +280,33 @@ export default function TodayScreen() {
     await load({ force: true })
     setRefreshing(false)
   }, [load])
+
+  const handleResetDemo = useCallback(async () => {
+    if (demoResetting) return
+    setDemoResetting(true)
+    try {
+      await seedDemoSession()
+      await refreshSettings()
+      await refreshAuth()
+      await load({ quiet: true })
+      showSuccess("Sample meals, weight and water are fresh again.", "Demo reset")
+    } catch (error) {
+      showError(error, "Could not reset the demo.")
+    } finally {
+      setDemoResetting(false)
+    }
+  }, [demoResetting, load, refreshAuth, refreshSettings, showError, showSuccess])
+
+  const handleExitDemo = useCallback(async () => {
+    if (demoResetting) return
+    try {
+      await logoutYazio()
+    } catch (error) {
+      showError(error, "Could not sign out.")
+      return
+    }
+    await refreshAuth()
+  }, [demoResetting, refreshAuth, showError])
 
   const onDeleteEntry = useCallback(
     (id: string) => {
@@ -603,7 +634,7 @@ export default function TodayScreen() {
                 bold
                 className="font-tabular leading-none"
                 style={{
-                  color: "#ffffff",
+                  color: colors.onWarning,
                   fontFamily: fonts.mono,
                   fontWeight: "700",
                 }}
@@ -719,37 +750,43 @@ export default function TodayScreen() {
       }}
     >
       <Box
-        className="flex-row items-center justify-between px-4 py-2"
+        className="flex-row items-center justify-between gap-2 px-4 py-3"
         style={{
           backgroundColor: `${colors.primary}14`,
           borderBottomWidth: borders.width,
           borderBottomColor: colors.border,
+          minHeight: 52,
         }}
       >
         <Text
-          size="2xs"
+          size="sm"
           bold
+          maxFontSizeMultiplier={1.8}
           style={{ fontFamily: fonts.mono, letterSpacing: 0.08, color: colors.primary }}
         >
           TODAY FUEL
         </Text>
         <Text
-          size="2xs"
+          size="sm"
           bold
-          style={{ fontFamily: fonts.mono, letterSpacing: 0.06, color: colors.textMuted }}
+          maxFontSizeMultiplier={1.8}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          style={{ fontFamily: fonts.mono, letterSpacing: 0.04, color: colors.textMuted }}
         >
           {formatThousands(Math.round(totals.kcal))} /{" "}
           {formatThousands(Math.round(settings.calorie_goal))} KCAL
         </Text>
       </Box>
-      <Box className="items-center pt-4">
+      <Box className="items-center px-4 pb-1 pt-5">
         <CalorieRing
           consumed={totals.kcal}
           goal={settings.calorie_goal}
           protein={totals.protein}
           carbs={totals.carbs}
           fat={totals.fat}
-          size={isLarge ? 192 : isWide ? 168 : width < 380 ? 140 : 152}
+          size={isLarge ? 224 : isWide ? 208 : width < 380 ? 192 : 208}
           onSwipeLeft={() => setDateKeyTransition((d) => shiftDateKey(d, 1))}
           onSwipeRight={() => setDateKeyTransition((d) => shiftDateKey(d, -1))}
         />
@@ -766,12 +803,12 @@ export default function TodayScreen() {
 
       {summary && summary.steps > 0 ? (
         <Box
-          className="flex-row items-center justify-center gap-1.5 border-t border-outline-200 pb-3 pt-2.5"
-          style={{ backgroundColor: `${colors.snack}12` }}
+          className="flex-row items-center justify-center gap-2 border-t border-outline-200 px-4 py-3"
+          style={{ backgroundColor: `${colors.snack}12`, minHeight: 48 }}
         >
-          <Feather name="activity" size={12} color={colors.snack} />
+          <Feather name="activity" size={16} color={colors.snack} />
           <Text
-            size="2xs"
+            size="sm"
             bold
             className="font-mono uppercase tracking-widest"
             style={{ letterSpacing: 0.06, color: colors.snack }}
@@ -810,9 +847,7 @@ export default function TodayScreen() {
           onPress={() => setLogWaterOpen(true)}
           className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-80"
           accessibilityRole="button"
-          accessibilityLabel={`Log water, ${formatWaterAmount(waterIntake, settings.units)} / ${
-            waterGoal > 0 ? formatWaterAmount(waterGoal, settings.units) : "Water"
-          }`}
+          accessibilityHint="Opens water logging"
         >
           <Box
             className="shrink-0 items-center justify-center rounded-none"
@@ -860,20 +895,20 @@ export default function TodayScreen() {
             borderRadius: radii.none,
           }}
           accessibilityRole="button"
-          accessibilityLabel={`Quick add ${settings.units === "imperial" ? `${formatNumber(250 * 0.033814)} fl oz` : "250ml"} water`}
+          accessibilityHint="Quick adds 250 milliliters of water"
         >
           <Text
             size="2xs"
             bold
             className="font-mono uppercase leading-none tracking-widest"
-            style={{ color: "#ffffff", letterSpacing: 0.06 }}
+            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
           >
             +{settings.units === "imperial" ? formatNumber(250 * 0.033814) : "250"}
           </Text>
           <Text
             size="2xs"
             className="font-mono uppercase leading-none tracking-widest"
-            style={{ color: "#ffffff", letterSpacing: 0.06 }}
+            style={{ color: colors.onPrimary, letterSpacing: 0.06 }}
           >
             {settings.units === "imperial" ? "oz" : "ml"}
           </Text>
@@ -1017,6 +1052,12 @@ export default function TodayScreen() {
 
   return (
     <Box className="flex-1" style={{ backgroundColor: colors.background }}>
+      <DemoBanner
+        visible={isDemo}
+        resetting={demoResetting}
+        onReset={handleResetDemo}
+        onExit={handleExitDemo}
+      />
       <OfflineBanner visible={!yazioAvailable} />
       <PageContainer variant={isWide ? "wide" : "default"} className="flex-1">
         <ScrollView
