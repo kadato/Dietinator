@@ -6,6 +6,7 @@ import {
   formatServingLabel,
   formatServingOption,
   formatUsageAmountLine,
+  withBaseServingOption,
 } from "../food-display"
 import type { FoodServing } from "@/types"
 
@@ -191,5 +192,31 @@ describe("formatEntryAmount", () => {
         serving: serving({ serving: "1 bar (45g)", amount: 45 }),
       }),
     ).toBe("1bar (45g)")
+  })
+})
+
+describe("withBaseServingOption", () => {
+  it("appends 100 g when only named presets exist", () => {
+    const named = [
+      serving({ serving: "whole.regular", amount: 150, serving_quantity: 100 }),
+      serving({ serving: "each", amount: 60, serving_quantity: 100 }),
+    ]
+    const result = withBaseServingOption(named, "g")
+    expect(result).toHaveLength(3)
+    expect(result[0]).toEqual(named[0])
+    expect(result[2]).toEqual({ serving: "100 g", amount: 100, serving_quantity: 100 })
+  })
+
+  it("leaves lists that already contain the baseline untouched", () => {
+    const withBase = [
+      serving({ serving: "whole.regular", amount: 150, serving_quantity: 100 }),
+      serving({ serving: "100 g", amount: 100, serving_quantity: 100 }),
+    ]
+    expect(withBaseServingOption(withBase, "g")).toBe(withBase)
+  })
+
+  it("ignores countable base units", () => {
+    const countable = [serving({ serving: "each", amount: 1, serving_quantity: 1 })]
+    expect(withBaseServingOption(countable, "stück")).toBe(countable)
   })
 })

@@ -27,6 +27,35 @@ export function displayUnit(baseUnit: string): string {
   }
 }
 
+/**
+ * Ensure g/ml serving lists always contain the 100 g/ml baseline alongside
+ * named presets (whole, each, cup, ...). Old cache rows and YAZIO details
+ * that list only named portions would otherwise hide the standard comparison
+ * chip. Returns a new array with the baseline appended when missing, so the
+ * YAZIO default stays at index 0 and the add-food default preview does not
+ * change.
+ */
+export function withBaseServingOption(servings: FoodServing[], baseUnit: string): FoodServing[] {
+  const unit = baseUnit || "g"
+  if (unit !== "g" && unit !== "ml") return servings
+  const hasBase = servings.some(
+    (s) =>
+      s.amount === 100 &&
+      s.serving_quantity === 100 &&
+      (s.serving === unit ||
+        s.serving === `100 ${unit}` ||
+        s.serving.toLowerCase() === "100 g" ||
+        s.serving.toLowerCase() === "100 ml"),
+  )
+  if (hasBase) return servings
+  const base: FoodServing = {
+    serving: unit === "ml" ? "100 ml" : "100 g",
+    amount: 100,
+    serving_quantity: 100,
+  }
+  return [...servings, base]
+}
+
 export function formatServingOption(serving: FoodServing, baseUnit: string): string {
   const label = serving.serving || baseUnit
   const unit = displayUnit(baseUnit)

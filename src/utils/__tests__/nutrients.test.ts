@@ -205,8 +205,12 @@ describe("normalizePerGramFood", () => {
   it("keeps the named serving options for the serving picker", () => {
     const normalized = normalizePerGramFood(perGram)
     expect(normalized.servings).toEqual([
-      { serving: "tablespoon", amount: 15, serving_quantity: 15 },
+      { serving: "tablespoon", amount: 15, serving_quantity: 100 },
     ])
+    // 1 tbsp (15 ml) of the normalized oil is 15% of the per-100 values.
+    expect(nutrientsForAmount(normalized.nutrients, normalized.servings![0], 15, "ml").kcal).toBe(
+      133,
+    )
   })
 
   it("labels gram rows as 100 g", () => {

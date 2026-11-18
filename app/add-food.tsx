@@ -30,6 +30,7 @@ import {
   formatUnitName,
   isCountableUnit,
   formatFoodAmount,
+  withBaseServingOption,
 } from "@/utils/food-display"
 import { routeParam } from "@/utils/route"
 import { toDateKey } from "@/utils/date"
@@ -285,7 +286,11 @@ export default function AddFoodScreen() {
 
   const servingOptions = useMemo((): FoodServing[] => {
     if (!food) return []
-    const options = food.servings?.length ? food.servings : [food.serving]
+    const raw = food.servings?.length ? food.servings : [food.serving]
+    // g/ml foods must always offer the 100 g/ml baseline alongside named
+    // presets (whole, each, cup, ...), even for cache rows written before
+    // the baseline was backfilled.
+    const options = withBaseServingOption(raw, food.base_unit || "g")
     // Some products ship duplicate serving entries (same name + amount).
     // Keep the first occurrence so every chip maps to a distinct amount.
     const seen = new Set<string>()

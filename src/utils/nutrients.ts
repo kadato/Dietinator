@@ -288,6 +288,7 @@ export function nutrientsForAmount(
  */
 export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
   const scale100 = (val?: number) => (val !== undefined ? roundNutrient(val * 100) : undefined)
+  const isGramMl = food.base_unit === "g" || food.base_unit === "ml"
   return {
     ...food,
     nutrients: {
@@ -316,6 +317,10 @@ export function normalizePerGramFood(food: SearchFoodResult): SearchFoodResult {
       amount: 100,
       serving_quantity: 100,
     },
+    // Named presets scale from the per-100 reference after normalization.
+    servings: isGramMl
+      ? food.servings?.map((s) => ({ ...s, serving_quantity: 100 }))
+      : food.servings,
   }
 }
 
