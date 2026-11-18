@@ -35,8 +35,19 @@ type Props = {
   onPointPress?: (point: TrendPoint) => void
 }
 
-const PAD = { top: 14, right: 12, bottom: 24, left: 54 }
+const PAD = { top: 14, right: 12, bottom: 24, left: 62 }
 const DAY_MS = 86400000
+
+function niceDecimals(span: number): number {
+  if (span >= 100) return 0
+  if (span >= 4) return 1
+  return 2
+}
+
+function roundTo(value: number, decimals: number): number {
+  const factor = 10 ** decimals
+  return Math.round(value * factor) / factor
+}
 
 function dayIndex(dateKey: string, startKey: string): number {
   // Rounded so DST 23/25h days still map to a whole day.
@@ -90,10 +101,6 @@ export function TrendChart({
 
   const geometry = useMemo(() => {
     if (chartData.length === 0 || width === 0) return null
-    const innerW = width - PAD.left - PAD.right
-    const innerH = height - PAD.top - PAD.bottom
-    const totalDays = Math.max(dayIndex(rangeEnd, rangeStart) + 1, 1)
-
     const values = chartData.map((point) => point.value)
     let min = Math.min(...values)
     let max = Math.max(...values)
@@ -101,16 +108,33 @@ export function TrendChart({
       min = Math.min(min, goalValue)
       max = Math.max(max, goalValue)
     }
-    const span = max - min
-    if (span === 0) {
+    const rawSpan = max - min
+    if (rawSpan === 0) {
       const pad = Math.max(Math.abs(max) * 0.05, 1)
       min -= pad
       max += pad
     } else {
-      const pad = span * 0.1
+      const pad = rawSpan * 0.12
       min -= pad
       max += pad
     }
+    // Snap padded extremes to clean steps so single-point charts don't show
+    // float noise like 71.72kg. Large spans (kcal) get integers, small spans
+    // (weight) keep one decimal.
+    const paddedSpan = max - min
+    const decimals = niceDecimals(paddedSpan)
+    min = roundTo(min, decimals)
+    max = roundTo(max, decimals)
+
+    // Size the left gutter from the longest formatted Y label so "2,000 kcal"
+    // never clips on a 320px phone, without wasting desktop chart width.
+    const probeLabels = [formatValue(max), formatValue(min)]
+    if (goalValue !== undefined) probeLabels.push(formatValue(goalValue))
+    const longest = Math.max(...probeLabels.map((label) => label.length))
+    const left = Math.min(84, Math.max(PAD.left, longest * 7 + 14))
+    const innerW = Math.max(width - left - PAD.right, 10)
+    const innerH = height - PAD.top - PAD.bottom
+    const totalDays = Math.max(dayIndex(rangeEnd, rangeStart) + 1, 1)
 
     const yFor = (value: number) => PAD.top + innerH * (1 - (value - min) / (max - min))
 
@@ -119,7 +143,7 @@ export function TrendChart({
       if (totalDays <= 1) return 0.5
       return Math.min(1, Math.max(0, dayIndex(dateKey, rangeStart) / (totalDays - 1)))
     }
-    const xFor = (dateKey: string) => PAD.left + innerW * tFor(dateKey)
+    const xFor = (dateKey: string) => left + innerW * tFor(dateKey)
 
     const linePath = chartData
       .map(
@@ -138,7 +162,7 @@ export function TrendChart({
     const slot = innerW / totalDays
     const barWidth = slot < 3 ? slot : Math.min(26, slot * 0.7)
     const barX = (dateKey: string) =>
-      PAD.left +
+      left +
       slot * (Math.min(totalDays - 1, Math.max(0, dayIndex(dateKey, rangeStart))) + 0.5) -
       barWidth / 2
 
@@ -156,9 +180,9 @@ export function TrendChart({
 
     // Y grid lines at min / mid / max, but labels only at min / max so the
     // mid label never collides with a data dot sitting on the mid value.
-    // Rounded to 2dp, because padded domains inherit float noise from subtraction.
-    const gridValues = [max, (min + max) / 2, min].map((value) => Math.round(value * 100) / 100)
-    const labelValues = [max, min].map((value) => Math.round(value * 100) / 100)
+    // Already snapped to clean steps above; rounding here only kills float noise.
+    const gridValues = [max, (min + max) / 2, min].map((value) => roundTo(value, decimals))
+    const labelValues = [max, min].map((value) => roundTo(value, decimals))
 
     // Dots on every point get crowded past ~90 entries. Sample them instead.
     const dotStep = Math.max(1, Math.ceil(chartData.length / 90))
@@ -176,8 +200,9 @@ export function TrendChart({
       dotStep,
       innerW,
       innerH,
+      left,
     }
-  }, [chartData, goalValue, height, rangeEnd, rangeStart, width])
+  }, [chartData, formatValue, goalValue, height, rangeEnd, rangeStart, width])
 
   const goalY = geometry && goalValue !== undefined ? geometry.yFor(goalValue) : null
 
@@ -220,9 +245,9 @@ export function TrendChart({
             return (
               <Line
                 key={`grid-${value}`}
-                x1={PAD.left}
+                x1={geometry.left}
                 y1={y}
-                x2={PAD.left + geometry.innerW}
+                x2={geometry.left + geometry.innerW}
                 y2={y}
                 stroke={colors.border}
                 strokeOpacity={0.55}
@@ -234,9 +259,9 @@ export function TrendChart({
           {geometry.labelValues.map((value) => (
             <SvgText
               key={`label-${value}`}
-              x={PAD.left - 6}
+              x={geometry.left - 6}
               y={geometry.yFor(value) + 3.5}
-              fontSize={11}
+              fontSize={10.5}
               fontFamily={fonts.mono}
               fill={colors.textMuted}
               textAnchor="end"
@@ -264,21 +289,21 @@ export function TrendChart({
           {goalY !== null ? (
             <>
               <Line
-                x1={PAD.left}
+                x1={geometry.left}
                 y1={goalY}
-                x2={PAD.left + geometry.innerW}
+                x2={geometry.left + geometry.innerW}
                 y2={goalY}
                 stroke={colors.warning}
                 strokeWidth={1.5}
                 strokeDasharray="6 4"
               />
               <SvgText
-                x={PAD.left + geometry.innerW}
-                y={goalY - 5}
+                x={geometry.left + 4}
+                y={Math.max(goalY - 5, 12)}
                 fontSize={11}
                 fontFamily={fonts.mono}
                 fill={colors.warning}
-                textAnchor="end"
+                textAnchor="start"
               >
                 {formatValue(goalValue as number)}
               </SvgText>

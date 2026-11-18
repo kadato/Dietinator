@@ -27,6 +27,7 @@ import {
 } from "@/db/stats"
 import { shiftDateKey, toDateKey, formatDisplayDate } from "@/utils/date"
 import { formatWeight, formatWaterAmount } from "@/utils/units"
+import { formatThousands } from "@/utils/format"
 import { computeAdherence, computeLogStreak } from "@/utils/adherence"
 import { computeMacroRatios } from "@/utils/nutrients"
 import { confirmAction } from "@/utils/confirm"
@@ -55,7 +56,8 @@ const MACRO_METRICS: { value: MacroMetric; label: string }[] = [
 ]
 
 /** Shared chart height so all four trend cards stay aligned. */
-const CHART_HEIGHT = 170
+const CHART_HEIGHT_WIDE = 170
+const CHART_HEIGHT_PHONE = 148
 
 const AXIS_MONTHS = [
   "Jan",
@@ -86,6 +88,7 @@ export default function StatsScreen() {
   const { showError, showUndo } = useToast()
   const { colors } = useTheme()
   const { isWide, isLarge } = useLayout()
+  const chartHeight = isWide ? CHART_HEIGHT_WIDE : CHART_HEIGHT_PHONE
   const [range, setRange] = useState<RangeId>("1m")
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
   const [latest, setLatest] = useState<WeightEntry | null>(null)
@@ -326,7 +329,7 @@ export default function StatsScreen() {
         </Box>
 
         <ScrollView
-          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : "max-w-[720px] self-center p-3 pb-16"}`}
+          contentContainerClassName={`w-full ${isWide ? (isLarge ? "p-6 pb-24" : "p-5 pb-20") : "max-w-[720px] self-center px-3 pt-2 pb-20"}`}
         >
           <SegmentedControl
             value={range}
@@ -392,7 +395,7 @@ export default function StatsScreen() {
             </Card>
           ) : (
             <Box
-              className={`mt-4 ${isWide ? "gap-4" : "gap-4"} ${isLarge ? "gap-5" : ""}`}
+              className={`mt-3 ${isWide ? "gap-4" : "gap-3"} ${isLarge ? "gap-5" : ""}`}
               style={
                 Platform.OS === "web" && isWide
                   ? ({
@@ -433,8 +436,8 @@ export default function StatsScreen() {
                   </Box>
                 </Box>
 
-                <Box className="mt-3 gap-3">
-                  <Box className="flex-row gap-3">
+                <Box className={`mt-3 ${isWide ? "gap-3" : "gap-2"}`}>
+                  <Box className={isWide ? "flex-row gap-3" : "flex-col gap-2"}>
                     <Box
                       className="flex-1 gap-1 rounded-none border p-3"
                       style={{
@@ -447,6 +450,7 @@ export default function StatsScreen() {
                         <Text
                           size="2xs"
                           bold
+                          numberOfLines={1}
                           className="font-mono uppercase tracking-widest"
                           style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
@@ -454,17 +458,35 @@ export default function StatsScreen() {
                         </Text>
                         <Feather name="zap" size={12} color={colors.warning} />
                       </Box>
-                      <Text size="xl" bold className="font-tabular" style={{ color: colors.text }}>
-                        {logStreak}
+                      <Box
+                        className={isWide ? "" : "flex-row items-baseline justify-between gap-2"}
+                      >
                         <Text
-                          size="xs"
-                          className="font-mono font-normal"
-                          style={{ color: colors.textMuted }}
+                          size="xl"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.text }}
                         >
-                          {" "}
-                          days
+                          {logStreak}
+                          <Text
+                            size="xs"
+                            className="font-mono font-normal"
+                            style={{ color: colors.textMuted }}
+                          >
+                            {" "}
+                            {logStreak === 1 ? "day" : "days"}
+                          </Text>
                         </Text>
-                      </Text>
+                        {!isWide ? (
+                          <Text
+                            size="2xs"
+                            className="font-mono"
+                            style={{ color: colors.textMuted }}
+                          >
+                            in a row
+                          </Text>
+                        ) : null}
+                      </Box>
                     </Box>
                     <Box
                       className="flex-1 gap-1 rounded-none border p-3"
@@ -478,6 +500,7 @@ export default function StatsScreen() {
                         <Text
                           size="2xs"
                           bold
+                          numberOfLines={1}
                           className="font-mono uppercase tracking-widest"
                           style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
@@ -493,7 +516,7 @@ export default function StatsScreen() {
                           style={{ color: colors.textMuted }}
                         >
                           {" "}
-                          / {RANGES.find((r) => r.id === range)?.days}
+                          / {RANGES.find((r) => r.id === range)?.days} days
                         </Text>
                       </Text>
                       <View
@@ -525,6 +548,7 @@ export default function StatsScreen() {
                         <Text
                           size="2xs"
                           bold
+                          numberOfLines={1}
                           className="font-mono uppercase tracking-widest"
                           style={{ color: colors.textMuted, letterSpacing: 0.06 }}
                         >
@@ -555,7 +579,7 @@ export default function StatsScreen() {
                         </View>
                       ) : (
                         <Text size="2xs" className="font-mono" style={{ color: colors.textMuted }}>
-                          No data in range
+                          Log food to see hit rate
                         </Text>
                       )}
                     </Box>
@@ -627,9 +651,20 @@ export default function StatsScreen() {
 
                 {goalProgress !== null ? (
                   <Box className="mt-3">
-                    <Box className="mb-1 flex-row items-center justify-between">
-                      <Text size="xs" bold className="" style={{ color: colors.text }}>
-                        Goal ·
+                    <Box className="mb-1 flex-row items-center justify-between gap-2">
+                      <Text
+                        size="xs"
+                        bold
+                        numberOfLines={1}
+                        className="flex-1"
+                        style={{ color: colors.text }}
+                      >
+                        Goal {targetKg > 0 ? `· ${formatWeight(targetKg, settings.units)}` : ""}{" "}
+                        {goalDelta !== null && goalDelta !== 0
+                          ? `· ${formatWeight(Math.abs(goalDelta), settings.units)} ${goalDelta > 0 ? "to go" : "past goal"}`
+                          : goalDelta === 0
+                            ? "· Reached"
+                            : ""}
                       </Text>
                       {goalProgress < 1 ? (
                         <Text
@@ -640,7 +675,16 @@ export default function StatsScreen() {
                         >
                           {Math.round(goalProgress * 100)}%
                         </Text>
-                      ) : null}
+                      ) : (
+                        <Text
+                          size="xs"
+                          bold
+                          className="font-tabular"
+                          style={{ color: colors.primary }}
+                        >
+                          Done
+                        </Text>
+                      )}
                     </Box>
                     <View
                       className="h-2 overflow-hidden rounded-none border"
@@ -677,7 +721,7 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => formatWeight(value, settings.units)}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={CHART_HEIGHT}
+                      height={chartHeight}
                       onPointPress={onWeightPointPress}
                       accessibilityLabel={`Body weight trend, ${formatWeight(weightChartData[0].value, settings.units)} to ${formatWeight(weightChartData[weightChartData.length - 1].value, settings.units)}`}
                     />
@@ -771,15 +815,20 @@ export default function StatsScreen() {
                     >
                       <Feather name="zap" size={18} color={colors.onPrimary} />
                     </Box>
-                    <Box>
+                    <Box className="min-w-0 flex-1">
                       <Text size="md" bold className="" style={{ color: colors.text }}>
                         Calories
                       </Text>
-                      <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
-                        Avg {avgKcal !== null ? `${avgKcal}` : "No data"}
+                      <Text
+                        size="xs"
+                        numberOfLines={1}
+                        className="font-tabular"
+                        style={{ color: colors.textMuted }}
+                      >
+                        {avgKcal !== null ? `Avg ${formatThousands(avgKcal)} kcal` : "No data yet"}
                         {settings.calorie_goal > 0
-                          ? ` · Goal ${Math.round(settings.calorie_goal)}`
-                          : ""}
+                          ? ` · Goal ${formatThousands(Math.round(settings.calorie_goal))} kcal`
+                          : " · No goal set"}
                       </Text>
                     </Box>
                   </Box>
@@ -794,9 +843,9 @@ export default function StatsScreen() {
                       variant="bars"
                       rangeStart={fromKey}
                       rangeEnd={toDateKey()}
-                      formatValue={(value) => `${Math.round(value)} kcal`}
+                      formatValue={(value) => `${formatThousands(Math.round(value))} kcal`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={CHART_HEIGHT}
+                      height={chartHeight}
                       onPointPress={setSelectedKcal}
                       accessibilityLabel={`Calories per day, ${calorieChartData.length} days`}
                     />
@@ -836,10 +885,26 @@ export default function StatsScreen() {
                     >
                       <Feather name="pie-chart" size={18} color={colors.onPrimary} />
                     </Box>
-                    <Box>
+                    <Box className="min-w-0 flex-1">
                       <Text size="md" bold className="" style={{ color: colors.text }}>
                         Macronutrients
                       </Text>
+                      {avgMacros ? (
+                        <Text
+                          size="xs"
+                          numberOfLines={1}
+                          className="font-tabular"
+                          style={{ color: colors.textMuted }}
+                        >
+                          Avg {avgMacros[macroMetric]}g ·{" "}
+                          {macroMetric === "protein"
+                            ? avgMacros.proteinPct
+                            : macroMetric === "carbs"
+                              ? avgMacros.carbsPct
+                              : avgMacros.fatPct}
+                          % of macro kcal
+                        </Text>
+                      ) : null}
                     </Box>
                   </Box>
                 </Box>
@@ -877,7 +942,7 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => `${Math.round(value)}g`}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={CHART_HEIGHT}
+                      height={chartHeight}
                       onPointPress={setSelectedMacro}
                       accessibilityLabel={`${macroMetric} per day, ${macroChartData.length} days`}
                     />
@@ -904,10 +969,16 @@ export default function StatsScreen() {
 
                 {avgMacros ? (
                   <Box className="mt-3 border-t border-outline-100 pt-3">
-                    <Text size="2xs" bold className="mb-2" style={{ color: colors.textMuted }}>
-                      {" "}
+                    <Text
+                      size="2xs"
+                      bold
+                      numberOfLines={1}
+                      className="mb-2 font-mono uppercase tracking-widest"
+                      style={{ color: colors.textMuted, letterSpacing: 0.06 }}
+                    >
+                      Daily average
                     </Text>
-                    <Box className="flex-row gap-2">
+                    <Box className={isWide ? "flex-row gap-2" : "flex-col gap-2"}>
                       <Box
                         className="flex-1 items-center rounded-none border p-2.5"
                         style={{
@@ -925,14 +996,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.text }}
                         >
-                          {avgMacros.protein}g
-                        </Text>
-                        <Text
-                          size="2xs"
-                          className="font-tabular"
-                          style={{ color: colors.textMuted }}
-                        >
-                          {" "}
+                          {avgMacros.protein}g · {avgMacros.proteinPct}%
                         </Text>
                       </Box>
                       <Box
@@ -952,14 +1016,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.text }}
                         >
-                          {avgMacros.carbs}g
-                        </Text>
-                        <Text
-                          size="2xs"
-                          className="font-tabular"
-                          style={{ color: colors.textMuted }}
-                        >
-                          {" "}
+                          {avgMacros.carbs}g · {avgMacros.carbsPct}%
                         </Text>
                       </Box>
                       <Box
@@ -979,14 +1036,7 @@ export default function StatsScreen() {
                           className="font-tabular"
                           style={{ color: colors.text }}
                         >
-                          {avgMacros.fat}g
-                        </Text>
-                        <Text
-                          size="2xs"
-                          className="font-tabular"
-                          style={{ color: colors.textMuted }}
-                        >
-                          {" "}
+                          {avgMacros.fat}g · {avgMacros.fatPct}%
                         </Text>
                       </Box>
                     </Box>
@@ -1011,11 +1061,15 @@ export default function StatsScreen() {
                     <Text size="md" bold className="" style={{ color: colors.text }}>
                       Water
                     </Text>
-                    <Text size="xs" className="font-tabular" style={{ color: colors.textMuted }}>
-                      Goal
+                    <Text
+                      size="xs"
+                      numberOfLines={1}
+                      className="font-tabular"
+                      style={{ color: colors.textMuted }}
+                    >
                       {settings.water_goal_ml > 0
-                        ? ` ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
-                        : ""}
+                        ? `Goal ${formatWaterAmount(settings.water_goal_ml, settings.units)}`
+                        : "No goal set"}
                     </Text>
                   </Box>
                 </Box>
@@ -1031,7 +1085,7 @@ export default function StatsScreen() {
                       rangeEnd={toDateKey()}
                       formatValue={(value) => formatWaterAmount(value, settings.units)}
                       formatDate={(dateKey) => formatAxisDate(dateKey, range)}
-                      height={CHART_HEIGHT}
+                      height={chartHeight}
                       onPointPress={setSelectedWater}
                       accessibilityLabel={`Water per day, ${waterChartData.length} days`}
                     />
