@@ -61,7 +61,10 @@ function withoutLegacyPerGramCache(cached: SearchFoodResult | null): SearchFoodR
 
 /**
  * True when a cache row can be served without touching the network.
- * - 'detail' rows: normalized per 100 g/ml, always safe.
+ * - 'detail' rows: normalized per 100 g/ml, always safe, but rows without
+ *   any serving options are polluted (for example a quick-add from search
+ *   overwrote the detail before the fix) and must refetch once to restore
+ *   the named presets (whole, each, cup, ...).
  * - 'search' rows: per-gram by design, never served as normalized data.
  * - Legacy rows (no marker, written before this column existed): clearly
  *   normalized rows (kcal >= 10, or non-g/ml units) are safe; anything
@@ -70,9 +73,15 @@ function withoutLegacyPerGramCache(cached: SearchFoodResult | null): SearchFoodR
  */
 export function isUsableCacheRow(row: CachedFood, cached: SearchFoodResult | null): boolean {
   if (!cached) return false
-  if (row.source === "detail") return true
+  if (row.source === "detail") {
+    // Self-heal polluted rows written without servings_json: they would
+    // otherwise show only the single default chip forever.
+    if (!cached.servings?.length) return false
+    return true
+  }
   if (row.source === "search") return false
   const gml = cached.base_unit === "g" || cached.base_unit === "ml"
+  if (gml && !cached.servings?.length) return false
   return !gml || cached.nutrients.kcal >= 10
 }
 
@@ -108,12 +117,57 @@ async function fetchFoodDetail(
   if (!product) return null
 
   const energyUnit = unitEnergy ?? (await getYazioEnergyUnit())
-  const defaultServing = product.servings[0]
-  const defaultAmount = defaultServing?.amount ?? 100
   const baseUnit = product.base_unit || "g"
+  const isGramMl = baseUnit === "g" || baseUnit === "ml"
   // Product detail API returns nutrients per gram; normalize to per 100 g before rounding.
   const perGram = isPerGramRawNutrients(product.nutrients, baseUnit, energyUnit)
   const mappedNutrients = nutrientsFromYazio(product.nutrients, energyUnit, perGram ? 100 : 1)
+  const rawServings = Array.isArray(product.servings) ? product.servings : []
+  const defaultServing = rawServings[0]
+  const defaultAmount = defaultServing?.amount ?? 100
+  const mappedServings = rawServings.map((s) => ({
+    serving: s.serving,
+    amount: s.amount,
+    // Per-100 nutrients (the common detail case) scale from 100; per-serving
+    // nutrients (for example a scoop where the API reports per portion) scale
+    // from the option's own amount. Countable units (each, cup, whole) have
+    // piece-count amounts and nutrients per base unit, so always 1.
+    serving_quantity: isGramMl ? (perGram ? 100 : s.amount) : 1,
+  }))
+
+  // g/ml products must always offer the 100 g/ml baseline alongside named
+  // presets (whole, each, cup, ...). YAZIO details often list only the named
+  // portions, so a missing baseline would hide the standard comparison chip.
+  // Appended (not prepended) so the YAZIO default stays at index 0 and the
+  // add-food default preview does not change.
+  if (isGramMl && perGram) {
+    const hasBase = mappedServings.some(
+      (s) =>
+        s.amount === 100 &&
+        s.serving_quantity === 100 &&
+        (s.serving === baseUnit ||
+          s.serving === `100 ${baseUnit}` ||
+          s.serving.toLowerCase() === "100 g" ||
+          s.serving.toLowerCase() === "100 ml"),
+    )
+    if (!hasBase) {
+      mappedServings.push({
+        serving: baseUnit === "ml" ? "100 ml" : "100 g",
+        amount: 100,
+        serving_quantity: 100,
+      })
+    }
+  }
+  // Never cache an empty option list: offline and instant-cache paths render
+  // serving chips from this array, so an empty list would hide all presets.
+  if (mappedServings.length === 0) {
+    mappedServings.push(
+      isGramMl
+        ? { serving: baseUnit === "ml" ? "100 ml" : "100 g", amount: 100, serving_quantity: 100 }
+        : { serving: baseUnit, amount: 1, serving_quantity: 1 },
+    )
+  }
+
   const food: SearchFoodResult = {
     product_id: product.id,
     name: product.name,
@@ -128,14 +182,7 @@ async function fetchFoodDetail(
             serving_quantity: defaultAmount,
           }
         : { serving: "portion", amount: 100, serving_quantity: 100 },
-    servings: product.servings.map((s) => ({
-      serving: s.serving,
-      amount: s.amount,
-      // g/ml products: the option amount is the nutrient reference (matches
-      // per-100 g normalization). Countable units (each, cup, whole) have
-      // piece-count amounts and nutrients per base unit, so always 1.
-      serving_quantity: baseUnit === "g" || baseUnit === "ml" ? s.amount : 1,
-    })),
+    servings: mappedServings,
     base_unit: product.base_unit,
     is_verified: product.is_verified,
   }

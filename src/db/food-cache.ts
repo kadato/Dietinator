@@ -211,11 +211,19 @@ export async function saveFoodToCache(
 ): Promise<void> {
   const db = await getDatabase()
   const now = new Date().toISOString()
+  // Only rows that actually carry named presets count as detail. Search rows
+  // (per-100, no servings) previously inferred as detail and then overwrote
+  // the real detail's servings_json with null, permanently hiding the
+  // whole/each/cup chips. Missing servings now infers as search so the next
+  // open refetches the detail once and self-heals.
+  const hasServings = !!food.servings?.length
   const rowSource =
     source ??
-    (isPerGramNutrients(food.nutrients, food.base_unit || "g", food.serving.serving_quantity)
-      ? "search"
-      : "detail")
+    (hasServings
+      ? "detail"
+      : isPerGramNutrients(food.nutrients, food.base_unit || "g", food.serving.serving_quantity)
+        ? "search"
+        : "search")
   await db.runAsync(
     `INSERT INTO food_cache (
       yazio_product_id, barcode, name, producer, nutrients_json, serving_json, servings_json,
@@ -227,11 +235,11 @@ export async function saveFoodToCache(
       producer = excluded.producer,
       nutrients_json = excluded.nutrients_json,
       serving_json = excluded.serving_json,
-      servings_json = excluded.servings_json,
+      servings_json = COALESCE(excluded.servings_json, food_cache.servings_json),
       base_unit = excluded.base_unit,
       cached_at = excluded.cached_at,
       last_used_at = ${preserveLastUsedAt ? "food_cache.last_used_at" : "excluded.last_used_at"},
-      source = excluded.source`,
+      source = CASE WHEN food_cache.source = 'detail' AND excluded.source = 'search' THEN 'detail' ELSE excluded.source END`,
     food.product_id,
     barcode,
     food.name,

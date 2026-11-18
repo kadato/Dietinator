@@ -96,6 +96,24 @@ describe("saveFoodToCache", () => {
     const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
     expect(args).toContain(null)
   })
+
+  it("preserves existing servings when the new row has none", async () => {
+    await saveFoodToCache(food({ servings: undefined }))
+    const sql = db.runAsync.mock.calls[0][0] as string
+    expect(sql).toContain("COALESCE(excluded.servings_json, food_cache.servings_json)")
+  })
+
+  it("never downgrades a detail row to search", async () => {
+    await saveFoodToCache(food({ servings: undefined }))
+    const sql = db.runAsync.mock.calls[0][0] as string
+    expect(sql).toContain("WHEN food_cache.source = 'detail'")
+  })
+
+  it("tags rows without servings as search so presets refetch", async () => {
+    await saveFoodToCache(food({ servings: undefined }))
+    const args = db.runAsync.mock.calls[0].slice(1) as unknown[]
+    expect(args[args.length - 1]).toBe("search")
+  })
 })
 
 describe("saveSearchResultToCache", () => {
