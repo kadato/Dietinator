@@ -257,6 +257,8 @@ export default function ScanScreen() {
   const [manualBarcode, setManualBarcode] = useState("")
   const [notFound, setNotFound] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
+  const [mountError, setMountError] = useState(false)
+  const [cameraKey, setCameraKey] = useState(0)
   // Mobile-web virtual keyboard covers the fixed lookup keys. Track it like
   // the food search does so the barcode field and lookup stay visible.
   const [keyboardHeight, setKeyboardHeight] = useState(0)
@@ -290,6 +292,7 @@ export default function ScanScreen() {
     setNotFound(false)
     setManualBarcode("")
     setTorchOn(false)
+    setMountError(false)
   }
 
   const lookupBarcode = async (barcode: string) => {
@@ -583,16 +586,107 @@ export default function ScanScreen() {
     )
   }
 
-  const cameraActive = !results.length && !loading && !notFound
+  const cameraActive = !results.length && !loading && !notFound && !mountError
+  // Keep the camera mounted behind the "Looking up..." overlay so the session
+  // does not flicker on every scan. Unmount only once results/not-found arrive.
+  const showCamera = cameraActive || loading
+
+  if (mountError) {
+    return (
+      <View style={styles.container}>
+        <PageContainer>
+          <Box className="flex-1 items-center justify-center px-3">
+            <Box
+              className="h-16 w-16 items-center justify-center rounded-none border"
+              style={{
+                backgroundColor: `${colors.warning}22`,
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderRadius: radii.none,
+              }}
+            >
+              <Feather name="video-off" size={28} color={colors.warning} />
+            </Box>
+            <Text style={styles.notFoundText}>Camera failed to start.</Text>
+            <Text style={styles.hint}>Check the lens permission, then try again.</Text>
+            <Button
+              size="md"
+              variant="outline"
+              action="secondary"
+              className="mt-4 rounded-none border"
+              style={{
+                borderWidth: borders.width,
+                borderColor: colors.border,
+                borderRadius: radii.none,
+              }}
+              onPress={() => {
+                setMountError(false)
+                setCameraKey((k) => k + 1)
+                resetForNextScan()
+              }}
+            >
+              <ButtonText
+                style={{
+                  fontFamily: fonts.mono,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.04,
+                }}
+              >
+                Retry camera
+              </ButtonText>
+            </Button>
+            <Pressable
+              style={styles.linkBtn}
+              onPress={() => {
+                if (fromMealBuilder) {
+                  resetForNextScan()
+                  router.back()
+                  return
+                }
+                router.replace({
+                  pathname: "/log-meal",
+                  params: { meal: mealType, date: dateKey },
+                })
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Search foods manually"
+            >
+              <Text style={styles.linkBtnText}>Search manually</Text>
+            </Pressable>
+          </Box>
+        </PageContainer>
+        <FabCluster
+          bottomOffset={insets.bottom + 20}
+          insetX={12}
+          left={
+            <Fab icon="arrow-left" tone="surface" onPress={close} accessibilityLabel="Go back" />
+          }
+        />
+      </View>
+    )
+  }
 
   return (
     <View style={styles.container}>
-      {cameraActive || scanned ? (
+      {showCamera ? (
         <CameraView
+          key={cameraKey}
           style={styles.camera}
+          facing="back"
+          // expo-camera semantics are inverted from the name: 'off' means
+          // continuous autofocus (correct for barcode scanning), 'on' means
+          // autofocus once then lock. The native default is already
+          // continuous on both platforms; set it explicitly to guard against
+          // future default changes.
+          autofocus="off"
           enableTorch={torchOn}
           barcodeScannerSettings={{
             barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"],
+          }}
+          onMountError={() => {
+            setMountError(true)
+            setLoading(false)
+            AccessibilityInfo.announceForAccessibility("Camera failed to start")
           }}
           onBarcodeScanned={
             scanned || loading
